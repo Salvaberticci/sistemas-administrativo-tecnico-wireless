@@ -1,87 +1,87 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menú Wireless Supply, C.A</title>
-    <link rel="stylesheet" href="../css/style2.css">
-</head>
-<body>
-    <div class="main-container">
-    <aside class="sidebar">
-        <header class="sidebar-header">
-            <h2>Menú de Opciones</h2>
-        </header>
-        <nav class="menu-nav">
-            <ul class="main-menu">
-                <li>
-                    <a href="#" class="category-link">Administración</a>
-                    <ul class="submenu">
-                       <li><a href="principal/index.php">Gestionar Contratos</a></li>
-                        <li><a href="gestion_municipios.php">Agregar Municipios</a></li>
-                        <li><a href="gestion_planes.php">Agregar Planes</a></li>
-                        <li><a href="gestion_bancos.php">Definir Bancos</a></li>
-                        <li><a href="gestion_vendedores.php">Gestion De Vendedores</a></li>
-                        <li><a href="gestion_pon.php">Gestion De PONs</a></li>
-                        <li><a href="gestion_olt.php">Gestion De OLTs</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#" class="category-link">Procesos</a>
-                    <ul class="submenu">
-                        <li><a href="principal/gestion_cobros.php">Cuentas Por Cobrar</a></li>
-                        <!--li><a href="#">Opción 2.2</a></li-->
-                    </ul>
-                </li>
-                <li>
-                    <a href="#" class="category-link">Reportes</a>
-                    <ul class="submenu">
-                        <li><a href="reportes_pdf/generar_pdf_municipios.php" class="btn" target="_blank">Lista Municipios</a></li>
-                        <li><a href="reportes_pdf/generar_pdf_bancos.php" class="btn" target="_blank">Lista Bancos</a></li>
-                        <li><a href="reportes_pdf/generar_pdf_planes.php" class="btn" target="_blank">Lista Planes</a></li>
-                        <li><a href="reportes_pdf/generar_pdf_vendedores.php" class="btn" target="_blank">Lista Vendedores</a></li>
-                        <li><a href="reportes_pdf/generar_pdf_pon.php" class="btn" target="_blank">Lista De PONs</a></li>
-                        <li><a href="reportes_pdf/generar_pdf_olt.php" class="btn" target="_blank">Lista De OLTs</a></li>
-                        <li><a href="reportes_pdf/reporte_cobranza.php">Reportes Cobranzas</a></li>
-                        <li><a href="reportes_pdf/reporte_clientes.php">Reportes Contratos</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#" class="category-link">Mantenimiento</a>
-                    <ul class="submenu">
-                        <li><a href="gestion_usuarios.php">Registro De Usuarios</a></li>
-                        <!--li><a href="#">Opción 4.2</a></li>
-                        <li><a href="#">Opción 4.3</a></li-->
-                    </ul>
-                </li>
-            </ul>
-        </nav>
-    </aside>
+<?php 
+$page_title = "Panel de Control";
+require_once 'includes/layout_head.php';
+require_once 'includes/sidebar.php';
+?>
+
+<main class="main-content">
+    <?php include 'includes/header.php'; ?>
     
-     <main class="content">
-    <div class="hero-section">
-        <img src="../images/logo.jpg" alt="Imagen de bienvenida">
-        <h1>Bienvenido a Wireless Supply, C.A.</h1>
-       <?php include 'mostrar_frase_random.php'; ?>
-        <p> La gestión informática no administra tareas, devuelve tiempo para el pensamiento. <b>Adrian Vergara</b></p>
-         <p class="copyright-text">
-        &copy; <span id="current-year"></span> Wireless Supply, C.A. Todos los derechos reservados.
-    </p>
+    <div class="page-content">
+        <!-- Welcome Hero Section -->
+        <div class="card bg-white border-0 shadow-lg overflow-hidden position-relative mb-4">
+            <div class="card-body p-5 position-relative text-center text-md-start">
+               <div class="row align-items-center">
+                   <div class="col-md-8">
+                        <h1 class="display-5 fw-bold text-primary mb-3">Bienvenido a Wireless Supply</h1>
+                        <p class="lead text-muted mb-4">Sistema de Gestión Administrativa y Técnica</p>
+                        
+
+                   </div>
+                   <div class="col-md-4 text-center">
+                        <img src="../images/logo.jpg" alt="Wireless Supply" class="img-fluid rounded-circle shadow-sm" style="max-height: 180px;">
+                   </div>
+               </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Grid -->
+        <h4 class="mb-4 text-muted fw-bold">Accesos Directos</h4>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <a href="principal/gestion_contratos.php" class="text-decoration-none">
+                    <div class="card h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <i class="fa-solid fa-file-contract fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title text-dark">Contratos</h5>
+                            <p class="card-text text-muted small">Administrar contratos de clientes</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="principal/gestion_cobros.php" class="text-decoration-none">
+                    <div class="card h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <i class="fa-solid fa-money-bill-wave fa-3x text-success mb-3"></i>
+                            <h5 class="card-title text-dark">Cobranzas</h5>
+                            <p class="card-text text-muted small">Gestión de cuentas por cobrar</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="gestion_usuarios.php" class="text-decoration-none">
+                    <div class="card h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <i class="fa-solid fa-users fa-3x text-info mb-3"></i>
+                            <h5 class="card-title text-dark">Usuarios</h5>
+                            <p class="card-text text-muted small">Gestión de usuarios del sistema</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="reportes_pdf/reporte_cobranza.php" class="text-decoration-none">
+                    <div class="card h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <i class="fa-solid fa-chart-pie fa-3x text-warning mb-3"></i>
+                            <h5 class="card-title text-dark">Reportes</h5>
+                            <p class="card-text text-muted small">Ver métricas y reportes</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <footer class="mt-5 text-center text-muted small">
+            &copy; <span id="current-year"></span> Wireless Supply, C.A. Todos los derechos reservados.
+        </footer>
     </div>
 </main>
-                 
-</div>
-    <a href="../index.html" class="logout-btn">
-         Cerrar Sesión
-    </a>
-    <footer>
-   
-</footer> 
 
-    <script src="../js/menu.js"></script>
-    <script>
+<script>
     document.getElementById("current-year").textContent = new Date().getFullYear();
-    </script>
-  
-</body>
-</html>
+</script>
+
+<?php require_once 'includes/layout_foot.php'; ?>

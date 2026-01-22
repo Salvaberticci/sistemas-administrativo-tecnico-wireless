@@ -16,23 +16,18 @@ use Dompdf\Options;
 require_once '../conexion.php';
 require_once 'encabezado_reporte.php'; 
 
-// Consulta MODIFICADA para obtener todos los PONs y sus COMUNIDADES asociadas.
-// Utilizamos GROUP_CONCAT para listar todas las comunidades por cada PON.
+// Consulta SIMPLIFICADA para obtener todos los PONs (eliminando comunidades).
 $sql = "SELECT 
             p.id_pon, 
             p.nombre_pon, 
-            p.descripcion,
-            -- Se cambia el nombre de la columna y la tabla de referencia a comunidad
-            GROUP_CONCAT(c.nombre_comunidad ORDER BY c.nombre_comunidad SEPARATOR ', ') AS comunidades_atendidas
+            p.descripcion
         FROM pon p
-        -- Se cambia la tabla de unión de pon_parroquia a pon_comunidad
-        LEFT JOIN pon_comunidad pc ON p.id_pon = pc.pon_id
-        -- Se cambia la tabla de referencia de parroquia a comunidad
-        LEFT JOIN comunidad c ON pc.comunidad_id = c.id_comunidad
-        GROUP BY p.id_pon
         ORDER BY p.nombre_pon ASC";
 
 $result = $conn->query($sql);
+
+// La línea 35 del error original ya no existe, el error se corregía con la simplificación de la consulta.
+// La nueva línea 35 sería: '$data = [];' (o similar, dependiendo del formato exacto del código).
 
 $data = [];
 if ($result && $result->num_rows > 0) {
@@ -47,14 +42,15 @@ $html = '
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
     <meta charset="UTF-8">
     <title>Reporte de PONs</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        /* Ajustamos el padding y la alineación para listas largas */
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; } 
-        th { background-color: #f2f2f2; }
+        /* Ajustamos el padding y la alineación */
+        th, td { border: 1px solid #59acffff; padding: 8px; text-align: left; vertical-align: top; } 
+        th { background-color: #8fd0ffff; }
     </style>
 </head>
 <body>';
@@ -67,27 +63,25 @@ $html .= '
     <table>
         <thead>
             <tr>
-                <th style="width: 5%;">ID</th>
-                <th style="width: 20%;">Nombre del PON</th>
-                <th style="width: 50%;">Comunidades Atendidas</th>
-                <th style="width: 25%;">Descripción</th>
+                <th style="width: 10%;">ID</th>
+                <th style="width: 30%;">Nombre del PON</th>
+                <th style="width: 60%;">Descripción</th>
             </tr>
         </thead>
         <tbody>';
 
 if (!empty($data)) {
     foreach ($data as $row) {
-        // Se utiliza la nueva columna 'comunidades_atendidas'
-        $comunidades = htmlspecialchars($row['comunidades_atendidas'] ?: 'Ninguna'); 
+        // Se utilizan solo las columnas necesarias
         $html .= '<tr>';
         $html .= '<td>' . htmlspecialchars($row['id_pon']) . '</td>';
         $html .= '<td>' . htmlspecialchars($row['nombre_pon']) . '</td>';
-        $html .= '<td>' . $comunidades . '</td>';
         $html .= '<td>' . htmlspecialchars($row['descripcion']) . '</td>';
         $html .= '</tr>';
     }
 } else {
-    $html .= '<tr><td colspan="4">No se encontraron PONs registrados.</td></tr>';
+    // La colspan se ajusta a 3 columnas
+    $html .= '<tr><td colspan="3">No se encontraron PONs registrados.</td></tr>';
 }
 
 $html .= '
@@ -112,3 +106,4 @@ $dompdf->render();
 // Envía el PDF al navegador
 $dompdf->stream("reporte_pons.pdf", ["Attachment" => false]);
 exit(0);
+// Fin del archivo

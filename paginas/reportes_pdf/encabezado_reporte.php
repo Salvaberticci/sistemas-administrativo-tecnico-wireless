@@ -17,7 +17,7 @@ function generar_encabezado_empresa($titulo) {
     // ----------------------------------------------------------------------
     
     $html = '
-    <div style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
+    <div style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #0057adff; padding-bottom: 10px;">
         <h1 style="margin: 0; font-size: 18px; color: #333;">' . htmlspecialchars($nombre_empresa) . '</h1>
         <p style="margin: 2px 0; font-size: 10px;">' . htmlspecialchars($rif_empresa) . '</p>
         <p style="margin: 2px 0; font-size: 10px;">' . htmlspecialchars($direccion_empresa) . '</p>

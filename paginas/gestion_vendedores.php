@@ -2,15 +2,19 @@
 // Incluye el archivo de conexión.
 require_once 'conexion.php';
 
+$path_to_root = "../";
+include $path_to_root . 'paginas/includes/layout_head.php';
+include $path_to_root . 'paginas/includes/sidebar.php';
+include $path_to_root . 'paginas/includes/header.php';
+
 $message = '';
 $message_class = '';
 $action = isset($_GET['action']) ? $_GET['action'] : '';
-$stmt = null; // Inicializamos $stmt
+$stmt = null; 
 
 // Variables para la búsqueda
 $search_term = isset($_GET['search']) ? $_GET['search'] : '';
 $sql_base = "SELECT * FROM `vendedores`";
-
 
 // --- LÓGICA DE GESTIÓN (ELIMINAR) ---
 if ($action === 'delete' && isset($_GET['id'])) {
@@ -26,7 +30,7 @@ if ($action === 'delete' && isset($_GET['id'])) {
         $message_class = 'error';
     }
     // Redirigimos para limpiar la URL y mostrar el mensaje
-    header("Location: gestion_vendedores.php?message=" . urlencode($message) . "&class=" . urlencode($message_class));
+    echo "<script>window.location.href = 'gestion_vendedores.php?message=" . urlencode($message) . "&class=" . urlencode($message_class) . "';</script>";
     exit();
 }
 
@@ -46,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_vendedor'])) {
             $message = "¡Vendedor '{$nombre}' actualizado con éxito!";
             $message_class = 'success';
         } else {
-            $message = "ADVERTENCIA: No se realizaron cambios en el Vendedor. Los datos ingresados son idénticos.";
+            $message = "ADVERTENCIA: No se realizaron cambios en el Vendedor.";
             $message_class = 'warning';
         }
     } else {
@@ -58,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_vendedor'])) {
         $stmt->close();
     }
     // Redirigimos para mostrar el mensaje y limpiar POST
-    header("Location: gestion_vendedores.php?message=" . urlencode($message) . "&class=" . urlencode($message_class));
+    echo "<script>window.location.href = 'gestion_vendedores.php?message=" . urlencode($message) . "&class=" . urlencode($message_class) . "';</script>";
     exit();
 }
 
@@ -88,198 +92,185 @@ if ($stmt) {
 $conn->close();
 
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Vendedores</title>
-    <link href="../css/bootstrap.min.css" rel="stylesheet">
-    <link href="../css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style4.css"> 
-    <link rel="stylesheet" href="../css/style3.css"> 
-   
-    <style>
-        /* Estilos del modal para coherencia */
-        .texto_modificado_modal {
-            color: #0d6efd; /* Azul Bootstrap Primary */
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
 
-        .modal-header-styled {
-            background-color: #f8f9fa; 
-            border-bottom: 2px solid #0d6efd;
-        }
-
-        .table-container {
-            margin-top: 2em;
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #fff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #c0d1e6;
-        }
-        th {
-            background-color: #0d47a1;
-            color: white;
-        }
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-        .action-links a {
-            color: #2196f3;
-            text-decoration: none;
-            margin-right: 10px;
-        }
-        .action-links a:hover {
-            text-decoration: underline;
-        }
-        .search-form {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 2em;
-        }
-        .search-form input[type="text"] {
-            flex-grow: 1;
-            padding: 0.8em;
-            border: 1px solid #c0d1e6;
-            border-radius: 5px;
-        }
-        .search-form button {
-            padding: 0.8em 1.5em;
-        }
-    </style>
-</head>
-<body>
-    <div class="register-container">
-        <header class="register-header">
-            <h1>Gestión de Vendedores</h1>
-            <p>Wireless Supply, C.A.</p>
-        </header>
-        <div style="margin-bottom: 2em; margin-right:2em; text-align: center;">
-            <a href="registro_vendedores.php" class="btn btn-primary">Nuevo Registro</a>
-        </div>
-
-        <?php if ($message): ?>
-            <div class="message <?php echo $message_class; ?>">
-                <?php echo htmlspecialchars($message); ?>
+<main class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Header de la página -->
+            <div class="row mb-4">
+                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <h2 class="h4 fw-bold mb-1 text-primary">Gestión de Vendedores</h2>
+                        <p class="text-muted mb-0">Administración del equipo de ventas</p>
+                    </div>
+                    <div>
+                        <a href="registro_vendedores.php" class="btn btn-primary d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Nuevo Vendedor</span>
+                        </a>
+                    </div>
+                </div>
             </div>
-        <?php endif; ?>
-        
-        <div class="step-section">
-            <h2>Consultar Vendedores</h2>
-            <form action="gestion_vendedores.php" method="GET" class="search-form">
-                <input type="text" name="search" placeholder="Buscar por ID o Nombre..." value="<?php echo htmlspecialchars($search_term); ?>">
-                <button type="submit" class="btn btn-primary">Buscar</button>
-            </form>
-        </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID Vendedor</th>
-                        <th>Nombre</th>
-                        <th>Teléfono</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if ($result && $result->num_rows > 0): ?>
-                        <?php while($row = $result->fetch_assoc()): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($row['id_vendedor']); ?></td>
-                                <td><?php echo htmlspecialchars($row['nombre_vendedor']); ?></td>
-                                <td><?php echo htmlspecialchars($row['telefono_vendedor']); ?></td>
-                               <td class="action-links">
-                                   <a href="#" 
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#modalModificacionVendedor"
-                                       data-id="<?php echo htmlspecialchars($row['id_vendedor']); ?>"
-                                       data-nombre="<?php echo htmlspecialchars($row['nombre_vendedor']); ?>"
-                                       data-telefono="<?php echo htmlspecialchars($row['telefono_vendedor']); ?>"
-                                       class="btn btn-sm" title="Modificar Vendedor">
-                                       <i class="fa-solid fa-pen-to-square text-primary"></i>
-                                   </a>
-                                   <a href="#" 
-                                       data-bs-href="gestion_vendedores.php?action=delete&id=<?php echo urlencode($row['id_vendedor']); ?>" 
-                                       data-bs-toggle="modal" 
-                                       data-bs-target="#eliminaModal" 
-                                       class="btn btn-sm" 
-                                       title="Eliminar Vendedor">
-                                       <i class="fa-solid fa-trash-can text-danger"></i>
-                                   </a>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <tr><td colspan="4">No se encontraron vendedores.</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-        <div style="margin-top: 2em; text-align: center;">
-            <a href="menu.php" class="btn btn-secondary">Volver al Menú</a>
+            <!-- Alertas -->
+            <?php if ($message): ?>
+                <div class="alert alert-<?php echo $message_class === 'success' ? 'success' : ($message_class === 'warning' ? 'warning' : 'danger'); ?> alert-dismissible fade show shadow-sm" role="alert">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid <?php echo $message_class === 'success' ? 'fa-circle-check' : ($message_class === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-xmark'); ?>"></i>
+                        <div><?php echo htmlspecialchars($message); ?></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <!-- Contenedor Principal -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-body p-0">
+                    <!-- Buscador -->
+                    <div class="p-4 bg-light border-bottom">
+                        <form action="gestion_vendedores.php" method="GET" class="row g-3 align-items-center">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0 text-muted">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                    </span>
+                                    <input type="text" name="search" class="form-control border-start-0 ps-0" 
+                                           placeholder="Buscar por ID o Nombre..." 
+                                           value="<?php echo htmlspecialchars($search_term); ?>">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tabla -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">ID Vendedor</th>
+                                    <th>Nombre</th>
+                                    <th>Teléfono</th>
+                                    <th class="text-end pe-4">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if ($result && $result->num_rows > 0): ?>
+                                    <?php while($row = $result->fetch_assoc()): ?>
+                                        <tr>
+                                            <td class="ps-4 fw-medium text-secondary">#<?php echo htmlspecialchars($row['id_vendedor']); ?></td>
+                                            <td class="fw-bold text-dark"><?php echo htmlspecialchars($row['nombre_vendedor']); ?></td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="fa-solid fa-phone text-muted small"></i>
+                                                    <?php echo htmlspecialchars($row['telefono_vendedor']); ?>
+                                                </div>
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <div class="btn-group gap-2">
+                                                    <button type="button" 
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#modalModificacionVendedor"
+                                                            data-id="<?php echo htmlspecialchars($row['id_vendedor']); ?>"
+                                                            data-nombre="<?php echo htmlspecialchars($row['nombre_vendedor']); ?>"
+                                                            data-telefono="<?php echo htmlspecialchars($row['telefono_vendedor']); ?>"
+                                                            class="btn btn-sm btn-outline-primary rounded-2" 
+                                                            title="Modificar">
+                                                        <i class="fa-solid fa-pen-to-square"></i>
+                                                    </button>
+                                                    <button type="button" 
+                                                            data-bs-href="gestion_vendedores.php?action=delete&id=<?php echo urlencode($row['id_vendedor']); ?>" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#eliminaModal" 
+                                                            class="btn btn-sm btn-outline-danger rounded-2" 
+                                                            title="Eliminar">
+                                                        <i class="fa-solid fa-trash-can"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="4" class="text-center py-5 text-muted">
+                                            <div class="d-flex flex-column align-items-center gap-2">
+                                                <i class="fa-solid fa-user-slash fa-2x opacity-25"></i>
+                                                <p class="mb-0">No se encontraron vendedores registrados</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <a href="../menu.php" class="btn btn-outline-secondary px-4">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Volver al Menú
+                </a>
+            </div>
         </div>
     </div>
     
-    <div class="modal fade" id="modalModificacionVendedor" tabindex="-1" aria-labelledby="modalModificacionVendedorLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header modal-header-styled">
-                    <h5 class="modal-title texto_modificado_modal" id="modalModificacionVendedorLabel">Modificar Vendedor</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="form-modificacion-vendedor" action="gestion_vendedores.php" method="POST" novalidate>
-                    <div class="modal-body">
-                        <input type="hidden" name="update_vendedor" value="1">
-                        <input type="hidden" name="id_vendedor_update" id="id_vendedor_modal" value="">
-                        
-                        <div class="mb-3">
-                            <label for="nombre_vendedor_modal" class="form-label">Nombre del Vendedor:</label>
-                            <input type="text" id="nombre_vendedor_modal" name="nombre_vendedor" class="form-control" required> 
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="telefono_vendedor_modal" class="form-label">Teléfono:</label>
-                            <input type="text" id="telefono_vendedor_modal" name="telefono_vendedor" class="form-control"> 
-                        </div>
-                        
-                    </div>
-                    <div class="modal-footer d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="width: 40%;">Cancelar</button>
-                        <button type="button" id="btn-actualizar-vendedor" class="btn btn-primary" style="width: 55%;">Actualizar</button>
-                    </div>
-                </form>
+    <?php include $path_to_root . 'paginas/includes/layout_foot.php'; ?>
+</main>
+
+<!-- Modal Modificación -->
+<div class="modal fade" id="modalModificacionVendedor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalModificacionVendedorLabel">
+                    <i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar Vendedor
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <form id="form-modificacion-vendedor" action="gestion_vendedores.php" method="POST" novalidate>
+                <div class="modal-body p-4">
+                    <input type="hidden" name="update_vendedor" value="1">
+                    <input type="hidden" name="id_vendedor_update" id="id_vendedor_modal" value="">
+                    
+                    <div class="mb-3">
+                        <label for="nombre_vendedor_modal" class="form-label fw-semibold text-secondary small text-uppercase">Nombre del Vendedor</label>
+                        <input type="text" id="nombre_vendedor_modal" name="nombre_vendedor" class="form-control" required placeholder="Nombre Completo"> 
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="telefono_vendedor_modal" class="form-label fw-semibold text-secondary small text-uppercase">Teléfono</label>
+                        <input type="text" id="telefono_vendedor_modal" name="telefono_vendedor" class="form-control" placeholder="Ej: 0414-1234567"> 
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top-0 py-3">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btn-actualizar-vendedor" class="btn btn-primary px-4">Actualizar</button>
+                </div>
+            </form>
         </div>
     </div>
-    <div class="modal fade" id="eliminaModal" tabindex="-1" aria-labelledby="eliminaModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header modal-header-styled">
-                <h5 class="modal-title texto_modificado_modal" id="eliminaModalLabel">Eliminar Registro</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                ¿Desea eliminar el registro?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn_modificado2" data-bs-dismiss="modal" >Cancelar</button>
-                <a class="btn btn-danger btn-ok">Eliminar</a> 
+</div>
+
+<!-- Modal Eliminación -->
+<div class="modal fade" id="eliminaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3 text-danger">
+                    <i class="fa-solid fa-circle-exclamation fa-3x"></i>
+                </div>
+                <h5 class="mb-2 fw-bold text-dark">¿Eliminar registro?</h5>
+                <p class="text-muted small mb-4">Esta acción no se puede deshacer.</p>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-danger btn-ok fw-medium">Eliminar</a>
+                    <button type="button" class="btn btn-light text-secondary fw-medium" data-bs-dismiss="modal">Cancelar</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<script src="../js/bootstrap.bundle.min.js"></script> 
 
 <script>
     // Lógica para pasar la URL de eliminación al modal de Bootstrap 
@@ -288,7 +279,7 @@ $conn->close();
         eliminaModal.addEventListener('shown.bs.modal', event => {
             let button = event.relatedTarget
             let url = button.getAttribute('data-bs-href') 
-            eliminaModal.querySelector('.modal-footer .btn-ok').href = url
+            eliminaModal.querySelector('.btn-ok').href = url
         })
     }
 
@@ -305,7 +296,7 @@ $conn->close();
             const telefono = button.getAttribute('data-telefono');
             
             // 2. Asignar valores a los campos del modal
-            document.getElementById('modalModificacionVendedorLabel').textContent = `Modificar Vendedor: ${nombre}`;
+            document.getElementById('modalModificacionVendedorLabel').innerHTML = `<i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar Vendedor: ${nombre}`;
             document.getElementById('id_vendedor_modal').value = id;
             document.getElementById('nombre_vendedor_modal').value = nombre;
             document.getElementById('telefono_vendedor_modal').value = telefono;
@@ -328,10 +319,7 @@ $conn->close();
             } else {
                 // Si no es válido, mostrar los mensajes de error de Bootstrap
                 formModificacionVendedor.classList.add('was-validated');
-                formModificacionVendedor.reportValidity(); 
             }
         });
     }
 </script>
-</body>
-</html>

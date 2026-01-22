@@ -1,0 +1,184 @@
+:root {
+    /* --- Color Palette (Premium Indigo/Slate) --- */
+    --primary-color: #4f46e5;
+    /* Indigo 600 */
+    --primary-hover: #4338ca;
+    /* Indigo 700 */
+    --primary-light: #e0e7ff;
+    /* Indigo 100 */
+
+    --bg-body: #f3f4f6;
+    /* Gray 100 */
+    --bg-surface: #ffffff;
+    --bg-sidebar: #1e293b;
+    /* Slate 800 - Used for Navbar Now */
+    --text-sidebar: #f8fafc;
+    /* Slate 50 */
+
+    --text-main: #1f2937;
+    /* Gray 800 */
+    --text-muted: #6b7280;
+    /* Gray 500 */
+    --border-color: #e5e7eb;
+    /* Gray 200 */
+
+    /* --- Shadows --- */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+    /* --- Typography --- */
+    --font-primary: 'Inter', sans-serif;
+    --font-heading: 'Outfit', sans-serif;
+}
+
+/* --- Global Reset & Base --- */
+body {
+    background-color: var(--bg-body);
+    font-family: var(--font-primary);
+    color: var(--text-main);
+    line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: #111827;
+}
+
+/* --- Layout Structure (UPDATED FOR TOPBAR) --- */
+.app-wrapper {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    flex-direction: column;
+    /* Changed from row to column for Top Navbar */
+    overflow-x: hidden;
+}
+
+/* Sidebar Styling - DEPRECATED / HIDDEN */
+.sidebar-wrapper {
+    display: none !important;
+}
+
+/* Main Content Area */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+}
+
+/* Page Content Container */
+.page-content {
+    padding: 2rem;
+    flex: 1;
+    width: 100%;
+    max-width: 1600px;
+    /* Limit max width for large screens */
+    margin: 0 auto;
+}
+
+/* Top Header (Navbar) */
+.top-header {
+    background-color: var(--bg-sidebar) !important;
+    /* Dark theme for navbar */
+    color: white;
+    z-index: 1000;
+}
+
+.top-header .navbar-brand {
+    font-size: 1.25rem;
+    color: white !important;
+}
+
+.top-header .nav-link {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+    border-radius: 6px;
+}
+
+.top-header .nav-link:hover,
+.top-header .nav-link.active,
+.top-header .show>.nav-link {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.top-header .dropdown-menu {
+    border-radius: 8px;
+    margin-top: 10px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.top-header .dropdown-item {
+    padding: 0.6rem 1rem;
+    color: var(--text-main);
+}
+
+.top-header .dropdown-item:active {
+    background-color: var(--primary-color);
+}
+
+
+/* --- Components Overrides --- */
+
+/* Cards */
+.card {
+    background: var(--bg-surface);
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-bottom: 1.5rem;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(79, 70, 229, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .page-content {
+        padding: 1rem;
+    }
+}

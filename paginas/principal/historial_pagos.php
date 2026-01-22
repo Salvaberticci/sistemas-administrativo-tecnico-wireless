@@ -1,6 +1,6 @@
 <?php
 // Incluye su archivo de conexión
-require_once 'conexion.php'; 
+require_once '../conexion.php'; 
 
 // ----------------------------------------------------------------------
 // 1. CAPTURA Y VALIDACIÓN DEL ID DEL CONTRATO
@@ -46,62 +46,67 @@ if ($resultado->num_rows > 0) {
     $pagos = $resultado->fetch_all(MYSQLI_ASSOC);
     $nombre_cliente = $pagos[0]['nombre_completo'];
 }
+
+// Configuración Layout
+$path_to_root = "../../";
+$page_title = "Historial de Pagos - " . $nombre_cliente;
+require_once '../includes/layout_head.php';
+require_once '../includes/sidebar.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial de Pagos - <?php echo htmlspecialchars($nombre_cliente); ?></title>
-    <link href="../../css/bootstrap.min.css" rel="stylesheet">
-    <link href="../../css/style3.css" rel="stylesheet"> 
-    <link href="../../css/style4.css" rel="stylesheet"> 
-</head>
-<body>
+<main class="main-content">
+    <?php include '../includes/header.php'; ?>
 
-<div class="container mt-5">
-    <h1 class="text-center pt-3 texto_modificado">Historial de Pagos</h1>
-    <p class="text-center">Cliente: <strong class="text-primary"><?php echo htmlspecialchars($nombre_cliente); ?></strong> (Contrato #<?php echo $id_contrato; ?>)</p>
+    <div class="page-content">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
+                <div>
+                    <h5 class="fw-bold text-primary mb-1">Historial de Pagos</h5>
+                    <p class="text-muted small mb-0">Cliente: <strong><?php echo htmlspecialchars($nombre_cliente); ?></strong> (Contrato #<?php echo $id_contrato; ?>)</p>
+                </div>
+                <div>
+                    <a href="gestion_cobros.php?maintenance_done=1" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-2"></i>Volver a Cuentas por Cobrar
+                    </a>
+                </div>
+            </div>
 
-    <div style="margin-bottom: 20px;">
-        <a href="gestion_cobros.php?maintenance_done=1" class="btn btn-secondary">Volver a Cuentas por Cobrar</a>
+            <div class="card-body px-4">
+                <div class="table-responsive">
+                    <table id="tablaHistorial" class="table table-hover w-100" style="font-size: 0.9rem;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Factura ID</th>
+                                <th>Emisión</th>
+                                <th>Vencimiento</th>
+                                <th>Fecha de Pago</th>
+                                <th>Monto Pagado</th>
+                                <th>Referencia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($pagos)): ?>
+                                <?php foreach ($pagos as $fila): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($fila['id_cobro']); ?></td>
+                                    <td><?php echo htmlspecialchars($fila['fecha_emision']); ?></td>
+                                    <td><?php echo htmlspecialchars($fila['fecha_vencimiento']); ?></td>
+                                    <td><?php echo htmlspecialchars($fila['fecha_pago']); ?></td>
+                                    <td class="fw-bold text-success">$<?php echo number_format($fila['monto_total'], 2); ?></td>
+                                    <td><?php echo htmlspecialchars($fila['referencia_pago']); ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">No se encontraron pagos registrados para este cliente.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
+</main>
 
-    <div class="table-responsive">
-        <table id="tablaHistorial" class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th>Factura ID</th>
-                    <th>Emisión</th>
-                    <th>Vencimiento</th>
-                    <th>Fecha de Pago</th>
-                    <th>Monto Pagado</th>
-                    <th>Referencia</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($pagos)): ?>
-                    <?php foreach ($pagos as $fila): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($fila['id_cobro']); ?></td>
-                        <td><?php echo htmlspecialchars($fila['fecha_emision']); ?></td>
-                        <td><?php echo htmlspecialchars($fila['fecha_vencimiento']); ?></td>
-                        <td><?php echo htmlspecialchars($fila['fecha_pago']); ?></td>
-                        <td>$<?php echo number_format($fila['monto_total'], 2); ?></td>
-                        <td><?php echo htmlspecialchars($fila['referencia_pago']); ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="6" class="text-center">No se encontraron pagos registrados para este cliente.</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<script src="../../js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once '../includes/layout_foot.php'; ?>

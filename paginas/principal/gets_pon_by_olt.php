@@ -3,7 +3,7 @@
 
 // Asegúrate de que la ruta a tu archivo de conexión sea correcta
 // Si este archivo está en la misma carpeta que nuevo.php, probablemente sea:
-require_once 'conexion.php'; 
+require_once '../conexion.php'; 
 
 // Especificar que la respuesta es JSON
 header('Content-Type: application/json');

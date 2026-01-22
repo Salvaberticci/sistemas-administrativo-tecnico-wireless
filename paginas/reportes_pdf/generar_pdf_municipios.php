@@ -34,15 +34,16 @@ $html = '
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
     <meta charset="UTF-8">
     <title>Reporte de Municipios y Parroquias</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 12px; }
         /* Se remueve h1 { text-align: center; } ya que el encabezado lo maneja */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .municipio-row td { background-color: #e0f7fa; font-weight: bold; }
+        th, td { border: 1px solid #047df7ff; padding: 8px; text-align: left; }
+        th { background-color: #8fd0ffff; }
+        .municipio-row td { background-color: #abf5ffff; font-weight: bold; }
         .parroquia-row { padding-left: 20px !important; }
     </style>
 </head>

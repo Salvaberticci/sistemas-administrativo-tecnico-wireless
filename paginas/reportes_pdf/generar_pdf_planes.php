@@ -35,14 +35,15 @@ $html = '
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
     <meta charset="UTF-8">
     <title>Reporte de Planes</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 12px; }
         /* Se remueve h1 { text-align: center; } ya que el encabezado lo maneja */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        th, td { border: 1px solid #59acffff; padding: 8px; text-align: left; }
+        th { background-color: #8fd0ffff; }
     </style>
 </head>
 <body>';

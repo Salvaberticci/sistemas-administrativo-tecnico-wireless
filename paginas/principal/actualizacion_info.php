@@ -14,6 +14,7 @@ require_once 'actualizar_vencimientos.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Actualizando Cobranzas</title>
     <link href="../../css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
     <style>
         /* Estilos básicos para centrar la pantalla de información */
         body, html {
@@ -60,7 +61,7 @@ require_once 'actualizar_vencimientos.php';
     document.addEventListener('DOMContentLoaded', function() {
         // Redirige al script principal después de 3 segundos (3000 ms)
         setTimeout(function() {
-            window.location.href = 'gestion_cobros.php?maintenance_done=true';
+            window.location.href = 'gestion_mensualidades.php?maintenance_done=true';
         }, 300); // 1000 ms = 1 segundo
     });
 </script>

@@ -4,7 +4,7 @@
 header('Content-Type: application/json');
 
 // Incluye su archivo de conexión
-require_once 'conexion.php'; 
+require_once '../conexion.php'; 
 
 $resultados = [];
 $search_query = isset($_GET['q']) ? $conn->real_escape_string($_GET['q']) : '';

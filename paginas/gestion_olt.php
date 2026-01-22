@@ -2,6 +2,11 @@
 // Incluye el archivo de conexión.
 require_once 'conexion.php';
 
+$path_to_root = "../";
+include $path_to_root . 'paginas/includes/layout_head.php';
+include $path_to_root . 'paginas/includes/sidebar.php';
+include $path_to_root . 'paginas/includes/header.php';
+
 $message = '';
 $message_class = '';
 $action = isset($_GET['action']) ? $_GET['action'] : '';
@@ -63,7 +68,7 @@ if ($action === 'delete_olt' && isset($_GET['id'])) {
         $message_class = 'error';
     }
     $stmt->close();
-    header("Location: gestion_olt.php?message=" . urlencode($message) . "&class=" . $message_class);
+    echo "<script>window.location.href = 'gestion_olt.php?message=" . urlencode($message) . "&class=" . $message_class . "';</script>";
     exit;
 }
 
@@ -121,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_olt'])) {
     }
     
     // Redirigir para limpiar los parámetros GET y mostrar el mensaje
-    header("Location: gestion_olt.php?message=" . urlencode($message) . "&class=" . $message_class);
+    echo "<script>window.location.href = 'gestion_olt.php?message=" . urlencode($message) . "&class=" . $message_class . "';</script>";
     exit;
 }
 
@@ -161,222 +166,247 @@ if ($result && $result->num_rows > 0) {
 $conn->close();
 
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de OLTs</title>
-    <link href="../css/bootstrap.min.css" rel="stylesheet">
-    <link href="../css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style3.css">
-    <link rel="stylesheet" href="../css/style4.css">
-    <style>
-        /* Estilos del modal para coherencia (AZUL solicitado) */
-        .texto_modificado_modal {
-            color: #0d6efd; /* Azul Bootstrap Primary */
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
 
-        .modal-header-styled {
-            background-color: #f8f9fa; 
-            border-bottom: 2px solid #0d6efd;
-        }
-        
-        .table-container table td:nth-child(6),
-        .table-container table th:nth-child(6) {
-            min-width: 150px; /* Ancho para las acciones */
-        }
-        
-        .table-container table td:nth-child(5),
-        .table-container table th:nth-child(5) {
-            min-width: 250px; /* Ancho para Parroquias */
-        }
-        
-        .checkbox-group {
-            border: 1px solid #ccc;
-            padding: 10px;
-            max-height: 200px;
-            overflow-y: auto; 
-            background-color: #f9f9f9;
-        }
-        .checkbox-item {
-            display: block; 
-            margin-bottom: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="register-container">
-        <header class="register-header">
-            <h1>Gestión de OLTs</h1>
-            <p>Wireless Supply, C.A.</p>
-        </header>
-        
-        <div class="header-actions">
-            <div>
-                <a href="registro_olt.php" class="btn btn-primary">Nuevo Registro</a>
+<main class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Header de la página -->
+            <div class="row mb-4">
+                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <h2 class="h4 fw-bold mb-1 text-primary">Gestión de OLTs</h2>
+                        <p class="text-muted mb-0">Administración de equipos Optical Line Terminal</p>
+                    </div>
+                    <div>
+                        <a href="registro_olt.php" class="btn btn-primary d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Nueva OLT</span>
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="step-section search-section">
-                <h2 style="margin-top: 0; text-align: center;">Buscar</h2>
-                <form action="gestion_olt.php" method="GET" class="search-form" style="display: inline-flex; width: 100%;">
-                    <input type="text" name="search" placeholder="Buscar por nombre de OLT o Parroquia..." value="<?php echo htmlspecialchars($search_term); ?>">
-                    <button type="submit" class="btn btn-primary">Buscar</button>
-                </form>
-            </div>
-        </div>
 
-        <?php if ($message): ?>
-            <div class="message <?php echo $message_class; ?>">
-                <?php echo htmlspecialchars($message); ?>
+            <!-- Alertas -->
+            <?php if ($message): ?>
+                <div class="alert alert-<?php echo $message_class === 'success' ? 'success' : ($message_class === 'warning' ? 'warning' : 'danger'); ?> alert-dismissible fade show shadow-sm" role="alert">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid <?php echo $message_class === 'success' ? 'fa-circle-check' : ($message_class === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-xmark'); ?>"></i>
+                        <div><?php echo htmlspecialchars($message); ?></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <!-- Contenedor Principal -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-body p-0">
+                    <!-- Buscador -->
+                    <div class="p-4 bg-light border-bottom">
+                        <form action="gestion_olt.php" method="GET" class="row g-3 align-items-center">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0 text-muted">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                    </span>
+                                    <input type="text" name="search" class="form-control border-start-0 ps-0" 
+                                           placeholder="Buscar por nombre de OLT o Parroquia..." 
+                                           value="<?php echo htmlspecialchars($search_term); ?>">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                            </div>
+                            <?php if (!empty($search_term)): ?>
+                                <div class="col-md-2">
+                                    <a href="gestion_olt.php" class="btn btn-outline-secondary w-100">Limpiar</a>
+                                </div>
+                            <?php endif; ?>
+                        </form>
+                    </div>
+
+                    <!-- Tabla -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">ID</th>
+                                    <th>Nombre</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                    <th>Parroquias Atendidas</th>
+                                    <th class="text-end pe-4">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($data)): ?>
+                                    <?php foreach ($data as $row): ?>
+                                        <tr>
+                                            <td class="ps-4 fw-medium text-secondary">#<?php echo htmlspecialchars($row['id_olt']); ?></td>
+                                            <td class="fw-bold text-dark"><?php echo htmlspecialchars($row['nombre_olt']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['marca']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['modelo']); ?></td>
+                                            <td>
+                                                <?php 
+                                                $parroquias = $row['parroquias_atendidas'] ? explode(', ', $row['parroquias_atendidas']) : [];
+                                                if (!empty($parroquias)): ?>
+                                                    <div class="d-flex flex-wrap gap-1">
+                                                        <?php foreach(array_slice($parroquias, 0, 3) as $p): ?>
+                                                            <span class="badge bg-light text-dark border"><?php echo htmlspecialchars($p); ?></span>
+                                                        <?php endforeach; ?>
+                                                        <?php if(count($parroquias) > 3): ?>
+                                                            <span class="badge bg-secondary text-white small">+<?php echo count($parroquias) - 3; ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">N/A</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <div class="btn-group gap-2">
+                                                   <?php 
+                                                        $olt_id = $row['id_olt'];
+                                                        $assigned_ids = isset($assigned_parroquias[$olt_id]) ? json_encode($assigned_parroquias[$olt_id]) : '[]';
+                                                   ?>
+                                                    <button type="button" 
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#modalModificacionOLT"
+                                                            data-id="<?php echo htmlspecialchars($olt_id); ?>"
+                                                            data-nombre="<?php echo htmlspecialchars($row['nombre_olt']); ?>"
+                                                            data-marca="<?php echo htmlspecialchars($row['marca']); ?>"
+                                                            data-modelo="<?php echo htmlspecialchars($row['modelo']); ?>"
+                                                            data-descripcion="<?php echo htmlspecialchars($row['descripcion']); ?>"
+                                                            data-assigned-parroquias='<?php echo htmlspecialchars($assigned_ids, ENT_QUOTES, 'UTF-8'); ?>'
+                                                            class="btn btn-sm btn-outline-primary rounded-2" 
+                                                            title="Modificar">
+                                                        <i class="fa-solid fa-pen-to-square"></i>
+                                                    </button>
+                                                    <button type="button" 
+                                                           data-bs-href="gestion_olt.php?action=delete_olt&id=<?php echo urlencode($olt_id); ?>" 
+                                                           data-bs-toggle="modal" 
+                                                           data-bs-target="#eliminaModal" 
+                                                           class="btn btn-sm btn-outline-danger rounded-2" 
+                                                           title="Eliminar">
+                                                        <i class="fa-solid fa-trash-can"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5 text-muted">
+                                            <div class="d-flex flex-column align-items-center gap-2">
+                                                <i class="fa-solid fa-server fa-2x opacity-25"></i>
+                                                <p class="mb-0">No se encontraron OLTs registradas</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        <?php endif; ?>
-        
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID OLT</th>
-                        <th>Nombre</th>
-                        <th>Marca</th>
-                        <th>Modelo</th>
-                        <th>Parroquias Atendidas</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($data)): ?>
-                        <?php foreach ($data as $row): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($row['id_olt']); ?></td>
-                                <td><?php echo htmlspecialchars($row['nombre_olt']); ?></td>
-                                <td><?php echo htmlspecialchars($row['marca']); ?></td>
-                                <td><?php echo htmlspecialchars($row['modelo']); ?></td>
-                                <td><?php echo htmlspecialchars($row['parroquias_atendidas'] ?: 'N/A'); ?></td>
-                                <td class="action-links">
-                                   <?php 
-                                        // Preparamos el array de IDs asignados para pasarlo al JS (JSON)
-                                        $olt_id = $row['id_olt'];
-                                        $assigned_ids = isset($assigned_parroquias[$olt_id]) ? json_encode($assigned_parroquias[$olt_id]) : '[]';
-                                   ?>
-                                   <a href="#" 
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#modalModificacionOLT"
-                                       data-id="<?php echo htmlspecialchars($olt_id); ?>"
-                                       data-nombre="<?php echo htmlspecialchars($row['nombre_olt']); ?>"
-                                       data-marca="<?php echo htmlspecialchars($row['marca']); ?>"
-                                       data-modelo="<?php echo htmlspecialchars($row['modelo']); ?>"
-                                       data-descripcion="<?php echo htmlspecialchars($row['descripcion']); ?>"
-                                       data-assigned-parroquias='<?php echo htmlspecialchars($assigned_ids, ENT_QUOTES, 'UTF-8'); ?>'
-                                       class="btn btn-sm" title="Modificar OLT">
-                                       <i class="fa-solid fa-pen-to-square text-primary"></i>
-                                   </a>
-                                   <a href="#" 
-                                       data-bs-href="gestion_olt.php?action=delete_olt&id=<?php echo urlencode($olt_id); ?>" 
-                                       data-bs-toggle="modal" 
-                                       data-bs-target="#eliminaModal" 
-                                       class="btn btn-sm" 
-                                       title="Eliminar OLT">
-                                       <i class="fa-solid fa-trash-can text-danger"></i>
-                                   </a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr><td colspan="6">No se encontraron OLTs.</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-        <div style="margin-top: 2em; text-align: center;">
-            <a href="menu.php" class="btn btn-secondary">Volver al Menú</a>
+            
+            <div class="mt-4 text-center">
+                <a href="../menu.php" class="btn btn-outline-secondary px-4">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Volver al Menú
+                </a>
+            </div>
         </div>
     </div>
+    
+    <?php include $path_to_root . 'paginas/includes/layout_foot.php'; ?>
+</main>
 
-    <div class="modal fade" id="modalModificacionOLT" tabindex="-1" aria-labelledby="modalModificacionOLTLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header modal-header-styled">
-                    <h5 class="modal-title texto_modificado_modal" id="modalModificacionOLTLabel">Modificar OLT</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="form-modificacion-olt" action="gestion_olt.php" method="POST" novalidate>
-                    <div class="modal-body">
-                        <input type="hidden" name="update_olt" value="1">
-                        <input type="hidden" name="id_olt" id="id_olt_modal" value="">
-                        
-                        <div class="row">
-                             <div class="col-md-6 mb-3">
-                                <label for="nombre_olt_modal" class="form-label">Nombre OLT:</label>
-                                <input type="text" id="nombre_olt_modal" name="nombre_olt" class="form-control" required> 
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="marca_modal" class="form-label">Marca:</label>
-                                <input type="text" id="marca_modal" name="marca" class="form-control" required> 
-                            </div>
+<!-- Modal Modificación -->
+<div class="modal fade" id="modalModificacionOLT" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalModificacionOLTLabel">
+                    <i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar OLT
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-modificacion-olt" action="gestion_olt.php" method="POST" novalidate>
+                <div class="modal-body p-4">
+                    <input type="hidden" name="update_olt" value="1">
+                    <input type="hidden" name="id_olt" id="id_olt_modal" value="">
+                    
+                    <div class="row">
+                         <div class="col-md-6 mb-3">
+                            <label for="nombre_olt_modal" class="form-label fw-semibold text-secondary small text-uppercase">Nombre OLT</label>
+                            <input type="text" id="nombre_olt_modal" name="nombre_olt" class="form-control" required placeholder="Ej: Huawei MA5608T"> 
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="marca_modal" class="form-label fw-semibold text-secondary small text-uppercase">Marca</label>
+                            <input type="text" id="marca_modal" name="marca" class="form-control" required placeholder="Ej: Huawei"> 
+                        </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="modelo_modal" class="form-label">Modelo:</label>
-                                <input type="text" id="modelo_modal" name="modelo" class="form-control" required> 
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Parroquias que Atiende (Seleccione una o más):</label>
-                                <div class="checkbox-group" id="parroquias-checkbox-container">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="modelo_modal" class="form-label fw-semibold text-secondary small text-uppercase">Modelo</label>
+                            <input type="text" id="modelo_modal" name="modelo" class="form-control" required placeholder="Modelo específico"> 
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold text-secondary small text-uppercase mb-2">Parroquias que Atiende</label>
+                            <div class="border rounded bg-light p-3" style="max-height: 200px; overflow-y: auto;">
+                                <div id="parroquias-checkbox-container">
                                     <?php if (!empty($parroquias_disponibles)): ?>
                                         <?php foreach ($parroquias_disponibles as $parroquia): ?>
-                                            <div class="checkbox-item">
-                                                <input type="checkbox" 
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
                                                        id="modal_parroquia_<?php echo htmlspecialchars($parroquia['id_parroquia']); ?>" 
                                                        name="parroquias_id[]" 
                                                        value="<?php echo htmlspecialchars($parroquia['id_parroquia']); ?>">
-                                                <label for="modal_parroquia_<?php echo htmlspecialchars($parroquia['id_parroquia']); ?>">
+                                                <label class="form-check-label" for="modal_parroquia_<?php echo htmlspecialchars($parroquia['id_parroquia']); ?>">
                                                     <?php echo htmlspecialchars($parroquia['nombre_parroquia']); ?>
                                                 </label>
                                             </div>
                                         <?php endforeach; ?>
                                     <?php else: ?>
-                                        <p>No hay parroquias disponibles.</p>
+                                        <p class="text-muted small mb-0">No hay parroquias disponibles.</p>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="descripcion_modal" class="form-label">Descripción:</label>
-                            <textarea id="descripcion_modal" name="descripcion" class="form-control" rows="3"></textarea>
-                        </div>
-                        
                     </div>
-                    <div class="modal-footer d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="width: 40%;">Cancelar</button>
-                        <button type="button" id="btn-actualizar-olt" class="btn btn-primary" style="width: 55%;">Actualizar</button>
+                    
+                    <div class="mb-3">
+                        <label for="descripcion_modal" class="form-label fw-semibold text-secondary small text-uppercase">Descripción</label>
+                        <textarea id="descripcion_modal" name="descripcion" class="form-control" rows="3" placeholder="Información técnica adicional..."></textarea>
                     </div>
-                </form>
-            </div>
+                    
+                </div>
+                <div class="modal-footer bg-light border-top-0 py-3">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btn-actualizar-olt" class="btn btn-primary px-4">Actualizar</button>
+                </div>
+            </form>
         </div>
     </div>
-    <div class="modal fade" id="eliminaModal" tabindex="-1" aria-labelledby="eliminaModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <div class="modal-header modal-header-styled">
-                    <h5 class="modal-title texto_modificado_modal" id="eliminaModalLabel">Eliminar Registro</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    ¿Desea eliminar el registro?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn_modificado2" data-bs-dismiss="modal" >Cancelar</button>
-                    <a class="btn btn-danger btn-ok" href="#">Eliminar</a> 
-                </div>
-            </div>
-        </div>
-    </div>
+</div>
 
-<script src="../js/bootstrap.bundle.min.js"></script> 
+<!-- Modal Eliminación -->
+<div class="modal fade" id="eliminaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3 text-danger">
+                    <i class="fa-solid fa-circle-exclamation fa-3x"></i>
+                </div>
+                <h5 class="mb-2 fw-bold text-dark">¿Eliminar registro?</h5>
+                <p class="text-muted small mb-4">Esta acción no se puede deshacer.</p>
+                <div class="d-grid gap-2">
+                    <a href="#" class="btn btn-danger btn-ok fw-medium">Eliminar</a>
+                    <button type="button" class="btn btn-light text-secondary fw-medium" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     // -----------------------------------------------------
@@ -397,7 +427,6 @@ $conn->close();
             const descripcion = button.getAttribute('data-descripcion');
             const assignedParroquiasJson = button.getAttribute('data-assigned-parroquias');
             
-            // Convertir el JSON de IDs a un array de números
             let assignedParroquiasIds = [];
             try {
                 // El atributo está codificado como string HTML, lo parseamos a JSON
@@ -407,7 +436,7 @@ $conn->close();
             }
 
             // 2. Asignar valores a los campos simples del modal
-            document.getElementById('modalModificacionOLTLabel').textContent = `Modificar OLT ID: ${id}`;
+            document.getElementById('modalModificacionOLTLabel').innerHTML = `<i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar OLT: ${nombre}`;
             document.getElementById('id_olt_modal').value = id;
             document.getElementById('nombre_olt_modal').value = nombre;
             document.getElementById('marca_modal').value = marca;

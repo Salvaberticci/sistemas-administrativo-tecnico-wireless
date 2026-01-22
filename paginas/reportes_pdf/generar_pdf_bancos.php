@@ -35,6 +35,7 @@ $html = '
 <!DOCTYPE html>
 <html lang="es">
 <head>
+   <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
     <meta charset="UTF-8">
     <title>Reporte de Bancos</title>
     <style>
@@ -42,8 +43,8 @@ $html = '
         /* La función generar_encabezado_empresa ya maneja el estilo del título,
            pero ajustamos las tablas y celdas */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        th, td { border: 1px solid #59acffff; padding: 8px; text-align: left; }
+        th { background-color: #8fd0ffff; }
     </style>
 </head>
 <body>';

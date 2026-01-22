@@ -2,10 +2,15 @@
 // Incluye el archivo de conexión.
 require_once 'conexion.php';
 
+$path_to_root = "../";
+include $path_to_root . 'paginas/includes/layout_head.php';
+include $path_to_root . 'paginas/includes/sidebar.php';
+include $path_to_root . 'paginas/includes/header.php';
+
 $message = '';
 $message_class = '';
 $action = isset($_GET['action']) ? $_GET['action'] : '';
-$stmt = null; // Inicializamos la variable stmt para evitar el error
+$stmt = null; 
 
 // Variables para la búsqueda
 $search_term = isset($_GET['search']) ? $_GET['search'] : '';
@@ -24,27 +29,20 @@ if ($action === 'delete_plan' && isset($_GET['id'])) {
         $message_class = 'error';
     }
     // Redirigimos para limpiar la URL
-    header("Location: gestion_planes.php?message=" . urlencode($message) . "&class=" . urlencode($message_class));
+    echo "<script>window.location.href = 'gestion_planes.php?message=" . urlencode($message) . "&class=" . urlencode($message_class) . "';</script>";
     exit();
 }
 
 // --- LÓGICA DE MODIFICACIÓN (PROCESAR FORMULARIO POST) ---
-// La lógica de obtener datos en GET (action=edit_plan) se elimina, 
-// pues los datos se pasan directamente al modal vía data-attributes.
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_plan'])) {
-    $id = $_POST['id_plan_update']; // Usamos un nombre único para el ID del modal
+    $id = $_POST['id_plan_update']; 
     $nombre = $_POST['nombre_plan'];
     $monto = $_POST['monto'];
     $descripcion = $_POST['descripcion'];
     
-    // Convertir el monto a un formato numérico adecuado si es necesario (ej: reemplazar comas)
     $monto_float = str_replace(',', '.', $monto);
     
     $stmt = $conn->prepare("UPDATE planes SET nombre_plan = ?, monto = ?, descripcion = ? WHERE id_plan = ?");
-    // Usamos 'dsi' (string, float/double, string, integer)
-    // Nota: MySQLi puede requerir 's' para el monto si el campo es DECIMAL o VARCHAR, pero 'd' es más seguro si es FLOAT/DOUBLE.
-    // Usaremos 's' para mantener la compatibilidad con el uso anterior en el archivo original, que no especificaba el tipo de campo $monto.
     $stmt->bind_param("sssi", $nombre, $monto_float, $descripcion, $id);
 
     if ($stmt->execute()) {
@@ -52,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_plan'])) {
             $message = "¡Plan actualizado con éxito!";
             $message_class = 'success';
         } else {
-            $message = "ADVERTENCIA: No se realizaron cambios en el Plan. Los datos ingresados son idénticos.";
+            $message = "ADVERTENCIA: No se realizaron cambios en el Plan.";
             $message_class = 'warning';
         }
     } else {
@@ -63,8 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_plan'])) {
     if ($stmt) {
         $stmt->close();
     }
-    // Redirigimos para mostrar el mensaje y limpiar POST
-    header("Location: gestion_planes.php?message=" . urlencode($message) . "&class=" . urlencode($message_class));
+    echo "<script>window.location.href = 'gestion_planes.php?message=" . urlencode($message) . "&class=" . urlencode($message_class) . "';</script>";
     exit();
 }
 
@@ -99,185 +96,207 @@ if (isset($_GET['message'])) {
     $message = $_GET['message'];
     $message_class = $_GET['class'];
 }
-
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Planes</title>
-    <link href="../css/bootstrap.min.css" rel="stylesheet">
-    <link href="../css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style3.css">
-    <link rel="stylesheet" href="../css/style4.css">
-    <style>
-        /* Estilos del modal para coherencia con gestion_municipios.php */
-        .texto_modificado_modal {
-            color: #0d6efd; /* Color azul de Bootstrap Primary */
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
 
-        .modal-header-styled {
-            background-color: #f8f9fa; /* Color de fondo muy claro */
-            border-bottom: 2px solid #0d6efd; /* Línea inferior azul */
-        }
-        
-        .form-label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: .5rem;
-        }
-        
-        /* Aseguramos que los campos del modal usen el diseño estándar de Bootstrap */
-        .modal-body .mb-3 {
-            display: flex;
-            flex-direction: column;
-        }
-    </style>
-</head>
-<body>
-    <div class="register-container">
-        <header class="register-header">
-            <h1>Gestión de Planes</h1>
-            <p>Wireless Supply, C.A.</p>
-        </header>
-        
-        <div class="header-actions">
-            <div>
-                <a href="registro_planes.php" class="btn btn-primary">Nuevo Registro</a>
+<main class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Header de la página -->
+            <div class="row mb-4">
+                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <h2 class="h4 fw-bold mb-1 text-primary">Gestión de Planes</h2>
+                        <p class="text-muted mb-0">Administración de planes de servicio</p>
+                    </div>
+                    <div>
+                        <a href="registro_planes.php" class="btn btn-primary d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Nuevo Plan</span>
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="step-section search-section">
-                <h2 style="margin-top: 0; text-align: center;">Buscar</h2>
-                <form action="gestion_planes.php" method="GET" class="search-form" style="display: inline-flex; width: 100%;">
-                    <input type="text" name="search" placeholder="Buscar por nombre de plan..." value="<?php echo htmlspecialchars($search_term); ?>">
-                    <button type="submit" class="btn btn-primary">Buscar</button>
-                </form>
-            </div>
-        </div>
 
-        <?php if ($message): ?>
-            <div class="message <?php echo $message_class; ?>">
-                <?php echo htmlspecialchars($message); ?>
-            </div>
-        <?php endif; ?>
+            <!-- Alertas -->
+            <?php if ($message): ?>
+                <div class="alert alert-<?php echo $message_class === 'success' ? 'success' : ($message_class === 'warning' ? 'warning' : 'danger'); ?> alert-dismissible fade show shadow-sm" role="alert">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid <?php echo $message_class === 'success' ? 'fa-circle-check' : ($message_class === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-xmark'); ?>"></i>
+                        <div><?php echo htmlspecialchars($message); ?></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Monto (USD)</th>
-                        <th>Descripción</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($data)): ?>
-                        <?php foreach ($data as $row): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($row['id_plan']); ?></td>
-                                <td><?php echo htmlspecialchars($row['nombre_plan']); ?></td>
-                                <td><?php echo htmlspecialchars($row['monto']); ?></td>
-                                <td><?php echo htmlspecialchars($row['descripcion']); ?></td>
-                                <td class="action-links">
-                                   <a href="#" 
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#modalModificacionPlan"
-                                       data-id="<?php echo htmlspecialchars($row['id_plan']); ?>"
-                                       data-nombre="<?php echo htmlspecialchars($row['nombre_plan']); ?>"
-                                       data-monto="<?php echo htmlspecialchars($row['monto']); ?>"
-                                       data-descripcion="<?php echo htmlspecialchars($row['descripcion']); ?>"
-                                       class="btn btn-sm" title="Modificar Plan">
-                                       <i class="fa-solid fa-pen-to-square text-primary"></i>
-                                   </a>
-                                   <a href="#" 
-                                       data-bs-href="gestion_planes.php?action=delete_plan&id=<?php echo urlencode($row['id_plan']); ?>" 
-                                       data-bs-toggle="modal" 
-                                       data-bs-target="#eliminaModal" 
-                                       class="btn btn-sm" 
-                                       title="Eliminar Plan">
-                                       <i class="fa-solid fa-trash-can text-danger"></i>
-                                   </a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr><td colspan="5">No se encontraron planes.</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-        <div style="margin-top: 2em; text-align: center;">
-            <a href="menu.php" class="btn btn-secondary">Volver al Menú</a>
+            <!-- Contenedor Principal -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-body p-0">
+                    <!-- Buscador -->
+                    <div class="p-4 bg-light border-bottom">
+                        <form action="gestion_planes.php" method="GET" class="row g-3 align-items-center">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0 text-muted">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                    </span>
+                                    <input type="text" name="search" class="form-control border-start-0 ps-0" 
+                                           placeholder="Buscar por nombre de plan..." 
+                                           value="<?php echo htmlspecialchars($search_term); ?>">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tabla -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">ID</th>
+                                    <th>Nombre</th>
+                                    <th>Monto (USD)</th>
+                                    <th>Descripción</th>
+                                    <th class="text-end pe-4">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($data)): ?>
+                                    <?php foreach ($data as $row): ?>
+                                        <tr>
+                                            <td class="ps-4 fw-medium text-secondary">#<?php echo htmlspecialchars($row['id_plan']); ?></td>
+                                            <td class="fw-bold text-dark"><?php echo htmlspecialchars($row['nombre_plan']); ?></td>
+                                            <td>
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">
+                                                    $<?php echo htmlspecialchars($row['monto']); ?>
+                                                </span>
+                                            </td>
+                                            <td class="text-muted small text-truncate" style="max-width: 300px;">
+                                                <?php echo htmlspecialchars($row['descripcion']); ?>
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <div class="btn-group gap-2">
+                                                    <button type="button" 
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#modalModificacionPlan"
+                                                            data-id="<?php echo htmlspecialchars($row['id_plan']); ?>"
+                                                            data-nombre="<?php echo htmlspecialchars($row['nombre_plan']); ?>"
+                                                            data-monto="<?php echo htmlspecialchars($row['monto']); ?>"
+                                                            data-descripcion="<?php echo htmlspecialchars($row['descripcion']); ?>"
+                                                            class="btn btn-sm btn-outline-primary rounded-2" 
+                                                            title="Modificar">
+                                                        <i class="fa-solid fa-pen-to-square"></i>
+                                                    </button>
+                                                    <button type="button" 
+                                                            data-bs-href="gestion_planes.php?action=delete_plan&id=<?php echo urlencode($row['id_plan']); ?>" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#eliminaModal" 
+                                                            class="btn btn-sm btn-outline-danger rounded-2" 
+                                                            title="Eliminar">
+                                                        <i class="fa-solid fa-trash-can"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5 text-muted">
+                                            <div class="d-flex flex-column align-items-center gap-2">
+                                                <i class="fa-solid fa-inbox fa-2x opacity-25"></i>
+                                                <p class="mb-0">No se encontraron planes registrados</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <a href="../menu.php" class="btn btn-outline-secondary px-4">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Volver al Menú
+                </a>
+            </div>
         </div>
     </div>
     
-    <div class="modal fade" id="modalModificacionPlan" tabindex="-1" aria-labelledby="modalModificacionPlanLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header modal-header-styled">
-                    <h5 class="modal-title texto_modificado_modal" id="modalModificacionPlanLabel">Modificar Plan</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="form-modificacion-plan" action="gestion_planes.php" method="POST" novalidate>
-                    <div class="modal-body">
-                        <input type="hidden" name="update_plan" value="1">
-                        <input type="hidden" name="id_plan_update" id="id_plan_modal" value="">
-                        
-                        <div class="mb-3">
-                            <label for="nombre_plan_modal" class="form-label">Nombre del Plan:</label>
-                            <input type="text" id="nombre_plan_modal" name="nombre_plan" class="form-control" required> 
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="monto_modal" class="form-label">Monto (USD):</label>
-                            <input type="number" id="monto_modal" name="monto" step="0.01" class="form-control" required> 
-                        </div>
+    <?php include $path_to_root . 'paginas/includes/layout_foot.php'; ?>
+</main>
 
-                        <div class="mb-3">
-                            <label for="descripcion_modal" class="form-label">Descripción:</label>
-                            <textarea id="descripcion_modal" name="descripcion" class="form-control" rows="4"></textarea> 
+<!-- Modal Modificación -->
+<div class="modal fade" id="modalModificacionPlan" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalModificacionPlanLabel">
+                    <i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar Plan
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-modificacion-plan" action="gestion_planes.php" method="POST" novalidate>
+                <div class="modal-body p-4">
+                    <input type="hidden" name="update_plan" value="1">
+                    <input type="hidden" name="id_plan_update" id="id_plan_modal" value="">
+                    
+                    <div class="mb-3">
+                        <label for="nombre_plan_modal" class="form-label fw-semibold text-secondary small text-uppercase">Nombre del Plan</label>
+                        <input type="text" id="nombre_plan_modal" name="nombre_plan" class="form-control" required placeholder="Ej: Fibra 100MB"> 
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="monto_modal" class="form-label fw-semibold text-secondary small text-uppercase">Monto (USD)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" id="monto_modal" name="monto" step="0.01" class="form-control" required placeholder="0.00"> 
                         </div>
-                        
                     </div>
-                    <div class="modal-footer d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="width: 40%;">Cancelar</button>
-                        <button type="button" id="btn-actualizar-plan" class="btn btn-primary" style="width: 55%;">Actualizar</button>
+
+                    <div class="mb-3">
+                        <label for="descripcion_modal" class="form-label fw-semibold text-secondary small text-uppercase">Descripción</label>
+                        <textarea id="descripcion_modal" name="descripcion" class="form-control" rows="3" placeholder="Detalles del servicio..."></textarea> 
                     </div>
-                </form>
+                </div>
+                <div class="modal-footer bg-light border-top-0 py-3">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btn-actualizar-plan" class="btn btn-primary px-4">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminación -->
+<div class="modal fade" id="eliminaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3 text-danger">
+                    <i class="fa-solid fa-circle-exclamation fa-3x"></i>
+                </div>
+                <h5 class="mb-2 fw-bold text-dark">¿Eliminar registro?</h5>
+                <p class="text-muted small mb-4">Esta acción no se puede deshacer.</p>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-danger btn-ok fw-medium">Eliminar</a>
+                    <button type="button" class="btn btn-light text-secondary fw-medium" data-bs-dismiss="modal">Cancelar</button>
+                </div>
             </div>
         </div>
     </div>
-    <div class="modal fade" id="eliminaModal" tabindex="-1" aria-labelledby="eliminaModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <div class="modal-header modal-header-styled">
-                    <h5 class="modal-title texto_modificado_modal" id="eliminaModalLabel">Eliminar Registro</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    ¿Desea eliminar el registro?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn_modificado2" data-bs-dismiss="modal" >Cancelar</button>
-                    <a class="btn btn-danger btn-ok">Eliminar</a> 
-                </div>
-            </div>
-        </div>
-    </div>
-    <script src="../js/bootstrap.bundle.min.js"></script> 
+</div>
 
 <script>
-    // Lógica para pasar la URL de eliminación al modal de Bootstrap (Ya estaba bien)
+    // Lógica para pasar la URL de eliminación al modal
     let eliminaModal = document.getElementById('eliminaModal')
     if (eliminaModal) {
         eliminaModal.addEventListener('shown.bs.modal', event => {
             let button = event.relatedTarget
             let url = button.getAttribute('data-bs-href') 
-            eliminaModal.querySelector('.modal-footer .btn-ok').href = url
+            eliminaModal.querySelector('.btn-ok').href = url
         })
     }
 
@@ -288,43 +307,32 @@ if (isset($_GET['message'])) {
         modalModificacionPlan.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget; 
             
-            // 1. Obtener los datos pasados desde la tabla
             const id = button.getAttribute('data-id');
             const nombre = button.getAttribute('data-nombre');
             const monto = button.getAttribute('data-monto');
             const descripcion = button.getAttribute('data-descripcion');
             
-            // 2. Asignar valores a los campos del modal
-            document.getElementById('modalModificacionPlanLabel').textContent = `Modificar Plan: ${nombre}`;
+            document.getElementById('modalModificacionPlanLabel').innerHTML = `<i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar Plan: ${nombre}`;
             document.getElementById('id_plan_modal').value = id;
             document.getElementById('nombre_plan_modal').value = nombre;
-            // Aseguramos que el monto se muestre con dos decimales, aunque el tipo sea number
             document.getElementById('monto_modal').value = parseFloat(monto).toFixed(2);
             document.getElementById('descripcion_modal').value = descripcion;
             
-            // 3. Reiniciar la validación
             document.getElementById('form-modificacion-plan').classList.remove('was-validated');
         });
     }
 
-    // 4. Lógica para el botón de Actualizar y validación manual
+    // Validación y envío del formulario
     const btnActualizarPlan = document.getElementById('btn-actualizar-plan');
     const formModificacionPlan = document.getElementById('form-modificacion-plan');
 
     if (btnActualizarPlan && formModificacionPlan) {
         btnActualizarPlan.addEventListener('click', function(event) {
-            
-            // Verificar si el formulario es válido (HTML5 validation)
             if (formModificacionPlan.checkValidity()) {
-                formModificacionPlan.submit(); // Enviar el formulario
+                formModificacionPlan.submit(); 
             } else {
-                // Si no es válido, mostrar los mensajes de error de Bootstrap
                 formModificacionPlan.classList.add('was-validated');
-                formModificacionPlan.reportValidity(); 
             }
         });
     }
-
 </script>
-</body>
-</html>

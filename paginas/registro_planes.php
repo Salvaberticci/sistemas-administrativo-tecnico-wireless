@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Prepara la consulta SQL para insertar los datos
     $stmt = $conn->prepare("INSERT INTO planes (nombre_plan, monto, descripcion) VALUES (?, ?, ?)");
-    $stmt->bind_param("sds", $nombre_plan, $monto, $descripcion); // 's' para string, 'd' para double/decimal
+    $stmt->bind_param("sds", $nombre_plan, $monto, $descripcion);
 
     // Ejecuta la consulta
     if ($stmt->execute()) {
@@ -29,49 +29,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->close();
     $conn->close();
 }
+
+$path_to_root = "../";
+$page_title = "Registro de Planes";
+require_once 'includes/layout_head.php';
+require_once 'includes/sidebar.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Planes</title>
-    <link rel="stylesheet" href="../css/style3.css">
-</head>
-<body>
-    <div class="register-container">
-        <header class="register-header">
-            <h1>Registro de Planes</h1>
-            <p>Wireless Supply, C.A.</p>
-        </header>
+<main class="main-content">
+    <?php include 'includes/header.php'; ?>
 
-        <?php if ($message): ?>
-            <div class="message <?php echo $message_class; ?>">
-                <?php echo htmlspecialchars($message); ?>
+    <div class="page-content">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
+                <div>
+                    <h5 class="fw-bold text-primary mb-1">Registro de Plan</h5>
+                    <p class="text-muted small mb-0">Crear nuevo plan de servicio</p>
+                </div>
             </div>
-        <?php endif; ?>
 
-        <div class="step-section">
-            <form action="registro_planes.php" method="POST">
-                <div class="input-group">
-                    <label for="nombre_plan">Nombre del Plan:</label>
-                    <input type="text" id="nombre_plan" name="nombre_plan" required>
-                </div>
-                <div class="input-group">
-                    <label for="monto">Monto (USD):</label>
-                    <input type="number" id="monto" name="monto" step="0.01" required>
-                </div>
-                <div class="input-group">
-                    <label for="descripcion">Descripción:</label>
-                    <textarea id="descripcion" name="descripcion" rows="4"></textarea>
-                </div>
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary">Registrar Plan</button>
-                    <a href="gestion_planes.php" class="btn btn-secondary">Volver</a>
-                </div>
-            </form>
+            <div class="card-body px-4">
+                <?php if ($message): ?>
+                    <div class="alert alert-<?php echo $message_class === 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert">
+                        <?php echo htmlspecialchars($message); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
+                <form action="registro_planes.php" method="POST" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="nombre_plan" class="form-label">Nombre del Plan</label>
+                        <input type="text" class="form-control" id="nombre_plan" name="nombre_plan" required autofocus>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="monto" class="form-label">Monto (USD)</label>
+                        <input type="number" class="form-control" id="monto" name="monto" step="0.01" required>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="4"></textarea>
+                    </div>
+                    
+                    <div class="col-12">
+                        <a href="gestion_planes.php" class="btn btn-secondary">Volver</a>
+                        <button type="submit" class="btn btn-success">Registrar Plan</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</body>
-</html>
+</main>
+
+<?php require_once 'includes/layout_foot.php'; ?>

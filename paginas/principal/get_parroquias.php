@@ -1,6 +1,6 @@
 <?php
 // Asegúrate de incluir tu archivo de conexión aquí también para que $conn esté disponible
-require_once 'conexion.php'; 
+require_once '../conexion.php'; 
 
 // Asegurarse de que el script solo devuelva datos JSON
 header('Content-Type: application/json');

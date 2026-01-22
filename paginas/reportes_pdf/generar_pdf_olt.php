@@ -46,14 +46,15 @@ $html = '
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
     <meta charset="UTF-8">
     <title>Reporte de OLTs</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         /* Ajustamos el padding y la alineación para listas largas */
-        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; vertical-align: top; } 
-        th { background-color: #f2f2f2; }
+        th, td { border: 1px solid #59acffff; padding: 6px; text-align: left; vertical-align: top; } 
+        th { background-color: #8fd0ffff; }
     </style>
 </head>
 <body>';

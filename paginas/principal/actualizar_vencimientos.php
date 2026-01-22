@@ -1,6 +1,6 @@
 <?php
 // Script de mantenimiento que se puede ejecutar con Cron o al inicio del día.
-require_once 'conexion.php'; 
+require_once '../conexion.php'; 
 
 // 1. Obtener la fecha actual en formato 'YYYY-MM-DD'
 $fecha_hoy = date('Y-m-d');

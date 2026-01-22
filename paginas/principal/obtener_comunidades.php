@@ -1,6 +1,6 @@
 <?php
 // obtener_comunidades.php
-require 'conexion.php'; 
+require '../conexion.php'; 
 
 header('Content-Type: application/json');
 

@@ -118,13 +118,14 @@ ob_start();
 <head>
     <meta charset="UTF-8">
     <title>Reporte de Clientes_PDF</title>
+       <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
     <style>
         body { font-family: Arial, sans-serif; font-size: 10px; }
         h1 { font-size: 16px; text-align: center; margin-bottom: 5px; }
         .subtitle { font-size: 11px; text-align: center; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 4px; text-align: left; }
-        th { background-color: #f2f2f2; text-align: center; font-size: 11px; }
+        th, td { border: 1px solid #59acffff; padding: 4px; text-align: left; }
+        th { background-color: #8fd0ffff; text-align: center; font-size: 11px; }
         .center { text-align: center; }
         .right { text-align: right; }
     </style>

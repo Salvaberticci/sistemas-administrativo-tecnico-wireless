@@ -95,239 +95,204 @@ if (isset($_GET['message'])) {
 }
 
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Bancos</title>
-    <link rel="stylesheet" href="../css/all.min.css">
-    <link href="../css/bootstrap.min.css" rel="stylesheet"> 
-    <link rel="stylesheet" href="../css/style3.css">
-    <link rel="stylesheet" href="../css/style4.css">
-    <style>
-        /* Estilos del modal para coherencia */
-        .texto_modificado_modal {
-            color: #0d6efd; /* Azul Bootstrap Primary */
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
+<?php
+$page_title = "Gestión de Bancos";
+require_once 'includes/layout_head.php';
+require_once 'includes/sidebar.php';
+?>
 
-        .modal-header-styled {
-            background-color: #f8f9fa; 
-            border-bottom: 2px solid #0d6efd;
-        }
-        
-        .form-label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: .5rem;
-        }
-        
-        .modal-body .mb-3 {
-            display: flex;
-            flex-direction: column;
-        }
-    </style>
-</head>
-<body>
-    <div class="register-container">
-        <header class="register-header">
-            <h1>Gestión de Bancos</h1>
-            <p>Wireless Supply, C.A.</p>
-        </header>
-        
-        <div class="header-actions">
-            <div>
-                <a href="registro_bancos.php" class="btn btn-primary">Nuevo Registro</a>
-            </div>
-            <div class="step-section search-section">
-                <h2 style="margin-top: 0; text-align: center;">Buscar</h2>
-                <form action="gestion_bancos.php" method="GET" class="search-form" style="display: inline-flex; width: 100%;">
-                    <input type="text" name="search" placeholder="Buscar por nombre de banco..." value="<?php echo htmlspecialchars($search_term); ?>">
-                    <button type="submit" class="btn btn-primary">Buscar</button>
-                </form>
-            </div>
-        </div>
+<main class="main-content">
+    <?php include 'includes/header.php'; ?>
 
+    <div class="page-content">
+        
         <?php if ($message): ?>
-            <div class="message <?php echo $message_class; ?>">
+            <div class="alert alert-<?php echo $message_class == 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert">
                 <?php echo htmlspecialchars($message); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
-        
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre del Banco</th>
-                        <th>Número de Cuenta</th>
-                        <th>Cédula Propietario</th>
-                        <th>Nombre Propietario</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($data)): ?>
-                        <?php foreach ($data as $row): ?>
+
+        <div class="card">
+            <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-center">
+                <h5 class="mb-3 mb-md-0">Listado de Bancos</h5>
+                <div class="d-flex gap-2 w-100 w-md-auto">
+                    <form action="gestion_bancos.php" method="GET" class="d-flex gap-2 flex-grow-1 header-search">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Buscar..." value="<?php echo htmlspecialchars($search_term); ?>">
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-search"></i></button>
+                    </form>
+                    <a href="registro_bancos.php" class="btn btn-primary btn-sm text-nowrap">
+                        <i class="fa-solid fa-plus"></i> Nuevo
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <td><?php echo htmlspecialchars($row['id_banco']); ?></td>
-                                <td><?php echo htmlspecialchars($row['nombre_banco']); ?></td>
-                                <td><?php echo htmlspecialchars($row['numero_cuenta']); ?></td>
-                                <td><?php echo htmlspecialchars($row['cedula_propietario']); ?></td>
-                                <td><?php echo htmlspecialchars($row['nombre_propietario']); ?></td>
-                                <td class="action-links">
-                                  <a href="#" 
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#modalModificacionBanco"
-                                       data-id="<?php echo htmlspecialchars($row['id_banco']); ?>"
-                                       data-nombre="<?php echo htmlspecialchars($row['nombre_banco']); ?>"
-                                       data-cuenta="<?php echo htmlspecialchars($row['numero_cuenta']); ?>"
-                                       data-cedula="<?php echo htmlspecialchars($row['cedula_propietario']); ?>"
-                                       data-propietario="<?php echo htmlspecialchars($row['nombre_propietario']); ?>"
-                                       class="btn btn-sm" title="Modificar Banco">
-                                       <i class="fa-solid fa-pen-to-square text-primary"></i>
-                                   </a>
-                                   <a href="#" 
-                                      data-bs-href="gestion_bancos.php?action=delete_banco&id=<?php echo urlencode($row['id_banco']); ?>" 
-                                       data-bs-toggle="modal" 
-                                       data-bs-target="#eliminaModal" 
-                                       class="btn btn-sm" 
-                                       title="Eliminar Banco">
-                                                            
-                                        <i class="fa-solid fa-trash-can text-danger"></i>
-                                    </a>
-                                </td>
+                                <th class="ps-4">ID</th>
+                                <th>Nombre del Banco</th>
+                                <th>Número de Cuenta</th>
+                                <th>Cédula Propietario</th>
+                                <th>Nombre Propietario</th>
+                                <th class="text-end pe-4">Acciones</th>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr><td colspan="6">No se encontraron bancos.</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-        <div style="margin-top: 2em; text-align: center;">
-            <a href="menu.php" class="btn btn-secondary">Volver al Menú</a>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($data)): ?>
+                                <?php foreach ($data as $row): ?>
+                                    <tr>
+                                        <td class="ps-4 text-muted">#<?php echo htmlspecialchars($row['id_banco']); ?></td>
+                                        <td class="fw-bold"><?php echo htmlspecialchars($row['nombre_banco']); ?></td>
+                                        <td class="font-monospace text-muted"><?php echo htmlspecialchars($row['numero_cuenta']); ?></td>
+                                        <td><?php echo htmlspecialchars($row['cedula_propietario']); ?></td>
+                                        <td><?php echo htmlspecialchars($row['nombre_propietario']); ?></td>
+                                        <td class="text-end pe-4">
+                                           <div class="btn-group">
+                                                <a href="#" 
+                                                   data-bs-toggle="modal"
+                                                   data-bs-target="#modalModificacionBanco"
+                                                   data-id="<?php echo htmlspecialchars($row['id_banco']); ?>"
+                                                   data-nombre="<?php echo htmlspecialchars($row['nombre_banco']); ?>"
+                                                   data-cuenta="<?php echo htmlspecialchars($row['numero_cuenta']); ?>"
+                                                   data-cedula="<?php echo htmlspecialchars($row['cedula_propietario']); ?>"
+                                                   data-propietario="<?php echo htmlspecialchars($row['nombre_propietario']); ?>"
+                                                   class="btn btn-light btn-sm text-primary" title="Modificar">
+                                                   <i class="fa-solid fa-pen"></i>
+                                                </a>
+                                                <a href="#" 
+                                                   data-bs-href="gestion_bancos.php?action=delete_banco&id=<?php echo urlencode($row['id_banco']); ?>" 
+                                                   data-bs-toggle="modal" 
+                                                   data-bs-target="#eliminaModal" 
+                                                   class="btn btn-light btn-sm text-danger" 
+                                                   title="Eliminar">
+                                                   <i class="fa-solid fa-trash"></i>
+                                                </a>
+                                           </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="6" class="text-center p-4 text-muted">No se encontraron bancos.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-    
-    <div class="modal fade" id="modalModificacionBanco" tabindex="-1" aria-labelledby="modalModificacionBancoLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header modal-header-styled">
-                    <h5 class="modal-title texto_modificado_modal" id="modalModificacionBancoLabel">Modificar Banco</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="form-modificacion-banco" action="gestion_bancos.php" method="POST" novalidate>
-                    <div class="modal-body">
-                        <input type="hidden" name="update_banco" value="1">
-                        <input type="hidden" name="id_banco_update" id="id_banco_modal" value="">
-                        
-                        <div class="mb-3">
-                            <label for="nombre_banco_modal" class="form-label">Nombre del Banco:</label>
-                            <input type="text" id="nombre_banco_modal" name="nombre_banco" class="form-control" required> 
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="numero_cuenta_modal" class="form-label">Número de Cuenta:</label>
-                            <input type="text" id="numero_cuenta_modal" name="numero_cuenta" class="form-control" required> 
-                        </div>
+</main>
 
-                        <div class="mb-3">
-                            <label for="cedula_propietario_modal" class="form-label">Cédula del Propietario:</label>
+<!-- Modal Modificar -->
+<div class="modal fade" id="modalModificacionBanco" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary" id="modalModificacionBancoLabel">Modificar Banco</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-modificacion-banco" action="gestion_bancos.php" method="POST" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" name="update_banco" value="1">
+                    <input type="hidden" name="id_banco_update" id="id_banco_modal" value="">
+                    
+                    <div class="mb-3">
+                        <label for="nombre_banco_modal" class="form-label small text-muted fw-bold text-uppercase">Nombre del Banco</label>
+                        <input type="text" id="nombre_banco_modal" name="nombre_banco" class="form-control" required> 
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="numero_cuenta_modal" class="form-label small text-muted fw-bold text-uppercase">Número de Cuenta</label>
+                        <input type="text" id="numero_cuenta_modal" name="numero_cuenta" class="form-control font-monospace" required> 
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-5 mb-3">
+                            <label for="cedula_propietario_modal" class="form-label small text-muted fw-bold text-uppercase">Cédula</label>
                             <input type="text" id="cedula_propietario_modal" name="cedula_propietario" class="form-control" required> 
                         </div>
-
-                        <div class="mb-3">
-                            <label for="nombre_propietario_modal" class="form-label">Nombre del Propietario:</label>
+                        <div class="col-md-7 mb-3">
+                            <label for="nombre_propietario_modal" class="form-label small text-muted fw-bold text-uppercase">Propietario</label>
                             <input type="text" id="nombre_propietario_modal" name="nombre_propietario" class="form-control" required> 
                         </div>
-                        
                     </div>
-                    <div class="modal-footer d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="width: 40%;">Cancelar</button>
-                        <button type="button" id="btn-actualizar-banco" class="btn btn-primary" style="width: 55%;">Actualizar</button>
-                    </div>
-                </form>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btn-actualizar-banco" class="btn btn-primary px-4">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar -->
+<div class="modal fade" id="eliminaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3 text-danger">
+                    <i class="fa-solid fa-trash-can fa-3x"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Eliminar Banco</h5>
+                <p class="text-muted small mb-4">Esta acción no se puede deshacer.</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <a href="#" class="btn btn-danger btn-ok px-4">Eliminar</a>
+                </div>
             </div>
         </div>
     </div>
-    <div class="modal fade" id="eliminaModal" tabindex="-1" aria-labelledby="eliminaModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <div class="modal-header modal-header-styled">
-                    <h5 class="modal-title texto_modificado_modal" id="eliminaModalLabel">Eliminar Registro</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    ¿Desea eliminar el registro?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn_modificado2" data-bs-dismiss="modal" >Cancelar</button>
-                    <a class="btn btn-danger btn-ok">Eliminar</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script src="../js/bootstrap.bundle.min.js"></script> 
+</div>
+
+<?php require_once 'includes/layout_foot.php'; ?>
 
 <script>
-    // Lógica para pasar la URL de eliminación al modal de Bootstrap 
+    // Delete Modal Logic
     let eliminaModal = document.getElementById('eliminaModal')
     if (eliminaModal) {
         eliminaModal.addEventListener('shown.bs.modal', event => {
             let button = event.relatedTarget
             let url = button.getAttribute('data-bs-href') 
-            eliminaModal.querySelector('.modal-footer .btn-ok').href = url
+            eliminaModal.querySelector('.btn-ok').href = url
         })
     }
 
-    // --- LÓGICA DEL MODAL DE MODIFICACIÓN DE BANCOS ---
+    // Edit Modal Logic
     const modalModificacionBanco = document.getElementById('modalModificacionBanco');
-
     if (modalModificacionBanco) {
         modalModificacionBanco.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget; 
-            
-            // 1. Obtener los 4 datos pasados desde la tabla
             const id = button.getAttribute('data-id');
             const nombre = button.getAttribute('data-nombre');
             const cuenta = button.getAttribute('data-cuenta');
             const cedula = button.getAttribute('data-cedula');
             const propietario = button.getAttribute('data-propietario');
             
-            // 2. Asignar valores a los campos del modal
-            document.getElementById('modalModificacionBancoLabel').textContent = `Modificar Banco: ${nombre}`;
+            document.getElementById('modalModificacionBancoLabel').textContent = `Editar Banco`;
             document.getElementById('id_banco_modal').value = id;
             document.getElementById('nombre_banco_modal').value = nombre;
             document.getElementById('numero_cuenta_modal').value = cuenta;
             document.getElementById('cedula_propietario_modal').value = cedula;
             document.getElementById('nombre_propietario_modal').value = propietario;
             
-            // 3. Reiniciar la validación
             document.getElementById('form-modificacion-banco').classList.remove('was-validated');
         });
     }
 
-    // 4. Lógica para el botón de Actualizar y validación manual
+    // Validation Logic
     const btnActualizarBanco = document.getElementById('btn-actualizar-banco');
     const formModificacionBanco = document.getElementById('form-modificacion-banco');
-
     if (btnActualizarBanco && formModificacionBanco) {
         btnActualizarBanco.addEventListener('click', function(event) {
-            
-            // Verificar si el formulario es válido (HTML5 validation)
             if (formModificacionBanco.checkValidity()) {
-                formModificacionBanco.submit(); // Enviar el formulario
+                formModificacionBanco.submit();
             } else {
-                // Si no es válido, mostrar los mensajes de error de Bootstrap
                 formModificacionBanco.classList.add('was-validated');
                 formModificacionBanco.reportValidity(); 
             }
         });
     }
-
 </script>
-</body>
-</html>

@@ -1,5 +1,5 @@
 <?php
-require_once 'conexion.php'; 
+require_once '../conexion.php'; 
 
 $id_cobro = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $cobro_data = null;
@@ -22,11 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_cobro_form'])) {
     
     if ($stmt->execute()) {
         $message = "Cobro #{$id_cobro_update} actualizado con éxito.";
-        $message_class = 'success';
+        $message_class = 'alert-success';
         // Si el estado es Pagado, se recomienda usar el modal de pago para registrar la ref/fecha_pago, pero aquí solo actualizamos el estado.
     } else {
         $message = "Error al actualizar: " . $stmt->error;
-        $message_class = 'danger';
+        $message_class = 'alert-danger';
     }
     $stmt->close();
 }
@@ -53,64 +53,76 @@ if ($resultado->num_rows === 1) {
     die("Error: Factura no encontrada.");
 }
 $stmt_select->close();
+
+// Configuración Layout
+$path_to_root = "../../";
+$page_title = "Modificar Cobro #" . $id_cobro;
+require_once '../includes/layout_head.php';
+require_once '../includes/sidebar.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Modificar Cobro #<?php echo $id_cobro; ?></title>
-    <link href="../../css/bootstrap.min.css" rel="stylesheet">
-    <link href="../../css/style3.css" rel="stylesheet">
+<main class="main-content">
+    <?php include '../includes/header.php'; ?>
 
+    <div class="page-content">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
+                <div>
+                    <h5 class="fw-bold text-primary mb-1">Modificar Cobros</h5>
+                    <p class="text-muted small mb-0">Wireless Supply, C.A.</p>
+                </div>
+            </div>
 
-</head>
-<body>
+            <div class="card-body px-4">
+                <p>Cobro #<?php echo htmlspecialchars($cobro_data['id_cobro']); ?></p>
 
-<div class="container mt-5">
-    <h1 class="text-center pt-3 texto_modificado">Modificar Cobros</h1>
-		 <p class= "text-center">Wireless Supply, C.A.</p>
-    <p>Cobro #<?php echo htmlspecialchars($cobro_data['id_cobro']); ?></p>
-    <?php if ($message): ?>
-        <div class="alert alert-<?php echo $message_class; ?>"><?php echo $message; ?></div>
-    <?php endif; ?>
+                <?php if ($message): ?>
+                    <div class="alert <?php echo $message_class; ?> alert-dismissible fade show" role="alert">
+                        <?php echo $message; ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
 
-    <p>Cliente: <strong><?php echo htmlspecialchars($cobro_data['nombre_cliente']); ?></strong> (Contrato ID: <?php echo htmlspecialchars($cobro_data['id_contrato']); ?>)</p>
+                <p>Cliente: <strong><?php echo htmlspecialchars($cobro_data['nombre_cliente']); ?></strong> (Contrato ID: <?php echo htmlspecialchars($cobro_data['id_contrato']); ?>)</p>
 
-    <form action="modifica_cobro.php?id=<?php echo $id_cobro; ?>" method="POST">
-        <input type="hidden" name="id_cobro_form" value="<?php echo htmlspecialchars($id_cobro); ?>">
+                <form action="modifica_cobro.php?id=<?php echo $id_cobro; ?>" method="POST" class="row g-3">
+                    <input type="hidden" name="id_cobro_form" value="<?php echo htmlspecialchars($id_cobro); ?>">
 
-        <div class="mb-3">
-            <label for="monto_total" class="form-label">Monto Total ($)</label>
-            <input type="number" step="0.01" class="form-control" name="monto_total" 
-                   value="<?php echo htmlspecialchars($cobro_data['monto_total']); ?>" required>
+                    <div class="col-md-6">
+                        <label for="monto_total" class="form-label">Monto Total ($)</label>
+                        <input type="number" step="0.01" class="form-control" name="monto_total" 
+                               value="<?php echo htmlspecialchars($cobro_data['monto_total']); ?>" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento</label>
+                        <input type="date" class="form-control" name="fecha_vencimiento" 
+                               value="<?php echo htmlspecialchars($cobro_data['fecha_vencimiento']); ?>" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="estado" class="form-label">Estado</label>
+                        <select name="estado" class="form-select" required>
+                            <option value="PENDIENTE" <?php echo ($cobro_data['estado'] == 'PENDIENTE') ? 'selected' : ''; ?>>PENDIENTE</option>
+                            <option value="PAGADO" <?php echo ($cobro_data['estado'] == 'PAGADO') ? 'selected' : ''; ?>>PAGADO</option>
+                            <option value="VENCIDO" <?php echo ($cobro_data['estado'] == 'VENCIDO') ? 'selected' : ''; ?>>VENCIDO</option>
+                            <option value="CANCELADO" <?php echo ($cobro_data['estado'] == 'CANCELADO') ? 'selected' : ''; ?>>CANCELADO</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Referencia de Pago Actual:</label>
+                        <p class="form-control-static"><?php echo $cobro_data['referencia_pago'] ? htmlspecialchars($cobro_data['referencia_pago']) : 'N/A'; ?></p>
+                    </div>
+
+                    <div class="col-12 mt-4 text-end">
+                        <a href="../reportes_pdf/reporte_cobranza.php" class="btn btn-secondary me-2">Cancelar y Volver</a>
+                        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
         </div>
+    </div>
+</main>
 
-        <div class="mb-3">
-            <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento</label>
-            <input type="date" class="form-control" name="fecha_vencimiento" 
-                   value="<?php echo htmlspecialchars($cobro_data['fecha_vencimiento']); ?>" required>
-        </div>
-        
-        <div class="mb-3">
-            <label for="estado" class="form-label">Estado</label>
-            <select name="estado" class="form-select" required>
-                <option value="PENDIENTE" <?php echo ($cobro_data['estado'] == 'PENDIENTE') ? 'selected' : ''; ?>>PENDIENTE</option>
-                <option value="PAGADO" <?php echo ($cobro_data['estado'] == 'PAGADO') ? 'selected' : ''; ?>>PAGADO</option>
-                <option value="VENCIDO" <?php echo ($cobro_data['estado'] == 'VENCIDO') ? 'selected' : ''; ?>>VENCIDO</option>
-                <option value="CANCELADO" <?php echo ($cobro_data['estado'] == 'CANCELADO') ? 'selected' : ''; ?>>CANCELADO</option>
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Referencia de Pago Actual:</label>
-            <p><?php echo $cobro_data['referencia_pago'] ? htmlspecialchars($cobro_data['referencia_pago']) : 'N/A'; ?></p>
-        </div>
-
-        <button type="submit" class="btn btn-success">Guardar Cambios</button>
-        <a href="../reportes_pdf/reporte_cobranza.php" class="btn btn-secondary">Cancelar y Volver</a>
-    </form>
-</div>
-
-</body>
-</html>
+<?php require_once '../includes/layout_foot.php'; ?>

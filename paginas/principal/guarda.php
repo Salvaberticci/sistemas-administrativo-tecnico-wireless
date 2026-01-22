@@ -12,7 +12,7 @@
  *
  */
 // Conexión a la base de datos
-require 'conexion.php';
+require '../conexion.php';
 
 // 1. CAPTURA Y SANEO DE DATOS
 // Se usa real_escape_string para prevenir inyección SQL.
@@ -33,8 +33,86 @@ $ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap']);
 $puerto_nap = $conn->real_escape_string($_POST['puerto_nap']);
 $num_presinto_odn = $conn->real_escape_string($_POST['num_presinto_odn']);
 $id_olt = $conn->real_escape_string($_POST['id_olt']);
-$id_pon = $conn->real_escape_string($_POST['id_pon']);
+$id_pon = $conn->real_escape_string($_POST['id_pon']?? null);
 $estado = 'ACTIVO'; // Estado inicial por defecto
+
+// NUEVOS CAMPOS ADMINISTRATIVOS Y TÉCNICOS
+$telefono_secundario = $conn->real_escape_string($_POST['telefono_secundario'] ?? '');
+$correo_adicional = $conn->real_escape_string($_POST['correo_adicional'] ?? '');
+$observaciones = $conn->real_escape_string($_POST['observaciones'] ?? '');
+
+$tipo_instalacion = $conn->real_escape_string($_POST['tipo_instalacion'] ?? '');
+$monto_instalacion = floatval($_POST['monto_instalacion'] ?? 0);
+$gastos_adicionales = floatval($_POST['gastos_adicionales'] ?? 0);
+$monto_pagar = floatval($_POST['monto_pagar'] ?? 0);
+$monto_pagado = floatval($_POST['monto_pagado'] ?? 0);
+
+$medio_pago = $conn->real_escape_string($_POST['medio_pago'] ?? '');
+$moneda_pago = $conn->real_escape_string($_POST['moneda_pago'] ?? 'USD');
+$dias_prorrateo = intval($_POST['dias_prorrateo'] ?? 0);
+// Calculamos monto prorrateo si fuera necesario, por ahora lo dejamos en 0 o se podría calcular
+$monto_prorrateo_usd = 0; 
+
+// DETALLES TÉCNICOS
+$tipo_conexion = $conn->real_escape_string($_POST['tipo_conexion'] ?? '');
+$mac_onu = $conn->real_escape_string($_POST['mac_onu'] ?? '');
+$ip_onu = $conn->real_escape_string($_POST['ip_onu'] ?? '');
+$nap_tx_power = $conn->real_escape_string($_POST['nap_tx_power'] ?? '');
+$onu_rx_power = $conn->real_escape_string($_POST['onu_rx_power'] ?? '');
+$distancia_drop = $conn->real_escape_string($_POST['distancia_drop'] ?? '');
+$punto_acceso = $conn->real_escape_string($_POST['punto_acceso'] ?? '');
+$valor_conexion_dbm = $conn->real_escape_string($_POST['valor_conexion_dbm'] ?? '');
+$evidencia_fibra = $conn->real_escape_string($_POST['evidencia_fibra'] ?? '');
+
+// PROCESAR FOTO EVIDENCIA
+$evidencia_foto = null;
+if (isset($_FILES['evidencia_foto']) && $_FILES['evidencia_foto']['error'] == 0) {
+    $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+    $filename = $_FILES['evidencia_foto']['name'];
+    $filetype = $_FILES['evidencia_foto']['type'];
+    $filesize = $_FILES['evidencia_foto']['size'];
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+    if (in_array($ext, $allowed)) {
+        $new_filename = 'evidencia_' . uniqid() . '.' . $ext;
+        $upload_dir = '../../uploads/contratos/';
+        
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        if (move_uploaded_file($_FILES['evidencia_foto']['tmp_name'], $upload_dir . $new_filename)) {
+            $evidencia_foto = 'uploads/contratos/' . $new_filename;
+        }
+    }
+}
+
+// Instaladores (array a string separado por comas)
+$instaladores_array = $_POST['instaladores'] ?? [];
+$instaladores_ids = implode(',', array_map('intval', $instaladores_array));
+
+// --- FUNCIÓN PARA GUARDAR FIRMAS (Base64 a PNG) ---
+function saveSignature($base64_string, $prefix) {
+    if (empty($base64_string)) return null;
+    $data = explode(',', $base64_string);
+    if (count($data) < 2) return null;
+    $imgData = base64_decode($data[1]);
+    $fileName = $prefix . '_' . uniqid() . '.png';
+    $uploadDir = '../../uploads/firmas/';
+    if (!file_exists($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+    if (file_put_contents($uploadDir . $fileName, $imgData)) {
+        return $fileName;
+    }
+    return null;
+}
+
+// Procesar Firmas
+$firma_cliente_b64 = $_POST['firma_cliente_data'] ?? '';
+$firma_tecnico_b64 = $_POST['firma_tecnico_data'] ?? '';
+$firma_cliente = saveSignature($firma_cliente_b64, 'cliente');
+$firma_tecnico = saveSignature($firma_tecnico_b64, 'tecnico');
 
 // Variable para manejar mensajes de error específicos
 $error_mensaje = null;
@@ -58,39 +136,56 @@ if ($stmt_check_ip->num_rows > 0) {
     $stmt_check_ip->close(); 
 
     // 3. INSERCIÓN EN LA TABLA DE CONTRATOS
-    // ⚠️ Se agregó id_comunidad a la lista de columnas
-    $sql = "INSERT INTO contratos (ip, cedula, nombre_completo, telefono, correo, id_municipio, id_parroquia, id_comunidad, id_plan, id_vendedor, direccion, fecha_instalacion, estado, ident_caja_nap, puerto_nap, num_presinto_odn, id_olt, id_pon) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO contratos (
+        ip, cedula, nombre_completo, telefono, correo, 
+        id_municipio, id_parroquia, id_comunidad, id_plan, id_vendedor, 
+        direccion, fecha_instalacion, estado, ident_caja_nap, puerto_nap, 
+        num_presinto_odn, id_olt, id_pon, tipo_instalacion, monto_instalacion, 
+        gastos_adicionales, monto_pagar, monto_pagado, instaladores,
+        telefono_secundario, correo_adicional, medio_pago, moneda_pago, dias_prorrateo,
+        monto_prorrateo_usd, observaciones, tipo_conexion, mac_onu, ip_onu,
+        nap_tx_power, onu_rx_power, distancia_drop, punto_acceso, valor_conexion_dbm,
+        evidencia_fibra, evidencia_foto, firma_cliente, firma_tecnico
+    ) VALUES (
+        ?, ?, ?, ?, ?, 
+        ?, ?, ?, ?, ?, 
+        ?, ?, ?, ?, ?, 
+        ?, ?, ?, ?, ?, 
+        ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?
+    )";
 
-    // Usando prepared statements para mayor seguridad
-    // ⚠️ Se agregó una 'i' al string de tipos de parámetros
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssssiiiiissssssii", 
-        $ip, 
-        $cedula, 
-        $nombre_completo, 
-        $telefono, 
-        $correo, 
-        $id_municipio, 
-        $id_parroquia, 
-        $id_comunidad, // ⚠️ Nueva variable
-        $id_plan, 
-        $id_vendedor, 
-        $direccion, 
-        $fecha_instalacion, 
-        $estado,
-        $ident_caja_nap, 
-        $puerto_nap, 
-        $num_presinto_odn, 
-        $id_olt,
-        $id_pon
+    
+    // Total string: sssssiiiiissssssiisddds (23) + ssssids (7) + sssssssssss (11) + ss (2) = 43
+    $stmt->bind_param("sssssiiiiissssssiisddds" . "ssssidsssssssssssss", 
+        $ip, $cedula, $nombre_completo, $telefono, $correo, 
+        $id_municipio, $id_parroquia, $id_comunidad, $id_plan, $id_vendedor, 
+        $direccion, $fecha_instalacion, $estado, $ident_caja_nap, $puerto_nap, 
+        $num_presinto_odn, $id_olt, $id_pon, $tipo_instalacion, $monto_instalacion, 
+        $gastos_adicionales, $monto_pagar, $monto_pagado, $instaladores_ids,
+        $telefono_secundario, $correo_adicional, $medio_pago, $moneda_pago, $dias_prorrateo,
+        $monto_prorrateo_usd, $observaciones, $tipo_conexion, $mac_onu, $ip_onu,
+        $nap_tx_power, $onu_rx_power, $distancia_drop, $punto_acceso, $valor_conexion_dbm,
+        $evidencia_fibra, $evidencia_foto, $firma_cliente, $firma_tecnico
     );
 
     $resultado = $stmt->execute();
     $id_contrato = $conn->insert_id; // Obtiene el ID del contrato recién insertado
     $stmt->close();
 
-    // 4. GENERACIÓN DE LA PRIMERA CUENTA POR COBRAR (Solo si el contrato fue exitoso)
+    // ⚠️ REDIRECCIÓN A GENERAR EL PDF
+       /* if ($resultado) { // Si el contrato se guardó correctamente
+            $pdf_url = "../reportes_pdf/generar_contrato_pdf.php?id_contrato=" . $id_contrato;
+            $conn->close(); // Cerrar conexión antes de la redirección
+            header("Location: " . $pdf_url); // Envía la cabecera de redirección
+            exit(); // Detiene el script para asegurar la redirección
+        }*/
+        
+    // 5. GENERACIÓN DE LA PRIMERA CUENTA POR COBRAR (Solo si el contrato fue exitoso)
     if ($resultado && $id_contrato > 0) {
         
         // Obtener el monto total del plan
@@ -132,6 +227,20 @@ if ($stmt_check_ip->num_rows > 0) {
         
         $stmt_monto->close();
     }
+
+    // 6. REGISTRO DE DEUDOR SI HAY SALDO PENDIENTE
+    if ($resultado && $id_contrato > 0) {
+        $saldo_pendiente = $monto_pagar - $monto_pagado;
+        
+        if ($saldo_pendiente > 0) {
+            $sql_deudor = "INSERT INTO clientes_deudores (id_contrato, monto_total, monto_pagado, saldo_pendiente, estado) 
+                          VALUES (?, ?, ?, ?, 'PENDIENTE')";
+            $stmt_deudor = $conn->prepare($sql_deudor);
+            $stmt_deudor->bind_param("iddd", $id_contrato, $monto_pagar, $monto_pagado, $saldo_pendiente);
+            $stmt_deudor->execute();
+            $stmt_deudor->close();
+        }
+    }
 } 
 // Cierre de la conexión (asegúrate de que todas las ramas la cierren o la cierras al final)
 $conn->close();
@@ -146,6 +255,7 @@ $conn->close();
 	<title>Nuevo Contrato</title>
 	<link href="../../css/bootstrap.min.css" rel="stylesheet">
     <link href="../../css/style4.css" rel="stylesheet">
+       <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
 
     <style>
         .text-success { color: #198754 !important; }
@@ -164,8 +274,13 @@ $conn->close();
             <?php } else { ?>
 			    <p class="text-center">El nuevo contrato ha sido registrado exitosamente y se ha generado la primera factura.</p>
                 <div class="col-12 text-center">
+                  <a href="../reportes_pdf/generar_contrato_pdf.php?id_contrato=<?php echo $id_contrato; ?>" target="_blank">
+                        Generar Contrato PDF
+                    </a>
+                </div>
+                <div class="col-12 text-center">
 		        	<div class="col-md-12">
-		        		<a href="nuevo.php" class="btn btn-primary">Regresar</a>
+		        		<a href="gestion_contratos.php" class="btn btn-primary">Regresar</a>
 		        	</div>
 		        </div>
             <?php } ?>

@@ -2,7 +2,7 @@
 // Script para insertar una cuenta por cobrar generada manualmente y registrar el detalle en el historial.
 // Este script es el procesador del formulario que se encuentra ahora dentro de gestion_cobros.php (modal).
 
-require_once 'conexion.php'; 
+require_once '../conexion.php'; 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // 1. Obtener y sanitizar datos del formulario
@@ -15,9 +15,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     $fecha_vencimiento = isset($_POST['fecha_vencimiento']) ? $conn->real_escape_string($_POST['fecha_vencimiento']) : '';
     
-    // Generar datos automáticos
-    $fecha_emision = date('Y-m-d'); 
-    $estado = 'PENDIENTE'; 
+    // Validar Pago Inmediato
+    $pago_inmediato = isset($_POST['pago_inmediato']) ? true : false;
+    $fecha_pago = null;
+    $referencia_pago = null;
+    $id_banco = null;
+
+    if ($pago_inmediato) {
+        $estado = 'PAGADO';
+        $fecha_pago = isset($_POST['fecha_pago']) ? $conn->real_escape_string($_POST['fecha_pago']) : date('Y-m-d H:i:s');
+        $referencia_pago = isset($_POST['referencia_pago']) ? $conn->real_escape_string($_POST['referencia_pago']) : '';
+        $id_banco = isset($_POST['id_banco_pago']) ? intval($_POST['id_banco_pago']) : null;
+        
+        // Use fecha_pago as emission as well if desired, but keeping emission as today is safer for accounting.
+        // User asked for "Fecha de Registro" field.
+    }
 
     $message = "Error desconocido.";
     $class = "danger";
@@ -29,18 +41,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         try {
             // 2. INSERTAR la Cuenta Por Cobrar (CXC)
+            // UPDATED: Added payment columns
             $sql_cxc = "INSERT INTO cuentas_por_cobrar (
                 id_contrato, 
                 fecha_emision, 
                 fecha_vencimiento, 
                 monto_total, 
-                estado
+                estado,
+                fecha_pago,
+                referencia_pago,
+                id_banco
             ) VALUES (
                 '$id_contrato', 
                 '$fecha_emision', 
                 '$fecha_vencimiento', 
                 '$monto_total', 
-                '$estado'
+                '$estado',
+                " . ($fecha_pago ? "'$fecha_pago'" : "NULL") . ",
+                " . ($referencia_pago ? "'$referencia_pago'" : "NULL") . ",
+                " . ($id_banco ? "'$id_banco'" : "NULL") . "
             )";
 
             if ($conn->query($sql_cxc) === TRUE) {

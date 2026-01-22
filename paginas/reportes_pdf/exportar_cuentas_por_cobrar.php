@@ -66,7 +66,8 @@ if ($stmt) {
     $stmt->close();
 }
 
-
+// *** CÁLCULO DE LA CANTIDAD DE CLIENTES/COBROS ***
+$cantidad_clientes = count($cobros);
 // ----------------------------------------------------------------------
 // 3. CAPTURA DEL HTML PARA DOMPDF
 // ----------------------------------------------------------------------
@@ -79,6 +80,7 @@ ob_start();
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+       <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
      <?php 
     // Llamada a la función para obtener el encabezado estandarizado
     echo generar_encabezado_empresa('Reporte Filtrado de Cuentas por Cobrar'); 
@@ -88,8 +90,8 @@ ob_start();
         h1 { text-align: center; font-size: 16px; margin-bottom: 15px; }
         .resumen { margin-bottom: 20px; font-size: 12px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
-        th { background-color: #f2f2f2; text-align: center; font-size: 10px; }
+        th, td { border: 1px solid #59acffff; padding: 6px 8px; text-align: left; }
+        th { background-color: #8fd0ffff; text-align: center; font-size: 10px; }
         .total { font-weight: bold; }
         .danger { color: red; font-weight: bold; }
         .success { color: green; }
@@ -102,6 +104,7 @@ ob_start();
     
     <p class="resumen">
         <strong>Filtros:</strong> Estado: <?php echo htmlspecialchars($estado_filtro); ?> | Vencimiento: <?php echo htmlspecialchars($fecha_inicio); ?> al <?php echo htmlspecialchars($fecha_fin); ?><br>
+        <strong>CANTIDAD DE CLIENTES:</strong> <?php echo $cantidad_clientes; ?><br>
         <strong>TOTAL MONTO REPORTADO:</strong> $<?php echo number_format($total_monto, 2); ?>
     </p>
 

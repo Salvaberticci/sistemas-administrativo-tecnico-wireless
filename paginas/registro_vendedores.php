@@ -1,8 +1,7 @@
 <?php
-// Incluye el archivo de conexión. La variable $conn estará disponible aquí.
+// Incluye el archivo de conexión.
 require_once 'conexion.php';
 
-// Variables para los mensajes
 $message = '';
 $message_class = '';
 
@@ -39,49 +38,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 $conn->close();
 
+$path_to_root = "../";
+$page_title = "Registro de Vendedores";
+require_once 'includes/layout_head.php';
+require_once 'includes/sidebar.php';
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Vendedor</title>
-    <link rel="stylesheet" href="../css/style3.css">
-</head>
-<body>
-    <div class="register-container">
-        <header class="register-header">
-            <h1>Registro de Vendedor</h1>
-            <p>Wireless Supply, C.A.</p>
-        </header>
 
-        <?php if ($message): ?>
-            <div class="message <?php echo $message_class; ?>">
-                <?php echo htmlspecialchars($message); ?>
+<main class="main-content">
+    <?php include 'includes/header.php'; ?>
+
+    <div class="page-content">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
+                <div>
+                    <h5 class="fw-bold text-primary mb-1">Registro de Vendedor</h5>
+                    <p class="text-muted small mb-0">Crear nuevo vendedor</p>
+                </div>
             </div>
-        <?php endif; ?>
 
-        <div class="step-section">
-            <h2>Registrar nuevo Vendedor</h2>
-            <form action="registro_vendedores.php" method="POST">
-                <div class="input-group">
-                    <label for="id_vendedor">ID de Vendedor:</label>
-                    <input type="text" id="id_vendedor" name="id_vendedor" required>
-                </div>
-                <div class="input-group">
-                    <label for="nombre_vendedor">Nombre del Vendedor:</label>
-                    <input type="text" id="nombre_vendedor" name="nombre_vendedor" required>
-                </div>
-                <div class="input-group">
-                    <label for="telefono_vendedor">Teléfono:</label>
-                    <input type="text" id="telefono_vendedor" name="telefono_vendedor">
-                </div>
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary">Registrar</button>
-                    <a href="gestion_vendedores.php" class="btn btn-secondary">Volver</a>
-                </div>
-            </form>
+            <div class="card-body px-4">
+                <?php if ($message): ?>
+                    <div class="alert alert-<?php echo $message_class === 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert">
+                        <?php echo htmlspecialchars($message); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
+                <form action="registro_vendedores.php" method="POST" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="id_vendedor" class="form-label">ID de Vendedor</label>
+                        <input type="text" class="form-control" id="id_vendedor" name="id_vendedor" required autofocus>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="nombre_vendedor" class="form-label">Nombre del Vendedor</label>
+                        <input type="text" class="form-control" id="nombre_vendedor" name="nombre_vendedor" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="telefono_vendedor" class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="telefono_vendedor" name="telefono_vendedor">
+                    </div>
+                    
+                    <div class="col-12">
+                        <a href="gestion_vendedores.php" class="btn btn-secondary">Volver</a>
+                        <button type="submit" class="btn btn-success">Registrar Vendedor</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</body>
-</html>
+</main>
+
+<?php require_once 'includes/layout_foot.php'; ?>

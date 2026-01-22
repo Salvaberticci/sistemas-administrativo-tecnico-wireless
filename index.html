@@ -3,31 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wireless Supply, C.A.</title>
-    <link rel="stylesheet" href="css/style1.css">
+    <title>Iniciar Sesión | Wireless Supply</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom Theme -->
+    <link href="css/pro_theme.css" rel="stylesheet">
+    <link rel="icon" type="image/jpg" href="images/logo.jpg"/>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, var(--bg-body) 0%, #e0e7ff 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            width: 100%;
+            max-width: 420px;
+            padding: 2.5rem;
+        }
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .form-control {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem 1rem;
+        }
+        .form-control:focus {
+            background: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+    </style>
 </head>
 <body>
     
-    <div class="login-container">
-        <header class="login-header">
-             <div class="hero-section">  
-            <img src="images/logo2.2.png" alt="Imagen de bienvenida">
+    <div class="login-card text-center fade-in-up">
+        <img src="images/logo.jpg" alt="Logo" class="login-logo">
+        
+        <h3 class="fw-bold mb-1" style="font-family: var(--font-heading)">Bienvenido</h3>
+        <p class="text-muted small mb-4">Sistema Administrativo y Técnico</p>
+        
+        <form action="paginas/verificar.php" method="POST" class="text-start">
+            <div class="mb-3">
+                <label for="usuario" class="form-label small fw-bold text-uppercase text-muted">Usuario</label>
+                <input type="text" class="form-control" id="usuario" name="usuario" placeholder="Ingrese su usuario" required>
             </div>
-            <p>Sistema de Administración</p>
-        </header>
-       <form class="login-form" action="paginas/verificar.php" method="POST">
-            <div class="input-group">
-                <!--label for="usuario">Usuario:</label-->
-                <input type="text" id="usuario" name="usuario" placeholder="Usuario" required>
+            
+            <div class="mb-4">
+                <label for="clave" class="form-label small fw-bold text-uppercase text-muted">Contraseña</label>
+                <input type="password" class="form-control" id="clave" name="clave" placeholder="••••••••" required>
             </div>
-            <div class="input-group">
-                <!--label for="clave">Contraseña:</label-->
-                <input type="password" id="clave" name="clave" placeholder="Contraseña" required>
-            </div>
-            <div class="button-group">
-                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+            
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary py-2">
+                    Iniciar Sesión
+                </button>
             </div>
         </form>
+        
+        <div class="mt-4 text-center">
+            <small class="text-muted">&copy; <script>document.write(new Date().getFullYear())</script> Wireless Supply, C.A.</small>
+        </div>
     </div>
+
 </body>
 </html>

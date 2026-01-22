@@ -1,6 +1,6 @@
 <?php
 // Script para mostrar la justificación detallada de un cobro manual
-require_once 'conexion.php'; 
+require_once '../conexion.php'; 
 
 $id_cobro = isset($_GET['id_cobro']) ? intval($_GET['id_cobro']) : 0;
 $detalle = null;

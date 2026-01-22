@@ -12,7 +12,7 @@
  *
  */
 
-require 'conexion.php';
+require '../conexion.php';
 
 // 1. CAPTURA Y SANEO DE DATOS
 $id = $conn->real_escape_string($_POST['id']);
@@ -33,7 +33,7 @@ $ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap']);
 $puerto_nap = $conn->real_escape_string($_POST['puerto_nap']);
 $num_presinto_odn = $conn->real_escape_string($_POST['num_presinto_odn']);
 $id_olt = $conn->real_escape_string($_POST['id_olt']);
-$id_pon = $conn->real_escape_string($_POST['id_pon']);
+$id_pon = $conn->real_escape_string($_POST['id_pon']?? null);
 
 $errores = '';
 
@@ -79,6 +79,7 @@ if (empty($errores)) {
 	<title>Actualizando Contrato</title>
 	<link href="../../css/bootstrap.min.css" rel="stylesheet">
 	<link href="../../css/style4.css" rel="stylesheet">
+	 <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
 	<style>
 		.text-success { color: #198754 !important; }
 		.text-danger { color: #dc3545 !important; }
@@ -93,7 +94,7 @@ if (empty($errores)) {
 			<p class="text-center">El contrato con ID: <b><?php echo $id; ?></b> ha sido actualizado correctamente.</p>
 			<div class="col-12 text-center">
 		        	<div class="col-md-12">
-		        		<a href="index.php" class="btn btn-primary">Regresar</a>
+		        		<a href="gestion_contratos.php" class="btn btn-primary">Regresar</a>
 		        	</div>
 		        </div>
 		<?php } else { ?>
@@ -104,7 +105,7 @@ if (empty($errores)) {
                 </div>
 				 <div class="col-12 text-center">
 		        	<div class="col-md-12">
-		        		<a href="index.php" class="btn btn-primary btn-danger">Regresar</a>
+		        		<a href="gestion_contratos.php" class="btn btn-primary btn-danger">Regresar</a>
 		        	</div>
 		        </div>
             <?php } else { ?>

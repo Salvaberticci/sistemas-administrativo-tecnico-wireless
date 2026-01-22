@@ -1,0 +1,28 @@
+[
+    {
+        "municipio": "San Fernando",
+        "parroquias": [
+            "San Fernando",
+            "El Recreo",
+            "Peñalver",
+            "San Rafael de Atamaica"
+        ]
+    },
+    {
+        "municipio": "Biruaca",
+        "parroquias": [
+            "Biruaca"
+        ]
+    },
+    {
+        "municipio": "Achaguas",
+        "parroquias": [
+            "Achaguas",
+            "Apurito",
+            "El Yagual",
+            "Guachara",
+            "Mucuritas",
+            "Queseras del Medio"
+        ]
+    }
+]

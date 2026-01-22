@@ -153,219 +153,189 @@ if (isset($_GET['message'])) {
 $conn->close();
 
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Usuarios</title>
-    <link href="../css/bootstrap.min.css" rel="stylesheet">
-    <link href="../css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style3.css">
-    <link rel="stylesheet" href="../css/style4.css">
-    <style>
-        /* Estilos del modal para coherencia (AZUL solicitado) */
-        .texto_modificado_modal {
-            color: #0d6efd; /* Azul Bootstrap Primary */
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
+<?php
+$page_title = "Gestión de Usuarios";
+require_once 'includes/layout_head.php';
+require_once 'includes/sidebar.php';
+?>
 
-        .modal-header-styled {
-            background-color: #f8f9fa; 
-            border-bottom: 2px solid #0d6efd;
-        }
-        
-        /* Asegurar que la tabla y el contenedor mantengan el ancho original */
-        .table-container {
-            width: 100%;
-            overflow-x: auto;
-        }
-        
-        .register-container {
-            max-width: 900px; /* Limitar el ancho del contenedor principal si era así antes */
-            margin: auto;
-            padding: 20px;
-        }
-        
-        /* Estilos del formulario dentro del modal (para usar las clases de Bootstrap dentro del modal) */
-        #form-modificacion-usuario .form-label {
-            margin-bottom: 0.25rem;
-            font-weight: 600;
-        }
-    </style>
-</head>
-<body>
-    <div class="register-container">
-        <header class="register-header">
-            <h1>Gestión de Usuarios</h1>
-            <p>Wireless Supply, C.A.</p>
-        </header>
+<main class="main-content">
+    <?php include 'includes/header.php'; ?>
 
-        <div class="header-actions">
-            <div>
-                <button type="button" class="btn btn-primary" 
-                    data-bs-toggle="modal" 
-                    data-bs-target="#modalModificacionUsuario" 
-                    data-id="" data-nombre="" data-usuario="" data-rol="">
-                    Nuevo Registro
-                </button>
-            </div>
-            <div class="step-section search-section">
-                <h2 style="margin-top: 0; text-align: center;">Buscar</h2>
-                <form action="gestion_usuarios.php" method="GET" class="search-form" style="display: inline-flex; width: 100%;">
-                    <input type="text" name="search" placeholder="Buscar por nombre o usuario..." value="<?php echo htmlspecialchars($search_term); ?>">
-                    <button type="submit" class="btn btn-primary">Buscar</button>
-                </form>
-            </div>
-        </div>
+    <div class="page-content">
         
-
         <?php if ($message): ?>
-            <div class="message <?php echo $message_class; ?>">
+            <div class="alert alert-<?php echo $message_class == 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert">
                 <?php echo htmlspecialchars($message); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
-        
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre Completo</th>
-                        <th>Usuario (Login)</th>
-                        <th>Rol</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($data)): ?>
-                        <?php foreach ($data as $row): ?>
+
+        <div class="card">
+            <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-center">
+                <h5 class="mb-3 mb-md-0">Listado de Usuarios</h5>
+                <div class="d-flex gap-2 w-100 w-md-auto">
+                    <form action="gestion_usuarios.php" method="GET" class="d-flex gap-2 flex-grow-1 header-search">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Buscar..." value="<?php echo htmlspecialchars($search_term); ?>">
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-search"></i></button>
+                    </form>
+                    <button type="button" class="btn btn-primary btn-sm text-nowrap" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#modalModificacionUsuario" 
+                        data-id="" data-nombre="" data-usuario="" data-rol="">
+                        <i class="fa-solid fa-plus"></i> Nuevo
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <td><?php echo htmlspecialchars($row['id_usuario']); ?></td>
-                                <td><?php echo htmlspecialchars($row['nombre_completo']); ?></td>
-                                <td><?php echo htmlspecialchars($row['usuario']); ?></td>
-                                <td><?php echo htmlspecialchars($row['rol']); ?></td>
-                                <td class="action-links">
-                                   <a href="#" 
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#modalModificacionUsuario"
-                                       data-id="<?php echo htmlspecialchars($row['id_usuario']); ?>"
-                                       data-nombre="<?php echo htmlspecialchars($row['nombre_completo']); ?>"
-                                       data-usuario="<?php echo htmlspecialchars($row['usuario']); ?>"
-                                       data-rol="<?php echo htmlspecialchars($row['rol']); ?>"
-                                       class="btn btn-sm" title="Modificar Usuario">
-                                       <i class="fa-solid fa-pen-to-square text-primary"></i>
-                                   </a>
-                                   <a href="#" 
-                                       data-bs-href="gestion_usuarios.php?action=delete_user&id=<?php echo urlencode($row['id_usuario']); ?>" 
-                                       data-bs-toggle="modal" 
-                                       data-bs-target="#eliminaModal" 
-                                       class="btn btn-sm" 
-                                       title="Eliminar Usuario">
-                                       <i class="fa-solid fa-trash-can text-danger"></i>
-                                   </a>
-                                </td>
+                                <th class="ps-4">ID</th>
+                                <th>Nombre Completo</th>
+                                <th>Usuario</th>
+                                <th>Rol</th>
+                                <th class="text-end pe-4">Acciones</th>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr><td colspan="5">No se encontraron usuarios.</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-        <div style="margin-top: 2em; text-align: center;">
-            <a href="menu.php" class="btn btn-secondary">Volver al Menú</a>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($data)): ?>
+                                <?php foreach ($data as $row): ?>
+                                    <tr>
+                                        <td class="ps-4 text-muted">#<?php echo htmlspecialchars($row['id_usuario']); ?></td>
+                                        <td class="fw-bold text-dark"><?php echo htmlspecialchars($row['nombre_completo']); ?></td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="fa-solid fa-user me-1"></i> <?php echo htmlspecialchars($row['usuario']); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <?php 
+                                            $badgeClass = $row['rol'] === 'Administrador' ? 'bg-primary' : 'bg-secondary';
+                                            ?>
+                                            <span class="badge <?php echo $badgeClass; ?> bg-opacity-10 text-primary border border-primary border-opacity-10">
+                                                <?php echo htmlspecialchars($row['rol']); ?>
+                                            </span>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                           <div class="btn-group">
+                                                <a href="#" 
+                                                   data-bs-toggle="modal"
+                                                   data-bs-target="#modalModificacionUsuario"
+                                                   data-id="<?php echo htmlspecialchars($row['id_usuario']); ?>"
+                                                   data-nombre="<?php echo htmlspecialchars($row['nombre_completo']); ?>"
+                                                   data-usuario="<?php echo htmlspecialchars($row['usuario']); ?>"
+                                                   data-rol="<?php echo htmlspecialchars($row['rol']); ?>"
+                                                   class="btn btn-light btn-sm text-primary" title="Modificar">
+                                                   <i class="fa-solid fa-pen"></i>
+                                                </a>
+                                                <a href="#" 
+                                                   data-bs-href="gestion_usuarios.php?action=delete_user&id=<?php echo urlencode($row['id_usuario']); ?>" 
+                                                   data-bs-toggle="modal" 
+                                                   data-bs-target="#eliminaModal" 
+                                                   class="btn btn-light btn-sm text-danger" 
+                                                   title="Eliminar">
+                                                   <i class="fa-solid fa-trash"></i>
+                                                </a>
+                                           </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="5" class="text-center p-4 text-muted">No se encontraron usuarios.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-top-0 d-flex justify-content-center p-3">
+                 <!-- Pagination could go here -->
+            </div>
         </div>
     </div>
+</main>
 
-    <div class="modal fade" id="modalModificacionUsuario" tabindex="-1" aria-labelledby="modalModificacionUsuarioLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header modal-header-styled">
-                    <h5 class="modal-title texto_modificado_modal" id="modalModificacionUsuarioLabel">Modificar Usuario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="form-modificacion-usuario" class="row g-3 p-3" method="POST" action="gestion_usuarios.php" novalidate>
-                    <div class="modal-body">
-                        <input type="hidden" name="id_usuario" id="id_usuario_modal" value="">
-                        
-                        <div class="col-12 mb-3">
-                            <label for="nombre_completo_modal" class="form-label">Nombre Completo:</label>
-                            <input type="text" id="nombre_completo_modal" name="nombre_completo" class="form-control" required> 
-                            <div class="invalid-feedback">
-                                Por favor, ingrese el nombre completo.
-                            </div>
-                        </div>
+<!-- Modal Modificar/Crear -->
+<div class="modal fade" id="modalModificacionUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary" id="modalModificacionUsuarioLabel">Gestión de Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-modificacion-usuario" method="POST" action="gestion_usuarios.php" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" name="id_usuario" id="id_usuario_modal" value="">
+                    
+                    <div class="mb-3">
+                        <label for="nombre_completo_modal" class="form-label small text-muted fw-bold text-uppercase">Nombre Completo</label>
+                        <input type="text" id="nombre_completo_modal" name="nombre_completo" class="form-control" placeholder="Ej: Juan Pérez" required> 
+                        <div class="invalid-feedback">Ingrese el nombre completo.</div>
+                    </div>
 
-                        <div class="col-12 mb-3">
-                            <label for="usuario_modal" class="form-label">Usuario (Login):</label>
-                            <input type="text" id="usuario_modal" name="usuario" class="form-control" required> 
-                            <div class="invalid-feedback">
-                                Por favor, ingrese el nombre de usuario.
-                            </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="usuario_modal" class="form-label small text-muted fw-bold text-uppercase">Usuario</label>
+                            <input type="text" id="usuario_modal" name="usuario" class="form-control" placeholder="Ej: jperez" required> 
+                            <div class="invalid-feedback">Ingrese el usuario.</div>
                         </div>
-                        
-                        <div class="col-12 mb-3">
-                            <label for="rol_modal" class="form-label">Rol:</label>
+                        <div class="col-md-6 mb-3">
+                            <label for="rol_modal" class="form-label small text-muted fw-bold text-uppercase">Rol</label>
                             <select id="rol_modal" name="rol" class="form-select" required>
                                 <option value="Administrador">Administrador</option>
                                 <option value="Operador">Operador</option>
+                                <option value="Vendedor">Vendedor</option>
                             </select>
-                            <div class="invalid-feedback">
-                                Por favor, seleccione un rol.
-                            </div>
                         </div>
+                    </div>
 
-                        <div class="col-12 mb-3">
-                            <label for="clave_modal" class="form-label" id="clave_label">Clave:</label>
-                            <input type="password" id="clave_modal" name="clave" class="form-control" placeholder="Dejar vacío para no cambiar" minlength="4">
-                             <small class="form-text text-muted" id="clave_hint">Solo ingrese una clave si desea cambiarla.</small>
-                             <div class="invalid-feedback" id="clave_feedback">
-                                La clave es obligatoria para nuevos usuarios y debe tener al menos 4 caracteres.
-                             </div>
-                        </div>
-                        
+                    <div class="mb-3">
+                        <label for="clave_modal" class="form-label small text-muted fw-bold text-uppercase">Contraseña</label>
+                        <input type="password" id="clave_modal" name="clave" class="form-control" placeholder="••••••" minlength="4">
+                        <div class="form-text small" id="clave_hint">Déjelo en blanco para mantener la actual.</div>
+                        <div class="invalid-feedback">La contraseña es requerida para nuevos usuarios (min 4 caracteres).</div>
                     </div>
-                    <div class="modal-footer d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="width: 40%;">Cancelar</button>
-                        <button type="button" id="btn-actualizar-usuario" class="btn btn-primary" style="width: 55%;">Guardar</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btn-actualizar-usuario" class="btn btn-primary px-4">Guardar Cambios</button>
+                </div>
+            </form>
         </div>
     </div>
-    <div class="modal fade" id="eliminaModal" tabindex="-1" aria-labelledby="eliminaModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <div class="modal-header modal-header-styled">
-                    <h5 class="modal-title texto_modificado_modal" id="eliminaModalLabel">Eliminar Registro</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<!-- Modal Eliminar -->
+<div class="modal fade" id="eliminaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3 text-danger">
+                    <i class="fa-solid fa-circle-exclamation fa-3x"></i>
                 </div>
-                <div class="modal-body">
-                    ¿Desea eliminar el registro?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn_modificado2" data-bs-dismiss="modal" >Cancelar</button>
-                    <a class="btn btn-danger btn-ok" href="#">Eliminar</a> 
+                <h5 class="fw-bold mb-2">¿Eliminar Usuario?</h5>
+                <p class="text-muted small mb-4">Esta acción no se puede deshacer.</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <a href="#" class="btn btn-danger btn-ok px-4">Eliminar</a> 
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-<script src="../js/bootstrap.bundle.min.js"></script> 
+<?php require_once 'includes/layout_foot.php'; ?>
 
 <script>
-    // -----------------------------------------------------
-    // 1. LÓGICA DEL MODAL DE MODIFICACIÓN/CREACIÓN
-    // -----------------------------------------------------
+    // Logic for User Modal
     const modalModificacionUsuario = document.getElementById('modalModificacionUsuario');
     const formModificacionUsuario = document.getElementById('form-modificacion-usuario');
 
     if (modalModificacionUsuario) {
         modalModificacionUsuario.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget; 
-            
             const id = button.getAttribute('data-id');
             const nombre = button.getAttribute('data-nombre');
             const usuario = button.getAttribute('data-usuario');
@@ -376,94 +346,67 @@ $conn->close();
             const claveHint = document.getElementById('clave_hint');
             const btnSubmit = document.getElementById('btn-actualizar-usuario');
             
-            // Limpiar clave al abrir
-            claveInput.value = '';
+            claveInput.value = ''; // Reset password field
             
             if (id) {
-                // Modo Modificación
-                modalTitle.textContent = `Modificar Usuario ID: ${id}`;
+                // Edit Mode
+                modalTitle.textContent = 'Editar Usuario';
                 document.getElementById('id_usuario_modal').value = id;
                 document.getElementById('nombre_completo_modal').value = nombre;
                 document.getElementById('usuario_modal').value = usuario;
                 document.getElementById('rol_modal').value = rol;
                 
-                // Clave: Opcional, solo si el usuario la teclea
                 claveInput.required = false; 
-                claveHint.textContent = "Solo ingrese una clave si desea cambiarla. Debe tener al menos 4 caracteres.";
-                btnSubmit.textContent = "Actualizar";
-
+                claveHint.textContent = "Ingrese una nueva contraseña solo si desea cambiarla.";
             } else {
-                // Modo Creación (Nuevo Registro)
-                modalTitle.textContent = 'Crear Nuevo Usuario';
-                document.getElementById('id_usuario_modal').value = ''; // ID vacío para inserción
+                // Create Mode
+                modalTitle.textContent = 'Nuevo Usuario';
+                document.getElementById('id_usuario_modal').value = '';
                 document.getElementById('nombre_completo_modal').value = '';
                 document.getElementById('usuario_modal').value = '';
-                // Establecer un rol por defecto si es creación
                 document.getElementById('rol_modal').value = 'Vendedor'; 
 
-                // Clave: Requerida para nuevo usuario
                 claveInput.required = true; 
-                claveHint.textContent = "La clave es obligatoria para un nuevo usuario y debe tener al menos 4 caracteres.";
-                btnSubmit.textContent = "Guardar";
+                claveHint.textContent = "La contraseña es obligatoria para nuevos usuarios.";
             }
-            
-            // Reiniciar la validación de Bootstrap
             formModificacionUsuario.classList.remove('was-validated');
         });
 
-        // 2. Lógica para el botón de Guardar/Actualizar y validación manual
+        // Submit Logic
         const btnActualizarUsuario = document.getElementById('btn-actualizar-usuario');
-
         if (btnActualizarUsuario && formModificacionUsuario) {
-            btnActualizarUsuario.addEventListener('click', function(event) {
-                
-                // Forzar la validación de la contraseña solo si está en modo CREACIÓN o si se llenó el campo
+            btnActualizarUsuario.addEventListener('click', function() {
                 const claveInput = document.getElementById('clave_modal');
                 const isCreation = document.getElementById('id_usuario_modal').value === '';
                 
                 if (isCreation) {
                     claveInput.required = true;
                 } else {
-                    // Si es modificación, solo se requiere si tiene contenido
                     claveInput.required = claveInput.value.length > 0;
-                    // También debe cumplir el minlength si tiene contenido
                     if (claveInput.value.length > 0 && claveInput.value.length < 4) {
                         claveInput.setCustomValidity("La clave debe tener al menos 4 caracteres.");
                     } else {
-                        claveInput.setCustomValidity(""); // Resetear la validez
+                        claveInput.setCustomValidity("");
                     }
                 }
 
-                // Usamos checkValidity para validar los campos requeridos
                 if (formModificacionUsuario.checkValidity()) {
-                    formModificacionUsuario.submit(); // Enviar el formulario
+                    formModificacionUsuario.submit();
                 } else {
                     formModificacionUsuario.classList.add('was-validated');
-                    // Opcional: enfocar el primer campo inválido
-                    formModificacionUsuario.reportValidity(); 
                 }
             });
         }
     }
 
-    // -----------------------------------------------------
-    // 3. LÓGICA DEL MODAL DE ELIMINACIÓN
-    // -----------------------------------------------------
-    let eliminaModal = document.getElementById('eliminaModal');
-    
+    // Delete Modal
+    const eliminaModal = document.getElementById('eliminaModal');
     if (eliminaModal) { 
         eliminaModal.addEventListener('shown.bs.modal', event => {
-            let button = event.relatedTarget;
-            // Obtenemos la URL del atributo data-bs-href (que es lo que se envía al PHP)
-            let url = button.getAttribute('data-bs-href'); 
-            
-            // Asignamos la URL al botón de confirmación 'Eliminar' (clase .btn-ok)
-            let btnOk = eliminaModal.querySelector('.modal-footer .btn-ok');
-            if (btnOk) {
-                btnOk.href = url;
-            }
+            const button = event.relatedTarget;
+            const url = button.getAttribute('data-bs-href'); 
+            const btnOk = eliminaModal.querySelector('.btn-ok');
+            if (btnOk) btnOk.href = url;
         });
     }
 </script>
-</body>
-</html>

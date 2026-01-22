@@ -1,124 +1,107 @@
 <?php
-// ¡AÑADE ESTO PARA DEBUGGING!
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// server_process.php
+ini_set('display_errors', 0); // Hide errors in production JSON
 error_reporting(E_ALL);
-// FIN DE DEBUGGING
 
-/**
- * Script para cargar datos del lado del servidor en DataTables
- *
- * @author MRoblesDev
- * @version 1.1 - Incluye nombres en lugar de IDs para Municipio, Parroquia, Plan y Vendedor
- * https://github.com/mroblesdev
- *
- */
+require '../conexion.php';
 
-require 'conexion.php';
-
-// 1. Definición de la tabla principal y las uniones (JOINs)
-// Usamos alias (c, m, pa, pl, v) para simplificar la consulta
+// 1. Tables and Joins
 $sTabla = "
     contratos c
-   LEFT JOIN municipio m ON c.id_municipio = m.id_municipio /* Asumiendo que el PK es id_municipio */
-   LEFT JOIN parroquia pa ON c.id_parroquia = pa.id_parroquia /* Asumiendo que el PK es id_parroquia */
-   LEFT JOIN comunidad com ON c.id_comunidad = com.id_comunidad /* Asumiendo que el PK es id_comunidad */
+   LEFT JOIN municipio m ON c.id_municipio = m.id_municipio 
+   LEFT JOIN parroquia pa ON c.id_parroquia = pa.id_parroquia 
+   LEFT JOIN comunidad com ON c.id_comunidad = com.id_comunidad 
    LEFT JOIN planes pl ON c.id_plan = pl.id_plan
    LEFT JOIN vendedores v ON c.id_vendedor = v.id_vendedor
    LEFT JOIN olt ol ON c.id_olt = ol.id_olt
    LEFT JOIN pon pn ON c.id_pon = pn.id_pon
 ";
 
-// 2. Definición de las columnas
-// Usamos el alias de la tabla y el nombre de la columna para la búsqueda y ordenamiento de DataTables.
+// 2. Columns to FETCH and SEARCH
+// Note: The order here dictates the index for searching/sorting/filtering from DataTables
 $aColumnas = [
-    'c.id', 
-    'c.ip',
-    'c.cedula',
-    'c.nombre_completo',
-    'c.telefono',
-    'c.correo',
-    'm.nombre_municipio',           // Nombre del Municipio
-    'pa.nombre_parroquia',          // Nombre de la Parroquia
-    'com.nombre_comunidad',
-    'c.direccion',                  // <-- COLUMNA DE DIRECCIÓN
-    'pl.nombre_plan',               // Nombre del Plan
-    'v.nombre_vendedor',            // Nombre completo del Vendedor
-    'c.fecha_instalacion', 
-    'c.estado', 
-    'c.ident_caja_nap',
-    'c.puerto_nap',
-    'c.num_presinto_odn',
-    'ol.nombre_olt',               // Nombre de la OLT
-    'pn.nombre_pon'           // Nombre del PON
+    'c.id',                     // 0
+    'c.fecha_registro',         // 1
+    'c.cedula',                 // 2
+    'c.nombre_completo',        // 3
+    'm.nombre_municipio',       // 4
+    'pa.nombre_parroquia',      // 5
+    'c.direccion',              // 6
+    'c.telefono',               // 7
+    'c.telefono_secundario',    // 8
+    'c.correo',                 // 9
+    'c.correo_adicional',       // 10
+    'c.fecha_instalacion',      // 11
+    'c.medio_pago',             // 12
+    'c.monto_pagar',            // 13
+    'c.monto_pagado',           // 14
+    'c.dias_prorrateo',         // 15
+    'c.monto_prorrateo_usd',    // 16
+    'c.observaciones',          // 17
+    'c.tipo_conexion',          // 18
+    'c.numero_onu',             // 19
+    'c.mac_onu',                // 20
+    'c.ip_onu',                 // 21
+    'c.ident_caja_nap',         // 22
+    'c.puerto_nap',             // 23
+    'c.nap_tx_power',           // 24
+    'c.onu_rx_power',           // 25
+    'c.distancia_drop',         // 26
+    'c.instalador',             // 27
+    'c.evidencia_fibra',        // 28
+    'c.ip',                     // 29
+    'c.punto_acceso',           // 30
+    'c.valor_conexion_dbm',     // 31
+    'c.num_presinto_odn',       // 32
+    'c.evidencia_foto',         // 33
+    'c.firma_cliente',          // 34
+    'c.firma_tecnico',          // 35
+    'c.vendedor_texto',         // 36
+    'c.sae_plus',               // 37
+    'pl.nombre_plan',           // 38
+    'ol.nombre_olt',            // 39
+    'pn.nombre_pon',            // 40
+    'c.estado'                  // 41
 ];
-$sIndexColumn = "c.id"; // Usamos c.id como índice
 
-// El resto de la lógica de paginación, ordenamiento y búsqueda es la misma...
+$sIndexColumn = "c.id";
 
+// --- Paginación ---
 $sLimit = '';
-$start = $_GET['iDisplayStart'] ?? 0;
-$length = $_GET['iDisplayLength'] ?? -1;
-
-$sLimit = '';
-if ($length != -1) {
-    $sLimit = "LIMIT {$start}, {$length}";
+if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
+    $sLimit = "LIMIT " . intval($_GET['iDisplayStart']) . ", " . intval($_GET['iDisplayLength']);
 }
 
+// --- Ordenamiento ---
 $sOrder = '';
 if (isset($_GET['iSortCol_0'])) {
     $sOrder = 'ORDER BY ';
-    $sortingCols = intval($_GET['iSortingCols'] ?? 0); 
+    $sortingCols = intval($_GET['iSortingCols']);
     for ($i = 0; $i < $sortingCols; $i++) {
-        $colIndex = intval($_GET["iSortCol_{$i}"] ?? -1);
-        $bSortable = $_GET["bSortable_{$i}"] ?? "false"; 
-        
-        if ($colIndex >= 0 && $colIndex < count($aColumnas) && $bSortable == "true") {
-            $sortDir = $_GET["sSortDir_{$i}"] ?? "asc";
-            $sOrder .= "{$aColumnas[$colIndex]} {$sortDir}, ";
+        $sortColIdx = intval($_GET["iSortCol_{$i}"]);
+        if (isset($aColumnas[$sortColIdx])) {
+             $sortDir = $_GET["sSortDir_{$i}"] === 'desc' ? 'desc' : 'asc'; // Sanitize direction
+             $sOrder .= $aColumnas[$sortColIdx] . " " . $sortDir . ", ";
         }
     }
     $sOrder = rtrim($sOrder, ', ');
+    if ($sOrder == 'ORDER BY ') $sOrder = '';
 }
 
+// --- Búsqueda ---
+$sWhere = "";
 $searchConditions = [];
-$searchValue = $_GET['sSearch'] ?? ''; 
-if ($searchValue != "") {
-    foreach ($aColumnas as $column) {
-        $searchConditions[] = "$column LIKE '%$searchValue%'";
+if (isset($_GET['sSearch']) && $_GET['sSearch'] != "") {
+    $searchValue = $conn->real_escape_string($_GET['sSearch']);
+    foreach ($aColumnas as $col) {
+        $searchConditions[] = "$col LIKE '%$searchValue%'";
     }
 }
-
-$individualSearchConditions = [];
-
-for ($i = 0; $i < intval($_GET['iColumns'] ?? 0); $i++) {
-    $isSearchable = $_GET['bSearchable_' . $i] ?? 'false';
-    $sSearchTerm = $_GET['sSearch_' . $i] ?? '';
-    
-    if ($isSearchable == 'true' && $sSearchTerm != '') {
-        // Usamos el nombre de la columna definido en $aColumnas
-        $individualSearchConditions[] = "{$aColumnas[$i]} LIKE '%{$conn->real_escape_string($sSearchTerm)}%'";
-    }
+if (!empty($searchConditions)) {
+    $sWhere = "WHERE (" . implode(' OR ', $searchConditions) . ")";
 }
 
-$whereConditions = [];
-if (!empty($searchConditions) || !empty($individualSearchConditions)) {
-    // La búsqueda global busca en todas las columnas (OR). 
-    $whereConditions[] = "(" . implode(' OR ', $searchConditions) . ")";
-
-    // La búsqueda individual se añade con AND
-    if (!empty($individualSearchConditions)) {
-        $whereConditions[] = "(" . implode(' AND ', $individualSearchConditions) . ")";
-    }
-}
-
-$sWhere = '';
-if (!empty($whereConditions)) {
-    $sWhere = "WHERE " . implode(' AND ', $whereConditions);
-}
-
-// 3. Construcción de la consulta SELECT
-// Seleccionamos las columnas con sus prefijos para que el resultado coincida con lo esperado
+// --- Query Principal ---
 $sQuery = "
     SELECT SQL_CALC_FOUND_ROWS " . implode(', ', $aColumnas) . "
     FROM $sTabla
@@ -127,99 +110,204 @@ $sQuery = "
     $sLimit
 ";
 $rResult = $conn->query($sQuery);
+if (!$rResult) {
+    die(json_encode(['error' => $conn->error]));
+}
 
-
-// El resto del código que cuenta registros e itera sobre los resultados es el mismo...
-
+// --- Totales ---
 $rResultFilterTotal = $conn->query("SELECT FOUND_ROWS()");
 $iFilteredTotal = $rResultFilterTotal->fetch_array()[0];
 
-// Usamos el mismo JOIN para el conteo total por si la tabla principal tiene alias
-$rResultTotal = $conn->query("SELECT COUNT({$sIndexColumn}) FROM $sTabla"); 
+$rResultTotal = $conn->query("SELECT COUNT({$sIndexColumn}) FROM $sTabla");
 $iTotal = $rResultTotal->fetch_array()[0];
 
+// --- Salida ---
 $output = [
-    "sEcho" => intval($_GET['sEcho'] ?? 0), 
+    "sEcho" => intval($_GET['sEcho']),
     "iTotalRecords" => $iTotal,
     "iTotalDisplayRecords" => $iFilteredTotal,
     "aaData" => []
 ];
 
-// Mapeo de campos para facilitar la lectura del array de resultado
-// La columna 'c.direccion' está en el índice 8, 'c.nombre_completo' en el 3 y 'c.ip' en el 1.
-// Los índices de columna en $aColumnas son:
-// 0: c.id, 1: c.ip, 2: c.cedula, 3: c.nombre_completo, 4: c.telefono, 5: c.correo, 
-// 6: m.nombre_municipio, 7: pa.nombre_parroquia, 8: c.direccion, 9: pl.nombre_plan, 
-// 10: v.nombre_vendedor, 11: c.fecha_instalacion, 12: c.estado, 13: c.ident_caja_nap, 
-// 14: c.puerto_nap, 15: c.num_presinto_odn, 16: c.pon
-$INDEX_ID = 0;
-$INDEX_IP = 1;
-$INDEX_NOMBRE_COMPLETO = 3;
-$INDEX_DIRECCION = 9; // <-- Índice de la columna 'c.direccion'
+// Helper para limpiar strings
+function clean($str) {
+    return htmlspecialchars($str ?? '', ENT_QUOTES, 'UTF-8');
+}
 
-$rResult->field_seek(0);
-$fields = $rResult->fetch_fields();
-
-while ($aRow = $rResult->fetch_array(MYSQLI_NUM)) {
+while ($aRow = $rResult->fetch_assoc()) {
     $row = [];
-    $id_registro = $aRow[$INDEX_ID]; 
+    $id = $aRow['id'];
 
-    // ⭐ PASO CLAVE: Extracción y Sanitización de Datos
-    // 1. Extraer la dirección, nombre e IP.
-    $direccion_raw = trim($aRow[$INDEX_DIRECCION] ?? '');
-    $nombre_completo_raw = trim($aRow[$INDEX_NOMBRE_COMPLETO] ?? ''); 
-    $ip_raw = trim($aRow[$INDEX_IP] ?? ''); 
+    // 0. ID (Hidden in JS usually, but sent here)
+    $row[] = $id;
 
-    // 2. Reemplazar saltos de línea con un espacio para evitar romper el atributo HTML.
-    $direccion_sin_newlines = str_replace(["\r", "\n"], ' ', $direccion_raw);
-    
-    // 3. Escapar para uso SEGURO en un atributo HTML (maneja comillas simples y dobles).
-    $direccion = htmlspecialchars($direccion_sin_newlines, ENT_QUOTES, 'UTF-8'); 
-    $nombre_completo = htmlspecialchars($nombre_completo_raw, ENT_QUOTES, 'UTF-8'); 
-    $ip = htmlspecialchars($ip_raw, ENT_QUOTES, 'UTF-8'); 
-    
-    for ($i = 0; $i < count($fields); $i++) {
-        $column = $fields[$i]->name;
-        $value = $aRow[$i];
+    // 1. SAR (Fecha Registro)
+    $row[] = !empty($aRow['fecha_registro']) ? date('d/m/Y H:i', strtotime($aRow['fecha_registro'])) : '-';
 
-        if ($column == 'fecha_instalacion') {
-            // Lógica de formato de fecha
-            if (!empty($value) && $value != '0000-00-00') {
-                $row[] = date('d/m/Y', strtotime($value));
-            } else {
-                $row[] = $value; 
-            }
-        } elseif ($column == 'direccion') {
-            // LÓGICA CLAVE: Reemplazar el valor de la dirección con el botón/icono
-            // Usamos las variables $direccion, $nombre_completo, $ip ya sanitizadas.
-            $button_html = "
-                <a class='btn btn-sm' href='#' 
-                   data-bs-toggle='modal' 
-                   data-bs-target='#modalDireccion' 
-                   data-direccion='{$direccion}'
-                   data-nombre='{$nombre_completo}'
-                   data-ip='{$ip}'
-                   title='Ver Dirección Completa'>
-                    <i class='fa-solid fa-eye text-info'></i> </a>
-            ";
-            $row[] = $button_html;
-        } elseif ($column == "version") {
-            $row[] = ($value == "0") ? '-' : $value;
-        } else {
-            // Añadir el valor de la columna como está
-            $row[] = $value;
-        }
+    // 2. CEDULA
+    $row[] = clean($aRow['cedula']);
+
+    // 3. NOMBRE
+    $row[] = "<span class='fw-bold text-primary'>" . clean($aRow['nombre_completo']) . "</span>";
+
+    // 4. MUNICIPIO
+    $row[] = clean($aRow['nombre_municipio']);
+
+    // 5. PARROQUIA
+    $row[] = clean($aRow['nombre_parroquia']);
+
+    // 6. DIRECCION (Boton)
+    $direccion = clean(str_replace(["\r", "\n"], ' ', $aRow['direccion']));
+    $row[] = "<button class='btn btn-sm btn-info text-white' 
+                onclick='verDireccion(\"{$direccion}\", \"" . clean($aRow['nombre_completo']) . "\", \"" . clean($aRow['ip']) . "\")'
+                title='Ver Dirección'>
+              <i class='fa-solid fa-map-location-dot'></i></button>";
+
+    // 7. TELEFONO 1
+    $row[] = clean($aRow['telefono']);
+
+    // 8. TELEFONO 2
+    $row[] = clean($aRow['telefono_secundario']);
+
+    // 9. CORREO
+    $row[] = clean($aRow['correo']);
+
+    // 10. CORREO ADICIONAL
+    $row[] = clean($aRow['correo_adicional']);
+
+    // 11. FECHA INSTALACION
+    $row[] = (!empty($aRow['fecha_instalacion']) && $aRow['fecha_instalacion'] != '0000-00-00') ? date('d/m/Y', strtotime($aRow['fecha_instalacion'])) : '';
+
+    // 12. MEDIO PAGO
+    $row[] = clean($aRow['medio_pago']);
+
+    // 13. MONTO PAGAR
+    $row[] = clean($aRow['monto_pagar']);
+
+    // 14. MONTO PAGADO
+    $row[] = clean($aRow['monto_pagado']);
+
+    // 15. DIAS PRORRATEO
+    $row[] = clean($aRow['dias_prorrateo']);
+
+    // 16. MONTO PRORRATEO $
+    $row[] = clean($aRow['monto_prorrateo_usd']);
+
+    // 17. OBSERVACIONES
+    $row[] = clean($aRow['observaciones']);
+
+    // 18. TIPO CONEXION
+    $row[] = clean($aRow['tipo_conexion']);
+
+    // 19. NUMERO ONU
+    $row[] = clean($aRow['numero_onu']);
+
+    // 20. MAC ONU
+    $row[] = clean($aRow['mac_onu']);
+
+    // 21. IP ONU
+    $row[] = clean($aRow['ip_onu']);
+
+    // 22. CAJA NAP
+    $row[] = clean($aRow['ident_caja_nap']);
+
+    // 23. PUERTO NAP
+    $row[] = clean($aRow['puerto_nap']);
+
+    // 24. NAP TX POWER
+    $row[] = clean($aRow['nap_tx_power']);
+
+    // 25. ONU RX POWER
+    $row[] = clean($aRow['onu_rx_power']);
+
+    // 26. DISTANCIA DROP
+    $row[] = clean($aRow['distancia_drop']);
+
+    // 27. INSTALADOR
+    $row[] = clean($aRow['instalador']);
+
+    // 28. IP SERVICIO
+    $row[] = clean($aRow['ip']);
+
+    // 29. PUNTO ACCESO
+    $row[] = clean($aRow['punto_acceso']);
+
+    // 30. VALOR CONEXION DBM
+    $row[] = clean($aRow['valor_conexion_dbm']);
+
+    // 31. INSTALADOR (Repetido)
+    $row[] = clean($aRow['instalador']);
+
+    // 32. SUGERENCIAS (Observaciones)
+    $row[] = clean($aRow['observaciones']);
+
+    // 33. PRECINTO ODN
+    $row[] = clean($aRow['num_presinto_odn']);
+
+    // 34. EVIDENCIA FOTO
+    $link = $aRow['evidencia_foto'];
+    if (!empty($link)) {
+        $row[] = "<a href='{$link}' target='_blank' class='btn btn-sm btn-outline-primary'><i class='fa-solid fa-image'></i></a>";
+    } else {
+        $row[] = '-';
     }
-    
-    // Botón Modificar 
-    $row[] = "<a class='btn btn-sm' href='modifica.php?id={$id_registro}' title='Modificar Contrato'><i class='fa-solid fa-pen-to-square text-primary'></i></a>";
-    
-    // Botón Eliminar 
-    $row[] = "<a class='btn btn-sm' href='#' data-bs-href='elimina.php?id={$id_registro}' data-bs-toggle='modal' data-bs-target='#eliminaModal' title='Eliminar Contrato'><i class='fa-solid fa-trash-can text-danger'></i></a>";
+
+    // 34B. FIRMA CLIENTE
+    $firmaCliente = $aRow['firma_cliente'] ?? '';
+    if (!empty($firmaCliente)) {
+        $row[] = "<a href='../../uploads/firmas/{$firmaCliente}' target='_blank' class='btn btn-sm btn-outline-info'><i class='fa-solid fa-signature'></i></a>";
+    } else {
+        $row[] = '-';
+    }
+
+    // 34C. FIRMA TECNICO
+    $firmaTecnico = $aRow['firma_tecnico'] ?? '';
+    if (!empty($firmaTecnico)) {
+        $row[] = "<a href='../../uploads/firmas/{$firmaTecnico}' target='_blank' class='btn btn-sm btn-outline-success'><i class='fa-solid fa-signature'></i></a>";
+    } else {
+        $row[] = '-';
+    }
+
+    // 34D. EVIDENCIA FIBRA  
+    $row[] = clean($aRow['evidencia_fibra']);
+
+    // --- EXTRAS ---
+
+    // VENDEDOR (Editable)
+    $v = clean($aRow['vendedor_texto']);
+    $row[] = "<div contenteditable='true' class='editable-cell' data-id='{$id}' data-field='vendedor_texto'>{$v}</div>";
+
+    // SAE PLUS (Editable)
+    $s = clean($aRow['sae_plus']);
+    $row[] = "<div contenteditable='true' class='editable-cell' data-id='{$id}' data-field='sae_plus'>{$s}</div>";
+
+    // PLAN
+    $row[] = clean($aRow['nombre_plan']);
+
+    // OLT
+    $row[] = clean($aRow['nombre_olt']);
+
+    // PON
+    $row[] = clean($aRow['nombre_pon']);
+
+    // ESTADO
+    $st = $aRow['estado'];
+    $color = 'secondary';
+    if ($st == 'ACTIVO') $color = 'success';
+    if ($st == 'SUSPENDIDO') $color = 'danger';
+    $row[] = "<span class='badge bg-{$color}'>{$st}</span>";
+
+    // ACCIONES
+    $row[] = "
+        <div class='d-flex gap-1'>
+            <a href='../reportes_pdf/generar_contrato_pdf.php?id_contrato={$id}' target='_blank' class='btn btn-sm btn-outline-danger' title='PDF'><i class='fa-solid fa-file-pdf'></i></a>
+            <a href='modifica.php?id={$id}' class='btn btn-sm btn-outline-primary' title='Editar'><i class='fa-solid fa-pen'></i></a>
+            <button class='btn btn-sm btn-outline-secondary' onclick='confirmarEliminar({$id})' title='Eliminar'><i class='fa-solid fa-trash'></i></button>
+        </div>
+    ";
 
     $output['aaData'][] = $row;
 }
 
-echo json_encode($output, JSON_UNESCAPED_UNICODE);
-
+echo json_encode($output);
 ?>

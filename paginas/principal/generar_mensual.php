@@ -10,22 +10,22 @@ if (php_sapi_name() !== 'cli') {
 }
 // ----------------------------------------------------------------------
 
-require_once 'conexion.php'; // Incluye tu archivo de conexión
+require_once '../conexion.php'; // Incluye tu archivo de conexión
 
 // ----------------------------------------------------------------------
 // 2. DEFINICIÓN DE FECHAS
 // ----------------------------------------------------------------------
 $fecha_emision = date('Y-m-d');
 $fecha_vencimiento = date('Y-m-d', strtotime('+30 days')); // Vence 30 días después de la emisión
-$mes_actual = date('Y-m'); // Mes y Año actual (ej: 2025-10)
+$mes_actual = date('Y-m'); // Mes y Año actual (ej: 2025-11)
 
 // PRUEBA DE DIAGNÓSTICO: Muestra las fechas generadas en el log del Cron Job
 echo "Fecha de Emisión: " . $fecha_emision . "\n";
 echo "Fecha de Vencimiento calculada: " . $fecha_vencimiento . "\n";
 
 // ----------------------------------------------------------------------
-// 3. CONSULTA PRINCIPAL: Obtener contratos ACTIVO sin factura para este mes
-// ¡CORRECCIÓN CLAVE: Se añade el JOIN a la tabla 'planes'!
+// 3. CONSULTA PRINCIPAL: Obtener contratos ACTIVO con monto mayor a cero
+// ¡CONDICIÓN CLAVE AÑADIDA: p.monto > 0 para excluir planes exonerados!
 // ----------------------------------------------------------------------
 $sql_contratos = "
     SELECT 
@@ -35,16 +35,19 @@ $sql_contratos = "
     FROM contratos c
     JOIN planes p ON c.id_plan = p.id_plan /* <--- UNIÓN PARA OBTENER EL MONTO */
     WHERE c.estado = 'ACTIVO' 
+    AND p.monto > 0                 /* <--- EXCLUYE PLANES CON MONTO CERO (EXONERADOS) */
+    /*
+    La siguiente cláusula se ELIMINÓ previamente para permitir la acumulación:
     AND NOT EXISTS (
         SELECT 1 
         FROM cuentas_por_cobrar cxc 
         WHERE cxc.id_contrato = c.id 
         AND cxc.fecha_emision LIKE '{$mes_actual}%'
     )
+    */
 ";
 
 // Ejecutar consulta de contratos
-// Aquí ocurría el Fatal Error
 $resultado_contratos = $conn->query($sql_contratos); 
 $contador_facturas = 0;
 
@@ -69,10 +72,7 @@ if ($resultado_contratos->num_rows > 0) {
 
     while ($fila = $resultado_contratos->fetch_assoc()) {
         $id_contrato = $fila['id'];
-        
-        // ¡El monto viene ahora como 'monto' de la consulta JOIN!
         $monto_base = $fila['monto']; 
-        
         $id_plan_cobrado = $fila['id_plan'];
         
         // Ejecutar la inserción
@@ -96,7 +96,7 @@ if ($resultado_contratos->num_rows > 0) {
     echo "Proceso completado. {$contador_facturas} facturas generadas exitosamente.\n";
 
 } else {
-    echo "No se encontraron contratos activos sin factura para el mes actual.\n";
+    echo "No se encontraron contratos activos sin factura para el mes actual o todos son planes exonerados.\n";
 }
 
 
