@@ -1,4 +1,4 @@
-<?php 
+<?php
 $page_title = "Panel de Control";
 require_once 'includes/layout_head.php';
 require_once 'includes/sidebar.php';
@@ -6,22 +6,23 @@ require_once 'includes/sidebar.php';
 
 <main class="main-content">
     <?php include 'includes/header.php'; ?>
-    
+
     <div class="page-content">
         <!-- Welcome Hero Section -->
         <div class="card bg-white border-0 shadow-lg overflow-hidden position-relative mb-4">
             <div class="card-body p-5 position-relative text-center text-md-start">
-               <div class="row align-items-center">
-                   <div class="col-md-8">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
                         <h1 class="display-5 fw-bold text-primary mb-3">Bienvenido a Wireless Supply</h1>
                         <p class="lead text-muted mb-4">Sistema de Gestión Administrativa y Técnica</p>
-                        
 
-                   </div>
-                   <div class="col-md-4 text-center">
-                        <img src="../images/logo.jpg" alt="Wireless Supply" class="img-fluid rounded-circle shadow-sm" style="max-height: 180px;">
-                   </div>
-               </div>
+
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <img src="../images/logo.jpg" alt="Wireless Supply" class="img-fluid rounded-circle shadow-sm"
+                            style="max-height: 180px;">
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -57,6 +58,17 @@ require_once 'includes/sidebar.php';
                             <i class="fa-solid fa-users fa-3x text-info mb-3"></i>
                             <h5 class="card-title text-dark">Usuarios</h5>
                             <p class="card-text text-muted small">Gestión de usuarios del sistema</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="soporte/gestion_fallas.php" class="text-decoration-none">
+                    <div class="card h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <i class="fa-solid fa-chart-line fa-3x text-danger mb-3"></i>
+                            <h5 class="card-title text-dark">Gestión de Fallas</h5>
+                            <p class="card-text text-muted small">Estadísticas y reportes técnicos</p>
                         </div>
                     </div>
                 </a>

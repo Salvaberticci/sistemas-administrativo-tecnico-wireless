@@ -1,0 +1,361 @@
+<?php
+/**
+ * Generar PDF de Reporte Técnico Individual
+ * Usa Dompdf para crear un documento profesional con toda la información
+ */
+
+ini_set('memory_limit', '256M');
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("Error: ID de reporte no proporcionado.");
+}
+
+$id_soporte = intval($_GET['id']);
+
+require '../../dompdf/autoload.inc.php';
+use Dompdf\Dompdf;
+use Dompdf\Options;
+
+require_once '../conexion.php';
+
+// Consultar datos completos del reporte
+$sql = "SELECT s.*, c.nombre_completo, c.cedula, c.ip, c.direccion, c.telefono
+        FROM soportes s
+        INNER JOIN contratos c ON s.id_contrato = c.id
+        WHERE s.id_soporte = $id_soporte";
+
+$result = $conn->query($sql);
+if ($result->num_rows == 0) {
+    die("Error: Reporte no encontrado.");
+}
+
+$r = $result->fetch_assoc();
+$saldo = $r['monto_total'] - $r['monto_pagado'];
+$conn->close();
+
+// Preparar variables
+$fecha = date('d/m/Y', strtotime($r['fecha_soporte']));
+$estado_pago = ($saldo <= 0.01) ? 'PAGADO' : 'PENDIENTE';
+
+// Codificar firmas a base64 si existen
+$firma_tecnico_b64 = '';
+$firma_cliente_b64 = '';
+
+if (!empty($r['firma_tecnico'])) {
+    $path_firma_tec = '../../uploads/firmas/' . $r['firma_tecnico'];
+    if (file_exists($path_firma_tec)) {
+        $firma_tecnico_b64 = 'data:image/png;base64,' . base64_encode(file_get_contents($path_firma_tec));
+    }
+}
+
+if (!empty($r['firma_cliente'])) {
+    $path_firma_cli = '../../uploads/firmas/' . $r['firma_cliente'];
+    if (file_exists($path_firma_cli)) {
+        $firma_cliente_b64 = 'data:image/png;base64,' . base64_encode(file_get_contents($path_firma_cli));
+    }
+}
+
+// Construir HTML del documento
+$html = '
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte Técnico #' . $r['id_soporte'] . '</title>
+    <style>
+        body {
+            font-family: "Helvetica", Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+            margin: 20px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #0d6efd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #0d6efd;
+            font-size: 20pt;
+            margin: 0;
+        }
+        .header p {
+            color: #666;
+            margin: 5px 0;
+        }
+        .section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        .section-title {
+            background-color: #0d6efd;
+            color: white;
+            padding: 8px 12px;
+            font-size: 12pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .info-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-table td.label {
+            font-weight: bold;
+            width: 30%;
+            color: #555;
+        }
+        .info-table td.value {
+            color: #333;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 9pt;
+            font-weight: bold;
+        }
+        .badge-success { background-color: #198754; color: white; }
+        .badge-warning { background-color: #ffc107; color: #000; }
+        .badge-danger { background-color: #dc3545; color: white; }
+        .badge-info { background-color: #0dcaf0; color: #000; }
+        .financial-summary {
+            background-color: #f8f9fa;
+            border: 2px solid #0d6efd;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        .financial-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #ccc;
+        }
+        .financial-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 11pt;
+        }
+        .signature-section {
+            margin-top: 40px;
+            text-align: center;
+        }
+        .signature-box {
+            display: inline-block;
+            width: 45%;
+            vertical-align: top;
+            text-align: center;
+        }
+        .signature-box img {
+            max-width: 200px;
+            max-height: 100px;
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
+        .signature-box p {
+            margin-top: 10px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            font-weight: bold;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>WIRELESS SUPPLY, C.A.</h1>
+        <p>REPORTE DE VISITA TÉCNICA</p>
+        <p><strong>Reporte #' . $r['id_soporte'] . '</strong> | Fecha: ' . $fecha . '</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">INFORMACIÓN DEL CLIENTE</div>
+        <table class="info-table">
+            <tr>
+                <td class="label">Nombre:</td>
+                <td class="value">' . htmlspecialchars($r['nombre_completo']) . '</td>
+            </tr>
+            <tr>
+                <td class="label">Cédula:</td>
+                <td class="value">' . htmlspecialchars($r['cedula']) . '</td>
+            </tr>
+            <tr>
+                <td class="label">IP Asignada:</td>
+                <td class="value">' . htmlspecialchars($r['ip']) . '</td>
+            </tr>
+            <tr>
+                <td class="label">Teléfono:</td>
+                <td class="value">' . htmlspecialchars($r['telefono']) . '</td>
+            </tr>
+            <tr>
+                <td class="label">Dirección:</td>
+                <td class="value">' . htmlspecialchars($r['direccion']) . '</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">DETALLES DE LA VISITA</div>
+        <table class="info-table">
+            <tr>
+                <td class="label">Técnico Asignado:</td>
+                <td class="value">' . htmlspecialchars($r['tecnico_asignado']) . '</td>
+            </tr>
+            <tr>
+                <td class="label">Sector:</td>
+                <td class="value">' . htmlspecialchars($r['sector']) . '</td>
+            </tr>
+            <tr>
+                <td class="label">Tipo de Servicio:</td>
+                <td class="value"><span class="badge badge-info">' . htmlspecialchars($r['tipo_servicio']) . '</span></td>
+            </tr>
+            <tr>
+                <td class="label">Tipo de Falla:</td>
+                <td class="value"><span class="badge badge-warning">' . htmlspecialchars($r['tipo_falla']) . '</span></td>
+            </tr>
+            <tr>
+                <td class="label">Solución Completada:</td>
+                <td class="value">' . ($r['solucion_completada'] ? '<span class="badge badge-success">SÍ</span>' : '<span class="badge badge-danger">NO</span>') . '</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">DIAGNÓSTICO TÉCNICO</div>
+        <table class="info-table">
+            <tr>
+                <td class="label">Estado ONU:</td>
+                <td class="value">' . htmlspecialchars($r['estado_onu']) . '</td>
+            </tr>
+            <tr>
+                <td class="label">Estado Router:</td>
+                <td class="value">' . htmlspecialchars($r['estado_router']) . '</td>
+            </tr>
+            <tr>
+                <td class="label">Modelo Router:</td>
+                <td class="value">' . htmlspecialchars($r['modelo_router']) . '</td>
+            </tr>
+            <tr>
+                <td class="label">Bajada / Subida / Ping:</td>
+                <td class="value">' . htmlspecialchars($r['bw_bajada']) . ' MB / ' . htmlspecialchars($r['bw_subida']) . ' MB / ' . htmlspecialchars($r['bw_ping']) . ' ms</td>
+            </tr>
+            <tr>
+                <td class="label">Dispositivos Conectados:</td>
+                <td class="value">' . htmlspecialchars($r['num_dispositivos']) . '</td>
+            </tr>';
+
+if (!empty($r['estado_antena'])) {
+    $html .= '
+            <tr>
+                <td class="label">Estado Antena:</td>
+                <td class="value">' . htmlspecialchars($r['estado_antena']) . '</td>
+            </tr>
+            <tr>
+                <td class="label">Valores Antena:</td>
+                <td class="value">' . htmlspecialchars($r['valores_antena']) . ' dBm</td>
+            </tr>';
+}
+
+$html .= '
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">OBSERVACIONES Y SUGERENCIAS</div>
+        <table class="info-table">
+            <tr>
+                <td class="label">Observaciones:</td>
+                <td class="value">' . nl2br(htmlspecialchars($r['observaciones'])) . '</td>
+            </tr>
+            <tr>
+                <td class="label">Sugerencias:</td>
+                <td class="value">' . nl2br(htmlspecialchars($r['sugerencias'])) . '</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">INFORMACIÓN FINANCIERA</div>
+        <div class="financial-summary">
+            <div class="financial-row">
+                <span>Costo de Visita:</span>
+                <span>$' . number_format($r['monto_total'], 2) . '</span>
+            </div>
+            <div class="financial-row">
+                <span>Monto Pagado:</span>
+                <span style="color: #198754;">$' . number_format($r['monto_pagado'], 2) . '</span>
+            </div>
+            <div class="financial-row">
+                <span>Saldo Pendiente:</span>
+                <span style="color: ' . ($saldo > 0.01 ? '#dc3545' : '#198754') . ';">$' . number_format($saldo, 2) . '</span>
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 10px;">
+            <span class="badge ' . ($estado_pago == 'PAGADO' ? 'badge-success' : 'badge-danger') . '">' . $estado_pago . '</span>
+        </p>
+    </div>
+
+    <div class="signature-section">
+        <div class="signature-box">
+            <p style="border-top: none; font-weight: bold; margin-bottom: 5px;">Firma del Técnico</p>';
+
+if (!empty($firma_tecnico_b64)) {
+    $html .= '<img src="' . $firma_tecnico_b64 . '" alt="Firma Técnico">';
+} else {
+    $html .= '<div style="border: 1px dashed #ccc; padding: 40px; color: #999;">Sin firma</div>';
+}
+
+$html .= '
+            <p>' . htmlspecialchars($r['tecnico_asignado']) . '</p>
+        </div>
+        <div class="signature-box">
+            <p style="border-top: none; font-weight: bold; margin-bottom: 5px;">Firma del Cliente</p>';
+
+if (!empty($firma_cliente_b64)) {
+    $html .= '<img src="' . $firma_cliente_b64 . '" alt="Firma Cliente">';
+} else {
+    $html .= '<div style="border: 1px dashed #ccc; padding: 40px; color: #999;">Sin firma</div>';
+}
+
+$html .= '
+            <p>' . htmlspecialchars($r['nombre_completo']) . '</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Wireless Supply, C.A. | Sistema de Gestión Técnica | Generado: ' . date('d/m/Y H:i') . '</p>
+    </div>
+</body>
+</html>';
+
+// Generar PDF
+$options = new Options();
+$options->set('isHtml5ParserEnabled', true);
+$options->set('defaultFont', 'Helvetica');
+$dompdf = new Dompdf($options);
+
+$dompdf->loadHtml($html);
+$dompdf->setPaper('A4', 'portrait');
+$dompdf->render();
+
+$dompdf->stream("Reporte_Tecnico_" . $r['id_soporte'] . ".pdf", ["Attachment" => false]);
+exit(0);
+?>

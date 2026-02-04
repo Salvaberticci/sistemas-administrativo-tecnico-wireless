@@ -92,6 +92,12 @@ if (!isset($path_fix)) {
                     </a>
                     <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="dropSupport">
                         <li><a class="dropdown-item"
+                                href="<?php echo $path_fix; ?>paginas/soporte/gestion_fallas.php"><i
+                                    class="fa-solid fa-chart-line w-20 me-2 text-muted"></i> Gestión de Fallas</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item"
                                 href="<?php echo $path_fix; ?>paginas/soporte/historial_soportes.php"><i
                                     class="fa-solid fa-list-check w-20 me-2 text-muted"></i> Historial</a></li>
                         <li><a class="dropdown-item"
