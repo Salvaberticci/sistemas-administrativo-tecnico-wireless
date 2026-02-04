@@ -271,11 +271,9 @@ require_once $path_to_root . 'paginas/includes/sidebar.php';
             </div>
         </div>
 
-    </div>
 </main>
 
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
-<script src="<?php echo $path_to_root; ?>js/bootstrap.bundle.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
