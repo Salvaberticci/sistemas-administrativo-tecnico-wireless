@@ -4,7 +4,7 @@
  */
 require '../conexion.php';
 
-$path_to_root = "../../"; 
+$path_to_root = "../../";
 $page_title = "Gestión de Contratos";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
@@ -18,7 +18,7 @@ require_once '../includes/sidebar.php';
         width: 100%;
         overflow-x: auto;
     }
-    
+
     /* Headers mas compactos */
     #mitabla thead th {
         font-size: 0.8rem;
@@ -28,12 +28,13 @@ require_once '../includes/sidebar.php';
         background-color: #f8f9fa;
         color: #495057;
     }
-    
+
     /* Celdas mas compactas */
     #mitabla tbody td {
         font-size: 0.85rem;
         vertical-align: middle;
-        white-space: nowrap; /* Evita saltos de linea largos */
+        white-space: nowrap;
+        /* Evita saltos de linea largos */
         padding: 4px 8px;
     }
 
@@ -44,10 +45,12 @@ require_once '../includes/sidebar.php';
         padding: 4px;
         border-radius: 4px;
     }
+
     .editable-cell:hover {
         background-color: #f1f3f5;
         border: 1px solid #ced4da;
     }
+
     .editable-cell:focus {
         background-color: #fff;
         outline: 2px solid #86b7fe;
@@ -58,11 +61,12 @@ require_once '../includes/sidebar.php';
     .table-responsive::-webkit-scrollbar {
         height: 10px;
     }
+
     .table-responsive::-webkit-scrollbar-thumb {
         background-color: #ccc;
         border-radius: 5px;
     }
-    
+
     /* Grupos de Headers (opcional, por ahora simple) */
 </style>
 
@@ -71,20 +75,42 @@ require_once '../includes/sidebar.php';
 
     <div class="page-content">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
+            <div
+                class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
                 <div>
                     <h5 class="fw-bold text-primary mb-1">Contratos</h5>
                     <p class="text-muted small mb-0">Gestión integral de contratos y servicios</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-outline-success d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalStats" id="btnOpenStats">
+                    <button type="button" class="btn btn-outline-success d-flex align-items-center gap-2"
+                        data-bs-toggle="modal" data-bs-target="#modalStats" id="btnOpenStats">
                         <i class="fa-solid fa-chart-pie"></i> <span class="d-none d-md-inline">Estadísticas</span>
                     </button>
-                    <button type="button" class="btn btn-outline-info d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTipos">
-                        <i class="fa-solid fa-tags"></i> <span class="d-none d-md-inline">Editar Tipos de Instalacion</span>
+                    <button type="button" class="btn btn-outline-info d-flex align-items-center gap-2"
+                        data-bs-toggle="modal" data-bs-target="#modalTipos">
+                        <i class="fa-solid fa-tags"></i> <span class="d-none d-md-inline">Editar Tipos de
+                            Conexión</span>
                     </button>
-                    <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalUbicaciones">
-                        <i class="fa-solid fa-map-location-dot"></i> <span class="d-none d-md-inline">Editar Ubicaciones</span>
+                    <!-- BOTONES INSTALADORES / VENDEDORES -->
+                    <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-2"
+                        data-bs-toggle="modal" data-bs-target="#modalInstaladores">
+                        <i class="fa-solid fa-helmet-safety"></i> <span class="d-none d-md-inline">Instaladores</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-2"
+                        data-bs-toggle="modal" data-bs-target="#modalVendedores">
+                        <i class="fa-solid fa-user-tie"></i> <span class="d-none d-md-inline">Vendedores</span>
+                    </button>
+                    <!-- BOTON PLANES PRORRATEO -->
+                    <button type="button" class="btn btn-outline-warning d-flex align-items-center gap-2"
+                        data-bs-toggle="modal" data-bs-target="#modalProrrateo">
+                        <i class="fa-solid fa-file-invoice-dollar"></i> <span class="d-none d-md-inline">Planes
+                            Prorrateo</span>
+                    </button>
+
+                    <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-2"
+                        data-bs-toggle="modal" data-bs-target="#modalUbicaciones">
+                        <i class="fa-solid fa-map-location-dot"></i> <span class="d-none d-md-inline">Editar
+                            Ubicaciones</span>
                     </button>
                     <a href="nuevo.php" class="btn btn-primary d-flex align-items-center gap-2">
                         <i class="fa-solid fa-plus"></i> <span class="d-none d-md-inline">Nuevo Contrato</span>
@@ -93,6 +119,59 @@ require_once '../includes/sidebar.php';
             </div>
 
             <div class="card-body px-4">
+                <!-- Filtros Extra (Poc) -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i
+                                    class="fa-solid fa-filter text-primary"></i></span>
+                            <select id="filter_empty" class="form-select border-primary">
+                                <option value="">Todos los registros</option>
+                                <option value="1">Vacío: SAR (Fecha)</option>
+                                <option value="2">Vacío: Cédula</option>
+                                <option value="3">Vacío: Cliente</option>
+                                <option value="4">Vacío: Municipio</option>
+                                <option value="5">Vacío: Parroquia</option>
+                                <option value="6">Vacío: Dirección</option>
+                                <option value="7">Vacío: Telf. 1</option>
+                                <option value="8">Vacío: Telf. 2</option>
+                                <option value="9">Vacío: Correo</option>
+                                <option value="10">Vacío: Correo (Alt)</option>
+                                <option value="11">Vacío: F. Instalación</option>
+                                <option value="12">Vacío: Medio Pago</option>
+                                <option value="13">Vacío: Monto Pagar</option>
+                                <option value="14">Vacío: Monto Pagado</option>
+                                <option value="15">Vacío: Días Prorrateo</option>
+                                <option value="16">Vacío: Monto Prorr. ($)</option>
+                                <option value="17">Vacío: Observaciones</option>
+                                <option value="18">Vacío: Tipo Conex.</option>
+                                <option value="19">Vacío: Num. ONU</option>
+                                <option value="20">Vacío: MAC/Serial</option>
+                                <option value="21">Vacío: IP ONU</option>
+                                <option value="22">Vacío: Caja NAP</option>
+                                <option value="23">Vacío: Puerto NAP</option>
+                                <option value="24">Vacío: NAP TX (dBm)</option>
+                                <option value="25">Vacío: ONU RX (dBm)</option>
+                                <option value="26">Vacío: Dist. Drop (m)</option>
+                                <option value="27">Vacío: Instalador</option>
+                                <option value="28">Vacío: Evidencia Fibra</option>
+                                <option value="29">Vacío: IP Servicio</option>
+                                <option value="30">Vacío: Punto Acceso</option>
+                                <option value="31">Vacío: Val. Conex. (dBm)</option>
+                                <option value="32">Vacío: Precinto ODN</option>
+                                <option value="33">Vacío: Foto</option>
+                                <option value="34">Vacío: Firma Cliente</option>
+                                <option value="35">Vacío: Firma Técnico</option>
+                                <option value="36">Vacío: Vendedor (Edit)</option>
+                                <option value="37">Vacío: SAE Plus (Edit)</option>
+                                <option value="38">Vacío: Plan</option>
+                                <option value="39">Vacío: OLT</option>
+                                <option value="40">Vacío: PON</option>
+                                <option value="41">Vacío: Estado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 <!-- Dashboard Cards -->
                 <div class="row mb-4">
                     <div class="col-md-6 mb-3 mb-md-0">
@@ -123,13 +202,13 @@ require_once '../includes/sidebar.php';
                     </div>
                 </div>
                 <!-- Wrapper responsive para scroll horizontal -->
-                <div class="table-responsive"> 
+                <div class="table-responsive">
                     <table class="display table table-hover w-100" id="mitabla">
                         <thead>
                             <tr>
                                 <!-- 0 ID (Hidden) -->
                                 <th>ID</th>
-                                
+
                                 <!-- Info Cliente -->
                                 <th title="Marca temporal de registro">SAR</th>
                                 <th>Cédula</th>
@@ -141,7 +220,7 @@ require_once '../includes/sidebar.php';
                                 <th>Telf. 2</th>
                                 <th>Correo</th>
                                 <th>Correo (Alt)</th>
-                                
+
                                 <!-- Instalacion y Cobro -->
                                 <th>F. Instalación</th>
                                 <th>Medio Pago</th>
@@ -150,7 +229,7 @@ require_once '../includes/sidebar.php';
                                 <th>Días Prorrateo</th>
                                 <th>Monto Prorr. ($)</th>
                                 <th title="Observaciones">Observ.</th>
-                                
+
                                 <!-- Tecnicos -->
                                 <th>Tipo Conex.</th>
                                 <th>Num. ONU</th>
@@ -165,7 +244,7 @@ require_once '../includes/sidebar.php';
                                 <th>IP Servicio</th>
                                 <th>Punto Acceso</th>
                                 <th>Val. Conex. (dBm)</th>
-                                
+
                                 <!-- Cierre -->
                                 <th title="Instalador (Cierre)">Instalador (C)</th>
                                 <th title="Evidencia de Fibra">Evidencia Fibra</th>
@@ -174,7 +253,7 @@ require_once '../includes/sidebar.php';
                                 <th>Foto</th>
                                 <th>Firma Cliente</th>
                                 <th>Firma Técnico</th>
-                                
+
                                 <!-- EXTRAS -->
                                 <th class="table-info">Vendedor (Edit)</th>
                                 <th class="table-info">SAE Plus (Edit)</th>
@@ -182,7 +261,7 @@ require_once '../includes/sidebar.php';
                                 <th>OLT</th>
                                 <th>PON</th>
                                 <th>Estado</th>
-                                
+
                                 <!-- Acciones -->
                                 <th class="text-end">Acciones</th>
                             </tr>
@@ -191,7 +270,7 @@ require_once '../includes/sidebar.php';
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="d-flex justify-content-center mt-4">
                     <a href="../../paginas/menu.php" class="btn btn-outline-secondary">
                         <i class="fa-solid fa-arrow-left me-2"></i> Volver al Menú
@@ -204,8 +283,8 @@ require_once '../includes/sidebar.php';
     <div class="modal fade" id="modalTipos" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-tags me-2"></i>Tipos de Instalación</h5>
+                <div class="modal-header bg-info text-dark">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-tags me-2"></i>Tipos de Conexión</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -213,13 +292,79 @@ require_once '../includes/sidebar.php';
                         <!-- Items generados por JS -->
                     </div>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="newTipo" placeholder="Nuevo Tipo (Ej. FIBRA EXTRA)">
-                        <button class="btn btn-success" type="button" id="btnAddTipo"><i class="fa-solid fa-plus"></i></button>
+                        <input type="text" class="form-control" id="newTipo" placeholder="Nuevo Tipo (Ej. FTTH, RADIO)">
+                        <button class="btn btn-success" type="button" id="btnAddTipo"><i
+                                class="fa-solid fa-plus"></i></button>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
-                     <small class="text-muted me-auto">Cambios guardados en JSON.</small>
+                    <small class="text-muted me-auto">Cambios guardados en JSON.</small>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GESTION INSTALADORES -->
+    <div class="modal fade" id="modalInstaladores" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-helmet-safety me-2"></i>Gestionar Instaladores
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group mb-3" id="listInstaladores" style="max-height: 400px; overflow-y: auto;">
+                    </div>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="newInstalador" placeholder="Nombre Instalador">
+                        <button class="btn btn-success" type="button" onclick="addPersonal('instalador')"><i
+                                class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GESTION VENDEDORES -->
+    <div class="modal fade" id="modalVendedores" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-tie me-2"></i>Gestionar Vendedores</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group mb-3" id="listVendedores" style="max-height: 400px; overflow-y: auto;"></div>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="newVendedor" placeholder="Nombre Vendedor">
+                        <button class="btn btn-success" type="button" onclick="addPersonal('vendedor')"><i
+                                class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GESTION PLANES PRORRATEO -->
+    <div class="modal fade" id="modalProrrateo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Planes Prorrateo
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group mb-3" id="listProrrateo" style="max-height: 400px; overflow-y: auto;"></div>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="newPlanNombre" placeholder="Nombre (Ej. 100 Mbps)">
+                        <input type="number" step="0.01" class="form-control" id="newPlanPrecio"
+                            placeholder="Precio ($)">
+                        <button class="btn btn-success" type="button" onclick="addPlanProrrateo()"><i
+                                class="fa-solid fa-plus"></i></button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -230,7 +375,8 @@ require_once '../includes/sidebar.php';
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-map-location-dot me-2"></i>Gestionar Ubicaciones (JSON)</h5>
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-map-location-dot me-2"></i>Gestionar
+                        Ubicaciones (JSON)</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -238,31 +384,38 @@ require_once '../includes/sidebar.php';
                         <!-- COLUMNA MUNICIPIOS -->
                         <div class="col-md-5 border-end">
                             <h6 class="text-primary fw-bold mb-3">Municipios</h6>
-                            <div class="list-group mb-3" id="listMunicipios" style="max-height: 300px; overflow-y: auto;">
+                            <div class="list-group mb-3" id="listMunicipios"
+                                style="max-height: 300px; overflow-y: auto;">
                                 <!-- Items generados por JS -->
                             </div>
                             <div class="input-group">
                                 <input type="text" class="form-control" id="newMunicipio" placeholder="Nuevo Municipio">
-                                <button class="btn btn-success" type="button" id="btnAddMunicipio"><i class="fa-solid fa-plus"></i></button>
+                                <button class="btn btn-success" type="button" id="btnAddMunicipio"><i
+                                        class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
-                        
+
                         <!-- COLUMNA PARROQUIAS -->
                         <div class="col-md-7">
-                            <h6 class="text-info fw-bold mb-3" id="titleParroquias">Parroquias (Seleccione un Municipio)</h6>
-                            <div class="list-group mb-3" id="listParroquias" style="max-height: 300px; overflow-y: auto;">
+                            <h6 class="text-info fw-bold mb-3" id="titleParroquias">Parroquias (Seleccione un Municipio)
+                            </h6>
+                            <div class="list-group mb-3" id="listParroquias"
+                                style="max-height: 300px; overflow-y: auto;">
                                 <!-- Items generados por JS -->
-                                <div class="text-center text-muted p-3">Seleccione un municipio para ver sus parroquias</div>
+                                <div class="text-center text-muted p-3">Seleccione un municipio para ver sus parroquias
+                                </div>
                             </div>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="newParroquia" placeholder="Nueva Parroquia" disabled>
-                                <button class="btn btn-success" type="button" id="btnAddParroquia" disabled><i class="fa-solid fa-plus"></i></button>
+                                <input type="text" class="form-control" id="newParroquia" placeholder="Nueva Parroquia"
+                                    disabled>
+                                <button class="btn btn-success" type="button" id="btnAddParroquia" disabled><i
+                                        class="fa-solid fa-plus"></i></button>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
-                     <small class="text-muted me-auto">Los cambios se guardan automáticamente en el archivo JSON.</small>
+                    <small class="text-muted me-auto">Los cambios se guardan automáticamente en el archivo JSON.</small>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
@@ -274,8 +427,10 @@ require_once '../includes/sidebar.php';
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-chart-pie me-2"></i>Estadísticas y Reportes</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-chart-pie me-2"></i>Estadísticas y Reportes
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <!-- Filtros -->
@@ -283,11 +438,11 @@ require_once '../includes/sidebar.php';
                         <div class="card-body">
                             <h6 class="fw-bold mb-3">Filtros de Búsqueda</h6>
                             <div class="row g-3">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label small">Fecha Inicio</label>
                                     <input type="date" class="form-control" id="statStartDate">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label small">Fecha Fin</label>
                                     <input type="date" class="form-control" id="statEndDate">
                                 </div>
@@ -297,57 +452,52 @@ require_once '../includes/sidebar.php';
                                         <option value="">Todos</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small">Vendedor (ID)</label>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Vendedor</label>
                                     <select class="form-select" id="statVendor">
                                         <option value="">Todos</option>
                                     </select>
                                 </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Tipo de Conexión</label>
+                                    <select class="form-select" id="statContractType">
+                                        <option value="">Todos</option>
+                                    </select>
+                                </div>
                                 <div class="col-md-12 text-end">
-                                    <button class="btn btn-primary" id="btnFilterStats"><i class="fa-solid fa-filter me-2"></i>Aplicar Filtros</button>
+                                    <button class="btn btn-primary" id="btnFilterStats"><i
+                                            class="fa-solid fa-filter me-2"></i>Aplicar Filtros</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Resultados -->
+                    <!-- Resultados Gráficas -->
                     <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="fw-bold text-primary">Instalaciones por Instalador</h6>
-                            <div class="table-responsive border rounded bg-white p-2" style="max-height: 300px; overflow-y: auto;">
-                                <table class="table table-sm table-striped mb-0" id="tableStatsInstaller">
-                                    <thead class="table-light sticky-top">
-                                        <tr>
-                                            <th>Instalador</th>
-                                            <th class="text-center">Total Instalaciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr><td colspan="2" class="text-center text-muted">Aplica filtros para ver datos</td></tr>
-                                    </tbody>
-                                </table>
+                        <div class="col-md-4">
+                            <h6 class="fw-bold text-primary text-center">Instalaciones por Instalador</h6>
+                            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                                <canvas id="chartInstaller"></canvas>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <h6 class="fw-bold text-success">Ventas por Vendedor</h6>
-                            <div class="table-responsive border rounded bg-white p-2" style="max-height: 300px; overflow-y: auto;">
-                                <table class="table table-sm table-striped mb-0" id="tableStatsVendor">
-                                    <thead class="table-light sticky-top">
-                                        <tr>
-                                            <th>ID Vendedor</th>
-                                            <th class="text-center">Total Contratos</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr><td colspan="2" class="text-center text-muted">Aplica filtros para ver datos</td></tr>
-                                    </tbody>
-                                </table>
+                        <div class="col-md-4">
+                            <h6 class="fw-bold text-success text-center">Ventas por Vendedor</h6>
+                            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                                <canvas id="chartVendor"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="fw-bold text-info text-center">Contratos por Ubicación</h6>
+                            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                                <canvas id="chartLocation"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-danger" id="btnExportPDF"><i class="fa-solid fa-file-pdf me-2"></i>Exportar PDF</button>
+                    <button type="button" class="btn btn-danger" id="btnExportPDF"><i
+                            class="fa-solid fa-file-pdf me-2"></i>Exportar PDF</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
@@ -356,7 +506,7 @@ require_once '../includes/sidebar.php';
 
     <!-- Scripts para PDF Export (Usando PHP Backend) -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Cargar Dashboard Stats
             fetchStatsDashboard();
 
@@ -367,12 +517,12 @@ require_once '../includes/sidebar.php';
             });
 
             // Botón Filtrar
-            document.getElementById('btnFilterStats').addEventListener('click', function() {
+            document.getElementById('btnFilterStats').addEventListener('click', function () {
                 fetchModalStats();
             });
 
             // Botón Exportar PDF
-            document.getElementById('btnExportPDF').addEventListener('click', function() {
+            document.getElementById('btnExportPDF').addEventListener('click', function () {
                 exportStatsPDF();
             });
         });
@@ -388,73 +538,127 @@ require_once '../includes/sidebar.php';
         }
 
         function fetchStatsLists() {
-            fetch('get_contract_stats.php?action=get_lists')
-                .then(response => response.json())
-                .then(data => {
-                    const selInst = document.getElementById('statInstaller');
-                    const selVend = document.getElementById('statVendor');
-                    
-                    // Solo llenar si están vacíos (o resetear siempre)
-                    if(selInst.options.length <= 1) {
-                         data.installers.forEach(inst => {
-                            let opt = new Option(inst, inst);
-                            selInst.add(opt);
-                        });
-                    }
-                   
-                    if(selVend.options.length <= 1) {
-                        data.vendors.forEach(vend => {
-                            let opt = new Option('Vendedor ' + vend, vend);
-                            selVend.add(opt);
-                        });
-                    }
-                });
+            Promise.all([
+                // Fetch Instaladores form JSON API (Same as Management Modal)
+                fetch('json_personal_api.php?action=get_instaladores').then(r => r.json()),
+                // Fetch Vendedores from JSON API
+                fetch('json_personal_api.php?action=get_vendedores').then(r => r.json()),
+                // Fetch Tipos from Types API
+                fetch('api_tipos_instalacion.php').then(r => r.json())
+            ]).then(([installers, vendors, types]) => {
+                const selInst = document.getElementById('statInstaller');
+                const selVend = document.getElementById('statVendor');
+                const selType = document.getElementById('statContractType');
+
+                // Fill Instaladores
+                if (selInst.options.length <= 1) {
+                    installers.forEach(inst => selInst.add(new Option(inst, inst)));
+                }
+
+                // Fill Vendedores
+                if (selVend.options.length <= 1) {
+                    vendors.forEach(vend => selVend.add(new Option(vend, vend)));
+                }
+
+                // Fill Tipos
+                if (selType.options.length <= 1) {
+                    types.forEach(t => selType.add(new Option(t, t)));
+                }
+            }).catch(err => console.error('Error loading lists:', err));
         }
+
+        // Chart Instances
+        let chartInstances = {};
 
         function fetchModalStats() {
             const start = document.getElementById('statStartDate').value;
             const end = document.getElementById('statEndDate').value;
             const inst = document.getElementById('statInstaller').value;
             const vend = document.getElementById('statVendor').value;
+            const type = document.getElementById('statContractType').value;
 
             const params = new URLSearchParams({
                 action: 'modal_stats',
                 start: start,
                 end: end,
                 installer: inst,
-                vendor: vend
+                vendor: vend,
+                type: type
             });
 
             fetch('get_contract_stats.php?' + params.toString())
                 .then(response => response.json())
                 .then(data => {
-                    renderStatsTable('tableStatsInstaller', data.by_installer, 'Instalador', 'nombre');
-                    renderStatsTable('tableStatsVendor', data.by_vendor, 'Vendedor', 'id_vendedor');
+                    renderStatsChart('chartInstaller', data.by_installer, 'nombre', 'Total Instalaciones');
+                    renderStatsChart('chartVendor', data.by_vendor, 'nombre_vendedor', 'Total Ventas'); // labels for vendors are now names
+                    renderStatsChart('chartLocation', data.by_location, 'ubicacion', 'Total Contratos');
                 });
         }
 
-        function renderStatsTable(tableId, data, labelCol, keyCol) {
-            const tbody = document.querySelector('#' + tableId + ' tbody');
-            tbody.innerHTML = '';
+        function renderStatsChart(canvasId, data, labelKey, title, isVendor = false) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
 
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No se encontraron resultados</td></tr>';
+            // Destroy existing chart if present
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+
+            if (!data || data.length === 0) {
+                // Render empty chart or message? Chart.js handles empty data gracefully usually, but let's pass empty
+                // Maybe better to clear canvas?
+                // For now, let's create a "No Data" chart or leave blank
+                chartInstances[canvasId] = new Chart(ctx, {
+                    type: 'pie',
+                    data: { labels: ['Sin Datos'], datasets: [{ data: [1], backgroundColor: ['#e9ecef'] }] },
+                    options: { plugins: { tooltip: { enabled: false }, legend: { display: false }, title: { display: true, text: 'Sin Resultados' } } }
+                });
                 return;
             }
 
-            let totalSum = 0;
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${row[keyCol]}</td><td class="text-center fw-bold">${row.total}</td>`;
-                tbody.appendChild(tr);
-                totalSum += parseInt(row.total);
+            // MODIFIED: Append count to labels to show in legend
+            const labels = data.map(item => {
+                let name = item[labelKey];
+                return `${name} (${item.total})`;
             });
-            
-             // Fila Total
-            const trTotal = document.createElement('tr');
-            trTotal.classList.add('table-dark');
-            trTotal.innerHTML = `<td><strong>TOTAL</strong></td><td class="text-center fw-bold">${totalSum}</td>`;
-            tbody.appendChild(trTotal);
+            const values = data.map(item => item.total);
+
+            // Generate Colors
+            const colors = generateColors(data.length);
+
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 10, font: { size: 10 } }
+                        },
+                        title: {
+                            display: true,
+                            text: title
+                        }
+                    }
+                }
+            });
+        }
+
+        function generateColors(count) {
+            const colors = [];
+            for (let i = 0; i < count; i++) {
+                const hue = (i * 137.508) % 360; // Golden angle approx
+                colors.push(`hsl(${hue}, 70%, 60%)`);
+            }
+            return colors;
         }
 
         function exportStatsPDF() {
@@ -462,20 +666,51 @@ require_once '../includes/sidebar.php';
             const end = document.getElementById('statEndDate').value;
             const inst = document.getElementById('statInstaller').value;
             const vend = document.getElementById('statVendor').value;
+            const type = document.getElementById('statContractType').value;
 
-            const params = new URLSearchParams({
+            // Capture Charts as Images
+            const imgInstaller = document.getElementById('chartInstaller').toDataURL('image/png');
+            const imgVendor = document.getElementById('chartVendor').toDataURL('image/png');
+            const imgLocation = document.getElementById('chartLocation').toDataURL('image/png');
+
+            // Create dynamic form for POST request
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '../../paginas/reportes_pdf/generar_estadisticas_pdf.php';
+            form.target = '_blank'; // Open in new tab
+
+            // Add Params
+            const fields = {
                 start: start,
                 end: end,
                 installer: inst,
-                vendor: vend
-            });
+                vendor: vend,
+                type: type,
+                img_installer: imgInstaller,
+                img_vendor: imgVendor,
+                img_location: imgLocation
+            };
 
-            // Abrir en nueva pestaña
-            window.open('../../paginas/reportes_pdf/generar_estadisticas_pdf.php?' + params.toString(), '_blank');
+            for (const key in fields) {
+                if (fields.hasOwnProperty(key)) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = fields[key];
+                    form.appendChild(input);
+                }
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
         }
     </script>
 
 </main>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- Modals -->
 <div class="modal fade" id="eliminaModal" tabindex="-1" aria-hidden="true">
@@ -494,31 +729,6 @@ require_once '../includes/sidebar.php';
     </div>
 </div>
 
-<div class="modal fade" id="modalDireccion" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered"> 
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white"> 
-                <h5 class="modal-title fs-6"><i class="fa-solid fa-map-location-dot me-2"></i> Dirección</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="flex-shrink-0">
-                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary"><i class="fa-solid fa-user fa-lg"></i></div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="mb-0 fw-bold" id="md_nombre">Cliente</h6>
-                        <small class="text-muted">IP: <span id="md_ip"></span></small>
-                    </div>
-                </div>
-                <div class="bg-light p-3 rounded border">
-                    <small class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Ubicación Exacta</small>
-                    <p id="md_direccion" class="mb-0 mt-1 text-dark small"></p> 
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <?php require_once '../includes/layout_foot.php'; ?>
 
@@ -526,11 +736,11 @@ require_once '../includes/sidebar.php';
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         var table = $('#mitabla').DataTable({
             "scrollX": true,      // Habilitar scroll horizontal nativo de DataTables
             "fixedColumns": {     // Si se quisiera fijar columnas (requiere extension FixedColumns, probalo basico primero)
-               // leftColumns: 2 
+                // leftColumns: 2 
             },
             "order": [[1, "desc"]], // Ordenar por SAR (Fecha Registro) descendente por defecto
             "language": {
@@ -545,6 +755,9 @@ require_once '../includes/sidebar.php';
             "bProcessing": true,
             "bServerSide": true,
             "sAjaxSource": "server_process.php",
+            "fnServerParams": function (aoData) {
+                aoData.push({ "name": "empty_filter", "value": $('#filter_empty').val() });
+            },
             "aoColumnDefs": [
                 { "bVisible": false, "aTargets": [0] }, // Ocultar ID
                 { "className": "text-center", "aTargets": "_all" } // Centrar todo por defecto
@@ -553,28 +766,28 @@ require_once '../includes/sidebar.php';
         });
 
         // --- Inline Edit Logic ---
-        $('#mitabla tbody').on('blur', '.editable-cell', function() {
+        $('#mitabla tbody').on('blur', '.editable-cell', function () {
             var cell = $(this);
             var id = cell.data('id');
             var field = cell.data('field');
             var value = cell.text(); // text() gets plain text, html() usually not needed for simple inputs
-            
+
             // Basic UI feedback 'saving'
-            cell.css('color', '#6c757d'); 
+            cell.css('color', '#6c757d');
 
             $.post('actualizar_contrato_inline.php', {
                 id: id,
                 field: field,
                 value: value
-            }, function(resp) {
+            }, function (resp) {
                 // Success
                 cell.css('color', '#198754'); // Green text
                 cell.addClass('bg-success bg-opacity-10');
-                setTimeout(() => { 
-                    cell.removeClass('bg-success bg-opacity-10'); 
+                setTimeout(() => {
+                    cell.removeClass('bg-success bg-opacity-10');
                     cell.css('color', '#212529'); // Reset color
                 }, 1500);
-            }).fail(function() {
+            }).fail(function () {
                 // Fail
                 cell.css('color', '#dc3545'); // Red text
                 alert("Error al guardar cambios. Verifique su conexión.");
@@ -582,7 +795,7 @@ require_once '../includes/sidebar.php';
         });
 
         // Enter key to blur (save)
-        $('#mitabla tbody').on('keydown', '.editable-cell', function(e) {
+        $('#mitabla tbody').on('keydown', '.editable-cell', function (e) {
             if (e.which === 13) {
                 e.preventDefault();
                 $(this).blur();
@@ -590,21 +803,19 @@ require_once '../includes/sidebar.php';
         });
 
         // Modal Logic
-        window.verDireccion = function(dir, nom, ip) {
-            $('#md_direccion').text(dir);
-            $('#md_nombre').text(nom);
-            $('#md_ip').text(ip);
-            // Mostrar modal manualmente si usamos onclick en vez de data-bs-toggle o para asegurar
-            // $('#modalDireccion').modal('show'); // Bootstrap 5 data attributes work fine usually
-        };
-        
-        window.confirmarEliminar = function(id) {
+
+        window.confirmarEliminar = function (id) {
             var url = 'elimina.php?id=' + id;
             var modalEl = document.getElementById('eliminaModal');
             modalEl.querySelector('.btn-ok').href = url;
             var modal = new bootstrap.Modal(modalEl);
             modal.show();
         };
+
+        // Escuchar cambio en filtro de vacios
+        $('#filter_empty').on('change', function () {
+            table.draw();
+        });
     });
 </script>
 
@@ -613,19 +824,189 @@ require_once '../includes/sidebar.php';
 
 <script>
     // ==========================================
-    // LÓGICA GESTIÓN TIPOS DE INSTALACIÓN (JSON)
+    // GESTIÓN GENÉRICA LISTAS (Instaladores / Vendedores / Tipos)
     // ==========================================
-    let tiposData = [];
 
+    // --- INSTALADORES ---
+    let instaladoresData = [];
+    function loadInstaladores() {
+        $.get('json_personal_api.php?action=get_instaladores', function (data) {
+            instaladoresData = data || [];
+            renderPersonalList('listInstaladores', instaladoresData, 'Instalador');
+        });
+    }
+
+    // --- VENDEDORES ---
+    let vendedoresData = [];
+    function loadVendedores() {
+        $.get('json_personal_api.php?action=get_vendedores', function (data) {
+            vendedoresData = data || [];
+            renderPersonalList('listVendedores', vendedoresData, 'Vendedor');
+        });
+    }
+
+    // --- PLANES PRORRATEO ---
+    let prorrateoData = [];
+    function loadPlanesProrrateo() {
+        $.get('json_personal_api.php?action=get_planes_prorrateo', function (data) {
+            prorrateoData = data || [];
+            renderProrrateoList();
+        });
+    }
+
+    function renderProrrateoList() {
+        const list = $('#listProrrateo');
+        list.empty();
+        if (prorrateoData.length === 0) {
+            list.html('<div class="text-center text-muted p-2">Sin registros</div>');
+            return;
+        }
+        prorrateoData.forEach((item, index) => {
+            const row = `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${item.nombre} - $${item.precio}</span>
+                    <button class="btn btn-sm btn-danger py-0 px-2" onclick="deletePlanProrrateo(${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
+                </div>`;
+            list.append(row);
+        });
+    }
+
+    window.addPlanProrrateo = function () {
+        const nombre = $('#newPlanNombre').val().trim();
+        const precio = $('#newPlanPrecio').val().trim();
+
+        if (!nombre || !precio) {
+            Swal.fire('Error', 'Ingrese nombre y precio', 'warning');
+            return;
+        }
+
+        prorrateoData.push({ nombre: nombre, precio: precio });
+        $('#newPlanNombre').val('');
+        $('#newPlanPrecio').val('');
+
+        savePlanesProrrateo();
+        renderProrrateoList();
+    };
+
+    window.deletePlanProrrateo = function (index) {
+        Swal.fire({
+            title: '¿Eliminar Plan?',
+            text: `Se eliminará este plan.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                prorrateoData.splice(index, 1);
+                savePlanesProrrateo();
+                renderProrrateoList();
+            }
+        });
+    };
+
+    function savePlanesProrrateo() {
+        $.ajax({
+            url: 'json_personal_api.php?action=save_planes_prorrateo',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(prorrateoData),
+            error: function () { Swal.fire('Error', 'No se pudo guardar', 'error'); }
+        });
+    }
+
+    // Funciones Genéricas UI
+    function renderPersonalList(listId, dataArr, typeLabel) {
+        const list = $('#' + listId);
+        list.empty();
+        if (dataArr.length === 0) {
+            list.html('<div class="text-center text-muted p-2">Sin registros</div>');
+            return;
+        }
+        dataArr.forEach((item, index) => {
+            const row = `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${item}</span>
+                    <button class="btn btn-sm btn-danger py-0 px-2" onclick="deletePersonal('${listId}', ${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
+                </div>`;
+            list.append(row);
+        });
+    }
+
+    window.addPersonal = function (type) {
+        let inputId = (type === 'instalador') ? 'newInstalador' : 'newVendedor';
+        let listId = (type === 'instalador') ? 'listInstaladores' : 'listVendedores';
+        let dataArr = (type === 'instalador') ? instaladoresData : vendedoresData;
+
+        // Obtener ID real del array porque lo pasamos por referencia
+        if (type === 'instalador') dataArr = instaladoresData;
+        else dataArr = vendedoresData;
+
+        const val = $('#' + inputId).val().trim().toUpperCase();
+        if (!val) return;
+
+        if (dataArr.includes(val)) {
+            Swal.fire('Atención', 'Este registro ya existe', 'warning');
+            return;
+        }
+
+        dataArr.push(val);
+        $('#' + inputId).val('');
+
+        savePersonal((type === 'instalador'));
+        renderPersonalList(listId, dataArr, '');
+    };
+
+    window.deletePersonal = function (listId, index) {
+        let isInstalador = (listId === 'listInstaladores');
+        let label = isInstalador ? 'Instalador' : 'Vendedor';
+        let dataArr = isInstalador ? instaladoresData : vendedoresData;
+
+        Swal.fire({
+            title: '¿Eliminar?',
+            text: `Se eliminará este ${label}.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Actualizar el array correcto
+                if (isInstalador) instaladoresData.splice(index, 1);
+                else vendedoresData.splice(index, 1);
+
+                savePersonal(isInstalador);
+
+                // Re-render
+                if (isInstalador) renderPersonalList('listInstaladores', instaladoresData, 'Instalador');
+                else renderPersonalList('listVendedores', vendedoresData, 'Vendedor');
+            }
+        });
+    };
+
+    function savePersonal(isInstalador) {
+        const action = isInstalador ? 'save_instaladores' : 'save_vendedores';
+        const dataPayload = isInstalador ? instaladoresData : vendedoresData;
+
+        $.ajax({
+            url: 'json_personal_api.php?action=' + action,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(dataPayload),
+            error: function () { Swal.fire('Error', 'No se pudo guardar', 'error'); }
+        });
+    }
+
+    // --- TIPOS (Mantenido Original) ---
+    let tiposData = [];
     function loadTipos() {
-        $.get('api_tipos_instalacion.php', function(data) {
+        $.get('api_tipos_instalacion.php', function (data) {
             tiposData = data;
             renderTipos();
         });
     }
 
-    // Exponer globalmente
-    window.renderTipos = function() {
+    window.renderTipos = function () {
         const list = $('#listTipos');
         list.empty();
         tiposData.forEach((t, index) => {
@@ -639,9 +1020,9 @@ require_once '../includes/sidebar.php';
         });
     };
 
-    window.deleteTipo = function(index) {
+    window.deleteTipo = function (index) {
         Swal.fire({
-            title: '¿Eliminar Tipo?',
+            title: '¿Eliminar Tipo de Conexión?',
             text: `Se eliminará "${tiposData[index]}".`,
             icon: 'warning',
             showCancelButton: true,
@@ -655,6 +1036,8 @@ require_once '../includes/sidebar.php';
             }
         });
     };
+    // ... resto script tipos ...
+
 
     function saveTipos() {
         $.ajax({
@@ -662,8 +1045,8 @@ require_once '../includes/sidebar.php';
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(tiposData),
-            success: function(response) {},
-            error: function() {
+            success: function (response) { },
+            error: function () {
                 Swal.fire('Error', 'No se pudo guardar los cambios', 'error');
             }
         });
@@ -676,7 +1059,7 @@ require_once '../includes/sidebar.php';
     let selectedMunicipioIndex = -1;
 
     function loadUbicaciones() {
-        $.get('api_ubicaciones.php', function(data) {
+        $.get('api_ubicaciones.php', function (data) {
             ubicacionesData = data;
             renderMunicipios();
             // Reset selección
@@ -688,7 +1071,7 @@ require_once '../includes/sidebar.php';
     }
 
     // Exponer globalmente
-    window.renderMunicipios = function() {
+    window.renderMunicipios = function () {
         const list = $('#listMunicipios');
         list.empty();
         ubicacionesData.forEach((m, index) => {
@@ -704,25 +1087,25 @@ require_once '../includes/sidebar.php';
         });
     };
 
-    window.selectMunicipio = function(index) {
+    window.selectMunicipio = function (index) {
         selectedMunicipioIndex = index;
         renderMunicipios(); // Para actualizar clase active
         renderParroquias();
-        
+
         $('#titleParroquias').text(`Parroquias de: ${ubicacionesData[index].municipio}`);
         $('#newParroquia, #btnAddParroquia').prop('disabled', false);
     };
 
-    window.renderParroquias = function() {
-        if(selectedMunicipioIndex === -1) return;
-        
+    window.renderParroquias = function () {
+        if (selectedMunicipioIndex === -1) return;
+
         const list = $('#listParroquias');
         list.empty();
         const parroquias = ubicacionesData[selectedMunicipioIndex].parroquias;
-        
-        if(parroquias.length === 0) {
-           list.html('<div class="text-center text-muted p-2">Sin parroquias registradas</div>');
-           return; 
+
+        if (parroquias.length === 0) {
+            list.html('<div class="text-center text-muted p-2">Sin parroquias registradas</div>');
+            return;
         }
 
         parroquias.forEach((p, pIndex) => {
@@ -736,7 +1119,7 @@ require_once '../includes/sidebar.php';
         });
     };
 
-    window.deleteMunicipio = function(e, index) {
+    window.deleteMunicipio = function (e, index) {
         e.stopPropagation(); // Evitar seleccionar al borrar
         Swal.fire({
             title: '¿Eliminar Municipio?',
@@ -748,11 +1131,11 @@ require_once '../includes/sidebar.php';
         }).then((result) => {
             if (result.isConfirmed) {
                 ubicacionesData.splice(index, 1);
-                if(selectedMunicipioIndex === index) {
+                if (selectedMunicipioIndex === index) {
                     selectedMunicipioIndex = -1;
                     $('#listParroquias').empty();
                     $('#newParroquia, #btnAddParroquia').prop('disabled', true);
-                } else if(selectedMunicipioIndex > index) {
+                } else if (selectedMunicipioIndex > index) {
                     selectedMunicipioIndex--;
                 }
                 saveData();
@@ -761,7 +1144,7 @@ require_once '../includes/sidebar.php';
         });
     };
 
-    window.deleteParroquia = function(pIndex) {
+    window.deleteParroquia = function (pIndex) {
         ubicacionesData[selectedMunicipioIndex].parroquias.splice(pIndex, 1);
         saveData();
         renderParroquias();
@@ -773,8 +1156,8 @@ require_once '../includes/sidebar.php';
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(ubicacionesData),
-            success: function(response) {},
-            error: function() {
+            success: function (response) { },
+            error: function () {
                 Swal.fire('Error', 'No se pudo guardar los cambios', 'error');
             }
         });
@@ -783,18 +1166,23 @@ require_once '../includes/sidebar.php';
     // ==========================================
     // EVENTS ON READY
     // ==========================================
-    $(document).ready(function() {
-        
+    $(document).ready(function () {
+
         // --- TIPOS ---
-        $('#modalTipos').on('show.bs.modal', function() {
+        $('#modalTipos').on('show.bs.modal', function () {
             loadTipos();
         });
 
-        $('#btnAddTipo').click(function() {
-            const nombre = $('#newTipo').val().trim().toUpperCase(); 
-            if(nombre) {
-                if(tiposData.includes(nombre)) {
-                    Swal.fire('Error', 'El tipo ya existe', 'warning');
+        // --- INSTALADORES / VENDEDORES ---
+        $('#modalInstaladores').on('show.bs.modal', function () { loadInstaladores(); });
+        $('#modalVendedores').on('show.bs.modal', function () { loadVendedores(); });
+        $('#modalProrrateo').on('show.bs.modal', function () { loadPlanesProrrateo(); });
+
+        $('#btnAddTipo').click(function () {
+            const nombre = $('#newTipo').val().trim().toUpperCase();
+            if (nombre) {
+                if (tiposData.includes(nombre)) {
+                    Swal.fire('Error', 'El tipo de conexión ya existe', 'warning');
                     return;
                 }
                 tiposData.push(nombre);
@@ -805,14 +1193,14 @@ require_once '../includes/sidebar.php';
         });
 
         // --- UBICACIONES ---
-        $('#modalUbicaciones').on('show.bs.modal', function() {
+        $('#modalUbicaciones').on('show.bs.modal', function () {
             loadUbicaciones();
         });
 
-        $('#btnAddMunicipio').click(function() {
+        $('#btnAddMunicipio').click(function () {
             const nombre = $('#newMunicipio').val().trim();
-            if(nombre) {
-                if(ubicacionesData.some(m => m.municipio.toLowerCase() === nombre.toLowerCase())) {
+            if (nombre) {
+                if (ubicacionesData.some(m => m.municipio.toLowerCase() === nombre.toLowerCase())) {
                     Swal.fire('Error', 'El municipio ya existe', 'warning');
                     return;
                 }
@@ -823,10 +1211,10 @@ require_once '../includes/sidebar.php';
             }
         });
 
-        $('#btnAddParroquia').click(function() {
+        $('#btnAddParroquia').click(function () {
             const nombre = $('#newParroquia').val().trim();
-            if(nombre && selectedMunicipioIndex !== -1) {
-                if(ubicacionesData[selectedMunicipioIndex].parroquias.some(p => p.toLowerCase() === nombre.toLowerCase())) {
+            if (nombre && selectedMunicipioIndex !== -1) {
+                if (ubicacionesData[selectedMunicipioIndex].parroquias.some(p => p.toLowerCase() === nombre.toLowerCase())) {
                     Swal.fire('Error', 'La parroquia ya existe en este municipio', 'warning');
                     return;
                 }

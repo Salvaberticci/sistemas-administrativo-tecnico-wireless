@@ -7,12 +7,24 @@ header('Content-Type: application/json; charset=utf-8');
 require '../conexion.php';
 
 // 1. Load Banks from JSON for mapping
+// 1. Load Banks from JSON for mapping
 $json_bancos = @file_get_contents('bancos.json');
 $bancosArr = json_decode($json_bancos, true) ?: [];
 $bancosMap = [];
-foreach($bancosArr as $b) {
-    if(isset($b['id_banco'])) $bancosMap[$b['id_banco']] = $b['nombre_banco'];
+foreach ($bancosArr as $b) {
+    if (isset($b['id_banco']))
+        $bancosMap[$b['id_banco']] = $b['nombre_banco'];
 }
+
+// PARAMETER MAPPING (Modern vs Legacy)
+$start = $_POST['start'] ?? $_POST['iDisplayStart'] ?? 0;
+$length = $_POST['length'] ?? $_POST['iDisplayLength'] ?? 10;
+$draw = $_POST['draw'] ?? $_POST['sEcho'] ?? 0;
+$searchVal = $_POST['search']['value'] ?? $_POST['sSearch'] ?? '';
+
+// Sort mapping
+$sortColIndex = $_POST['order'][0]['column'] ?? $_POST['iSortCol_0'] ?? 0;
+$sortDir = $_POST['order'][0]['dir'] ?? $_POST['sSortDir_0'] ?? 'desc';
 
 // 2. Define Table and Joins
 $sTabla = "
@@ -46,8 +58,8 @@ if (isset($_POST['id_banco']) && $_POST['id_banco'] != '') {
 }
 
 // Global Search
-if (isset($_POST['sSearch']) && $_POST['sSearch'] != "") {
-    $searchValue = $conn->real_escape_string($_POST['sSearch']);
+if ($searchVal != "") {
+    $searchValue = $conn->real_escape_string($searchVal);
     $searchConds = [];
     foreach ($aSearchColumns as $col) {
         $searchConds[] = "$col LIKE '%$searchValue%'";
@@ -57,23 +69,21 @@ if (isset($_POST['sSearch']) && $_POST['sSearch'] != "") {
 
 $sWhere = "WHERE " . implode(" AND ", $whereConditions);
 
-// 5. Sorting and Paging (Standard DataTables iDisplayStart/iDisplayLength)
+// 5. Sorting and Paging
 $sLimit = "";
-if (isset($_POST['iDisplayStart']) && $_POST['iDisplayLength'] != '-1') {
-    $sLimit = "LIMIT " . intval($_POST['iDisplayStart']) . ", " . intval($_POST['iDisplayLength']);
+if ($length != -1) {
+    $sLimit = "LIMIT " . intval($start) . ", " . intval($length);
 }
 
-$sOrder = "ORDER BY COALESCE(cxc.fecha_pago, cxc.fecha_emision) DESC";
-if (isset($_POST['iSortCol_0'])) {
-    $sOrder = "ORDER BY ";
-    for ($i = 0; $i < intval($_POST['iSortingCols']); $i++) {
-        $colIdx = intval($_POST['iSortCol_' . $i]);
-        if ($_POST['bSortable_' . $colIdx] == "true") {
-            $sOrder .= $aSearchColumns[$colIdx] . " " . $conn->real_escape_string($_POST['sSortDir_' . $i]) . ", ";
-        }
-    }
-    $sOrder = substr_replace($sOrder, "", -2);
-    if ($sOrder == "ORDER BY") $sOrder = "ORDER BY COALESCE(cxc.fecha_pago, cxc.fecha_emision) DESC";
+// Order By Logic
+$sOrder = "";
+// Use mapped sort parameters
+if (isset($aSearchColumns[$sortColIndex])) {
+    $sOrder = "ORDER BY " . $aSearchColumns[$sortColIndex] . " " . $conn->real_escape_string($sortDir);
+}
+
+if ($sOrder == "") {
+    $sOrder = "ORDER BY COALESCE(cxc.fecha_pago, cxc.fecha_emision) DESC";
 }
 
 // 6. Final Queries
@@ -101,18 +111,37 @@ $sQuery = "
 ";
 
 $rResult = $conn->query($sQuery);
+if (!$rResult) {
+    echo json_encode(["error" => "SQL Error (Main Query): " . $conn->error]);
+    exit;
+}
+
 $rResultFilterTotal = $conn->query("SELECT FOUND_ROWS()");
+if (!$rResultFilterTotal) {
+    echo json_encode(["error" => "SQL Error (Filter Total): " . $conn->error]);
+    exit;
+}
 $iFilteredTotal = $rResultFilterTotal->fetch_array()[0];
 
+// Total records query
 $rResultTotal = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar");
+if (!$rResultTotal) {
+    echo json_encode(["error" => "SQL Error (Total Records): " . $conn->error]);
+    exit;
+}
 $iTotal = $rResultTotal->fetch_array()[0];
 
 // 7. Output Result
 $output = [
-    "sEcho" => intval($_POST['sEcho'] ?? 0),
+    // Legacy mapping
+    "sEcho" => intval($draw),
     "iTotalRecords" => $iTotal,
     "iTotalDisplayRecords" => $iFilteredTotal,
-    "aaData" => []
+    // Modern mapping
+    "draw" => intval($draw),
+    "recordsTotal" => $iTotal,
+    "recordsFiltered" => $iFilteredTotal,
+    "aaData" => [] // DataTables < 1.10 uses aaData, modern uses data (usually auto-detected, but aaData is safe)
 ];
 
 while ($aRow = $rResult->fetch_assoc()) {
@@ -120,35 +149,37 @@ while ($aRow = $rResult->fetch_assoc()) {
     $id_cobro = $aRow['id_cobro'];
     $id_contrato = $aRow['id_contrato'];
     $estado = $aRow['estado'];
-    
+
     // 0. Fecha (Use payment date if paid, else emission)
     $fecha_base = $aRow['fecha_pago'] ?: $aRow['fecha_emision'];
     $row[] = date('d/m/Y', strtotime($fecha_base));
-    
+
     // 1. Ref
     $row[] = htmlspecialchars($aRow['referencia_pago'] ?: '-');
-    
+
     // 2. Cliente
     $row[] = htmlspecialchars($aRow['nombre_completo']);
-    
+
     // 3. Concepto
     $concepto = $aRow['justificacion'] ?: $aRow['nombre_plan'];
     $row[] = htmlspecialchars($concepto ?: 'N/A');
-    
+
     // 4. Monto
     $row[] = '$' . number_format($aRow['monto_total'], 2, ',', '.');
-    
+
     // 5. Cuenta (JSON Map)
     $id_bank = $aRow['id_banco'];
     $bank_name = isset($bancosMap[$id_bank]) ? $bancosMap[$id_bank] : ($id_bank ? 'Desconocido' : '-');
     $row[] = htmlspecialchars($bank_name);
-    
+
     // 6. Estado (Badge)
     $badge_class = 'warning';
-    if ($estado == 'PAGADO') $badge_class = 'success';
-    elseif ($estado == 'VENCIDO') $badge_class = 'danger';
+    if ($estado == 'PAGADO')
+        $badge_class = 'success';
+    elseif ($estado == 'VENCIDO')
+        $badge_class = 'danger';
     $row[] = '<span class="badge bg-' . $badge_class . '">' . $estado . '</span>';
-    
+
     // 7. Acciones
     $acciones = '';
     // Pagar
@@ -174,10 +205,14 @@ while ($aRow = $rResult->fetch_assoc()) {
     if ($aRow['es_manual'] > 0) {
         $acciones .= '<a href="acceder_historial.php?id_cobro=' . $id_cobro . '" class="btn btn-sm btn-dark" title="Justificación"><i class="fas fa-info-circle"></i></a>';
     }
-    
+
     $row[] = $acciones;
     $output['aaData'][] = $row;
 }
 
 $conn->close();
+// Clear buffer to avoid whitespace issues
+if (ob_get_length())
+    ob_clean();
 echo json_encode($output);
+exit;

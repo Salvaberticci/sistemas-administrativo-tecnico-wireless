@@ -2,7 +2,7 @@
 // generar_contrato_pdf.php
 
 // SOLUCIÓN MEMORIA: Aumenta el límite de memoria para evitar fallos de Dompdf
-ini_set('memory_limit', '256M'); 
+ini_set('memory_limit', '256M');
 
 // Muestra errores de PHP para depuración
 error_reporting(E_ALL);
@@ -22,7 +22,7 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 
 // Incluye el archivo de conexión a la base de datos
-require_once '../conexion.php'; 
+require_once '../conexion.php';
 
 // ----------------------------------------------------------------------
 // NUEVO: 1. MANEJO Y CODIFICACIÓN DE IMÁGENES
@@ -33,11 +33,12 @@ $path_encabezado = '../../images/encabezado_contrato_nuevo.PNG';
 $path_pie = '../../images/piedepagina_contrato.PNG';
 
 // Función para codificar imágenes a Base64 (más limpia y fiable para Dompdf)
-function encode_image_to_base64($path, $mime) {
+function encode_image_to_base64($path, $mime)
+{
     if (!file_exists($path)) {
         // En caso de error, devuelve un marcador de posición transparente
         echo "Advertencia: Archivo de imagen no encontrado en la ruta: " . $path . "\n";
-        return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; 
+        return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
     }
     $data = file_get_contents($path);
     return 'data:' . $mime . ';base64,' . base64_encode($data);
@@ -90,41 +91,42 @@ $costo_mensual_f = number_format($contrato_data['costo_mensual'], 2, ',', '.');
 
 
 // Función auxiliar para formatear texto con subrayado (EXISTENTE)
-function format_field($value) {
+function format_field($value)
+{
     return '<span class="field-value">' . htmlspecialchars($value) . '</span>';
 }
 
 // Array de reemplazo para los marcadores de posición (MODIFICADO)
 $placeholders = [
-    '{ID_CONTRATO}'         => htmlspecialchars($contrato_data['id_contrato']),
-    '{FECHA_CONTRATO_DIA}'  => date('d', strtotime($contrato_data['fecha_contrato'])),
-    '{FECHA_CONTRATO_MES}'  => date('m', strtotime($contrato_data['fecha_contrato'])),
+    '{ID_CONTRATO}' => htmlspecialchars($contrato_data['id_contrato']),
+    '{FECHA_CONTRATO_DIA}' => date('d', strtotime($contrato_data['fecha_contrato'])),
+    '{FECHA_CONTRATO_MES}' => date('m', strtotime($contrato_data['fecha_contrato'])),
     '{FECHA_CONTRATO_ANIO}' => date('Y', strtotime($contrato_data['fecha_contrato'])),
-    '{NOMBRE_CLIENTE}'      => htmlspecialchars($contrato_data['nombre_cliente']),
-    '{CEDULA_CLIENTE}'      => htmlspecialchars($contrato_data['cedula_cliente']),
-    '{TELEFONO_CLIENTE}'    => htmlspecialchars($contrato_data['telefono']),
-    '{EMAIL_CLIENTE}'       => htmlspecialchars($contrato_data['correo']),
-    '{DIRECCION_CLIENTE}'   => htmlspecialchars($contrato_data['direccion_cliente']),
-    '{NOMBRE_PLAN}'         => htmlspecialchars($contrato_data['nombre_plan']),
-    '{COSTO_MENSUAL}'       => $costo_mensual_f . ' USD',
-    '{NOMBRE_PARROQUIA}'    => htmlspecialchars($contrato_data['nombre_parroquia']),
-    '{NOMBRE_MUNICIPIO}'    => htmlspecialchars($contrato_data['nombre_municipio']),
-    '{LUGAR_FIRMA}'         => 'Escuque, Sabana Libre ', // ⚠️ CAMBIA ESTO
-    '{NOMBRE_EMPRESA}'      => 'Wireless Supply, C.A.',
+    '{NOMBRE_CLIENTE}' => htmlspecialchars($contrato_data['nombre_cliente']),
+    '{CEDULA_CLIENTE}' => htmlspecialchars($contrato_data['cedula_cliente']),
+    '{TELEFONO_CLIENTE}' => htmlspecialchars($contrato_data['telefono']),
+    '{EMAIL_CLIENTE}' => htmlspecialchars($contrato_data['correo']),
+    '{DIRECCION_CLIENTE}' => htmlspecialchars($contrato_data['direccion_cliente']),
+    '{NOMBRE_PLAN}' => htmlspecialchars($contrato_data['nombre_plan']),
+    '{COSTO_MENSUAL}' => $costo_mensual_f . ' USD',
+    '{NOMBRE_PARROQUIA}' => htmlspecialchars($contrato_data['nombre_parroquia']),
+    '{NOMBRE_MUNICIPIO}' => htmlspecialchars($contrato_data['nombre_municipio']),
+    '{LUGAR_FIRMA}' => 'Escuque, Sabana Libre ', // ⚠️ CAMBIA ESTO
+    '{NOMBRE_EMPRESA}' => 'Wireless Supply, C.A.',
     '{NOMBRE_EMPRESA_REPRESENTANTE}' => 'David Garcia',
     '{CARGO_REPRESENTANTE}' => 'Gerente',
     // Placeholders para formato de campo
-    '{NOMBRE_CLIENTE_F}'    => format_field($contrato_data['nombre_cliente']),
-    '{CEDULA_CLIENTE_F}'    => format_field($contrato_data['cedula_cliente']),
+    '{NOMBRE_CLIENTE_F}' => format_field($contrato_data['nombre_cliente']),
+    '{CEDULA_CLIENTE_F}' => format_field($contrato_data['cedula_cliente']),
     '{DIRECCION_CLIENTE_F}' => format_field($contrato_data['direccion_cliente']),
-    '{NOMBRE_PARROQUIA_F}'  => format_field($contrato_data['nombre_parroquia']),
-    '{NOMBRE_MUNICIPIO_F}'  => format_field($contrato_data['nombre_municipio']),
-    '{TELEFONO_CLIENTE_F}'  => format_field($contrato_data['telefono']),
-    '{EMAIL_CLIENTE_F}'     => format_field($contrato_data['correo']),
-    
+    '{NOMBRE_PARROQUIA_F}' => format_field($contrato_data['nombre_parroquia']),
+    '{NOMBRE_MUNICIPIO_F}' => format_field($contrato_data['nombre_municipio']),
+    '{TELEFONO_CLIENTE_F}' => format_field($contrato_data['telefono']),
+    '{EMAIL_CLIENTE_F}' => format_field($contrato_data['correo']),
+
     // NUEVOS PLACEHOLDERS PARA IMÁGENES (Base64)
     '{IMG_ENCABEZADO_B64}' => $img_encabezado_b64,
-    '{IMG_PIE_B64}'        => $img_pie_b64,
+    '{IMG_PIE_B64}' => $img_pie_b64,
 ];
 
 
@@ -135,7 +137,7 @@ $html_contrato_plantilla = '
      <div id="header-image-container">
         <img src="{IMG_ENCABEZADO_B64}" class="header-image">
     </div>
-        <h2>CONTRATO DE SERVICIO N° {ID_CONTRATO}</h2>
+        <h2>CONTRATO DE SERVICIO.</h2>
     
         <p>En la ciudad de <strong>{LUGAR_FIRMA}</strong> a los <strong>{FECHA_CONTRATO_DIA}</strong> días del mes de <strong>{FECHA_CONTRATO_MES}</strong> del <strong>{FECHA_CONTRATO_ANIO}</strong>, comparecen por una parte la empresa <strong>{NOMBRE_EMPRESA}</strong> y por la otra el/la Sr(a). <strong>{NOMBRE_CLIENTE}</strong>, identificado con Cédula de Identidad V-<strong>{CEDULA_CLIENTE}</strong>, domiciliado en <strong>{DIRECCION_CLIENTE}</strong>, quien en adelante se denominará EL CLIENTE.</p>
         
@@ -145,24 +147,21 @@ $html_contrato_plantilla = '
         <h3>Segunda: Tarifa</h3>
         <p>El importe mensual de su facturación debe ser cancelado por adelantado los primeros 05 días de cada mes, de no haber cancelado su cuota el sistema suspenderá el servicio con excepción de la instalación por lo que será un cargo único que estará reflejado en la factura emitida por la empresa y el cual está incluido en el monto de la instalación. El monto de la instalación no es reembolsable por la empresa.</p>
         
-        <h4>2.1 Planes de financiamiento:</h4>
-        <p>La empresa le ofrece planes de financiamiento. El Cliente para optar a los planes de financiamiento se comprometerá a cumplir con las cuotas acordadas y en las fechas fijadas en èste contrato. En caso que El Cliente incumpla cualquiera de las obligaciones de pago contenidas en el contrato, le será suspendido el servicio desde el día inmediato posterior al vencimiento del pago respectivo.</p>
-        <p>El Cliente acepta que bastará con que el proveedor le notifique mediante comunicación escrita, correo electrónico, mensaje de texto o WhatsApp enviado a los números indicados en el presente contrato para que se entienda que El Cliente conoce cualquier modificación a las condiciones económicas, incluyendo tarifas, aumentos, promociones.</p>
-        <p>El Cliente debe reportar los pagos con su capture al siguiente <b>número telefónico 0424-7336576.</b></p>
-
         <h3>Tercero: Instalación de Equipos</h3>
-        <p>La empresa tendrá un lapso no mayor a 48 horas para realizar la instalación y activación del servicio. La empresa proveerá al Cliente de los dispositivos, modelos, aparatos, necesarios para la adecuada prestación del servicio. Los equipos serán instalados por la Empresa, en la localidad indicada por El Cliente y específicamente en la ubicación acordada por las partes. Una vez que la Empresa haya instalado los equipos y establecido el servicio, El Cliente debe firmar la ficha técnica donde queda conforme todos los datos técnicos. En caso que El Cliente desee modificar el lugar de la instalación debe notificar a la empresa y los costos respectivos a la mudanza o traslado será por parte del Cliente.</p>
+        <p>La empresa tendrá un lapso no mayor a 48 horas para realizar la instalación y activación del servicio. La empresa proveerá al Cliente de los dispositivos, modelos, aparatos, necesarios para la adecuada prestación del servicio. Los equipos serán instalados por la Empresa, en la localidad indicada por El Cliente y específicamente en la ubicación acordada por las partes. Una vez que la Empresa haya instalado los equipos y establecido el servicio, El Cliente debe firmar la ficha técnica donde queda conforme todos los datos técnicos. En caso que El Cliente desee modificar el lugar de la instalación debe notificar a la empresa y los costos respectivos a la mudanza o traslado serán por parte del Cliente.</p>
         
-        <h3>Cuarta: Formulación de Reclamos</h3>
-        <p>El cliente debe reportar las averías o fallas en el servicio, a la empresa por el siguiente<b> número telefónico 0424-7627776 (Soporte Técnico).</b> La Empresa garantizará la atención y solución al reporte emitido por El Cliente.</p>
+        <h3>Cuarta: Canales de Comunicación y Reclamos</h3>
+        <p>Para la gestión de servicios, reportes y consultas, la Empresa pone a disposición del Cliente los siguientes canales oficiales de comunicación: Atención Administrativa: 0424-7336576 (Consultas sobre facturación, pagos, cambio de planes, actualización de datos personales y solicitudes de traslados). Soporte Técnico: 0424-7627776 (Reporte de fallas en el servicio, configuración de equipos, interrupciones de conexión y asistencia técnica especializada). ÚNICAS VÍAS OFICIALES PARA GARANTIZAR EL REGISTRO Y SEGUIMIENTO DE SUS SOLICITUDES.</p>
         
         <h3>Quinta: Uso de los Equipos Instalados</h3>
         <p>Una vez instalados los equipos, El Cliente se constituirá en depositario de los mismos, obligándose a usarlos de conformidad con el destino y finalidad para los que fueron creados, siendo responsables de todo daño, deterioro que se les cause, siempre que se deban a causas que le sean imputables.</p>
         
+        <h3>Sexta: Horarios de Atención y Soporte Técnico</h3>
+        <p>LA EMPRESA establece los siguientes canales y horarios para la atención: Atención Personalizada (Soporte Humano): Lunes a Viernes: De 8:00 AM a 5:00 PM. Sábados: De 8:00 AM a 12:00 PM. Exceptuando días festivos y feriados oficiales. Atención Automatizada (GalaBot): Fuera de los horarios de oficina anteriormente mencionados, así como en días no laborables, el CLIENTE será atendido de forma inmediata por GalaBot, nuestro asistente virtual inteligente. GalaBot está facultado para: Gestionar reportes iniciales de fallas y asignar números de ticket. Proporcionar guías de autoayuda y solución de problemas comunes. En caso de que el requerimiento sea de alta complejidad y no pueda ser resuelto por GalaBot, el caso será escalado automáticamente para ser atendido por el personal técnico en la apertura del siguiente bloque de horario administrativo.</p>
+        
         <hr>
         <h3 style="text-align: center; margin-top: 20px;">CONDICIONES COMERCIALES</h3>
-        <p><strong>Precio del Servicio:</strong> Los cargos de instalación son iniciales por única vez. Comprenden cancelación de los técnicos por concepto de instalación del servicio, gastos por transporte y combustible, gastos de materiales y equipos, y un primer mes de renta.</p>
-        <p>El cliente debe cancelar los primeros 05 días de cada mes, nuestro sistema administrativo genera una única fecha de corte apartir del 06 de cada mes, por consiguiente, El Cliente debe cancelar por prorrateo si su instalación se realiza a mediados del mes.</p>
+        <p><strong>Precio del Servicio:</strong> Los cargos de instalación son iniciales por única vez. Comprenden cancelación de los técnicos por concepto de instalación del servicio, gastos por transporte y combustible, gastos de materiales y equipos, y un primer mes de renta. El cliente debe cancelar los primeros 05 días de cada mes, nuestro sistema administrativo genera una única fecha de corte a final de mes, por consiguiente, El Cliente debe cancelar por prorrateo si su instalación se realiza a mediados del mes.</p>
 
         <table>
             <thead>
@@ -221,7 +220,7 @@ $html_final_body = strtr($html_contrato_plantilla, $placeholders);
 // 5. CONFIGURACIÓN Y GENERACIÓN DE DOMPDF (EXISTENTE)
 $options = new Options();
 $options->set('isHtml5ParserEnabled', true);
-$options->set('defaultFont', 'Helvetica'); 
+$options->set('defaultFont', 'Helvetica');
 $dompdf = new Dompdf($options);
 
 

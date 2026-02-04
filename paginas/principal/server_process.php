@@ -80,12 +80,13 @@ if (isset($_GET['iSortCol_0'])) {
     for ($i = 0; $i < $sortingCols; $i++) {
         $sortColIdx = intval($_GET["iSortCol_{$i}"]);
         if (isset($aColumnas[$sortColIdx])) {
-             $sortDir = $_GET["sSortDir_{$i}"] === 'desc' ? 'desc' : 'asc'; // Sanitize direction
-             $sOrder .= $aColumnas[$sortColIdx] . " " . $sortDir . ", ";
+            $sortDir = $_GET["sSortDir_{$i}"] === 'desc' ? 'desc' : 'asc'; // Sanitize direction
+            $sOrder .= $aColumnas[$sortColIdx] . " " . $sortDir . ", ";
         }
     }
     $sOrder = rtrim($sOrder, ', ');
-    if ($sOrder == 'ORDER BY ') $sOrder = '';
+    if ($sOrder == 'ORDER BY ')
+        $sOrder = '';
 }
 
 // --- Búsqueda ---
@@ -97,8 +98,30 @@ if (isset($_GET['sSearch']) && $_GET['sSearch'] != "") {
         $searchConditions[] = "$col LIKE '%$searchValue%'";
     }
 }
-if (!empty($searchConditions)) {
-    $sWhere = "WHERE (" . implode(' OR ', $searchConditions) . ")";
+
+// --- Filtro por Vacíos ---
+$emptyFilterConditions = [];
+if (isset($_GET['empty_filter']) && $_GET['empty_filter'] !== "") {
+    $colIdx = intval($_GET['empty_filter']);
+    if (isset($aColumnas[$colIdx])) {
+        $colName = $aColumnas[$colIdx];
+        // TRIM handles strings with only spaces
+        // Also check for '0000-00-00' (dates) and '-' (placeholder)
+        $emptyFilterConditions[] = "($colName IS NULL OR TRIM($colName) = '' OR $colName = '0000-00-00' OR TRIM($colName) = '-')";
+    }
+}
+
+if (!empty($searchConditions) || !empty($emptyFilterConditions)) {
+    $sWhere = "WHERE ";
+    if (!empty($searchConditions)) {
+        $sWhere .= "(" . implode(' OR ', $searchConditions) . ")";
+        if (!empty($emptyFilterConditions)) {
+            $sWhere .= " AND ";
+        }
+    }
+    if (!empty($emptyFilterConditions)) {
+        $sWhere .= "(" . implode(' AND ', $emptyFilterConditions) . ")";
+    }
 }
 
 // --- Query Principal ---
@@ -130,7 +153,8 @@ $output = [
 ];
 
 // Helper para limpiar strings
-function clean($str) {
+function clean($str)
+{
     return htmlspecialchars($str ?? '', ENT_QUOTES, 'UTF-8');
 }
 
@@ -156,12 +180,11 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 5. PARROQUIA
     $row[] = clean($aRow['nombre_parroquia']);
 
-    // 6. DIRECCION (Boton)
+    // 6. DIRECCION (Boton + Texto)
     $direccion = clean(str_replace(["\r", "\n"], ' ', $aRow['direccion']));
-    $row[] = "<button class='btn btn-sm btn-info text-white' 
-                onclick='verDireccion(\"{$direccion}\", \"" . clean($aRow['nombre_completo']) . "\", \"" . clean($aRow['ip']) . "\")'
-                title='Ver Dirección'>
-              <i class='fa-solid fa-map-location-dot'></i></button>";
+    $row[] = "<div class='d-flex align-items-center gap-2'>
+                <small class='text-muted d-inline-block' style='max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;' title='{$direccion}'>{$direccion}</small>
+              </div>";
 
     // 7. TELEFONO 1
     $row[] = clean($aRow['telefono']);
@@ -293,8 +316,10 @@ while ($aRow = $rResult->fetch_assoc()) {
     // ESTADO
     $st = $aRow['estado'];
     $color = 'secondary';
-    if ($st == 'ACTIVO') $color = 'success';
-    if ($st == 'SUSPENDIDO') $color = 'danger';
+    if ($st == 'ACTIVO')
+        $color = 'success';
+    if ($st == 'SUSPENDIDO')
+        $color = 'danger';
     $row[] = "<span class='badge bg-{$color}'>{$st}</span>";
 
     // ACCIONES

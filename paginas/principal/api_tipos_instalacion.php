@@ -7,7 +7,7 @@ $jsonFile = 'data/tipos_instalacion.json';
 // CREAR ARCHIVO SI NO EXISTE
 if (!file_exists($jsonFile)) {
     // Valores por defecto si se crea de cero
-    $defaults = ["NUEVO", "MIGRACION", "MUDANZA", "NUEVO FTTH", "NUEVO RADIO"];
+    $defaults = ["FTTH", "RADIO"];
     file_put_contents($jsonFile, json_encode($defaults, JSON_PRETTY_PRINT));
 }
 

@@ -27,7 +27,8 @@ require_once '../includes/sidebar.php';
 
 	<div class="page-content">
 		<div class="card">
-			<div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
+			<div
+				class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
 				<div>
 					<h5 class="fw-bold text-primary mb-1">Modificar Registro</h5>
 					<p class="text-muted small mb-0">Wireless Supply, C.A.</p>
@@ -35,39 +36,45 @@ require_once '../includes/sidebar.php';
 			</div>
 
 			<div class="card-body px-4">
-				<form class="row g-3" method="POST" action="actualiza.php" enctype="multipart/form-data" autocomplete="off">
+				<form class="row g-3" method="POST" action="actualiza.php" enctype="multipart/form-data"
+					autocomplete="off">
 
 					<input type="hidden" id="id" name="id" value="<?php echo $row['id']; ?>" />
 
 					<div class="col-md-6">
 						<label for="ip" class="form-label">IP</label>
-						<input type="text" class="form-control" id="ip" name="ip" value="<?php echo $row['ip']; ?>" required autofocus>
+						<input type="text" class="form-control" id="ip" name="ip" value="<?php echo $row['ip']; ?>"
+							required autofocus>
 					</div>
 
 					<div class="col-md-6">
 						<label for="cedula" class="form-label">Cedula</label>
-						<input type="text" class="form-control" id="cedula" name="cedula" value="<?php echo $row['cedula']; ?>" required>
+						<input type="text" class="form-control" id="cedula" name="cedula"
+							value="<?php echo $row['cedula']; ?>" required>
 					</div>
 
 					<div class="col-md-6">
 						<label for="nombre_completo" class="form-label">Nombre Completo</label>
-						<input type="text" class="form-control" id="nombre_completo" name="nombre_completo" value="<?php echo $row['nombre_completo']; ?>">
+						<input type="text" class="form-control" id="nombre_completo" name="nombre_completo"
+							value="<?php echo $row['nombre_completo']; ?>">
 					</div>
 
 					<div class="col-md-6">
 						<label for="telefono" class="form-label">Teléfono</label>
-						<input type="text" class="form-control" id="telefono" name="telefono" value="<?php echo $row['telefono']; ?>">
+						<input type="text" class="form-control" id="telefono" name="telefono"
+							value="<?php echo $row['telefono']; ?>">
 					</div>
 
 					<div class="col-md-6">
 						<label for="correo" class="form-label">Correo</label>
-						<input type="text" class="form-control" id="correo" name="correo" value="<?php echo $row['correo']; ?>">
+						<input type="text" class="form-control" id="correo" name="correo"
+							value="<?php echo $row['correo']; ?>">
 					</div>
 
 					<?php
-					
+
 					// ⚠️ 1. OBTENER EL ID DEL CONTRATO A EDITAR 
-					$idContrato = $row['id']; 
+					$idContrato = $row['id'];
 
 					// 2. CONSULTA PARA OBTENER DATOS ACTUALES (INCLUYENDO MUNICIPIO, PARROQUIA y COMUNIDAD)
 					// 🔑 MODIFICADO: Se agrega id_comunidad a la selección
@@ -88,7 +95,7 @@ require_once '../includes/sidebar.php';
 					// 3. CONSULTA PARA OBTENER TODOS LOS MUNICIPIOS, PLANES Y VENDEDORES (para llenar la lista)
 					$sql_municipios = "SELECT id_municipio, nombre_municipio FROM municipio ORDER BY nombre_municipio ASC";
 					$resultado_municipios = $conn->query($sql_municipios);
-					
+
 					// OBTENER VALORES SELECCIONADOS DEL CONTRATO (RED)
 					// ----------------------------------------------------
 					$vendedor_seleccionado = $row['id_vendedor'];
@@ -99,7 +106,7 @@ require_once '../includes/sidebar.php';
 					
 					// CONSULTAS PARA LLENAR LAS LISTAS (STATIC)
 					// ----------------------------------------------------
-
+					
 					// Consulta para Vendedores
 					$sql_vendedores = "SELECT id_vendedor, nombre_vendedor FROM vendedores ORDER BY nombre_vendedor ASC";
 					$resultado_vendedores = $conn->query($sql_vendedores);
@@ -108,7 +115,7 @@ require_once '../includes/sidebar.php';
 					$sql_planes = "SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan ASC";
 					$resultado_planes = $conn->query($sql_planes);
 
-					$estado_actual = $row['estado']; 
+					$estado_actual = $row['estado'];
 
 					// Consulta para OLTs
 					$sql_olt = "SELECT id_olt, nombre_olt FROM olt ORDER BY nombre_olt ASC";
@@ -151,49 +158,49 @@ require_once '../includes/sidebar.php';
 
 					?>
 					<div class="col-md-6">
-					<label for="municipio" class="form-label">Municipio</label>
-					<select name="id_municipio" id="municipio" class="form-select" required>
-						<option value="">-- Seleccione un Municipio --</option>
+						<label for="municipio" class="form-label">Municipio</label>
+						<select name="id_municipio" id="municipio" class="form-select" required>
+							<option value="">-- Seleccione un Municipio --</option>
 
-						<?php
-						if ($resultado_municipios->num_rows > 0) {
-							while($fila = $resultado_municipios->fetch_assoc()) {
-								$id = htmlspecialchars($fila["id_municipio"]);
-								$nombre = htmlspecialchars($fila["nombre_municipio"]);
-							
-								// 🔑 Lógica de Selección: Compara el ID de la base de datos con el del contrato
-								$selected = ($id == $municipio_seleccionado) ? 'selected' : ''; 
-							
-								echo "<option value=\"$id\" $selected>$nombre</option>";
+							<?php
+							if ($resultado_municipios->num_rows > 0) {
+								while ($fila = $resultado_municipios->fetch_assoc()) {
+									$id = htmlspecialchars($fila["id_municipio"]);
+									$nombre = htmlspecialchars($fila["nombre_municipio"]);
+
+									// 🔑 Lógica de Selección: Compara el ID de la base de datos con el del contrato
+									$selected = ($id == $municipio_seleccionado) ? 'selected' : '';
+
+									echo "<option value=\"$id\" $selected>$nombre</option>";
+								}
 							}
-						}
-						?>
-					</select>
+							?>
+						</select>
 					</div>
 
 					<br>
 
 					<div class="col-md-6">
-					<label for="parroquia" class="form-label">Parroquia</label>
-					<select name="id_parroquia" id="parroquia" class="form-select" required>
-						<option value="<?php echo $parroquia_seleccionada; ?>">
-							<?php 
-							// Consulta rápida para mostrar el nombre de la parroquia actual
-							$sql_nombre = "SELECT nombre_parroquia FROM parroquia WHERE id_parroquia = $parroquia_seleccionada";
-							$res_nombre = $conn->query($sql_nombre);
-							// Asegurar que solo se muestre el nombre si la consulta fue exitosa
-							$nombre_parroquia_actual = $res_nombre->num_rows > 0 ? $res_nombre->fetch_assoc()['nombre_parroquia'] : 'Cargando...';
-							echo htmlspecialchars($nombre_parroquia_actual);
-							?> (Actual)
-						</option>
-					</select>
+						<label for="parroquia" class="form-label">Parroquia</label>
+						<select name="id_parroquia" id="parroquia" class="form-select" required>
+							<option value="<?php echo $parroquia_seleccionada; ?>">
+								<?php
+								// Consulta rápida para mostrar el nombre de la parroquia actual
+								$sql_nombre = "SELECT nombre_parroquia FROM parroquia WHERE id_parroquia = $parroquia_seleccionada";
+								$res_nombre = $conn->query($sql_nombre);
+								// Asegurar que solo se muestre el nombre si la consulta fue exitosa
+								$nombre_parroquia_actual = $res_nombre->num_rows > 0 ? $res_nombre->fetch_assoc()['nombre_parroquia'] : 'Cargando...';
+								echo htmlspecialchars($nombre_parroquia_actual);
+								?> (Actual)
+							</option>
+						</select>
 					</div>
-					
+
 					<div class="col-md-6">
 						<label for="comunidad" class="form-label">Comunidad</label>
-						<select name="id_comunidad" id="comunidad" class="form-select">
+						<select name="id_comunidad" id="comunidad" class="form-select" required>
 							<option value="<?php echo $comunidad_seleccionada; ?>">
-								<?php 
+								<?php
 								// Consulta rápida para mostrar el nombre de la comunidad actual
 								$sql_nombre = "SELECT nombre_comunidad FROM comunidad WHERE id_comunidad = $comunidad_seleccionada";
 								$res_nombre = $conn->query($sql_nombre);
@@ -206,140 +213,210 @@ require_once '../includes/sidebar.php';
 
 
 					<div class="col-md-6">
-					  <label for="id_plan" class="form-label">Plan</label>
-					  <select name="id_plan" id="id_plan" class="form-select" required>
-						  <option value="">-- Seleccione un Plan --</option>
+						<label for="id_plan" class="form-label">Plan</label>
+						<select name="id_plan" id="id_plan" class="form-select" required>
+							<option value="">-- Seleccione un Plan --</option>
 
-						  <?php
-						  if ($resultado_planes->num_rows > 0) {
-							  while($fila = $resultado_planes->fetch_assoc()) {
-								  $id = htmlspecialchars($fila["id_plan"]);
-								  $nombre = htmlspecialchars($fila["nombre_plan"]);
+							<?php
+							if ($resultado_planes->num_rows > 0) {
+								while ($fila = $resultado_planes->fetch_assoc()) {
+									$id = htmlspecialchars($fila["id_plan"]);
+									$nombre = htmlspecialchars($fila["nombre_plan"]);
 
-								  // Lógica CLAVE: Marca la opción guardada
-								  $selected = ($id == $plan_seleccionado) ? 'selected' : ''; 
+									// Lógica CLAVE: Marca la opción guardada
+									$selected = ($id == $plan_seleccionado) ? 'selected' : '';
 
-								  echo "<option value=\"$id\" $selected>$nombre</option>";
-							  }
-						  }
-						  ?>
-					  </select>
+									echo "<option value=\"$id\" $selected>$nombre</option>";
+								}
+							}
+							?>
+						</select>
 					</div>
 
 					<div class="col-md-6">
-					<label for="id_vendedor" class="form-label">Vendedor</label>
-					<select name="id_vendedor" id="id_vendedor" class="form-select" required>
-						<option value="">-- Seleccione un Vendedor --</option>
+						<label for="id_vendedor" class="form-label">Vendedor</label>
+						<select name="id_vendedor" id="id_vendedor" class="form-select" required>
+							<option value="">-- Seleccione un Vendedor --</option>
 
-						<?php
-						if ($resultado_vendedores->num_rows > 0) {
-							while($fila = $resultado_vendedores->fetch_assoc()) {
-								$id = htmlspecialchars($fila["id_vendedor"]);
-								$nombre = htmlspecialchars($fila["nombre_vendedor"]);
-							
-								// Lógica CLAVE: Marca la opción guardada
-								$selected = ($id == $vendedor_seleccionado) ? 'selected' : ''; 
-							
-								echo "<option value=\"$id\" $selected>$nombre</option>";
+							<?php
+							if ($resultado_vendedores->num_rows > 0) {
+								while ($fila = $resultado_vendedores->fetch_assoc()) {
+									$id = htmlspecialchars($fila["id_vendedor"]);
+									$nombre = htmlspecialchars($fila["nombre_vendedor"]);
+
+									// Lógica CLAVE: Marca la opción guardada
+									$selected = ($id == $vendedor_seleccionado) ? 'selected' : '';
+
+									echo "<option value=\"$id\" $selected>$nombre</option>";
+								}
 							}
-						}
-						?>
-					</select>
+							?>
+						</select>
 					</div>
 
 					<div class="col-md-6">
 						<label for="direccion" class="form-label">Direccion</label>
-						<textarea class="form-control" id="direccion" name="direccion" rows="3"><?php echo htmlspecialchars($row['direccion']); ?></textarea>
+						<textarea class="form-control" id="direccion" name="direccion"
+							rows="3"><?php echo htmlspecialchars($row['direccion']); ?></textarea>
 					</div>
 
 					<div class="col-md-6">
-					<label for="fecha_instalacion" class="form-label">Fecha de Instalación</label>
+						<label for="fecha_instalacion" class="form-label">Fecha de Instalación</label>
 
-					<input 
-						type="date" 
-						class="form-control" 
-						id="fecha_instalacion" 
-						name="fecha_instalacion" 
+						<input type="date" class="form-control" id="fecha_instalacion" name="fecha_instalacion"
+							value="<?php echo $row['fecha_instalacion']; ?>">
 
-						value="<?php echo $row['fecha_instalacion']; ?>"
-					  >
+						<?php if ($row['fecha_instalacion']): ?>
+							<small class="form-text text-muted">
+								<?php //echo $fecha_venezolana; ?>
+							</small>
+						<?php endif; ?>
+					</div>
 
-					<?php if ($row['fecha_instalacion']): ?>
-						<small class="form-text text-muted">
-						  <?php //echo $fecha_venezolana; ?>
-						</small>
-					<?php endif; ?>
-				</div>
+					<div class="col-md-6">
+						<label for="estado" class="form-label">Estado del Contrato</label>
+						<select class="form-select" id="estado" name="estado" required>
+							<option value="">-- Seleccione el Estado --</option>
 
-				<div class="col-md-6">
-				<label for="estado" class="form-label">Estado del Contrato</label>
-				<select class="form-select" id="estado" name="estado" required>
-				 <option value="">-- Seleccione el Estado --</option>
-				
-				   <option value="ACTIVO" 
-					   <?php if ($estado_actual == 'ACTIVO') echo 'selected'; ?>>
-					  ACTIVO
-				   </option>
-				
-				  <option value="INACTIVO" 
-					   <?php if ($estado_actual == 'INACTIVO') echo 'selected'; ?>>
-					INACTIVO
-				   </option>
-				
-				   <option value="SUSPENDIDO" 
-					 <?php if ($estado_actual == 'SUSPENDIDO') echo 'selected'; ?>>
-					SUSPENDIDO
-					</option>
-				
-				</select>
-				</div>
-					
+							<option value="ACTIVO" <?php if ($estado_actual == 'ACTIVO')
+								echo 'selected'; ?>>
+								ACTIVO
+							</option>
+
+							<option value="INACTIVO" <?php if ($estado_actual == 'INACTIVO')
+								echo 'selected'; ?>>
+								INACTIVO
+							</option>
+
+							<option value="SUSPENDIDO" <?php if ($estado_actual == 'SUSPENDIDO')
+								echo 'selected'; ?>>
+								SUSPENDIDO
+							</option>
+
+						</select>
+					</div>
+
 					<div class="col-md-6">
 						<label for="ident_caja_nap" class="form-label">Identificacion Caja Nap</label>
-						<input type="text" class="form-control" id="ident_caja_nap" name="ident_caja_nap" value="<?php echo $row['ident_caja_nap']; ?>">
+						<input type="text" class="form-control" id="ident_caja_nap" name="ident_caja_nap"
+							value="<?php echo $row['ident_caja_nap']; ?>">
 					</div>
 
 					<div class="col-md-6">
 						<label for="puerto_nap" class="form-label">Puerto_Nap</label>
-						<input type="text" class="form-control" id="puerto_nap" name="puerto_nap" value="<?php echo $row['puerto_nap']; ?>">
+						<input type="text" class="form-control" id="puerto_nap" name="puerto_nap"
+							value="<?php echo $row['puerto_nap']; ?>">
 					</div>
 
 					<div class="col-md-6">
 						<label for="num_presinto_odn" class="form-label">Numero_Presinto_ODN</label>
-						<input type="text" class="form-control" id="num_presinto_odn" name="num_presinto_odn" value="<?php echo $row['num_presinto_odn']; ?>">
+						<input type="text" class="form-control" id="num_presinto_odn" name="num_presinto_odn"
+							value="<?php echo $row['num_presinto_odn']; ?>">
 					</div>
 
 					<div class="col-md-6">
-					<label for="id_olt" class="form-label">OLT</label>
-					<select name="id_olt" id="id_olt" class="form-select" required>
-						<option value="">-- Seleccione una OLT --</option>
+						<label for="id_olt" class="form-label">OLT</label>
+						<select name="id_olt" id="id_olt" class="form-select" required>
+							<option value="">-- Seleccione una OLT --</option>
 
-						<?php
-						if ($resultado_olt->num_rows > 0) {
-							while($fila = $resultado_olt->fetch_assoc()) {
-								$id = htmlspecialchars($fila["id_olt"]);
-								$nombre = htmlspecialchars($fila["nombre_olt"]);
-							
-								// Lógica CLAVE: Marca la opción guardada
-								$selected = ($id == $olt_seleccionado) ? 'selected' : ''; 
-							
-								echo "<option value=\"$id\" $selected>$nombre</option>";
+							<?php
+							if ($resultado_olt->num_rows > 0) {
+								while ($fila = $resultado_olt->fetch_assoc()) {
+									$id = htmlspecialchars($fila["id_olt"]);
+									$nombre = htmlspecialchars($fila["nombre_olt"]);
+
+									// Lógica CLAVE: Marca la opción guardada
+									$selected = ($id == $olt_seleccionado) ? 'selected' : '';
+
+									echo "<option value=\"$id\" $selected>$nombre</option>";
+								}
 							}
-						}
-						?>
-					</select>
+							?>
+						</select>
 					</div>
 
 					<div class="col-md-6">
-					<label for="id_pon" class="form-label">PON</label>
-					<select name="id_pon" id="id_pon" class="form-select" required disabled> 
-						<option value="<?php echo $pon_seleccionado; ?>" selected>
-							<?php echo htmlspecialchars($nombre_pon_actual); ?> (Actual)
-						</option>
-					</select>
+						<label for="id_pon" class="form-label">PON</label>
+						<select name="id_pon" id="id_pon" class="form-select" required disabled>
+							<option value="<?php echo $pon_seleccionado; ?>" selected>
+								<?php echo htmlspecialchars($nombre_pon_actual); ?> (Actual)
+							</option>
+						</select>
 					</div>
 
-					
+					<!-- NUEVOS CAMPOS ADMINISTRATIVOS Y TÉCNICOS -->
+					<div class="section-title bg-light p-2 mt-4 fw-bold border-start border-primary border-4">
+						Información de Conexión</div>
+
+					<div class="col-md-6">
+						<label for="tipo_conexion" class="form-label">Tipo de Conexión</label>
+						<select name="tipo_conexion" id="tipo_conexion" class="form-select" required>
+							<option value="">-- Seleccione Conexión --</option>
+							<?php
+							// Cargar Tipos desde JSON
+							$jsonFileTypes = 'data/tipos_instalacion.json';
+							$current_tipo_conexion = $row['tipo_conexion'] ?? '';
+							if (file_exists($jsonFileTypes)) {
+								$typesData = json_decode(file_get_contents($jsonFileTypes), true);
+								if (is_array($typesData)) {
+									foreach ($typesData as $type) {
+										$selected = ($type == $current_tipo_conexion) ? 'selected' : '';
+										echo '<option value="' . $type . '" ' . $selected . '>' . $type . '</option>';
+									}
+								}
+							} else {
+								// Fallback
+								echo '<option value="FTTH" ' . ($current_tipo_conexion == 'FTTH' ? 'selected' : '') . '>FTTH</option>';
+								echo '<option value="RADIO" ' . ($current_tipo_conexion == 'RADIO' ? 'selected' : '') . '>RADIO</option>';
+							}
+							?>
+						</select>
+					</div>
+
+					<div class="section-title bg-light p-2 mt-4 fw-bold border-start border-primary border-4">Detalles
+						Técnicos</div>
+
+					<!-- CAMPOS FTTH -->
+					<div class="col-md-6 campo-ftth">
+						<label for="mac_onu" class="form-label">MAC/Serial ONU</label>
+						<input type="text" class="form-control" id="mac_onu" name="mac_onu"
+							value="<?php echo $row['mac_onu']; ?>">
+					</div>
+					<div class="col-md-6 campo-ftth">
+						<label for="ip_onu" class="form-label">IP ONU</label>
+						<input type="text" class="form-control" id="ip_onu" name="ip_onu"
+							value="<?php echo $row['ip_onu']; ?>">
+					</div>
+					<div class="col-md-6 campo-ftth">
+						<label for="nap_tx_power" class="form-label">NAP TX Power</label>
+						<input type="text" class="form-control" id="nap_tx_power" name="nap_tx_power"
+							value="<?php echo $row['nap_tx_power']; ?>">
+					</div>
+					<div class="col-md-6 campo-ftth">
+						<label for="onu_rx_power" class="form-label">ONU RX Power</label>
+						<input type="text" class="form-control" id="onu_rx_power" name="onu_rx_power"
+							value="<?php echo $row['onu_rx_power']; ?>">
+					</div>
+					<div class="col-md-6 campo-ftth">
+						<label for="distancia_drop" class="form-label">Distancia Drop (m)</label>
+						<input type="text" class="form-control" id="distancia_drop" name="distancia_drop"
+							value="<?php echo $row['distancia_drop']; ?>">
+					</div>
+
+					<!-- CAMPOS RADIO -->
+					<div class="col-md-6 campo-radio">
+						<label for="punto_acceso" class="form-label">Punto de Acceso</label>
+						<input type="text" class="form-control" id="punto_acceso" name="punto_acceso"
+							value="<?php echo $row['punto_acceso']; ?>">
+					</div>
+					<div class="col-md-6 campo-radio">
+						<label for="valor_conexion_dbm" class="form-label">Valor Conexión (dBm)</label>
+						<input type="text" class="form-control" id="valor_conexion_dbm" name="valor_conexion_dbm"
+							value="<?php echo $row['valor_conexion_dbm']; ?>">
+					</div>
+
+
+
 					<div class="col-12 mt-4 text-end">
 						<a href="gestion_contratos.php" class="btn btn-secondary me-2">Regresar</a>
 						<button type="submit" class="btn btn-primary">Guardar Cambios</button>
@@ -359,23 +436,23 @@ require_once '../includes/sidebar.php';
 	let deleteButtons = document.querySelectorAll('.delete');
 
 	for (let i = 0; i < deleteButtons.length; i++) {
-		deleteButtons[i].addEventListener('click', function() {
+		deleteButtons[i].addEventListener('click', function () {
 			var file = this.getAttribute('data');
 			var dataString = 'file=' + file;
 
 			fetch('del_file.php', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded'
-					},
-					body: dataString
-				})
-				.then(function(response) {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded'
+				},
+				body: dataString
+			})
+				.then(function (response) {
 					if (response.ok) {
 						location.reload();
 					}
 				})
-				.catch(function(error) {
+				.catch(function (error) {
 					console.error('Error:', error);
 				});
 		});
@@ -383,184 +460,196 @@ require_once '../includes/sidebar.php';
 </script>
 
 <script>
-$(document).ready(function() {
-	
-	// 🔑 OBTENER LOS VALORES INICIALES DE PHP (UBICACIÓN)
-	var parroquiaSeleccionadaId = "<?php echo $parroquia_seleccionada; ?>";
-	var municipioInicialId = "<?php echo $municipio_seleccionado; ?>";
-	var comunidadSeleccionadaId = "<?php echo $comunidad_seleccionada; ?>"; 
+	$(document).ready(function () {
 
-	// 🔑 NUEVOS: OBTENER LOS VALORES INICIALES DE PHP (RED)
-	var oltInicialId = "<?php echo $olt_seleccionado; ?>";
-	var ponSeleccionadoId = "<?php echo $pon_seleccionado; ?>";
+		// 🔑 OBTENER LOS VALORES INICIALES DE PHP (UBICACIÓN)
+		var parroquiaSeleccionadaId = "<?php echo $parroquia_seleccionada; ?>";
+		var municipioInicialId = "<?php echo $municipio_seleccionado; ?>";
+		var comunidadSeleccionadaId = "<?php echo $comunidad_seleccionada; ?>";
 
-	// =========================================================================
-	// 2. FUNCIONES DE CARGA EN CASCADA
-	// =========================================================================
+		// 🔑 NUEVOS: OBTENER LOS VALORES INICIALES DE PHP (RED)
+		var oltInicialId = "<?php echo $olt_seleccionado; ?>";
+		var ponSeleccionadoId = "<?php echo $pon_seleccionado; ?>";
 
-	// Función para cargar comunidades 
-	function cargarComunidadesIniciales(parroquiaID, comunidadIDaSeleccionar) {
-		
-		$('#comunidad').html('<option value="">Cargando comunidades...</option>');
-		$('#comunidad').prop('disabled', true);
+		// =========================================================================
+		// 2. FUNCIONES DE CARGA EN CASCADA
+		// =========================================================================
 
-		if (parroquiaID) {
-			$.ajax({
-				url: 'obtener_comunidades.php', 
-				type: 'POST',
-				data: { id_parroquia: parroquiaID },
-				dataType: 'json',
-				success: function(comunidades) {
-					$('#comunidad').html('<option value="">-- Seleccione una Comunidad --</option>');
-					
-					$.each(comunidades, function(key, value) {
-						var selectedAttr = (key == comunidadIDaSeleccionar) ? 'selected' : '';
-						$('#comunidad').append('<option value="' + key + '" ' + selectedAttr + '>' + value + '</option>');
-					});
-					
-					$('#comunidad').prop('disabled', false);
-				},
-				error: function() {
-					$('#comunidad').html('<option value="">Error al cargar comunidades</option>');
-				}
-			});
-		} else {
-			$('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>');
-		}
-	}
-	
+		// Función para cargar comunidades 
+		function cargarComunidadesIniciales(parroquiaID, comunidadIDaSeleccionar) {
 
-	// Función para cargar parroquias (MODIFICADA: Llama a cargarComunidades)
-	function cargarParroquiasIniciales(municipioID, parroquiaIDaSeleccionar, comunidadIDaSeleccionar) {
-		
-		$('#parroquia').html('<option value="">Cargando parroquias...</option>');
-		$('#parroquia').prop('disabled', true);
-		
-		// Resetear Comunidad
-		$('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>');
-		$('#comunidad').prop('disabled', true);
+			$('#comunidad').html('<option value="">Cargando comunidades...</option>');
+			$('#comunidad').prop('disabled', true);
 
+			if (parroquiaID) {
+				$.ajax({
+					url: 'obtener_comunidades.php',
+					type: 'POST',
+					data: { id_parroquia: parroquiaID },
+					dataType: 'json',
+					success: function (comunidades) {
+						$('#comunidad').html('<option value="">-- Seleccione una Comunidad --</option>');
 
-		if (municipioID) {
-			$.ajax({
-				url: 'get_parroquias.php', 
-				type: 'POST',
-				data: { id: municipioID }, // El script get_parroquias.php espera 'id'
-				dataType: 'json',
-				success: function(parroquias) {
-					$('#parroquia').html('<option value="">-- Seleccione una Parroquia --</option>');
-					var parroquiaSeleccionadaPostCarga = null;
-					
-					$.each(parroquias, function(key, value) {
-						var selectedAttr = (key == parroquiaIDaSeleccionar) ? 'selected' : '';
-						
-						if (selectedAttr) {
-							parroquiaSeleccionadaPostCarga = key;
-						}
-
-						$('#parroquia').append('<option value="' + key + '" ' + selectedAttr + '>' + value + '</option>');
-					});
-					
-					$('#parroquia').prop('disabled', false);
-
-					// Si hay una parroquia pre-seleccionada, cargar sus comunidades
-					if (parroquiaSeleccionadaPostCarga) {
-							cargarComunidadesIniciales(parroquiaSeleccionadaPostCarga, comunidadIDaSeleccionada);
-					} else {
-						cargarComunidadesIniciales(null, null); // Deshabilita la comunidad
-					}
-				},
-				error: function() {
-					$('#parroquia').html('<option value="">Error al cargar parroquias</option>');
-				}
-			});
-		} else {
-			$('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>');
-		}
-	}
-	
-	// 🔑 NUEVA: Función para cargar PONs (OLT -> PON)
-	function cargarPonsIniciales(oltID, ponIDaSeleccionar) {
-		var $ponSelect = $('#id_pon');
-		
-		$ponSelect.html('<option value="">Cargando PONs...</option>').prop('disabled', true);
-
-		if (oltID) {
-			// Realizar la llamada AJAX al endpoint que filtra
-			$.ajax({
-				url: 'gets_pon_by_olt.php', // *** IMPORTANTE: NECESITAS ESTE ARCHIVO ***
-				type: 'GET', 
-				data: { id_olt: oltID },
-				dataType: 'json',
-				success: function(response) {
-					$ponSelect.empty();
-					
-					if (!response.error && response.pons && response.pons.length > 0) {
-						$ponSelect.append('<option value="">-- Seleccione un PON --</option>');
-						
-						$.each(response.pons, function(index, pon) {
-							// Lógica de pre-selección
-							var selectedAttr = (pon.id_pon == ponIDaSeleccionar) ? 'selected' : '';
-							$ponSelect.append('<option value="' + pon.id_pon + '" ' + selectedAttr + '>' + pon.nombre_pon + '</option>');
+						$.each(comunidades, function (key, value) {
+							var selectedAttr = (key == comunidadIDaSeleccionar) ? 'selected' : '';
+							$('#comunidad').append('<option value="' + key + '" ' + selectedAttr + '>' + value + '</option>');
 						});
-						$ponSelect.prop('disabled', false); 
-					} else {
-						var msg = response.message || 'No se encontraron PONs.';
-						$ponSelect.append('<option value="" disabled>' + msg + '</option>');
-						$ponSelect.prop('disabled', true); 
+
+						$('#comunidad').prop('disabled', false);
+					},
+					error: function () {
+						$('#comunidad').html('<option value="">Error al cargar comunidades</option>');
 					}
-				},
-				error: function() {
-					$ponSelect.html('<option value="" disabled>Error de comunicación al cargar PONs.</option>');
-					$ponSelect.prop('disabled', true);
-				}
-			});
-		} else {
-			$ponSelect.html('<option value="">-- Seleccione una OLT primero --</option>');
+				});
+			} else {
+				$('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>');
+			}
 		}
-	}
 
 
-	// =========================================================================
-	// 3. EVENTOS y LLAMADAS INICIALES
-	// =========================================================================
+		// Función para cargar parroquias (MODIFICADA: Llama a cargarComunidades)
+		function cargarParroquiasIniciales(municipioID, parroquiaIDaSeleccionar, comunidadIDaSeleccionar) {
 
-	// Al cargar la página, iniciar la carga de ubicación pre-seleccionada
-	if (municipioInicialId) {
-		cargarParroquiasIniciales(municipioInicialId, parroquiaSeleccionadaId, comunidadSeleccionadaId);
-	}
-	
-	// 🔑 NUEVA: Al cargar la página, iniciar la carga de PONs pre-seleccionados
-	if (oltInicialId) {
-		cargarPonsIniciales(oltInicialId, ponSeleccionadoId);
-	}
+			$('#parroquia').html('<option value="">Cargando parroquias...</option>');
+			$('#parroquia').prop('disabled', true);
 
-	// Manejar cambio de Municipio
-	$('#municipio').on('change', function() {
-		var nuevoMunicipioID = $(this).val(); 
-		
-		if (nuevoMunicipioID) {
-			// Al cambiar municipio, reiniciamos parroquia y comunidad (null, null)
-			cargarParroquiasIniciales(nuevoMunicipioID, null, null); 
-		} else {
-			$('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>').prop('disabled', true);
-			$('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>').prop('disabled', true);
+			// Resetear Comunidad
+			$('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>');
+			$('#comunidad').prop('disabled', true);
+
+
+			if (municipioID) {
+				$.ajax({
+					url: 'get_parroquias.php',
+					type: 'POST',
+					data: { id: municipioID }, // El script get_parroquias.php espera 'id'
+					dataType: 'json',
+					success: function (parroquias) {
+						$('#parroquia').html('<option value="">-- Seleccione una Parroquia --</option>');
+						var parroquiaSeleccionadaPostCarga = null;
+
+						$.each(parroquias, function (key, value) {
+							var selectedAttr = (key == parroquiaIDaSeleccionar) ? 'selected' : '';
+
+							if (selectedAttr) {
+								parroquiaSeleccionadaPostCarga = key;
+							}
+
+							$('#parroquia').append('<option value="' + key + '" ' + selectedAttr + '>' + value + '</option>');
+						});
+
+						$('#parroquia').prop('disabled', false);
+
+						// Si hay una parroquia pre-seleccionada, cargar sus comunidades
+						if (parroquiaSeleccionadaPostCarga) {
+							cargarComunidadesIniciales(parroquiaSeleccionadaPostCarga, comunidadIDaSeleccionar);
+						} else {
+							cargarComunidadesIniciales(null, null); // Deshabilita la comunidad
+						}
+					},
+					error: function () {
+						$('#parroquia').html('<option value="">Error al cargar parroquias</option>');
+					}
+				});
+			} else {
+				$('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>');
+			}
 		}
-	});
-	
-	// Manejar cambio de Parroquia
-	$('#parroquia').on('change', function() {
-		var idParroquia = $(this).val();
-		// Al cambiar parroquia, cargamos comunidades
-		cargarComunidadesIniciales(idParroquia, null);
-	});
-	
-	// 🔑 NUEVO: Manejar cambio de OLT
-	$('#id_olt').on('change', function() {
-		var idOlt = $(this).val();
-		// Al cambiar OLT, no hay PON pre-seleccionado, pasamos 'null'
-		cargarPonsIniciales(idOlt, null); 
-	});
 
-});
+		// 🔑 NUEVA: Función para cargar PONs (OLT -> PON)
+		function cargarPonsIniciales(oltID, ponIDaSeleccionar) {
+			var $ponSelect = $('#id_pon');
+
+			$ponSelect.html('<option value="">Cargando PONs...</option>').prop('disabled', true);
+
+			if (oltID) {
+				// Realizar la llamada AJAX al endpoint que filtra
+				$.ajax({
+					url: 'gets_pon_by_olt.php', // *** IMPORTANTE: NECESITAS ESTE ARCHIVO ***
+					type: 'GET',
+					data: { id_olt: oltID },
+					dataType: 'json',
+					success: function (response) {
+						$ponSelect.empty();
+
+						if (!response.error && response.pons && response.pons.length > 0) {
+							$ponSelect.append('<option value="">-- Seleccione un PON --</option>');
+
+							$.each(response.pons, function (index, pon) {
+								// Lógica de pre-selección
+								var selectedAttr = (pon.id_pon == ponIDaSeleccionar) ? 'selected' : '';
+								$ponSelect.append('<option value="' + pon.id_pon + '" ' + selectedAttr + '>' + pon.nombre_pon + '</option>');
+							});
+							$ponSelect.prop('disabled', false);
+						} else {
+							var msg = response.message || 'No se encontraron PONs.';
+							$ponSelect.append('<option value="" disabled>' + msg + '</option>');
+							$ponSelect.prop('disabled', true);
+						}
+					},
+					error: function () {
+						$ponSelect.html('<option value="" disabled>Error de comunicación al cargar PONs.</option>');
+						$ponSelect.prop('disabled', true);
+					}
+				});
+			} else {
+				$ponSelect.html('<option value="">-- Seleccione una OLT primero --</option>');
+			}
+		}
+
+
+		// =========================================================================
+		// 3. EVENTOS y LLAMADAS INICIALES
+		// =========================================================================
+
+		// Al cargar la página, iniciar la carga de ubicación pre-seleccionada
+		if (municipioInicialId) {
+			cargarParroquiasIniciales(municipioInicialId, parroquiaSeleccionadaId, comunidadSeleccionadaId);
+		}
+
+		// 🔑 NUEVA: Al cargar la página, iniciar la carga de PONs pre-seleccionados
+		if (oltInicialId) {
+			cargarPonsIniciales(oltInicialId, ponSeleccionadoId);
+		}
+
+		// Manejar cambio de Municipio
+		$('#municipio').on('change', function () {
+			var nuevoMunicipioID = $(this).val();
+
+			if (nuevoMunicipioID) {
+				// Al cambiar municipio, reiniciamos parroquia y comunidad (null, null)
+				cargarParroquiasIniciales(nuevoMunicipioID, null, null);
+			} else {
+				$('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>').prop('disabled', true);
+				$('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>').prop('disabled', true);
+			}
+		});
+
+		// Manejar cambio de Parroquia
+		$('#parroquia').on('change', function () {
+			var idParroquia = $(this).val();
+			// Al cambiar parroquia, cargamos comunidades
+			cargarComunidadesIniciales(idParroquia, null);
+		});
+
+		// 🔑 NUEVO: Manejar cambio de OLT
+		$('#id_olt').on('change', function () {
+			var idOlt = $(this).val();
+			// Al cambiar OLT, no hay PON pre-seleccionado, pasamos 'null'
+			cargarPonsIniciales(idOlt, null);
+		});
+
+		// 🔑 NUEVO: Manejar visibilidad de campos técnicos
+		$('#tipo_conexion').on('change', function () {
+			var tipo = $(this).val();
+			$('.campo-ftth, .campo-radio').hide();
+			if (tipo && tipo.includes('FTTH')) {
+				$('.campo-ftth').show();
+			} else if (tipo && tipo.includes('RADIO')) {
+				$('.campo-radio').show();
+			}
+		});
+		$('#tipo_conexion').trigger('change');
+
+	});
 </script>

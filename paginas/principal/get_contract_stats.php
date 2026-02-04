@@ -26,8 +26,9 @@ if ($action === 'dashboard') {
 if ($action === 'modal_stats') {
     $start_date = $_GET['start'] ?? '';
     $end_date = $_GET['end'] ?? '';
-    $installer = $_GET['installer'] ?? ''; // Puede ser ID o Nombre
-    $vendor_id = $_GET['vendor'] ?? '';
+    $installer = $_GET['installer'] ?? '';
+    $vendor_text = $_GET['vendor'] ?? '';
+    $contract_type = $_GET['type'] ?? '';
 
     $where = [];
     $params = [];
@@ -41,24 +42,25 @@ if ($action === 'modal_stats') {
         $types .= "ss";
     }
 
-    // Filtro Vendedor
-    if (!empty($vendor_id)) {
-        $where[] = "id_vendedor = ?";
-        $params[] = $vendor_id;
-        $types .= "i";
+    // Filtro Vendedor (Buscamos por el texto guardado en vendedor_texto)
+    if (!empty($vendor_text)) {
+        $where[] = "vendedor_texto = ?";
+        $params[] = $vendor_text;
+        $types .= "s";
     }
 
-    // Filtro Instalador (Complejo: busca en instalador (texto) o instaladores (ids))
-    // Simplificación: Si se selecciona un instalador, buscamos coincidencia en texto o JSON/IDs
+    // Filtro Instalador
     if (!empty($installer)) {
-        // Asumimos que el filtro envía un Nombre o un ID.
-        // Si es numérico, buscamos en instaladores (LIKE) o id_instalador si existiera
-        // Si es texto, buscamos en instalador (LIKE)
-        $where[] = "(instalador LIKE ? OR instaladores LIKE ?)";
-        $wildcard = "%$installer%";
-        $params[] = $wildcard;
-        $params[] = $wildcard;
-        $types .= "ss";
+        $where[] = "instalador = ?";
+        $params[] = $installer;
+        $types .= "s";
+    }
+
+    // Filtro Tipo Contrato (tipo_conexion)
+    if (!empty($contract_type)) {
+        $where[] = "tipo_conexion = ?";
+        $params[] = $contract_type;
+        $types .= "s";
     }
 
     $sql_where = "";
@@ -66,72 +68,108 @@ if ($action === 'modal_stats') {
         $sql_where = "WHERE " . implode(" AND ", $where);
     }
 
-    // Estadísticas Agrupadas
-    // 1. Por Instalador (Normalizando nombres)
-    // Usamos 'instalador' si existe, sino 'Sin Asignar'
-    // Nota: Esto es básico. Para reportes precisos con IDs JSON, se requiere lógica compleja no soportada fácilmente en SQL simple.
+    // 1. Por Instalador
     $sql_installers = "SELECT 
-                        COALESCE(NULLIF(instalador, ''), 'Instalador Externo/Otro') as nombre, 
+                        COALESCE(NULLIF(instalador, ''), 'Sin Asignar') as nombre, 
                         COUNT(*) as total 
                        FROM contratos 
                        $sql_where 
                        GROUP BY nombre 
                        ORDER BY total DESC";
 
-    // 2. Por Vendedor
-    // Hacemos JOIN con usuarios o vendedores si existe la tabla, o devolvemos ID
-    // Asumimos tabla 'usuarios' o 'vendedores' para obtener nombre. Si no, devolvemos ID.
-    // Verificamos si existe tabla 'usuarios' para hacer JOIN. (Asunción basada en práctica común, si falla, corregimos)
-    // Mejor devolvemos ID y el frontend que resuelva si tiene la lista, o hacemos un intento simple.
-    $sql_vendors = "SELECT id_vendedor, COUNT(*) as total FROM contratos $sql_where GROUP BY id_vendedor ORDER BY total DESC";
-    
+    // 2. Por Vendedor (Usamos vendedor_texto para agrupar)
+    $sql_vendors = "SELECT 
+                        COALESCE(NULLIF(vendedor_texto, ''), 'Sin Asignar') as nombre_vendedor, 
+                        COUNT(*) as total 
+                       FROM contratos 
+                       $sql_where 
+                       GROUP BY nombre_vendedor 
+                       ORDER BY total DESC";
+
+    // 3. Por Ubicación (Municipio y Parroquia)
+    $sql_location = "SELECT 
+                        COALESCE(m.nombre_municipio, 'Sin Municipio') as nombre_municipio,
+                        COALESCE(p.nombre_parroquia, 'Sin Parroquia') as nombre_parroquia,
+                        COUNT(*) as total
+                     FROM contratos c
+                     LEFT JOIN municipio m ON c.id_municipio = m.id_municipio
+                     LEFT JOIN parroquia p ON c.id_parroquia = p.id_parroquia
+                     $sql_where
+                     GROUP BY m.nombre_municipio, p.nombre_parroquia
+                     ORDER BY total DESC";
+
     // Ejecutar Query Instaladores
     $stmt = $conn->prepare($sql_installers);
-    if (!empty($types)) {
-        $stmt->bind_param($types, ...$params);
+    if ($stmt) {
+        if (!empty($types)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $res_inst = $stmt->get_result();
+        $stats_installers = [];
+        while ($row = $res_inst->fetch_assoc()) {
+            $stats_installers[] = $row;
+        }
+        $stmt->close();
     }
-    $stmt->execute();
-    $res_inst = $stmt->get_result();
-    $stats_installers = [];
-    while ($row = $res_inst->fetch_assoc()) {
-        $stats_installers[] = $row;
-    }
-    $stmt->close();
 
     // Ejecutar Query Vendedores
     $stmt = $conn->prepare($sql_vendors);
-    if (!empty($types)) {
-        $stmt->bind_param($types, ...$params);
+    if ($stmt) {
+        if (!empty($types)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $res_vend = $stmt->get_result();
+        $stats_vendors = [];
+        while ($row = $res_vend->fetch_assoc()) {
+            $stats_vendors[] = $row;
+        }
+        $stmt->close();
     }
-    $stmt->execute();
-    $res_vend = $stmt->get_result();
-    $stats_vendors = [];
-    while ($row = $res_vend->fetch_assoc()) {
-        $stats_vendors[] = $row;
+
+    // Ejecutar Query Ubicación
+    $stmt = $conn->prepare($sql_location);
+    if ($stmt) {
+        if (!empty($types)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $res_loc = $stmt->get_result();
+        $stats_location = [];
+        while ($row = $res_loc->fetch_assoc()) {
+            $stats_location[] = [
+                'ubicacion' => "{$row['nombre_municipio']} - {$row['nombre_parroquia']}",
+                'total' => $row['total']
+            ];
+        }
+        $stmt->close();
     }
-    $stmt->close();
 
     echo json_encode([
-        'by_installer' => $stats_installers,
-        'by_vendor' => $stats_vendors
+        'by_installer' => $stats_installers ?? [],
+        'by_vendor' => $stats_vendors ?? [],
+        'by_location' => $stats_location ?? []
     ]);
     exit;
 }
 
 if ($action === 'get_lists') {
     // Obtener lista única de Instaladores (Nombres) y Vendedores (IDs) para los filtros
-    
+
     // Instaladores: Distintos nombres de la columna texto
     $sql_inst = "SELECT DISTINCT instalador FROM contratos WHERE instalador IS NOT NULL AND instalador != '' ORDER BY instalador ASC";
     $res_inst = $conn->query($sql_inst);
     $installers = [];
-    while($row = $res_inst->fetch_row()) $installers[] = $row[0];
+    while ($row = $res_inst->fetch_row())
+        $installers[] = $row[0];
 
     // Vendedores: IDs distintos
     $sql_vend = "SELECT DISTINCT id_vendedor FROM contratos WHERE id_vendedor > 0 ORDER BY id_vendedor ASC";
     $res_vend = $conn->query($sql_vend);
     $vendors = [];
-    while($row = $res_vend->fetch_row()) $vendors[] = $row[0];
+    while ($row = $res_vend->fetch_row())
+        $vendors[] = $row[0];
 
     echo json_encode([
         'installers' => $installers,
