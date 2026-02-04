@@ -94,6 +94,11 @@ if (!isset($path_fix)) {
                         <li><a class="dropdown-item"
                                 href="<?php echo $path_fix; ?>paginas/soporte/historial_soportes.php"><i
                                     class="fa-solid fa-list-check w-20 me-2 text-muted"></i> Historial</a></li>
+                        <li><a class="dropdown-item"
+                                href="<?php echo $path_fix; ?>paginas/soporte/registro_contrato_instalador.php"
+                                target="_blank"><i class="fa-solid fa-file-signature w-20 me-2 text-muted"></i> Registro
+                                Contrato
+                                Instalador</a></li>
                         <li><a class="dropdown-item" href="<?php echo $path_fix; ?>paginas/soporte/reporte_tecnico.php"
                                 target="_blank"><i class="fa-solid fa-pen-to-square w-20 me-2 text-muted"></i> Nuevo
                                 Reporte</a></li>
