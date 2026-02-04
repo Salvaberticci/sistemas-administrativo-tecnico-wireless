@@ -45,10 +45,7 @@ if (!isset($path_fix)) {
                                     class="fa-solid fa-wifi w-20 me-2 text-muted"></i> Planes</a></li>
                         <li><a class="dropdown-item" href="<?php echo $path_fix; ?>paginas/gestion_bancos.php"><i
                                     class="fa-solid fa-building-columns w-20 me-2 text-muted"></i> Bancos</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $path_fix; ?>paginas/gestion_vendedores.php"><i
-                                    class="fa-solid fa-users-gear w-20 me-2 text-muted"></i> Vendedores</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $path_fix; ?>paginas/gestion_instaladores.php"><i
-                                    class="fa-solid fa-screwdriver w-20 me-2 text-muted"></i> Instaladores</a></li>
+
                     </ul>
                 </li>
 
@@ -100,10 +97,6 @@ if (!isset($path_fix)) {
                         <li><a class="dropdown-item" href="<?php echo $path_fix; ?>paginas/soporte/reporte_tecnico.php"
                                 target="_blank"><i class="fa-solid fa-pen-to-square w-20 me-2 text-muted"></i> Nuevo
                                 Reporte</a></li>
-                        <li><a class="dropdown-item"
-                                href="<?php echo $path_fix; ?>paginas/soporte/registro_contrato_instalador.php"
-                                target="_blank"><i class="fa-solid fa-file-signature w-20 me-2 text-muted"></i> Nuevo
-                                Contrato (Instalador)</a></li>
                     </ul>
                 </li>
 
