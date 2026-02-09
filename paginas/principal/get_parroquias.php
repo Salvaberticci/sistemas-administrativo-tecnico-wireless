@@ -4,7 +4,7 @@ require_once '../conexion.php';
 $id_municipio = isset($_GET['id_municipio']) ? (int) $_GET['id_municipio'] : 0;
 
 if ($id_municipio > 0) {
-    $sql = "SELECT id_parroquia, nombre_parroquia FROM parroquias WHERE id_municipio = ? ORDER BY nombre_parroquia ASC";
+    $sql = "SELECT id_parroquia, nombre_parroquia FROM parroquia WHERE id_municipio = ? ORDER BY nombre_parroquia ASC";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $id_municipio);
     $stmt->execute();

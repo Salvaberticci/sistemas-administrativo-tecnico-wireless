@@ -118,12 +118,12 @@ require_once 'includes/sidebar.php';
                 </a>
             </div>
             <div class="col-md-6 col-lg-3">
-                <a href="../reportar_pago.php" target="_blank" class="text-decoration-none">
-                    <div class="card h-100 hover-lift border-0 shadow-sm" style="background-color: #f0f7ff;">
+                <a href="principal/conciliacion.php" class="text-decoration-none">
+                    <div class="card h-100 hover-lift shadow-sm border-primary border-opacity-10">
                         <div class="card-body text-center p-4">
-                            <i class="fa-solid fa-paper-plane fa-3x text-info mb-3"></i>
-                            <h5 class="card-title text-dark">Link de Pago</h5>
-                            <p class="card-text text-muted small">Copiar para el cliente</p>
+                            <i class="fa-solid fa-scale-balanced fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title text-dark">Conciliación</h5>
+                            <p class="card-text text-muted small">Validar pagos con extracto bancario (OCR)</p>
                         </div>
                     </div>
                 </a>

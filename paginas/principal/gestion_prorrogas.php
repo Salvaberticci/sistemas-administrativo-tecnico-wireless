@@ -7,8 +7,8 @@ require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 
 // Obtener planes para el select
-$planes = $conn->query("SELECT id, nombre_plan FROM planes WHERE estado = 'ACTIVO' ORDER BY nombre_plan ASC");
-$municipios = $conn->query("SELECT id_municipio, nombre_municipio FROM municipios ORDER BY nombre_municipio ASC");
+$planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan ASC");
+$municipios = $conn->query("SELECT id_municipio, nombre_municipio FROM municipio ORDER BY nombre_municipio ASC");
 $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO (BOLIVARES)", "ZELLE", "RESERVE", "BINANCE"];
 ?>
 
@@ -256,7 +256,7 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
                                 <select name="id_plan" class="form-select" required>
                                     <option value="">Seleccione...</option>
                                     <?php while ($p = $planes->fetch_assoc()): ?>
-                                        <option value="<?= $p['id'] ?>">
+                                        <option value="<?= $p['id_plan'] ?>">
                                             <?= $p['nombre_plan'] ?>
                                         </option>
                                     <?php endwhile; ?>
@@ -334,13 +334,15 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
                 <div class="modal-body p-4">
                     <div class="text-center mb-4">
                         <i class="fa-solid fa-money-bill-transfer fa-3x text-success mb-3"></i>
-                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Solicitud de <span id="pago_tipo"></span></h6>
+                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Solicitud de <span
+                                id="pago_tipo"></span></h6>
                         <h5 class="fw-bold" id="pago_nombre_titular"></h5>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Monto a Cobrar ($) *</label>
-                        <input type="number" step="0.01" name="monto" class="form-control form-control-lg fw-bold text-success" required placeholder="0.00">
+                        <input type="number" step="0.01" name="monto"
+                            class="form-control form-control-lg fw-bold text-success" required placeholder="0.00">
                     </div>
 
                     <div class="mb-3">
@@ -352,16 +354,18 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
                         <label class="form-label small fw-bold">Banco / Cuenta *</label>
                         <select name="id_banco" class="form-select" required>
                             <option value="">Seleccione...</option>
-                            <?php 
+                            <?php
                             $b = $conn->query("SELECT id_banco, nombre_banco FROM bancos");
-                            while($r = $b->fetch_assoc()) echo "<option value='".$r['id_banco']."'>".$r['nombre_banco']."</option>";
+                            while ($r = $b->fetch_assoc())
+                                echo "<option value='" . $r['id_banco'] . "'>" . $r['nombre_banco'] . "</option>";
                             ?>
                         </select>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Justificación / Nota</label>
-                        <textarea name="nota" class="form-control" rows="2" placeholder="Ej: Pago de prórroga aprobada"></textarea>
+                        <textarea name="nota" class="form-control" rows="2"
+                            placeholder="Ej: Pago de prórroga aprobada"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-0">
