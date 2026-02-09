@@ -4,7 +4,7 @@ require_once '../conexion.php';
 
 // Configuración Layout
 $path_to_root = "../../";
-$page_title = "Aprebar Reportes de Pago";
+$page_title = "Aprobar Reportes de Pago";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 
@@ -145,6 +145,7 @@ $resultado = $conn->query($sql);
                 <form action="procesar_aprobacion_admin.php" method="POST">
                     <div class="modal-body">
                         <input type="hidden" name="id_reporte" id="ap_id_reporte">
+                        <input type="hidden" name="accion" value="APROBAR">
 
                         <div class="alert alert-info py-2 small">
                             Al aprobar, se creará un registro en el historial de mensualidades como
@@ -245,6 +246,8 @@ $resultado = $conn->query($sql);
         document.getElementById('ap_referencia').value = data.referencia;
         document.getElementById('ap_id_banco').value = data.id_banco_destino || '';
         document.getElementById('ap_meses_notas').innerHTML = `<strong>Meses reportados:</strong> ${data.meses_pagados}<br><strong>Justificación:</strong> ${data.concepto || 'N/A'}`;
+
+        console.log("Preparando aprobación para reporte:", data);
 
         // Cargar contratos dinámicamente o seleccionar el detectado
         const select = document.getElementById('ap_id_contrato');

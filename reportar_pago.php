@@ -5,6 +5,9 @@ include 'paginas/conexion.php';
 // Cargar bancos para el combo
 $json_bancos = @file_get_contents('paginas/principal/bancos.json');
 $bancosArr = json_decode($json_bancos, true) ?: [];
+
+// Generar lista de meses base (nombres en español)
+$meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -169,8 +172,9 @@ $bancosArr = json_decode($json_bancos, true) ?: [];
                                     <div id="container_meses">
                                         <label class="form-label">Concepto del Pago (Mes) <span
                                                 class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="meses[]"
-                                            placeholder="Ej: Enero 2026" required>
+                                        <select class="form-select selector-mes" name="meses[]" required>
+                                            <option value="">Seleccione mes...</option>
+                                        </select>
                                     </div>
                                     <div id="add_mes_btn" class="mt-2 d-none">
                                         <button type="button" class="btn btn-sm btn-outline-primary"
@@ -251,25 +255,75 @@ $bancosArr = json_decode($json_bancos, true) ?: [];
             } else {
                 btnAddMes.classList.add('d-none');
                 // Limpiar extras si se desmarca
-                const inputs = containerMeses.querySelectorAll('input');
-                if (inputs.length > 1) {
-                    for (let i = 1; i < inputs.length; i++) {
-                        inputs[i].parentElement.remove();
+                const selects = containerMeses.querySelectorAll('.selector-mes');
+                if (selects.length > 1) {
+                    for (let i = 1; i < selects.length; i++) {
+                        selects[i].parentElement.remove();
                     }
                 }
             }
         });
 
+        const inputFecha = document.querySelector('[name="fecha_pago"]');
+        const mesesNombres = <?php echo json_encode($meses_nombres); ?>;
+
+        function generarOpcionesMeses(fechaStr) {
+            const fecha = new Date(fechaStr + 'T00:00:00');
+            const options = [];
+            const year = fecha.getFullYear();
+            const month = fecha.getMonth();
+
+            // Generamos una ventana de 6 meses antes y 6 meses después de la fecha seleccionada
+            for (let i = -6; i <= 6; i++) {
+                const d = new Date(year, month + i, 1);
+                const label = mesesNombres[d.getMonth()] + " " + d.getFullYear();
+                options.push(label);
+            }
+            return options;
+        }
+
+        function actualizarTodosLosSelects() {
+            const fechaVal = inputFecha.value;
+            if (!fechaVal) return;
+
+            const opciones = generarOpcionesMeses(fechaVal);
+            const fechaObj = new Date(fechaVal + 'T00:00:00');
+            const mesActualLabel = mesesNombres[fechaObj.getMonth()] + " " + fechaObj.getFullYear();
+
+            document.querySelectorAll('.selector-mes').forEach(select => {
+                const selectedVal = select.value;
+                select.innerHTML = '<option value="">Seleccione mes...</option>';
+                opciones.forEach(opt => {
+                    const el = document.createElement('option');
+                    el.value = opt;
+                    el.textContent = opt;
+                    if (opt === selectedVal || (!selectedVal && opt === mesActualLabel)) {
+                        el.selected = true;
+                    }
+                    select.appendChild(el);
+                });
+            });
+        }
+
+        inputFecha.addEventListener('change', actualizarTodosLosSelects);
+        
+        // Ejecutar inicialmente
+        actualizarTodosLosSelects();
+
         function agregarMes() {
             const div = document.createElement('div');
             div.className = 'mt-2 d-flex align-items-center';
+            
             div.innerHTML = `
-            <input type="text" class="form-control me-2" name="meses[]" placeholder="Siguiente mes..." required>
-            <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
+                <select class="form-select selector-mes me-2" name="meses[]" required>
+                    <option value="">Seleccione mes...</option>
+                </select>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
             containerMeses.appendChild(div);
+            actualizarTodosLosSelects();
         }
     </script>
 </body>

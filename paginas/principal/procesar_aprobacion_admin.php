@@ -31,8 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 VALUES (?, CURRENT_DATE, CURRENT_DATE, ?, 'PAGADO', ?, ?, ?, 'LINK', ?)";
 
             $stmt_cxc = $conn->prepare($sql_cxc);
+            if (!$stmt_cxc) {
+                throw new Exception("Error preparando inserción CxC: " . $conn->error);
+            }
+
             $stmt_cxc->bind_param("idssis", $id_contrato, $monto_total, $fecha_pago, $referencia, $id_banco, $path_archivo);
-            $stmt_cxc->execute();
+            if (!$stmt_cxc->execute()) {
+                throw new Exception("Error ejecutando inserción CxC: " . $stmt_cxc->error);
+            }
             $id_cobro_nuevo = $conn->insert_id;
 
             // 3. Insertar en historial de cobros manuales
@@ -41,19 +47,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 VALUES (?, 'SISTEMA (APROBACIÓN WEB)', ?, ?)";
 
             $stmt_hist = $conn->prepare($sql_hist);
+            if (!$stmt_hist) {
+                throw new Exception("Error preparando historial: " . $conn->error);
+            }
+
             $stmt_hist->bind_param("isd", $id_cobro_nuevo, $justificacion, $monto_total);
-            $stmt_hist->execute();
+            if (!$stmt_hist->execute()) {
+                throw new Exception("Error ejecutando historial: " . $stmt_hist->error);
+            }
 
             // 4. Actualizar reporte original
             $sql_upd = "UPDATE pagos_reportados SET estado = 'APROBADO' WHERE id_reporte = $id_reporte";
-            $conn->query($sql_upd);
+            if (!$conn->query($sql_upd)) {
+                throw new Exception("Error actualizando estado del reporte: " . $conn->error);
+            }
 
             $conn->commit();
             $message = "¡Pago aprobado y registrado exitosamente!";
             $class = "success";
         } catch (Exception $e) {
             $conn->rollback();
-            $message = "Error en la transacción: " . $e->getMessage();
+            $message = "Error en el proceso de aprobación: " . $e->getMessage();
             $class = "danger";
         }
     } elseif ($accion === 'RECHAZAR') {
@@ -61,10 +75,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sql_rej = "UPDATE pagos_reportados SET estado = 'RECHAZADO', concepto = CONCAT(concepto, '\n\nMOTIVO RECHAZO: ', '$motivo') WHERE id_reporte = $id_reporte";
 
         if ($conn->query($sql_rej)) {
-            $message = "El reporte ha sido rechazado.";
+            $message = "El reporte ha sido rechazado correctamente.";
             $class = "warning";
         } else {
-            $message = "Error al rechazar reporte: " . $conn->error;
+            $message = "Error al rechazar el reporte: " . $conn->error;
             $class = "danger";
         }
     }
