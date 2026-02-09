@@ -30,14 +30,16 @@ $resultado = $conn->query($sql);
                 <div class="row align-items-center">
                     <div class="col">
                         <h5 class="fw-bold text-primary mb-0">Reportes de Pago Pendientes</h5>
-                        <p class="text-muted small mb-0">Revisión manual de reportes enviados por clientes vía link público</p>
+                        <p class="text-muted small mb-0">Revisión manual de reportes enviados por clientes vía link
+                            público</p>
                     </div>
                 </div>
             </div>
-            
+
             <?php if (isset($_GET['message'])): ?>
                 <div class="px-4 pt-3">
-                    <div class="alert alert-<?php echo $_GET['class'] ?? 'info'; ?> alert-dismissible fade show" role="alert">
+                    <div class="alert alert-<?php echo $_GET['class'] ?? 'info'; ?> alert-dismissible fade show"
+                        role="alert">
                         <?php echo htmlspecialchars($_GET['message']); ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
@@ -122,6 +124,11 @@ $resultado = $conn->query($sql);
                                                     onclick="confirmarRechazo(<?php echo $row['id_reporte']; ?>)"
                                                     title="Rechazar">
                                                     <i class="fas fa-times"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="confirmarEliminacion(<?php echo $row['id_reporte']; ?>)"
+                                                    title="Eliminar Reporte Permanentemente">
+                                                    <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
                                         </td>
@@ -225,15 +232,35 @@ $resultado = $conn->query($sql);
                         <i class="fas fa-exclamation-circle fa-4x text-danger mb-3"></i>
                         <h5 class="mb-3">¿Seguro que desea rechazar este reporte?</h5>
                         <p class="text-muted">Esta acción no registrará el pago y marcará el reporte como rechazado.</p>
-                        <div class="text-start mt-3">
-                            <label class="form-label fw-bold small">Motivo del rechazo (Opcional)</label>
-                            <textarea class="form-control" name="motivo" rows="2"
-                                placeholder="Referencia inválida, capture ilegible, etc."></textarea>
+                        <div class="modal-footer border-top-0 pt-0">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-danger px-4">RECHAZAR PAGO</button>
                         </div>
                     </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Eliminar Reporte -->
+    <div class="modal fade" id="modalEliminarReporte" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold">Eliminar Reporte</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="procesar_aprobacion_admin.php" method="POST">
+                    <div class="modal-body text-center p-4">
+                        <input type="hidden" name="id_reporte" id="el_id_reporte">
+                        <input type="hidden" name="accion" value="ELIMINAR">
+                        <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                        <h6 class="fw-bold">¿Eliminar permanentemente?</h6>
+                        <p class="text-muted small">Esto borrará el registro y su imagen del servidor.</p>
+                    </div>
                     <div class="modal-footer border-top-0 pt-0">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger px-4">RECHAZAR PAGO</button>
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">No</button>
+                        <button type="submit" class="btn btn-danger px-4">Sí, Eliminar</button>
                     </div>
                 </form>
             </div>

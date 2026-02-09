@@ -81,6 +81,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "Error al rechazar el reporte: " . $conn->error;
             $class = "danger";
         }
+    } elseif ($accion === 'ELIMINAR') {
+        // Obtener ruta del archivo antes de borrar el registro
+        $sql_f = "SELECT capture_path FROM pagos_reportados WHERE id_reporte = $id_reporte";
+        $res_f = $conn->query($sql_f);
+        if ($res_f && $res_f->num_rows > 0) {
+            $reporte = $res_f->fetch_assoc();
+            $file_path = "../../" . $reporte['capture_path'];
+            if (!empty($reporte['capture_path']) && file_exists($file_path)) {
+                unlink($file_path);
+            }
+        }
+
+        $sql_del = "DELETE FROM pagos_reportados WHERE id_reporte = $id_reporte";
+        if ($conn->query($sql_del)) {
+            $message = "Reporte e imagen eliminados permanentemente.";
+            $class = "info";
+        } else {
+            $message = "Error al eliminar el reporte: " . $conn->error;
+            $class = "danger";
+        }
     }
 
     $conn->close();
