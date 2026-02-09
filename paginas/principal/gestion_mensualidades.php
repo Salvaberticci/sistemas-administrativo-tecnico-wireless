@@ -33,10 +33,23 @@ require_once '../includes/sidebar.php';
 <link href="<?php echo $path_to_root; ?>css/datatables.min.css" rel="stylesheet">
 <style>
     /* Estilos específicos */
-    .badge.bg-warning { background-color: #ffc107 !important; color: #000; }
-    .badge.bg-danger { background-color: #dc3545 !important; }
-    .badge.bg-success { background-color: #198754 !important; }
-    #contrato_search_results_modal { max-height: 200px; overflow-y: auto; }
+    .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #000;
+    }
+
+    .badge.bg-danger {
+        background-color: #dc3545 !important;
+    }
+
+    .badge.bg-success {
+        background-color: #198754 !important;
+    }
+
+    #contrato_search_results_modal {
+        max-height: 200px;
+        overflow-y: auto;
+    }
 </style>
 
 <main class="main-content">
@@ -53,19 +66,24 @@ require_once '../includes/sidebar.php';
                 <div class="bg-white p-2 rounded shadow-sm border me-2">
                     <span id="tasa_display" class="text-secondary small">Cargando tasa...</span>
                 </div>
-                <button type="button" class="btn btn-secondary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalGestionBancos" title="Gestionar Cuentas Bancarias">
+                <button type="button" class="btn btn-secondary shadow-sm" data-bs-toggle="modal"
+                    data-bs-target="#modalGestionBancos" title="Gestionar Cuentas Bancarias">
                     <i class="fa-solid fa-university me-1"></i> Ctas.
                 </button>
-                <button type="button" class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#modalGenerarCobro">
+                <button type="button" class="btn btn-success shadow-sm" data-bs-toggle="modal"
+                    data-bs-target="#modalGenerarCobro">
                     <i class="fas fa-plus-circle me-1"></i> Generar Cobro
                 </button>
                 <div class="btn-group shadow-sm">
-                    <button class="btn btn-primary" onclick="exportarExcel('filtrado')" title="Exportar con filtros actuales">
+                    <button class="btn btn-primary" onclick="exportarExcel('filtrado')"
+                        title="Exportar con filtros actuales">
                         <i class="fa-solid fa-filter me-1"></i> Exp. Filtrado
                     </button>
-                    <button class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"></button>
+                    <button class="btn btn-primary dropdown-toggle dropdown-toggle-split"
+                        data-bs-toggle="dropdown"></button>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="exportarExcel('todos')"><i class="fa-solid fa-globe text-success me-2"></i> Exportar Global</a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="exportarExcel('todos')"><i
+                                    class="fa-solid fa-globe text-success me-2"></i> Exportar Global</a></li>
                     </ul>
                 </div>
             </div>
@@ -85,11 +103,13 @@ require_once '../includes/sidebar.php';
                 <div class="row g-2 align-items-end">
                     <div class="col-md-3">
                         <label class="form-label small fw-bold text-muted mb-1">Desde</label>
-                        <input type="date" class="form-control form-control-sm" id="fecha_inicio" value="<?php echo date('Y-m-01'); ?>">
+                        <input type="date" class="form-control form-control-sm" id="fecha_inicio"
+                            value="<?php echo date('Y-m-01'); ?>">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-bold text-muted mb-1">Hasta</label>
-                        <input type="date" class="form-control form-control-sm" id="fecha_fin" value="<?php echo date('Y-m-t'); ?>">
+                        <input type="date" class="form-control form-control-sm" id="fecha_fin"
+                            value="<?php echo date('Y-m-t'); ?>">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-bold text-muted mb-1">Cuenta/Banco</label>
@@ -98,7 +118,8 @@ require_once '../includes/sidebar.php';
                         </select>
                     </div>
                     <div class="col-md-3 text-end">
-                        <p class="text-muted small mb-0"><i class="fas fa-info-circle me-1"></i> Use los filtros para buscar por fecha o cuenta.</p>
+                        <p class="text-muted small mb-0"><i class="fas fa-info-circle me-1"></i> Use los filtros para
+                            buscar por fecha o cuenta.</p>
                     </div>
                 </div>
             </div>
@@ -133,217 +154,236 @@ require_once '../includes/sidebar.php';
 
 <!-- Modal Gestionar Bancos (NUEVO) -->
 <div class="modal fade" id="modalGestionBancos" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-secondary text-white">
-        <h5 class="modal-title fw-bold">Gestionar Cuentas Bancarias</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <!-- Form Agregar -->
-        <form id="formAgregarBanco" class="mb-4">
-            <label class="form-label fw-bold small text-muted">Agregar Nueva Cuenta</label>
-            <div class="input-group">
-                <input type="text" class="form-control" name="nombre_banco" placeholder="Nombre Banco / Titular" required>
-                <button class="btn btn-success" type="submit"><i class="fas fa-plus"></i></button>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title fw-bold">Gestionar Cuentas Bancarias</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="row g-2 mt-1">
-                 <div class="col-6">
-                    <input type="text" class="form-control form-control-sm" name="numero_cuenta" placeholder="Nro Cuenta (Opcional)">
-                 </div>
-                 <div class="col-6">
-                    <input type="text" class="form-control form-control-sm" name="titular_cuenta" placeholder="Titular (Opcional)">
-                 </div>
-            </div>
-        </form>
+            <div class="modal-body p-4">
+                <!-- Form Agregar -->
+                <form id="formAgregarBanco" class="mb-4">
+                    <label class="form-label fw-bold small text-muted">Agregar Nueva Cuenta</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="nombre_banco" placeholder="Nombre Banco / Titular"
+                            required>
+                        <button class="btn btn-success" type="submit"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div class="row g-2 mt-1">
+                        <div class="col-6">
+                            <input type="text" class="form-control form-control-sm" name="numero_cuenta"
+                                placeholder="Nro Cuenta (Opcional)">
+                        </div>
+                        <div class="col-6">
+                            <input type="text" class="form-control form-control-sm" name="titular_cuenta"
+                                placeholder="Titular (Opcional)">
+                        </div>
+                    </div>
+                </form>
 
-        <!-- Lista Bancos -->
-        <h6 class="fw-bold small text-muted mb-2">Cuentas Existentes</h6>
-        <ul class="list-group" id="lista_bancos_gestion">
-            <!-- Items por JS -->
-        </ul>
-      </div>
+                <!-- Lista Bancos -->
+                <h6 class="fw-bold small text-muted mb-2">Cuentas Existentes</h6>
+                <ul class="list-group" id="lista_bancos_gestion">
+                    <!-- Items por JS -->
+                </ul>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- Modal Pagar -->
 <div class="modal fade" id="modalPagar" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title fw-bold">Registrar Pago</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <form action="procesar_pago.php" method="POST">
-        <div class="modal-body p-4">
-          <input type="hidden" name="id_cobro" id="id_cobro_modal">
-          
-          <div class="mb-4 text-center">
-             <h6 class="text-muted text-uppercase small fw-bold mb-1">Monto Pendiente</h6>
-             <h2 class="text-success fw-bold display-6" id="monto_display_modal"></h2>
-              <p class="text-muted mb-0">Cliente: <strong id="cliente_nombre_modal" class="text-dark"></strong></p>
-          </div>
-
-          <!-- Selección de Moneda -->
-          <div class="mb-3 text-center">
-              <div class="btn-group" role="group">
-                  <input type="radio" class="btn-check" name="moneda_pagar" id="moneda_pagar_usd" value="usd" checked>
-                  <label class="btn btn-outline-success" for="moneda_pagar_usd"><i class="fas fa-dollar-sign"></i> USD</label>
-
-                  <input type="radio" class="btn-check" name="moneda_pagar" id="moneda_pagar_bs" value="bs">
-                  <label class="btn btn-outline-primary" for="moneda_pagar_bs">Bs (Bolívares)</label>
-              </div>
-          </div>
-
-          <div class="mb-2">
-            <label class="form-label fw-semibold text-secondary small">Monto a Pagar</label>
-            <input type="number" step="0.01" class="form-control form-control-lg" id="input_monto_pagar" required>
-            <input type="hidden" name="monto_pagado" id="monto_pagado_hidden"> <!-- Valor final en USD -->
-            <div id="equiv_pagar" class="form-text text-end fw-bold text-primary mt-1"></div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold text-secondary small">Referencia</label>
-            <input type="text" class="form-control" name="referencia_pago" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-semibold text-secondary small">Banco / Cuenta</label>
-            <select class="form-select" name="id_banco" id="select_banco_modal" required>
-              <option value="">Seleccione...</option>
-              <!-- Llenado por JS -->
-            </select>
-          </div>
-        </div>
-        <div class="modal-footer bg-light border-top-0">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="submit" class="btn btn-success">Confirmar Pago</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Generar Cobro -->
-<div class="modal fade" id="modalGenerarCobro" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title fw-bold">Generar Cargo Manual</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <form action="generar_cobro_manual.php" method="POST">
-        <div class="modal-body p-4">
-            <div class="mb-3 position-relative">
-                <label class="form-label fw-semibold text-secondary small">Buscar Contrato</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control border-start-0 ps-0" id="contrato_search_modal" placeholder="ID o Nombre" required autocomplete="off">
-                </div>
-                <input type="hidden" name="id_contrato" id="id_contrato_hidden_modal" required>
-                <div id="contrato_search_results_modal" class="list-group shadow-sm position-absolute w-100" style="z-index: 1050;"></div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Registrar Pago</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold text-secondary small d-block">Monto del Cargo</label>
-                    
-                    <div class="btn-group w-100 mb-2" role="group">
-                        <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_usd" value="usd" checked>
-                        <label class="btn btn-outline-success btn-sm" for="moneda_cobro_usd"><i class="fas fa-dollar-sign"></i> USD</label>
+            <form action="procesar_pago.php" method="POST">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="id_cobro" id="id_cobro_modal">
 
-                        <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_bs" value="bs">
-                        <label class="btn btn-outline-primary btn-sm" for="moneda_cobro_bs">Bs</label>
+                    <div class="mb-4 text-center">
+                        <h6 class="text-muted text-uppercase small fw-bold mb-1">Monto Pendiente</h6>
+                        <h2 class="text-success fw-bold display-6" id="monto_display_modal"></h2>
+                        <p class="text-muted mb-0">Cliente: <strong id="cliente_nombre_modal"
+                                class="text-dark"></strong></p>
                     </div>
 
-                    <input type="number" step="0.01" min="0.01" class="form-control" id="input_monto_cobro" required>
-                    <input type="hidden" name="monto" id="monto_cobro_hidden"> <!-- Valor final en USD -->
-                    <div id="equiv_cobro" class="form-text fw-bold text-primary mt-1"></div>
-                </div>
-                 <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold text-secondary small">Fecha Vencimiento</label>
-                    <input type="date" class="form-control" name="fecha_vencimiento" required>
-                </div>
-            </div>
-            <div class="mb-3">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="check_pago_inmediato" name="pago_inmediato" value="1">
-                    <label class="form-check-label fw-bold text-success" for="check_pago_inmediato">¿Pagado Inmediatamente?</label>
-                </div>
-            </div>
+                    <!-- Selección de Moneda -->
+                    <div class="mb-3 text-center">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="moneda_pagar" id="moneda_pagar_usd" value="usd"
+                                checked>
+                            <label class="btn btn-outline-success" for="moneda_pagar_usd"><i
+                                    class="fas fa-dollar-sign"></i> USD</label>
 
-            <!-- Campos de Pago Directo (Ocultos por defecto) -->
-            <div id="campos_pago_directo" class="border rounded p-3 bg-light mb-3" style="display:none;">
-                <h6 class="fw-bold text-muted small mb-3">Detalles del Pago</h6>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold text-secondary small">Fecha de Registro</label>
-                        <input type="date" class="form-control" name="fecha_pago" value="<?php echo date('Y-m-d'); ?>">
+                            <input type="radio" class="btn-check" name="moneda_pagar" id="moneda_pagar_bs" value="bs">
+                            <label class="btn btn-outline-primary" for="moneda_pagar_bs">Bs (Bolívares)</label>
+                        </div>
                     </div>
-                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold text-secondary small">Cuenta Bancaria</label>
-                        <select class="form-select" name="id_banco_pago" id="select_banco_cobro">
+
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold text-secondary small">Monto a Pagar</label>
+                        <input type="number" step="0.01" class="form-control form-control-lg" id="input_monto_pagar"
+                            required>
+                        <input type="hidden" name="monto_pagado" id="monto_pagado_hidden"> <!-- Valor final en USD -->
+                        <div id="equiv_pagar" class="form-text text-end fw-bold text-primary mt-1"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Referencia</label>
+                        <input type="text" class="form-control" name="referencia_pago" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Banco / Cuenta</label>
+                        <select class="form-select" name="id_banco" id="select_banco_modal" required>
                             <option value="">Seleccione...</option>
                             <!-- Llenado por JS -->
                         </select>
                     </div>
                 </div>
-                <div class="mb-2">
-                    <label class="form-label fw-semibold text-secondary small">Número de Referencia</label>
-                    <input type="text" class="form-control" name="referencia_pago">
+                <div class="modal-footer bg-light border-top-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-success">Confirmar Pago</button>
                 </div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-semibold text-secondary small">Autorizado por</label>
-                <input type="text" class="form-control" name="autorizado_por" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-semibold text-secondary small">Justificación</label>
-                <textarea class="form-control" name="justificacion" rows="2" required></textarea>
-            </div>
+            </form>
         </div>
-        <div class="modal-footer bg-light border-top-0">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-success">Guardar</button>
-        </div>
-      </form>
     </div>
-  </div>
+</div>
+
+<!-- Modal Generar Cobro -->
+<div class="modal fade" id="modalGenerarCobro" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold">Generar Cargo Manual</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="generar_cobro_manual.php" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-3 position-relative">
+                        <label class="form-label fw-semibold text-secondary small">Buscar Contrato</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                    class="fas fa-search"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="contrato_search_modal"
+                                placeholder="ID, Nombre o Cédula" required autocomplete="off">
+                        </div>
+                        <input type="hidden" name="id_contrato" id="id_contrato_hidden_modal" required>
+                        <div id="contrato_search_results_modal" class="list-group shadow-sm position-absolute w-100"
+                            style="z-index: 1050;"></div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold text-secondary small d-block">Monto del Cargo</label>
+
+                            <div class="btn-group w-100 mb-2" role="group">
+                                <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_usd"
+                                    value="usd" checked>
+                                <label class="btn btn-outline-success btn-sm" for="moneda_cobro_usd"><i
+                                        class="fas fa-dollar-sign"></i> USD</label>
+
+                                <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_bs"
+                                    value="bs">
+                                <label class="btn btn-outline-primary btn-sm" for="moneda_cobro_bs">Bs</label>
+                            </div>
+
+                            <input type="number" step="0.01" min="0.01" class="form-control" id="input_monto_cobro"
+                                required>
+                            <input type="hidden" name="monto" id="monto_cobro_hidden"> <!-- Valor final en USD -->
+                            <div id="equiv_cobro" class="form-text fw-bold text-primary mt-1"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold text-secondary small">Fecha Vencimiento</label>
+                            <input type="date" class="form-control" name="fecha_vencimiento" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="check_pago_inmediato"
+                                name="pago_inmediato" value="1">
+                            <label class="form-check-label fw-bold text-success" for="check_pago_inmediato">¿Pagado
+                                Inmediatamente?</label>
+                        </div>
+                    </div>
+
+                    <!-- Campos de Pago Directo (Ocultos por defecto) -->
+                    <div id="campos_pago_directo" class="border rounded p-3 bg-light mb-3" style="display:none;">
+                        <h6 class="fw-bold text-muted small mb-3">Detalles del Pago</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-secondary small">Fecha de Registro</label>
+                                <input type="date" class="form-control" name="fecha_pago"
+                                    value="<?php echo date('Y-m-d'); ?>">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-secondary small">Cuenta Bancaria</label>
+                                <select class="form-select" name="id_banco_pago" id="select_banco_cobro">
+                                    <option value="">Seleccione...</option>
+                                    <!-- Llenado por JS -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold text-secondary small">Número de Referencia</label>
+                            <input type="text" class="form-control" name="referencia_pago">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Autorizado por</label>
+                        <input type="text" class="form-control" name="autorizado_por" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Justificación</label>
+                        <textarea class="form-control" name="justificacion" rows="2" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Modal Eliminar -->
 <div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-sm modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-body p-4 text-center">
-         <div class="mb-3 text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i></div>
-        <h5 class="fw-bold">¿Eliminar Cobro?</h5>
-        <form id="formEliminar" method="GET" action="elimina_cobro.php">
-          <input type="hidden" name="id" id="id_cobro_eliminar">
-          <p class="text-muted small mb-4">Se eliminará el cobro #<strong id="id_display_eliminar"></strong> de <strong id="cliente_nombre_eliminar"></strong></p>
-          <div class="d-grid gap-2">
-             <button type="submit" class="btn btn-danger fw-medium">Sí, Eliminar</button>
-            <button type="button" class="btn btn-light text-secondary fw-medium" data-bs-dismiss="modal">Cancelar</button>
-          </div>
-        </form>
-      </div>
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3 text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i></div>
+                <h5 class="fw-bold">¿Eliminar Cobro?</h5>
+                <form id="formEliminar" method="GET" action="elimina_cobro.php">
+                    <input type="hidden" name="id" id="id_cobro_eliminar">
+                    <p class="text-muted small mb-4">Se eliminará el cobro #<strong id="id_display_eliminar"></strong>
+                        de <strong id="cliente_nombre_eliminar"></strong></p>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger fw-medium">Sí, Eliminar</button>
+                        <button type="button" class="btn btn-light text-secondary fw-medium"
+                            data-bs-dismiss="modal">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- Modal Exito -->
 <div class="modal fade" id="modalExito" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-body p-4 text-center">
-        <div class="mb-3 text-success"><i class="fas fa-check-circle fa-4x"></i></div>
-        <h5 class="fw-bold mb-2" id="modalExitoLabel">Operación Exitosa</h5>
-        <p class="text-muted mb-4" id="modal_exito_mensaje_principal">Acción completada.</p> 
-         <button type="button" class="btn btn-success w-100" data-bs-dismiss="modal">Aceptar</button>
-      </div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3 text-success"><i class="fas fa-check-circle fa-4x"></i></div>
+                <h5 class="fw-bold mb-2" id="modalExitoLabel">Operación Exitosa</h5>
+                <p class="text-muted mb-4" id="modal_exito_mensaje_principal">Acción completada.</p>
+                <button type="button" class="btn btn-success w-100" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <?php require_once '../includes/layout_foot.php'; ?>
@@ -352,286 +392,286 @@ require_once '../includes/sidebar.php';
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 <script>
-$(function() {
-    // === TASA DE CAMBIO ===
-    let TASA_BCV = 0;
+    $(function () {
+        // === TASA DE CAMBIO ===
+        let TASA_BCV = 0;
 
-    // Obtener Tasa al Cargar
-    fetch('get_tasa_dolar.php')
-        .then(r => r.json())
-        .then(data => {
-            if(data.success) {
-                TASA_BCV = parseFloat(data.promedio);
-                $('#tasa_display').html(`<strong>Tasa BCV/Ref:</strong> Bs. ${TASA_BCV.toFixed(2)}`);
-            } else {
-                $('#tasa_display').html(`<span class="text-danger">Error Tasa</span>`);
-            }
-        });
-
-    // === CONVERSIÓN EN MODAL GENERAR COBRO ===
-    const inputMontoCobro = document.getElementById('input_monto_cobro');
-    const inputMontoCobroHidden = document.getElementById('monto_cobro_hidden');
-    const displayEquivCobro = document.getElementById('equiv_cobro');
-    const radiosMonedaCobro = document.getElementsByName('moneda_cobro');
-
-    function calcCobro() {
-        if(!TASA_BCV) return;
-        let val = parseFloat(inputMontoCobro.value) || 0;
-        let esBs = document.getElementById('moneda_cobro_bs').checked;
-        
-        if(esBs) {
-            let usd = val / TASA_BCV;
-            inputMontoCobroHidden.value = usd.toFixed(2);
-            displayEquivCobro.textContent = `Equivalente: $${usd.toFixed(2)}`;
-        } else {
-            inputMontoCobroHidden.value = val.toFixed(2);
-            let bs = val * TASA_BCV;
-            displayEquivCobro.textContent = `Equivalente: Bs. ${bs.toFixed(2)}`;
-        }
-    }
-
-    if(inputMontoCobro) {
-        inputMontoCobro.addEventListener('input', calcCobro);
-        radiosMonedaCobro.forEach(r => r.addEventListener('change', calcCobro));
-    }
-
-    // === CONVERSIÓN EN MODAL PAGAR ===
-    const inputMontoPagar = document.getElementById('input_monto_pagar');
-    const inputMontoPagarHidden = document.getElementById('monto_pagado_hidden');
-    const displayEquivPagar = document.getElementById('equiv_pagar');
-    const radiosMonedaPagar = document.getElementsByName('moneda_pagar');
-    
-    $('#modalPagar').on('shown.bs.modal', function () {
-        calcPagar();
-    });
-
-    function calcPagar() {
-        if(!TASA_BCV) return;
-        let val = parseFloat(inputMontoPagar.value) || 0;
-        let esBs = document.getElementById('moneda_pagar_bs').checked;
-
-        if(esBs) {
-            let usd = val / TASA_BCV;
-            if(inputMontoPagarHidden) inputMontoPagarHidden.value = usd.toFixed(2);
-            displayEquivPagar.textContent = `Equivalente: $${usd.toFixed(2)}`;
-        } else {
-            if(inputMontoPagarHidden) inputMontoPagarHidden.value = val.toFixed(2);
-            let bs = val * TASA_BCV;
-            displayEquivPagar.textContent = `Equivalente: Bs. ${bs.toFixed(2)}`;
-        }
-    }
-
-    if(inputMontoPagar) {
-        inputMontoPagar.addEventListener('input', calcPagar);
-        radiosMonedaPagar.forEach(r => r.addEventListener('change', calcPagar));
-    }
-
-    // === TABLA UNIFICADA (server_process_mensualidades.php) ===
-    var tablaUnica = $('#tabla_mensualidades_unica').DataTable({
-        "order": [[0, "desc"]],
-        "pageLength": 10,
-        "language": {
-            "sProcessing":     "Procesando...",
-            "sLengthMenu":     "Mostrar _MENU_ registros",
-            "sZeroRecords":    "No se encontraron resultados",
-            "sEmptyTable":     "Ningún dato disponible en esta tabla",
-            "sInfo":           "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-            "sInfoEmpty":      "Mostrando registros del 0 al 0 de un total de 0 registros",
-            "sInfoFiltered":   "(filtrado de un total de _MAX_ registros)",
-            "sSearch":         "Buscar:",
-            "oPaginate": {
-                "sFirst":    "Primero",
-                "sLast":     "Último",
-                "sNext":     "Siguiente",
-                "sPrevious": "Anterior"
-            }
-        },
-        "processing": true,
-        "serverSide": true,
-        "ajax": {
-            "url": "server_process_mensualidades.php",
-            "type": "POST",
-            "data": function(d) {
-                d.fecha_inicio = $('#fecha_inicio').val();
-                d.fecha_fin = $('#fecha_fin').val();
-                d.id_banco = $('#filtro_cuenta').val();
-                d.sSearch = d.search.value; // Map modern search to legacy param
-            }
-        },
-        "columns": [
-            { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 }, { "data": 4 }, { "data": 5 }, { "data": 6 },
-            { "data": 7, "orderable": false, "searchable": false, "className": "text-end" }
-        ],
-        "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
-    });
-
-    $('#fecha_inicio, #fecha_fin, #filtro_cuenta').on('change', function() { 
-        tablaUnica.ajax.reload(); 
-    });
-
-    // === MODAL PAGAR LÓGICA ===
-    $('#modalPagar').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget);
-        var modal = $(this);
-        modal.find('#id_cobro_modal').val(button.data('id'));
-        document.getElementById('moneda_pagar_usd').checked = true;
-        document.getElementById('input_monto_pagar').value = button.data('monto');
-        if(inputMontoPagarHidden) inputMontoPagarHidden.value = button.data('monto');
-        modal.find('#monto_display_modal').text('$' + parseFloat(button.data('monto')).toFixed(2));
-        modal.find('#cliente_nombre_modal').text(button.data('nombre'));
-        setTimeout(calcPagar, 100);
-    });
-
-    // === MODAL ELIMINAR LÓGICA ===
-    $('#modalEliminar').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget);
-        var modal = $(this);
-        modal.find('#id_cobro_eliminar').val(button.data('id'));
-        modal.find('#id_display_eliminar').text(button.data('id'));
-        modal.find('#cliente_nombre_eliminar').text(button.data('nombre'));
-    });
-
-    // === BUSCADOR AUTOCOMPLETE CONTRATOS ===
-    const searchInput = document.getElementById('contrato_search_modal');
-    const resultsContainer = document.getElementById('contrato_search_results_modal');
-    const hiddenInput = document.getElementById('id_contrato_hidden_modal');
-    
-    if(searchInput) {
-        let timer;
-        searchInput.addEventListener('input', function() {
-            clearTimeout(timer);
-            const q = this.value.trim();
-            if(q.length < 3) { resultsContainer.innerHTML=''; return; }
-            timer = setTimeout(() => {
-                fetch(`buscar_contratos.php?q=${encodeURIComponent(q)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        resultsContainer.innerHTML = '';
-                        if(data.length) {
-                            data.forEach(c => {
-                                const a = document.createElement('a');
-                                a.className = 'list-group-item list-group-item-action';
-                                a.innerHTML = `<strong>ID ${c.id}</strong>: ${c.nombre_completo}`;
-                                a.onclick = (e) => {
-                                    e.preventDefault();
-                                    searchInput.value = `ID ${c.id}: ${c.nombre_completo}`;
-                                    hiddenInput.value = c.id;
-                                    resultsContainer.innerHTML = '';
-                                };
-                                resultsContainer.appendChild(a);
-                            });
-                        } else {
-                            resultsContainer.innerHTML = '<div class="list-group-item disabled">Sin resultados</div>';
-                        }
-                    });
-            }, 300);
-        });
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
-                resultsContainer.innerHTML = '';
-            }
-        });
-    }
-
-    // === ÉXITO PARAMS ===
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('message') || urlParams.has('pago_exitoso') || urlParams.has('eliminacion_exitosa')) {
-         var exitoModal = new bootstrap.Modal(document.getElementById('modalExito'));
-         document.getElementById('modal_exito_mensaje_principal').textContent = urlParams.get('message') || 'Operación realizada con éxito.';
-         exitoModal.show();
-         if (history.replaceState) {
-             var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?maintenance_done=1';
-             window.history.replaceState({path:newUrl},'',newUrl);
-         }
-    }
-
-    // === TOGGLE PAGO INMEDIATO ===
-    const checkPago = document.getElementById('check_pago_inmediato');
-    const boxPago = document.getElementById('campos_pago_directo');
-    if(checkPago && boxPago) {
-        checkPago.addEventListener('change', function() {
-            if(this.checked) {
-                boxPago.style.display = 'block';
-                document.querySelector('[name="id_banco_pago"]').setAttribute('required', 'required');
-                document.querySelector('[name="referencia_pago"]').setAttribute('required', 'required');
-            } else {
-                boxPago.style.display = 'none';
-                document.querySelector('[name="id_banco_pago"]').removeAttribute('required');
-                document.querySelector('[name="referencia_pago"]').removeAttribute('required');
-            }
-        });
-    }
-
-    cargarBancos();
-});
-
-// === FUNCIONES GLOBALES ===
-function exportarExcel(tipo) {
-    var fecha_inicio = $('#fecha_inicio').val();
-    var fecha_fin = $('#fecha_fin').val();
-    var id_banco = $('#filtro_cuenta').val();
-    var url = 'exportar_mensualidades.php?tipo=' + tipo;
-    if(fecha_inicio && fecha_fin) {
-        url += '&fecha_inicio=' + encodeURIComponent(fecha_inicio) + '&fecha_fin=' + encodeURIComponent(fecha_fin);
-    }
-    if (tipo === 'filtrado' && id_banco) {
-         url += '&id_banco=' + encodeURIComponent(id_banco);
-    }
-    window.open(url, '_blank');
-}
-
-function cargarBancos() {
-    fetch('json_bancos_api.php?action=get')
-        .then(r => r.json())
-        .then(data => {
-            const filtro = document.getElementById('filtro_cuenta');
-            const modalSelect = document.getElementById('select_banco_modal');
-            const cobroSelect = document.getElementById('select_banco_cobro');
-            const lista = document.getElementById('lista_bancos_gestion');
-            
-            const valFiltro = filtro ? filtro.value : '';
-            const valModal = modalSelect ? modalSelect.value : '';
-            const valCobro = cobroSelect ? cobroSelect.value : '';
-            
-            if(filtro) filtro.innerHTML = '<option value="">Todas las Cuentas</option>';
-            if(modalSelect) modalSelect.innerHTML = '<option value="">Seleccione...</option>';
-            if(cobroSelect) cobroSelect.innerHTML = '<option value="">Seleccione...</option>';
-            if(lista) lista.innerHTML = '';
-            
-            data.forEach(b => {
-                if(filtro) filtro.add(new Option(b.nombre_banco, b.id_banco));
-                if(modalSelect) modalSelect.add(new Option(b.nombre_banco, b.id_banco));
-                if(cobroSelect) cobroSelect.add(new Option(b.nombre_banco, b.id_banco));
-                if(lista) {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                    li.innerHTML = `<div><strong>${b.nombre_banco}</strong><small class="d-block text-muted" style="font-size:0.75rem">${b.numero_cuenta || ''} ${b.titular_cuenta ? '- ' + b.titular_cuenta : ''}</small></div>
-                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarBanco('${b.id_banco}')"><i class="fas fa-trash"></i></button>`;
-                    lista.appendChild(li);
+        // Obtener Tasa al Cargar
+        fetch('get_tasa_dolar.php')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    TASA_BCV = parseFloat(data.promedio);
+                    $('#tasa_display').html(`<strong>Tasa BCV/Ref:</strong> Bs. ${TASA_BCV.toFixed(2)}`);
+                } else {
+                    $('#tasa_display').html(`<span class="text-danger">Error Tasa</span>`);
                 }
             });
-            if(valFiltro && filtro) filtro.value = valFiltro;
-            if(valModal && modalSelect) modalSelect.value = valModal;
-            if(valCobro && cobroSelect) cobroSelect.value = valCobro;
+
+        // === CONVERSIÓN EN MODAL GENERAR COBRO ===
+        const inputMontoCobro = document.getElementById('input_monto_cobro');
+        const inputMontoCobroHidden = document.getElementById('monto_cobro_hidden');
+        const displayEquivCobro = document.getElementById('equiv_cobro');
+        const radiosMonedaCobro = document.getElementsByName('moneda_cobro');
+
+        function calcCobro() {
+            if (!TASA_BCV) return;
+            let val = parseFloat(inputMontoCobro.value) || 0;
+            let esBs = document.getElementById('moneda_cobro_bs').checked;
+
+            if (esBs) {
+                let usd = val / TASA_BCV;
+                inputMontoCobroHidden.value = usd.toFixed(2);
+                displayEquivCobro.textContent = `Equivalente: $${usd.toFixed(2)}`;
+            } else {
+                inputMontoCobroHidden.value = val.toFixed(2);
+                let bs = val * TASA_BCV;
+                displayEquivCobro.textContent = `Equivalente: Bs. ${bs.toFixed(2)}`;
+            }
+        }
+
+        if (inputMontoCobro) {
+            inputMontoCobro.addEventListener('input', calcCobro);
+            radiosMonedaCobro.forEach(r => r.addEventListener('change', calcCobro));
+        }
+
+        // === CONVERSIÓN EN MODAL PAGAR ===
+        const inputMontoPagar = document.getElementById('input_monto_pagar');
+        const inputMontoPagarHidden = document.getElementById('monto_pagado_hidden');
+        const displayEquivPagar = document.getElementById('equiv_pagar');
+        const radiosMonedaPagar = document.getElementsByName('moneda_pagar');
+
+        $('#modalPagar').on('shown.bs.modal', function () {
+            calcPagar();
         });
-}
 
-const formAgregar = document.getElementById('formAgregarBanco');
-if(formAgregar) {
-    formAgregar.addEventListener('submit', function(e) {
-        e.preventDefault();
-        fetch('json_bancos_api.php?action=add', { method: 'POST', body: new FormData(this) })
-        .then(r => r.json())
-        .then(res => { if(res.success) { this.reset(); cargarBancos(); } else { alert('Error: ' + res.message); } });
+        function calcPagar() {
+            if (!TASA_BCV) return;
+            let val = parseFloat(inputMontoPagar.value) || 0;
+            let esBs = document.getElementById('moneda_pagar_bs').checked;
+
+            if (esBs) {
+                let usd = val / TASA_BCV;
+                if (inputMontoPagarHidden) inputMontoPagarHidden.value = usd.toFixed(2);
+                displayEquivPagar.textContent = `Equivalente: $${usd.toFixed(2)}`;
+            } else {
+                if (inputMontoPagarHidden) inputMontoPagarHidden.value = val.toFixed(2);
+                let bs = val * TASA_BCV;
+                displayEquivPagar.textContent = `Equivalente: Bs. ${bs.toFixed(2)}`;
+            }
+        }
+
+        if (inputMontoPagar) {
+            inputMontoPagar.addEventListener('input', calcPagar);
+            radiosMonedaPagar.forEach(r => r.addEventListener('change', calcPagar));
+        }
+
+        // === TABLA UNIFICADA (server_process_mensualidades.php) ===
+        var tablaUnica = $('#tabla_mensualidades_unica').DataTable({
+            "order": [[0, "desc"]],
+            "pageLength": 10,
+            "language": {
+                "sProcessing": "Procesando...",
+                "sLengthMenu": "Mostrar _MENU_ registros",
+                "sZeroRecords": "No se encontraron resultados",
+                "sEmptyTable": "Ningún dato disponible en esta tabla",
+                "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+                "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+                "sSearch": "Buscar:",
+                "oPaginate": {
+                    "sFirst": "Primero",
+                    "sLast": "Último",
+                    "sNext": "Siguiente",
+                    "sPrevious": "Anterior"
+                }
+            },
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                "url": "server_process_mensualidades.php",
+                "type": "POST",
+                "data": function (d) {
+                    d.fecha_inicio = $('#fecha_inicio').val();
+                    d.fecha_fin = $('#fecha_fin').val();
+                    d.id_banco = $('#filtro_cuenta').val();
+                    d.sSearch = d.search.value; // Map modern search to legacy param
+                }
+            },
+            "columns": [
+                { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 }, { "data": 4 }, { "data": 5 }, { "data": 6 },
+                { "data": 7, "orderable": false, "searchable": false, "className": "text-end" }
+            ],
+            "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
+        });
+
+        $('#fecha_inicio, #fecha_fin, #filtro_cuenta').on('change', function () {
+            tablaUnica.ajax.reload();
+        });
+
+        // === MODAL PAGAR LÓGICA ===
+        $('#modalPagar').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var modal = $(this);
+            modal.find('#id_cobro_modal').val(button.data('id'));
+            document.getElementById('moneda_pagar_usd').checked = true;
+            document.getElementById('input_monto_pagar').value = button.data('monto');
+            if (inputMontoPagarHidden) inputMontoPagarHidden.value = button.data('monto');
+            modal.find('#monto_display_modal').text('$' + parseFloat(button.data('monto')).toFixed(2));
+            modal.find('#cliente_nombre_modal').text(button.data('nombre'));
+            setTimeout(calcPagar, 100);
+        });
+
+        // === MODAL ELIMINAR LÓGICA ===
+        $('#modalEliminar').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var modal = $(this);
+            modal.find('#id_cobro_eliminar').val(button.data('id'));
+            modal.find('#id_display_eliminar').text(button.data('id'));
+            modal.find('#cliente_nombre_eliminar').text(button.data('nombre'));
+        });
+
+        // === BUSCADOR AUTOCOMPLETE CONTRATOS ===
+        const searchInput = document.getElementById('contrato_search_modal');
+        const resultsContainer = document.getElementById('contrato_search_results_modal');
+        const hiddenInput = document.getElementById('id_contrato_hidden_modal');
+
+        if (searchInput) {
+            let timer;
+            searchInput.addEventListener('input', function () {
+                clearTimeout(timer);
+                const q = this.value.trim();
+                if (q.length < 3) { resultsContainer.innerHTML = ''; return; }
+                timer = setTimeout(() => {
+                    fetch(`buscar_contratos.php?q=${encodeURIComponent(q)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            resultsContainer.innerHTML = '';
+                            if (data.length) {
+                                data.forEach(c => {
+                                    const a = document.createElement('a');
+                                    a.className = 'list-group-item list-group-item-action';
+                                    a.innerHTML = `<strong>ID ${c.id}</strong>: ${c.nombre_completo} <br><small class="text-muted">C.I.: ${c.cedula || 'N/A'}</small>`;
+                                    a.onclick = (e) => {
+                                        e.preventDefault();
+                                        searchInput.value = `ID ${c.id}: ${c.nombre_completo}`;
+                                        hiddenInput.value = c.id;
+                                        resultsContainer.innerHTML = '';
+                                    };
+                                    resultsContainer.appendChild(a);
+                                });
+                            } else {
+                                resultsContainer.innerHTML = '<div class="list-group-item disabled">Sin resultados</div>';
+                            }
+                        });
+                }, 300);
+            });
+            document.addEventListener('click', function (e) {
+                if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+                    resultsContainer.innerHTML = '';
+                }
+            });
+        }
+
+        // === ÉXITO PARAMS ===
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('message') || urlParams.has('pago_exitoso') || urlParams.has('eliminacion_exitosa')) {
+            var exitoModal = new bootstrap.Modal(document.getElementById('modalExito'));
+            document.getElementById('modal_exito_mensaje_principal').textContent = urlParams.get('message') || 'Operación realizada con éxito.';
+            exitoModal.show();
+            if (history.replaceState) {
+                var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?maintenance_done=1';
+                window.history.replaceState({ path: newUrl }, '', newUrl);
+            }
+        }
+
+        // === TOGGLE PAGO INMEDIATO ===
+        const checkPago = document.getElementById('check_pago_inmediato');
+        const boxPago = document.getElementById('campos_pago_directo');
+        if (checkPago && boxPago) {
+            checkPago.addEventListener('change', function () {
+                if (this.checked) {
+                    boxPago.style.display = 'block';
+                    document.querySelector('[name="id_banco_pago"]').setAttribute('required', 'required');
+                    document.querySelector('[name="referencia_pago"]').setAttribute('required', 'required');
+                } else {
+                    boxPago.style.display = 'none';
+                    document.querySelector('[name="id_banco_pago"]').removeAttribute('required');
+                    document.querySelector('[name="referencia_pago"]').removeAttribute('required');
+                }
+            });
+        }
+
+        cargarBancos();
     });
-}
 
-window.eliminarBanco = function(id) {
-    if(!confirm('¿Seguro de eliminar esta cuenta?')) return;
-    const form = new FormData();
-    form.append('id', id);
-    fetch('json_bancos_api.php?action=delete', { method: 'POST', body: form })
-    .then(r => r.json())
-    .then(res => { if(res.success) { cargarBancos(); } else { alert('Error al eliminar'); } });
-};
+    // === FUNCIONES GLOBALES ===
+    function exportarExcel(tipo) {
+        var fecha_inicio = $('#fecha_inicio').val();
+        var fecha_fin = $('#fecha_fin').val();
+        var id_banco = $('#filtro_cuenta').val();
+        var url = 'exportar_mensualidades.php?tipo=' + tipo;
+        if (fecha_inicio && fecha_fin) {
+            url += '&fecha_inicio=' + encodeURIComponent(fecha_inicio) + '&fecha_fin=' + encodeURIComponent(fecha_fin);
+        }
+        if (tipo === 'filtrado' && id_banco) {
+            url += '&id_banco=' + encodeURIComponent(id_banco);
+        }
+        window.open(url, '_blank');
+    }
+
+    function cargarBancos() {
+        fetch('json_bancos_api.php?action=get')
+            .then(r => r.json())
+            .then(data => {
+                const filtro = document.getElementById('filtro_cuenta');
+                const modalSelect = document.getElementById('select_banco_modal');
+                const cobroSelect = document.getElementById('select_banco_cobro');
+                const lista = document.getElementById('lista_bancos_gestion');
+
+                const valFiltro = filtro ? filtro.value : '';
+                const valModal = modalSelect ? modalSelect.value : '';
+                const valCobro = cobroSelect ? cobroSelect.value : '';
+
+                if (filtro) filtro.innerHTML = '<option value="">Todas las Cuentas</option>';
+                if (modalSelect) modalSelect.innerHTML = '<option value="">Seleccione...</option>';
+                if (cobroSelect) cobroSelect.innerHTML = '<option value="">Seleccione...</option>';
+                if (lista) lista.innerHTML = '';
+
+                data.forEach(b => {
+                    if (filtro) filtro.add(new Option(b.nombre_banco, b.id_banco));
+                    if (modalSelect) modalSelect.add(new Option(b.nombre_banco, b.id_banco));
+                    if (cobroSelect) cobroSelect.add(new Option(b.nombre_banco, b.id_banco));
+                    if (lista) {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                        li.innerHTML = `<div><strong>${b.nombre_banco}</strong><small class="d-block text-muted" style="font-size:0.75rem">${b.numero_cuenta || ''} ${b.titular_cuenta ? '- ' + b.titular_cuenta : ''}</small></div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarBanco('${b.id_banco}')"><i class="fas fa-trash"></i></button>`;
+                        lista.appendChild(li);
+                    }
+                });
+                if (valFiltro && filtro) filtro.value = valFiltro;
+                if (valModal && modalSelect) modalSelect.value = valModal;
+                if (valCobro && cobroSelect) cobroSelect.value = valCobro;
+            });
+    }
+
+    const formAgregar = document.getElementById('formAgregarBanco');
+    if (formAgregar) {
+        formAgregar.addEventListener('submit', function (e) {
+            e.preventDefault();
+            fetch('json_bancos_api.php?action=add', { method: 'POST', body: new FormData(this) })
+                .then(r => r.json())
+                .then(res => { if (res.success) { this.reset(); cargarBancos(); } else { alert('Error: ' + res.message); } });
+        });
+    }
+
+    window.eliminarBanco = function (id) {
+        if (!confirm('¿Seguro de eliminar esta cuenta?')) return;
+        const form = new FormData();
+        form.append('id', id);
+        fetch('json_bancos_api.php?action=delete', { method: 'POST', body: form })
+            .then(r => r.json())
+            .then(res => { if (res.success) { cargarBancos(); } else { alert('Error al eliminar'); } });
+    };
 </script>
