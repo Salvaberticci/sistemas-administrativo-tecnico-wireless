@@ -1,40 +1,18 @@
 <?php
-// Asegúrate de incluir tu archivo de conexión aquí también para que $conn esté disponible
-require_once '../conexion.php'; 
+require_once '../conexion.php';
 
-// Asegurarse de que el script solo devuelva datos JSON
-header('Content-Type: application/json');
+$id_municipio = isset($_GET['id_municipio']) ? (int) $_GET['id_municipio'] : 0;
 
-if (isset($_POST['id']) && !empty($_POST['id'])) {
-    
-    // ⚠️ Usamos $conn para la sanitización
-    $municipioID = $conn->real_escape_string($_POST['id']);
+if ($id_municipio > 0) {
+    $sql = "SELECT id_parroquia, nombre_parroquia FROM parroquias WHERE id_municipio = ? ORDER BY nombre_parroquia ASC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id_municipio);
+    $stmt->execute();
+    $res = $stmt->get_result();
 
-    // Consulta con el ID del municipio
-    $sql = "SELECT id_parroquia, nombre_parroquia 
-            FROM parroquia 
-            WHERE id_municipio = '$municipioID' 
-            ORDER BY nombre_parroquia ASC";
-    
-    // ⚠️ Usamos $conn para la consulta
-    $resultado = $conn->query($sql);
-    
-    $parroquias = array();
-
-    if ($resultado && $resultado->num_rows > 0) {
-        while ($fila = $resultado->fetch_assoc()) {
-            $parroquias[$fila['id_parroquia']] = $fila['nombre_parroquia'];
-        }
+    echo '<option value="">Seleccione...</option>';
+    while ($p = $res->fetch_assoc()) {
+        echo '<option value="' . $p['id_parroquia'] . '">' . $p['nombre_parroquia'] . '</option>';
     }
-    
-    echo json_encode($parroquias);
-    
-} else {
-    // Retorna una lista vacía si el ID no es válido
-    echo json_encode([]);
 }
-
-// ⚠️ NOTA: El cierre de la conexión ($conn->close()) generalmente se hace
-// al final de la ejecución de tu script principal, no necesariamente aquí.
-// Pero si solo usas la conexión para esta consulta, podrías cerrarla aquí.
 ?>

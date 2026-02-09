@@ -88,6 +88,10 @@ if (!isset($path_fix)) {
                                 href="<?php echo $path_fix; ?>paginas/principal/historial_pagos_reportados.php"><i
                                     class="fa-solid fa-clock-rotate-left w-20 me-2 text-primary"></i> Historial
                                 Reportes Web</a></li>
+                        <li><a class="dropdown-item"
+                                href="<?php echo $path_fix; ?>paginas/principal/gestion_prorrogas.php"><i
+                                    class="fa-solid fa-calendar-plus w-20 me-2 text-primary"></i> Gestión de
+                                Prórrogas</a></li>
                         <li><a class="dropdown-item" href="<?php echo $path_fix; ?>reportar_pago.php" target="_blank"><i
                                     class="fa-solid fa-external-link-alt w-20 me-2 text-info"></i> Link Reporte de
                                 Pago</a></li>
