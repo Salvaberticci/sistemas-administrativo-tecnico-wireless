@@ -24,7 +24,7 @@ $correo = $conn->real_escape_string($_POST['correo']);
 $id_municipio = $conn->real_escape_string($_POST['id_municipio']);
 $id_parroquia = $conn->real_escape_string($_POST['id_parroquia']);
 // ⚠️ NUEVO CAMPO: Captura de id_comunidad
-$id_comunidad = $conn->real_escape_string($_POST['id_comunidad']); 
+$id_comunidad = $conn->real_escape_string($_POST['id_comunidad']);
 $id_plan = $conn->real_escape_string($_POST['id_plan']);
 $id_vendedor = $conn->real_escape_string($_POST['id_vendedor']);
 $direccion = $conn->real_escape_string($_POST['direccion']);
@@ -33,7 +33,7 @@ $ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap']);
 $puerto_nap = $conn->real_escape_string($_POST['puerto_nap']);
 $num_presinto_odn = $conn->real_escape_string($_POST['num_presinto_odn']);
 $id_olt = $conn->real_escape_string($_POST['id_olt']);
-$id_pon = $conn->real_escape_string($_POST['id_pon']?? null);
+$id_pon = $conn->real_escape_string($_POST['id_pon'] ?? null);
 $estado = 'ACTIVO'; // Estado inicial por defecto
 
 // NUEVOS CAMPOS ADMINISTRATIVOS Y TÉCNICOS
@@ -51,7 +51,7 @@ $medio_pago = $conn->real_escape_string($_POST['medio_pago'] ?? '');
 $moneda_pago = $conn->real_escape_string($_POST['moneda_pago'] ?? 'USD');
 $dias_prorrateo = intval($_POST['dias_prorrateo'] ?? 0);
 // Calculamos monto prorrateo si fuera necesario, por ahora lo dejamos en 0 o se podría calcular
-$monto_prorrateo_usd = 0; 
+$monto_prorrateo_usd = 0;
 
 // DETALLES TÉCNICOS
 $tipo_conexion = $conn->real_escape_string($_POST['tipo_conexion'] ?? '');
@@ -76,7 +76,7 @@ if (isset($_FILES['evidencia_foto']) && $_FILES['evidencia_foto']['error'] == 0)
     if (in_array($ext, $allowed)) {
         $new_filename = 'evidencia_' . uniqid() . '.' . $ext;
         $upload_dir = '../../uploads/contratos/';
-        
+
         if (!file_exists($upload_dir)) {
             mkdir($upload_dir, 0755, true);
         }
@@ -92,10 +92,13 @@ $instaladores_array = $_POST['instaladores'] ?? [];
 $instaladores_ids = implode(',', array_map('intval', $instaladores_array));
 
 // --- FUNCIÓN PARA GUARDAR FIRMAS (Base64 a PNG) ---
-function saveSignature($base64_string, $prefix) {
-    if (empty($base64_string)) return null;
+function saveSignature($base64_string, $prefix)
+{
+    if (empty($base64_string))
+        return null;
     $data = explode(',', $base64_string);
-    if (count($data) < 2) return null;
+    if (count($data) < 2)
+        return null;
     $imgData = base64_decode($data[1]);
     $fileName = $prefix . '_' . uniqid() . '.png';
     $uploadDir = '../../uploads/firmas/';
@@ -109,10 +112,22 @@ function saveSignature($base64_string, $prefix) {
 }
 
 // Procesar Firmas
-$firma_cliente_b64 = $_POST['firma_cliente_data'] ?? '';
-$firma_tecnico_b64 = $_POST['firma_tecnico_data'] ?? '';
-$firma_cliente = saveSignature($firma_cliente_b64, 'cliente');
-$firma_tecnico = saveSignature($firma_tecnico_b64, 'tecnico');
+$generate_link = isset($_POST['generate_link']) && $_POST['generate_link'] === '1';
+$token_firma = null;
+$estado_firma = 'COMPLETADO';
+
+if ($generate_link) {
+    $token_firma = bin2hex(random_bytes(32));
+    $estado_firma = 'PENDIENTE';
+    // En modo link, las firmas pueden venir vacías
+    $firma_cliente = null;
+    $firma_tecnico = null;
+} else {
+    $firma_cliente_b64 = $_POST['firma_cliente_data'] ?? '';
+    $firma_tecnico_b64 = $_POST['firma_tecnico_data'] ?? '';
+    $firma_cliente = saveSignature($firma_cliente_b64, 'cliente');
+    $firma_tecnico = saveSignature($firma_tecnico_b64, 'tecnico');
+}
 
 // Variable para manejar mensajes de error específicos
 $error_mensaje = null;
@@ -130,10 +145,14 @@ $stmt_check_ip->store_result();
 if ($stmt_check_ip->num_rows > 0) {
     // Si la IP ya existe, configuramos el error. No se ejecuta el código de inserción.
     $error_mensaje = "Error de Validación: La dirección IP <strong>'{$ip}'</strong> ya se encuentra registrada en otro contrato.";
+    if ($generate_link) {
+        echo json_encode(['status' => 'error', 'msg' => strip_tags($error_mensaje)]);
+        exit;
+    }
     $stmt_check_ip->close();
 } else {
     // La IP es única, podemos continuar con la inserción del contrato.
-    $stmt_check_ip->close(); 
+    $stmt_check_ip->close();
 
     // 3. INSERCIÓN EN LA TABLA DE CONTRATOS
     $sql = "INSERT INTO contratos (
@@ -145,7 +164,8 @@ if ($stmt_check_ip->num_rows > 0) {
         telefono_secundario, correo_adicional, medio_pago, moneda_pago, dias_prorrateo,
         monto_prorrateo_usd, observaciones, tipo_conexion, mac_onu, ip_onu,
         nap_tx_power, onu_rx_power, distancia_drop, punto_acceso, valor_conexion_dbm,
-        evidencia_fibra, evidencia_foto, firma_cliente, firma_tecnico
+        evidencia_fibra, evidencia_foto, firma_cliente, firma_tecnico,
+        token_firma, estado_firma
     ) VALUES (
         ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, 
@@ -155,63 +175,131 @@ if ($stmt_check_ip->num_rows > 0) {
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
-        ?, ?, ?, ?
+        ?, ?, ?, ?,
+        ?, ?
     )";
 
     $stmt = $conn->prepare($sql);
-    
-    // Total string: sssssiiiiissssssiisddds (23) + ssssids (7) + sssssssssss (11) + ss (2) = 43
-    $stmt->bind_param("sssssiiiiissssssiisddds" . "ssssidsssssssssssss", 
-        $ip, $cedula, $nombre_completo, $telefono, $correo, 
-        $id_municipio, $id_parroquia, $id_comunidad, $id_plan, $id_vendedor, 
-        $direccion, $fecha_instalacion, $estado, $ident_caja_nap, $puerto_nap, 
-        $num_presinto_odn, $id_olt, $id_pon, $tipo_instalacion, $monto_instalacion, 
-        $gastos_adicionales, $monto_pagar, $monto_pagado, $instaladores_ids,
-        $telefono_secundario, $correo_adicional, $medio_pago, $moneda_pago, $dias_prorrateo,
-        $monto_prorrateo_usd, $observaciones, $tipo_conexion, $mac_onu, $ip_onu,
-        $nap_tx_power, $onu_rx_power, $distancia_drop, $punto_acceso, $valor_conexion_dbm,
-        $evidencia_fibra, $evidencia_foto, $firma_cliente, $firma_tecnico
+
+    // Total string: sssssiiiiissssssiisddds (23) + ssssids (7) + sssssssssss (11) + ss (2) + ss (2) = 45
+    // Recalculated types string carefully to match new columns
+    $types = "sssssiiiiissssssiisddds" . "ssssidsssssssssssss" . "ss";
+
+    $stmt->bind_param(
+        $types,
+        $ip,
+        $cedula,
+        $nombre_completo,
+        $telefono,
+        $correo,
+        $id_municipio,
+        $id_parroquia,
+        $id_comunidad,
+        $id_plan,
+        $id_vendedor,
+        $direccion,
+        $fecha_instalacion,
+        $estado,
+        $ident_caja_nap,
+        $puerto_nap,
+        $num_presinto_odn,
+        $id_olt,
+        $id_pon,
+        $tipo_instalacion,
+        $monto_instalacion,
+        $gastos_adicionales,
+        $monto_pagar,
+        $monto_pagado,
+        $instaladores_ids,
+        $telefono_secundario,
+        $correo_adicional,
+        $medio_pago,
+        $moneda_pago,
+        $dias_prorrateo,
+        $monto_prorrateo_usd,
+        $observaciones,
+        $tipo_conexion,
+        $mac_onu,
+        $ip_onu,
+        $nap_tx_power,
+        $onu_rx_power,
+        $distancia_drop,
+        $punto_acceso,
+        $valor_conexion_dbm,
+        $evidencia_fibra,
+        $evidencia_foto,
+        $firma_cliente,
+        $firma_tecnico,
+        $token_firma,
+        $estado_firma
     );
 
     $resultado = $stmt->execute();
     $id_contrato = $conn->insert_id; // Obtiene el ID del contrato recién insertado
     $stmt->close();
 
+    // 4. RETORNO JSON SI ES START LINK
+    if ($generate_link) {
+        if ($resultado) {
+            // Construir link absoluto
+            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+            $host = $_SERVER['HTTP_HOST'];
+            // Asumiendo que firmar_remoto.php está en /paginas/soporte/
+            // Convertir path actual (/paginas/principal) a base
+            $scriptDir = dirname($_SERVER['PHP_SELF']); // /.../paginas/principal
+            $baseDir = dirname(dirname($scriptDir)); // /.../
+            // Ajuste hardcoded para ser seguros si la estructura es fija
+            $link = $protocol . "://" . $host . "/sistemas-administrativo-tecnico-wireless/paginas/soporte/firmar_remoto.php?token=" . $token_firma . "&type=contrato";
+
+            // Si la estructura de carpetas varía, intentar ser relativo
+            // Si estamos en /paginas/principal/guarda.php
+            // firmar_remoto está en ../soporte/firmar_remoto.php
+            // Pero necesitamos URL absoluta para compartir
+
+            echo json_encode(['status' => 'success', 'link' => $link]);
+            exit; // Detener ejecución para no mostrar HTML
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => 'Error al guardar en BD: ' . $conn->error]);
+            exit;
+        }
+    }
+
     // ⚠️ REDIRECCIÓN A GENERAR EL PDF
-       /* if ($resultado) { // Si el contrato se guardó correctamente
-            $pdf_url = "../reportes_pdf/generar_contrato_pdf.php?id_contrato=" . $id_contrato;
-            $conn->close(); // Cerrar conexión antes de la redirección
-            header("Location: " . $pdf_url); // Envía la cabecera de redirección
-            exit(); // Detiene el script para asegurar la redirección
-        }*/
-        
+    /* if ($resultado) { // Si el contrato se guardó correctamente
+         $pdf_url = "../reportes_pdf/generar_contrato_pdf.php?id_contrato=" . $id_contrato;
+         $conn->close(); // Cerrar conexión antes de la redirección
+         header("Location: " . $pdf_url); // Envía la cabecera de redirección
+         exit(); // Detiene el script para asegurar la redirección
+     }*/
+
     // 5. GENERACIÓN DE LA PRIMERA CUENTA POR COBRAR (Solo si el contrato fue exitoso)
     if ($resultado && $id_contrato > 0) {
-        
+
         // Obtener el monto total del plan
         $sql_monto = "SELECT monto FROM planes WHERE id_plan = ? LIMIT 1";
         $stmt_monto = $conn->prepare($sql_monto);
         $stmt_monto->bind_param("i", $id_plan);
         $stmt_monto->execute();
         $result_monto = $stmt_monto->get_result();
-        
+
         if ($result_monto->num_rows > 0) {
             $row_monto = $result_monto->fetch_assoc();
             $monto_total = $row_monto['monto'];
-            
+
             // Define fechas para la factura
             $fecha_emision = $fecha_instalacion; // La fecha de instalación es la de emisión
             $fecha_vencimiento = date('Y-m-d', strtotime($fecha_emision . ' + 30 days'));
-            
+
             // Inserción en la tabla de cuentas por cobrar (cxc)
             $sql_cobro = "INSERT INTO cuentas_por_cobrar (id_contrato, fecha_emision, fecha_vencimiento, monto_total)
             VALUES (?, ?, ?, ?)";
-            
+
             $stmt_cobro = $conn->prepare($sql_cobro);
-            $stmt_cobro->bind_param("issd", 
-                $id_contrato, 
-                $fecha_emision, 
-                $fecha_vencimiento, 
+            $stmt_cobro->bind_param(
+                "issd",
+                $id_contrato,
+                $fecha_emision,
+                $fecha_vencimiento,
                 $monto_total
             );
 
@@ -224,14 +312,14 @@ if ($stmt_check_ip->num_rows > 0) {
             // El contrato se guardó ($resultado sigue siendo true), pero no se encontró el plan.
             $error_mensaje = "ADVERTENCIA: Contrato guardado, pero no se pudo generar la factura: Plan de servicio no encontrado.";
         }
-        
+
         $stmt_monto->close();
     }
 
     // 6. REGISTRO DE DEUDOR SI HAY SALDO PENDIENTE
     if ($resultado && $id_contrato > 0) {
         $saldo_pendiente = $monto_pagar - $monto_pagado;
-        
+
         if ($saldo_pendiente > 0) {
             $sql_deudor = "INSERT INTO clientes_deudores (id_contrato, monto_total, monto_pagado, saldo_pendiente, estado) 
                           VALUES (?, ?, ?, ?, 'PENDIENTE')";
@@ -241,7 +329,7 @@ if ($stmt_check_ip->num_rows > 0) {
             $stmt_deudor->close();
         }
     }
-} 
+}
 // Cierre de la conexión (asegúrate de que todas las ramas la cierren o la cierras al final)
 $conn->close();
 ?>
@@ -250,56 +338,67 @@ $conn->close();
 <html lang="es">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Nuevo Contrato</title>
-	<link href="../../css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Contrato</title>
+    <link href="../../css/bootstrap.min.css" rel="stylesheet">
     <link href="../../css/style4.css" rel="stylesheet">
-       <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
+    <link rel="icon" type="image/jpg" href="../../images/logo.jpg" />
 
     <style>
-        .text-success { color: #198754 !important; }
-        .text-danger { color: #dc3545 !important; }
-        .text-warning { color: #ffc107 !important; }
+        .text-success {
+            color: #198754 !important;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+        }
+
+        .text-warning {
+            color: #ffc107 !important;
+        }
     </style>
 </head>
 
 <body>
-	<main class="container">
+    <main class="container">
 
-		<?php if ($resultado) { ?>
-			<h3 class="text-center text-success">✅ REGISTRO GUARDADO</h3>
+        <?php if ($resultado) { ?>
+            <h3 class="text-center text-success">✅ REGISTRO GUARDADO</h3>
             <?php if ($error_mensaje && strpos($error_mensaje, 'ADVERTENCIA') !== false) { ?>
-                <p class="text-center text-warning">El nuevo contrato ha sido registrado, pero se generó una advertencia: <?php echo $error_mensaje; ?></p>
+                <p class="text-center text-warning">El nuevo contrato ha sido registrado, pero se generó una advertencia:
+                    <?php echo $error_mensaje; ?></p>
             <?php } else { ?>
-			    <p class="text-center">El nuevo contrato ha sido registrado exitosamente y se ha generado la primera factura.</p>
+                <p class="text-center">El nuevo contrato ha sido registrado exitosamente y se ha generado la primera factura.
+                </p>
                 <div class="col-12 text-center">
-                  <a href="../reportes_pdf/generar_contrato_pdf.php?id_contrato=<?php echo $id_contrato; ?>" target="_blank">
+                    <a href="../reportes_pdf/generar_contrato_pdf.php?id_contrato=<?php echo $id_contrato; ?>" target="_blank">
                         Generar Contrato PDF
                     </a>
                 </div>
                 <div class="col-12 text-center">
-		        	<div class="col-md-12">
-		        		<a href="gestion_contratos.php" class="btn btn-primary">Regresar</a>
-		        	</div>
-		        </div>
+                    <div class="col-md-12">
+                        <a href="gestion_contratos.php" class="btn btn-primary">Regresar</a>
+                    </div>
+                </div>
             <?php } ?>
-		<?php } else { ?>
-			<h3 class="text-center text-danger">❌ ERROR AL GUARDAR</h3>
+        <?php } else { ?>
+            <h3 class="text-center text-danger">❌ ERROR AL GUARDAR</h3>
             <?php if ($error_mensaje) { ?>
                 <p class="text-center text-danger"><?php echo $error_mensaje; ?></p>
                 <div class="col-12 text-center">
-		        	<div class="col-md-12">
-		        		<a href="nuevo.php" class="btn btn-primary btn-danger">Regresar</a>
-		        	</div>
-		        </div>
+                    <div class="col-md-12">
+                        <a href="nuevo.php" class="btn btn-primary btn-danger">Regresar</a>
+                    </div>
+                </div>
             <?php } else { ?>
-			    <p class="text-center">Hubo un problema desconocido al registrar el contrato o un error al ejecutar la consulta.</p>
-		    <?php } ?>
+                <p class="text-center">Hubo un problema desconocido al registrar el contrato o un error al ejecutar la consulta.
+                </p>
+            <?php } ?>
         <?php } ?>
 
-		
-	</main>
+
+    </main>
 </body>
 
 </html>

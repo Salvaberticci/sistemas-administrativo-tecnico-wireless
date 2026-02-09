@@ -521,9 +521,12 @@ require_once '../includes/sidebar.php';
                         <input type="hidden" name="firma_tecnico_data" id="firma_tecnico_data">
                     </div>
 
-                    <div class="col-12">
+                    <div class="col-12 d-flex gap-2">
                         <a href="gestion_contratos.php" class="btn btn-secondary">Regresar</a>
-                        <button type="submit" class="btn btn-success ">Guardar</button>
+                        <button type="submit" class="btn btn-success">Guardar</button>
+                        <button type="button" class="btn btn-outline-primary" id="btnGenerarLink">
+                            <i class="fa-solid fa-link me-2"></i> Registrar y Generar Link
+                        </button>
                     </div>
 
                 </form>
@@ -761,6 +764,10 @@ require_once '../includes/sidebar.php';
             if (type === 'tecnico') padTecnico.clear();
         }
 
+        // Exponer pads globalmente
+        window.padCliente = padCliente;
+        window.padTecnico = padTecnico;
+
         // CAPTURAR FIRMAS ANTES DE ENVIAR
         $('form').on('submit', function (e) {
             if (!padCliente.isEmpty()) {
@@ -771,6 +778,118 @@ require_once '../includes/sidebar.php';
             }
         });
     });
+</script>
+
+<!-- Modal Link Generado -->
+<div class="modal fade" id="modalLink" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-link me-2"></i>Enlace de Contrato Generado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                    onclick="location.href='gestion_contratos.php'"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="mb-4">
+                    <i class="fa-regular fa-circle-check text-primary fa-4x mb-3"></i>
+                    <h4>¡Contrato Registrado!</h4>
+                    <p class="text-muted">El contrato ha sido guardado y está pendiente de firma.</p>
+                </div>
+
+                <label class="form-label fw-bold text-start w-100">Enlace para el Cliente:</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="linkInput" readonly>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copiarLink()">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="#" id="btnWhatsapp" target="_blank" class="btn btn-success">
+                        <i class="fa-brands fa-whatsapp me-2"></i> Enviar por WhatsApp
+                    </a>
+                    <button type="button" class="btn btn-secondary" onclick="location.href='gestion_contratos.php'">
+                        Cerrar y Regresar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Lógica para Generar Link
+    document.getElementById('btnGenerarLink').addEventListener('click', function () {
+        // Validar formulario básico
+        const form = document.querySelector('form');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        // Obtener firmas si existen (aunque para link suelen estar vacías, pero por si acaso el admin firmó)
+        // Usamos la logica existente de los pads
+        if (window.padCliente && !window.padCliente.isEmpty()) {
+            $('#firma_cliente_data').val(window.padCliente.toDataURL());
+        }
+        if (window.padTecnico && !window.padTecnico.isEmpty()) {
+            $('#firma_tecnico_data').val(window.padTecnico.toDataURL());
+        }
+
+        const formData = new FormData(form);
+        formData.append('generate_link', '1');
+
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Generando...';
+
+        fetch('guarda.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('linkInput').value = data.link;
+
+                    // Configurar WhatsApp
+                    const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
+                    // Usamos backticks para template string
+                    const mensaje = encodeURIComponent(`Hola, por favor firma tu contrato de servicio en el siguiente enlace: ${data.link}`);
+                    const waLink = `https://wa.me/${telefono}?text=${mensaje}`;
+                    document.getElementById('btnWhatsapp').href = waLink;
+
+                    const modal = new bootstrap.Modal(document.getElementById('modalLink'));
+                    modal.show();
+                } else {
+                    Swal.fire('Error', data.msg || 'Error al generar el link', 'error');
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                Swal.fire('Error', 'Error de conexión', 'error');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            });
+    });
+
+    function copiarLink() {
+        const linkInput = document.getElementById("linkInput");
+        linkInput.select();
+        linkInput.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(linkInput.value).then(() => {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Copiado!',
+                text: 'Enlace copiado al portapapeles',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        });
+    }
 </script>
 
 <?php require_once '../includes/layout_foot.php'; ?>
