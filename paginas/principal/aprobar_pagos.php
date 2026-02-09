@@ -2,7 +2,7 @@
 // aprobar_pagos.php - Panel administrativo para revisar pagos reportados por clientes
 require_once '../conexion.php';
 
-// ConfiguraciÃ³n Layout
+// Configuración Layout
 $path_to_root = "../../";
 $page_title = "Aprobar Reportes de Pago";
 require_once '../includes/layout_head.php';
@@ -159,7 +159,7 @@ $resultado = $conn->query($sql);
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title fw-bold">Confirmar AprobaciÃ³n de Pago</h5>
+                    <h5 class="modal-title fw-bold">Confirmar Aprobación de Pago</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="procesar_aprobacion_admin.php" method="POST">
@@ -168,7 +168,7 @@ $resultado = $conn->query($sql);
                         <input type="hidden" name="accion" value="APROBAR">
 
                         <div class="alert alert-info py-2 small">
-                            Al aprobar, se crearÃ¡ un registro en el historial de mensualidades como
+                            Al aprobar, se creará un registro en el historial de mensualidades como
                             <strong>PAGADO</strong> con origen <strong>LINK</strong>.
                         </div>
 
@@ -177,7 +177,7 @@ $resultado = $conn->query($sql);
                                 <label class="form-label fw-bold">Contrato Asociado</label>
                                 <select name="id_contrato" id="ap_id_contrato" class="form-select" required>
                                     <option value="">Seleccione contrato...</option>
-                                    <!-- Se llenarÃ¡ con AJAX o JS si ya se detectÃ³ -->
+                                    <!-- Se llenará con AJAX o JS si ya se detectó -->
                                 </select>
                                 <div class="small text-muted mt-1">Si la Cédula no coincide, busque el contrato
                                     correcto.</div>
@@ -236,7 +236,7 @@ $resultado = $conn->query($sql);
                         <input type="hidden" name="accion" value="RECHAZAR">
                         <i class="fas fa-exclamation-circle fa-4x text-danger mb-3"></i>
                         <h5 class="mb-3">Â¿Seguro que desea rechazar este reporte?</h5>
-                        <p class="text-muted">Esta acciÃ³n no registrarÃ¡ el pago y marcarÃ¡ el reporte como rechazado.</p>
+                        <p class="text-muted">Esta acción no registrará el pago y marcará el reporte como rechazado.</p>
                         <div class="modal-footer border-top-0 pt-0">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="btn btn-danger px-4">RECHAZAR PAGO</button>
@@ -261,11 +261,11 @@ $resultado = $conn->query($sql);
                         <input type="hidden" name="accion" value="ELIMINAR">
                         <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
                         <h6 class="fw-bold">Â¿Eliminar permanentemente?</h6>
-                        <p class="text-muted small">Esto borrarÃ¡ el registro y su imagen del servidor.</p>
+                        <p class="text-muted small">Esto borrará el registro y su imagen del servidor.</p>
                     </div>
                     <div class="modal-footer border-top-0 pt-0">
                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">No</button>
-                        <button type="submit" class="btn btn-danger px-4">SÃ­, Eliminar</button>
+                        <button type="submit" class="btn btn-danger px-4">Sí, Eliminar</button>
                     </div>
                 </form>
             </div>
@@ -285,11 +285,11 @@ $resultado = $conn->query($sql);
         document.getElementById('ap_fecha_pago').value = data.fecha_pago;
         document.getElementById('ap_referencia').value = data.referencia;
         document.getElementById('ap_id_banco').value = data.id_banco_destino || '';
-        document.getElementById('ap_meses_notas').innerHTML = `<strong>Meses reportados:</strong> ${data.meses_pagados}<br><strong>JustificaciÃ³n:</strong> ${data.concepto || 'N/A'}`;
+        document.getElementById('ap_meses_notas').innerHTML = `<strong>Meses reportados:</strong> ${data.meses_pagados}<br><strong>Justificación:</strong> ${data.concepto || 'N/A'}`;
 
-        console.log("Preparando aprobaciÃ³n para reporte:", data);
+        console.log("Preparando aprobación para reporte:", data);
 
-        // Cargar contratos dinÃ¡micamente o seleccionar el detectado
+        // Cargar contratos dinámicamente o seleccionar el detectado
         const select = document.getElementById('ap_id_contrato');
         select.innerHTML = '<option value="">Cargando contratos...</option>';
 
