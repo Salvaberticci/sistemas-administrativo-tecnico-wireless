@@ -30,11 +30,19 @@ $resultado = $conn->query($sql);
                 <div class="row align-items-center">
                     <div class="col">
                         <h5 class="fw-bold text-primary mb-0">Reportes de Pago Pendientes</h5>
-                        <p class="text-muted small mb-0">Revisión manual de reportes enviados por clientes vía link
-                            público</p>
+                        <p class="text-muted small mb-0">Revisión manual de reportes enviados por clientes vía link público</p>
                     </div>
                 </div>
             </div>
+            
+            <?php if (isset($_GET['message'])): ?>
+                <div class="px-4 pt-3">
+                    <div class="alert alert-<?php echo $_GET['class'] ?? 'info'; ?> alert-dismissible fade show" role="alert">
+                        <?php echo htmlspecialchars($_GET['message']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+            <?php endif; ?>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle" id="tablaAprobacion">
