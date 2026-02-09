@@ -224,9 +224,49 @@
                                 <button type="submit" class="btn btn-primary btn-lg" id="btnGuardar">
                                     <i class="fas fa-save me-2"></i> Guardar Reporte
                                 </button>
+                                <button type="button" class="btn btn-outline-success btn-lg" id="btnGenerarLink">
+                                    <i class="fa-brands fa-whatsapp me-2"></i> Guardar y Generar Link de Firma
+                                </button>
                             </div>
 
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Link Generado -->
+    <div class="modal fade" id="modalLink" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fa-solid fa-link me-2"></i>Enlace Generado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        onclick="location.reload()"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <div class="mb-4">
+                        <i class="fa-regular fa-circle-check text-success fa-4x mb-3"></i>
+                        <h4>¡Soporte Guardado!</h4>
+                        <p class="text-muted">El soporte ha sido guardado como pendiente de firma.</p>
+                    </div>
+
+                    <label class="form-label fw-bold text-start w-100">Enlace para el Cliente:</label>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="linkInput" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copiarLink()">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="#" id="btnWhatsapp" target="_blank" class="btn btn-success">
+                            <i class="fa-brands fa-whatsapp me-2"></i> Enviar por WhatsApp
+                        </a>
+                        <button type="button" class="btn btn-secondary" onclick="location.reload()">
+                            Cerrar y Nuevo Registro
+                        </button>
                     </div>
                 </div>
             </div>
@@ -302,6 +342,78 @@
                 calcularSaldo();
             }
         });
+
+        // Lógica para Generar Link
+        const btnGenerarLink = document.getElementById('btnGenerarLink');
+        const modalLink = new bootstrap.Modal(document.getElementById('modalLink'));
+
+        btnGenerarLink.addEventListener('click', function () {
+            if (!document.getElementById('soporteForm').checkValidity()) {
+                document.getElementById('soporteForm').reportValidity();
+                return;
+            }
+
+            const formData = new FormData(document.getElementById('soporteForm'));
+            formData.append('generate_link', '1');
+
+            // Validar si hay cliente seleccionado
+            if (!formData.get('id_contrato')) {
+                Swal.fire('Error', 'Seleccione un cliente primero', 'warning');
+                return;
+            }
+
+            // UI Loading
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
+
+            fetch('guardar_soporte.php', {
+                method: 'POST',
+                body: formData
+            })
+                .then(r => r.json())
+                .then(data => {
+                    this.classList.remove('btn-outline-success'); // fix visual state if needed
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+
+                    if (data.status === 'success') {
+                        // Mostrar Modal
+                        const linkCompleto = window.location.origin + window.location.pathname.replace('reporte_tecnico.php', '') + data.link;
+                        document.getElementById('linkInput').value = linkCompleto;
+
+                        // Configurar WhatsApp
+                        // Obtener telefono del cliente limpiando caracteres
+                        /* Nota: No tenemos el telefono a mano fácil en el DOM salvo que lo hayamos guardado al seleccionar cliente.
+                           Podemos intentar obtenerlo o dejar el link para que el usuario seleccione contacto. */
+                        const mensaje = `Hola, aquí tienes el enlace para firmar el reporte técnico: ${linkCompleto}`;
+                        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+                        document.getElementById('btnWhatsapp').href = whatsappUrl;
+
+                        modalLink.show();
+                    } else {
+                        Swal.fire('Error', data.msg, 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+                    Swal.fire('Error', 'Error de conexión', 'error');
+                });
+        });
+
+        function copiarLink() {
+            const copyText = document.getElementById("linkInput");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+
+            const btn = document.querySelector('button[onclick="copiarLink()"]');
+            const icon = btn.querySelector('i');
+            icon.className = 'fa-solid fa-check';
+            setTimeout(() => { icon.className = 'fa-regular fa-copy'; }, 2000);
+        }
 
         // Cargar opciones de falla dinámicamente
         function cargarOpcionesFalla() {

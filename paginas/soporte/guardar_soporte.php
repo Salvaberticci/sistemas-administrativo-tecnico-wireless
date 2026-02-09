@@ -6,17 +6,20 @@
 require_once '../conexion.php';
 
 // Función auxiliar para guardar firmas (Reutilizada de reporte_tecnico logic)
-function saveSignatureFromAdmin($base64_string, $prefix) {
-    if (empty($base64_string)) return null;
-    
+function saveSignatureFromAdmin($base64_string, $prefix)
+{
+    if (empty($base64_string))
+        return null;
+
     $data = explode(',', $base64_string);
     // Validar formato data:image/png;base64,... (A veces puede venir sin 'data:image...' si se manipula string, pero pad.toDataURL() siempre lo manda)
-    if (count($data) < 2) return null;
-    
+    if (count($data) < 2)
+        return null;
+
     $imgData = base64_decode($data[1]);
     $fileName = $prefix . '_Admin_' . uniqid() . '.png';
     $filePath = '../../uploads/firmas/' . $fileName; // Ruta relativa
-    
+
     // Crear carpeta si no existe (por seguridad)
     if (!file_exists('../../uploads/firmas')) {
         mkdir('../../uploads/firmas', 0777, true);
@@ -31,14 +34,14 @@ function saveSignatureFromAdmin($base64_string, $prefix) {
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // 1. Sanitización de datos BÁSICOS
     $id_contrato = isset($_POST['id_contrato']) ? intval($_POST['id_contrato']) : 0;
-    
+
     // Si viene la descripcion del textarea llamada 'descripcion', la usamos. Si no, usamos 'observaciones' como fallback o concatenamos
     // En el nuevo form tenemos 'descripcion' (Problema) y 'sugerencias'. Y campos tecnicos.
     $descripcion_problema = isset($_POST['descripcion']) ? $conn->real_escape_string($_POST['descripcion']) : '';
     $sugerencias = isset($_POST['sugerencias']) ? $conn->real_escape_string($_POST['sugerencias']) : '';
     $tecnico = isset($_POST['tecnico']) ? $conn->real_escape_string($_POST['tecnico']) : '';
     $fecha_soporte = isset($_POST['fecha_soporte']) ? $conn->real_escape_string($_POST['fecha_soporte']) : date('Y-m-d');
-    
+
     // Financiero
     $monto_total = isset($_POST['monto_total']) ? floatval($_POST['monto_total']) : 0.0;
     $monto_pagado = isset($_POST['monto_pagado']) ? floatval($_POST['monto_pagado']) : 0.0;
@@ -63,7 +66,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $firma_cliente_b64 = isset($_POST['firma_cliente_data']) ? $_POST['firma_cliente_data'] : '';
 
     if ($id_contrato > 0) {
-        
+
         $conn->begin_transaction();
 
         try {
@@ -71,31 +74,66 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $path_firma_tech = saveSignatureFromAdmin($firma_tecnico_b64, 'tech');
             $path_firma_cli = saveSignatureFromAdmin($firma_cliente_b64, 'cli');
 
+
             // 3. Insertar en tabla `soportes`
-            // Columna 'descripcion' en BD suele ser texto corto. 'observaciones' TEXT.
-            // Usaremos: descripcion = descripcion_problema. observaciones = descripcion_problema + sugerencias (para tener histórico completo si se quiere) 
-            // O mejor: descripcion = descripcion_problema, sugerencias = sugerencias. observaciones = descripcion_problema (legacy fallback)
-            
+            // Manejo de estado de firma y token
+            $estado_firma = 'COMPLETADO';
+            $token_firma = null;
+            $generate_link = isset($_POST['generate_link']) && $_POST['generate_link'] === '1';
+
+            if ($generate_link) {
+                // Generar token único
+                $token_firma = bin2hex(random_bytes(32));
+                $estado_firma = 'PENDIENTE';
+
+                // Si es link, no validamos firmas ni las intentamos guardar (podrían venir vacías)
+                $path_firma_tech = null;
+                $path_firma_cli = null;
+            } else {
+                // Guardado normal - Firmas obligatorias (validado en frontend, pero aquí guardamos)
+                $path_firma_tech = saveSignatureFromAdmin($firma_tecnico_b64, 'tech');
+                $path_firma_cli = saveSignatureFromAdmin($firma_cliente_b64, 'cli');
+            }
+
             $sql_soporte = "INSERT INTO soportes (
                 id_contrato, descripcion, monto_total, monto_pagado, fecha_soporte, tecnico_asignado, observaciones,
                 sector, tipo_servicio, ip_address, estado_onu, estado_router, modelo_router,
                 bw_bajada, bw_subida, bw_ping, num_dispositivos,
                 estado_antena, valores_antena, sugerencias, solucion_completada,
-                firma_tecnico, firma_cliente
+                firma_tecnico, firma_cliente, token_firma, estado_firma
             ) VALUES (
                 '$id_contrato', '$descripcion_problema', '$monto_total', '$monto_pagado', '$fecha_soporte', '$tecnico', '$descripcion_problema',
                 '$sector', '$tipo_servicio', '$ip', '$estado_onu', '$estado_router', '$modelo_router',
                 '$bw_bajada', '$bw_subida', '$bw_ping', '$num_dispositivos',
                 '$estado_antena', '$valores_antena', '$sugerencias', '$solucion_completada',
-                '$path_firma_tech', '$path_firma_cli'
+                '$path_firma_tech', '$path_firma_cli', " . ($token_firma ? "'$token_firma'" : "NULL") . ", '$estado_firma'
             )";
-            
+
             if (!$conn->query($sql_soporte)) {
                 throw new Exception("Error al guardar soporte: " . $conn->error);
             }
             $id_soporte = $conn->insert_id;
 
-            // 4. Deuda / Cobranzas (Lógica Original Mantenida)
+            // 4. Deuda / Cobranzas (Solo si no es 'generate_link' o si política lo permite en pendiente)
+            // Lógica: Si es link, el documento no está "cerrado", ¿deberíamos generar deuda?
+            // Generalmente NO, hasta que firme. Pero para simplificar, asumiremos que si generan link, 
+            // es porque ya hicieron el trabajo. DE TODOS MODOS, el cobro puede quedar PENDIENTE.
+
+            // Si es link, retornamos JSON con URL
+            if ($generate_link) {
+                $conn->commit();
+                $link = "firmar_remoto.php?token=" . $token_firma;
+                echo json_encode([
+                    'status' => 'success',
+                    'link' => $link,
+                    'id_soporte' => $id_soporte,
+                    'msg' => 'Soporte guardado temporalmente. Comparta el enlace para firmar.'
+                ]);
+                exit();
+            }
+
+            // ... (Resto de lógica de Cobranzas original si NO es link) ...
+
             $deuda_pendiente = $monto_total - $monto_pagado;
 
             if ($deuda_pendiente > 0.01) {
@@ -103,13 +141,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $fecha_vencimiento = date('Y-m-d', strtotime($fecha_soporte . ' + 7 days')); // Vence en 7 días por defecto
                 $estado = 'PENDIENTE';
 
-                // Usamos 'monto_total' de cxc como la DEUDA PENDIENTE inicial (según lógica previa)
-                // OJO: Si se quiere mantener el monto total real, y un 'saldo'. El sistema actual de cobros parece usar 'monto_total' como saldo a cobrar.
-                // En `guardar_reporte_publico.php` usé monto_total completo porque monto_pagado era 0.
-                // Aquí el admin puede poner un pago inicial. 
-                // Si Costo=100, Pagó=20. Deuda=80.
-                // Insertamos CxC con monto=80.
-                
                 $sql_cxc = "INSERT INTO cuentas_por_cobrar (id_contrato, fecha_emision, fecha_vencimiento, monto_total, estado) 
                             VALUES ('$id_contrato', '$fecha_soporte', '$fecha_vencimiento', '$deuda_pendiente', '$estado')";
 
@@ -134,21 +165,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
             $conn->commit();
-            // Redirigir con éxito
+
+            // Si es petición AJAX normal (no form submit tradicional), devolver JSON
+            // El formulario actual usa submit tradicional, pero lo cambiaremos a AJAX para el Modal
+            if (isset($_POST['ajax']) && $_POST['ajax'] === '1') {
+                echo json_encode(['status' => 'success', 'msg' => 'Soporte registrado correctamente']);
+                exit();
+            }
+
+            // Redirigir con éxito (Legacy)
             header("Location: historial_soportes.php?status=success&msg=Soporte registrado correctamente");
             exit();
 
         } catch (Exception $e) {
             $conn->rollback();
+            if ($generate_link || (isset($_POST['ajax']) && $_POST['ajax'] === '1')) {
+                echo json_encode(['status' => 'error', 'msg' => $e->getMessage()]);
+                exit();
+            }
             header("Location: registro_soporte.php?status=error&msg=" . urlencode($e->getMessage()));
             exit();
         }
     } else {
+        if (isset($_POST['ajax']) && $_POST['ajax'] === '1') {
+            echo json_encode(['status' => 'error', 'msg' => 'Debe seleccionar un cliente']);
+            exit();
+        }
         header("Location: registro_soporte.php?status=error&msg=Debe seleccionar un cliente.");
         exit();
     }
 } else {
-    header("Location: registro_soporte.php");
-    exit();
+    // Si no es POST
 }
 ?>

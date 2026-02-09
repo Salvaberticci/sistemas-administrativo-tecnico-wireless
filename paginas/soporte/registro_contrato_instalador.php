@@ -419,9 +419,49 @@
                                         <button type="submit" class="btn btn-success btn-lg" id="btnGuardar">
                                             <i class="fas fa-save me-2"></i> Registrar Contrato
                                         </button>
+                                        <button type="button" class="btn btn-outline-primary btn-lg"
+                                            id="btnGenerarLink">
+                                            <i class="fa-brands fa-whatsapp me-2"></i> Registrar y Generar Link de Firma
+                                        </button>
                                     </div>
-
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Link Generado -->
+    <div class="modal fade" id="modalLink" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fa-solid fa-link me-2"></i>Enlace de Contrato Generado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        onclick="location.reload()"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <div class="mb-4">
+                        <i class="fa-regular fa-circle-check text-primary fa-4x mb-3"></i>
+                        <h4>¡Contrato Pre-registrado!</h4>
+                        <p class="text-muted">El contrato está pendiente de firma del cliente.</p>
+                    </div>
+
+                    <label class="form-label fw-bold text-start w-100">Enlace para el Cliente:</label>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="linkInput" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copiarLink()">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="#" id="btnWhatsapp" target="_blank" class="btn btn-success">
+                            <i class="fa-brands fa-whatsapp me-2"></i> Enviar por WhatsApp
+                        </a>
+                        <button type="button" class="btn btn-secondary" onclick="location.reload()">
+                            Cerrar y Nuevo Registro
+                        </button>
                     </div>
                 </div>
             </div>
@@ -588,12 +628,73 @@
             document.getElementById('firma_tecnico_data').value = padTecnico.toDataURL();
 
             const formData = new FormData(this);
+            guardarContrato(formData);
+        });
 
-            // Agregar foto si existe
-            const fotoFile = document.getElementById('foto_instalacion').files[0];
-            if (fotoFile) {
-                formData.append('evidencia_foto_file', fotoFile);
+        // Botón Generar Link
+        const btnGenerarLink = document.getElementById('btnGenerarLink');
+        const modalLink = new bootstrap.Modal(document.getElementById('modalLink'));
+
+        btnGenerarLink.addEventListener('click', function() {
+            const form = document.getElementById('formContrato');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
             }
+            
+            // Para link NO validamos firmas obligatorias en este punto
+            const formData = new FormData(form);
+            formData.append('generate_link', '1');
+            
+            // UI Loading
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
+            
+            fetch('guardar_contrato_instalador.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                this.disabled = false;
+                this.innerHTML = originalText;
+                
+                if (data.status === 'success') {
+                     // Mostrar Modal
+                    const linkCompleto = window.location.origin + window.location.pathname.replace('registro_contrato_instalador.php', '') + data.link;
+                    document.getElementById('linkInput').value = linkCompleto;
+                    
+                    // Configurar WhatsApp
+                    const telefono = formData.get('telefono') || '';
+                    const mensaje = `Estimado cliente, por favor firme su contrato de servicio en el siguiente enlace: ${linkCompleto}`;
+                    
+                    // Intentar abrir whatsapp directo si hay telefono, sino share generico
+                    let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+                    // Si el numero tiene formato valido (simple check), podriamos usarlo:
+                    // if(telefono.length > 9) whatsappUrl = `https://wa.me/58${telefono.substring(1)}?text=...`; 
+                    
+                    document.getElementById('btnWhatsapp').href = whatsappUrl;
+
+                    modalLink.show();
+                } else {
+                     Swal.fire('Error', data.msg || 'Error desconocido', 'error');
+                }
+            })
+            .catch(err => {
+                this.disabled = false;
+                this.innerHTML = originalText;
+                console.error(err);
+                Swal.fire('Error', 'Error de conexión', 'error');
+            });
+        });
+
+        function guardarContrato(formData) {
+            // Agregar foto si existe (re-check, aunque formData ya lo toma del input file)
+            /* const fotoFile = document.getElementById('foto_instalacion').files[0];
+            if (fotoFile && !formData.has('evidencia_foto_file')) { // formData toma archivos automaticamente
+                formData.append('evidencia_foto_file', fotoFile);
+            } */
 
             document.getElementById('btnGuardar').disabled = true;
             document.getElementById('btnGuardar').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
@@ -624,7 +725,17 @@
                     document.getElementById('btnGuardar').disabled = false;
                     document.getElementById('btnGuardar').innerHTML = '<i class="fas fa-save me-2"></i> Registrar Contrato';
                 });
-        });
+        }
+
+        function copiarLink() {
+            const copyText = document.getElementById("linkInput");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); 
+            navigator.clipboard.writeText(copyText.value);
+            
+            const btn = document.querySelector('button[onclick="copiarLink()"]'); // Simple selector logic
+            // Visual feedback handled by user logic usually, simplified here
+        }
     </script>
 
 </body>
