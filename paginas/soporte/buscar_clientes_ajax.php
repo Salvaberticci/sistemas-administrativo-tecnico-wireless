@@ -39,17 +39,9 @@ try {
 
     $result = $conn->query($sql);
 
-    if (!$result) {
-        // Error en la consulta
-        echo json_encode([
-            'error' => true,
-            'message' => $conn->error
-        ]);
-        exit;
-    }
-
     $clientes = [];
-    if ($result->num_rows > 0) {
+
+    if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $clientes[] = [
                 'id' => $row['id'],
@@ -65,12 +57,12 @@ try {
 
     $conn->close();
 
+    // SIEMPRE retornar array, nunca objeto con error
     echo json_encode($clientes);
 
 } catch (Exception $e) {
-    echo json_encode([
-        'error' => true,
-        'message' => $e->getMessage()
-    ]);
+    // En caso de error, retornar array vacío (Select2 requiere array)
+    error_log("Error en buscar_clientes_ajax.php: " . $e->getMessage());
+    echo json_encode([]);
 }
 ?>
