@@ -48,19 +48,20 @@ $cedula = $conn->real_escape_string($_POST['cedula'] ?? '');
 $nombre_completo = $conn->real_escape_string($_POST['nombre_completo'] ?? '');
 $telefono = $conn->real_escape_string($_POST['telefono'] ?? '');
 $correo = $conn->real_escape_string($_POST['correo'] ?? '');
-$id_municipio = $conn->real_escape_string($_POST['id_municipio'] ?? '');
-$id_parroquia = $conn->real_escape_string($_POST['id_parroquia'] ?? '');
+// Para claves foráneas, si vienen vacías deben ser NULL, no string vacío ''
+$id_municipio = !empty($_POST['id_municipio']) ? $conn->real_escape_string($_POST['id_municipio']) : null;
+$id_parroquia = !empty($_POST['id_parroquia']) ? $conn->real_escape_string($_POST['id_parroquia']) : null;
 // ⚠️ NUEVO CAMPO: Captura de id_comunidad
-$id_comunidad = $conn->real_escape_string($_POST['id_comunidad'] ?? '');
-$id_plan = $conn->real_escape_string($_POST['id_plan'] ?? '');
-$id_vendedor = $conn->real_escape_string($_POST['id_vendedor'] ?? '');
+$id_comunidad = !empty($_POST['id_comunidad']) ? $conn->real_escape_string($_POST['id_comunidad']) : null;
+$id_plan = !empty($_POST['id_plan']) ? $conn->real_escape_string($_POST['id_plan']) : null;
+$id_vendedor = !empty($_POST['id_vendedor']) ? $conn->real_escape_string($_POST['id_vendedor']) : null;
 $direccion = $conn->real_escape_string($_POST['direccion'] ?? '');
 $fecha_instalacion = $conn->real_escape_string($_POST['fecha_instalacion'] ?? '');
 $ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap'] ?? '');
 $puerto_nap = $conn->real_escape_string($_POST['puerto_nap'] ?? '');
 $num_presinto_odn = $conn->real_escape_string($_POST['num_presinto_odn'] ?? '');
-$id_olt = $conn->real_escape_string($_POST['id_olt'] ?? '');
-$id_pon = $conn->real_escape_string($_POST['id_pon'] ?? '');
+$id_olt = !empty($_POST['id_olt']) ? $conn->real_escape_string($_POST['id_olt']) : null;
+$id_pon = !empty($_POST['id_pon']) ? $conn->real_escape_string($_POST['id_pon']) : null;
 $estado = 'ACTIVO'; // Estado inicial por defecto
 
 // NUEVOS CAMPOS ADMINISTRATIVOS Y TÉCNICOS
