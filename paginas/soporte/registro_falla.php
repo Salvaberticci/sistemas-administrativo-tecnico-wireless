@@ -108,9 +108,16 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                 </div>
             </div>
 
+
             <!-- Sección 2: Clasificación de la Falla -->
             <div class="form-section">
-                <h5 class="fw-bold mb-3"><i class="fa-solid fa-tag me-2"></i>Clasificación de la Falla</h5>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0"><i class="fa-solid fa-tag me-2"></i>Clasificación de la Falla</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                        data-bs-target="#configModal">
+                        <i class="fa-solid fa-cog me-1"></i>Configurar Opciones
+                    </button>
+                </div>
 
                 <div class="row g-3 mb-3">
                     <div class="col-12">
@@ -137,22 +144,7 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                     <div class="col-md-6">
                         <label class="form-label">Tipo de Falla <span class="text-danger">*</span></label>
                         <select class="form-select" id="tipo_falla" name="tipo_falla" required>
-                            <option value="">Seleccione...</option>
-                            <option value="Sin Señal / LOS">Sin Señal / LOS</option>
-                            <option value="Internet Lento">Internet Lento</option>
-                            <option value="Cortes Intermitentes">Cortes Intermitentes</option>
-                            <option value="Router Dañado">Router Dañado</option>
-                            <option value="ONU Apagada/Dañada">ONU Apagada/Dañada</option>
-                            <option value="Antena Desalineada">Antena Desalineada</option>
-                            <option value="Cable Dañado">Cable Dañado</option>
-                            <option value="Fibra Cortada">Fibra Cortada</option>
-                            <option value="Problema Eléctrico">Problema Eléctrico</option>
-                            <option value="Configuración Incorrecta">Configuración Incorrecta</option>
-                            <option value="Dispositivo del Cliente">Dispositivo del Cliente</option>
-                            <option value="Saturación de Red">Saturación de Red</option>
-                            <option value="Mantenimiento Preventivo">Mantenimiento Preventivo</option>
-                            <option value="Cambio de Equipo">Cambio de Equipo</option>
-                            <option value="Otro">Otro</option>
+                            <option value="">Cargando opciones...</option>
                         </select>
                         <div class="invalid-feedback">Debe seleccionar un tipo de falla</div>
                     </div>
@@ -160,9 +152,7 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                     <div class="col-md-6">
                         <label class="form-label">Tipo de Servicio</label>
                         <select class="form-select" id="tipo_servicio" name="tipo_servicio">
-                            <option value="Fibra Óptica">Fibra Óptica</option>
-                            <option value="Radio Enlace">Radio Enlace</option>
-                            <option value="Mixto">Mixto</option>
+                            <option value="">Cargando opciones...</option>
                         </select>
                     </div>
                 </div>
@@ -306,11 +296,68 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
     </div>
 </main>
 
+<!-- Modal Configuración de Opciones -->
+<div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-cog me-2"></i>Gestión de Fallas y Servicios</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Columna Tipos de Falla -->
+                    <div class="col-md-6 border-end">
+                        <h6 class="fw-bold text-danger mb-3">Tipos de Falla</h6>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="nuevoTipoFalla"
+                                placeholder="Nuevo tipo de falla...">
+                            <button class="btn btn-primary" type="button" onclick="agregarOpcion('tipos_falla')">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        <ul class="list-group" id="listaFallas" style="max-height: 300px; overflow-y: auto;">
+                            <!-- Items cargados dinámicamente -->
+                        </ul>
+                    </div>
+
+                    <!-- Columna Tipos de Servicio -->
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-primary mb-3">Tipos de Servicio</h6>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="nuevoTipoServicio"
+                                placeholder="Nuevo tipo de servicio...">
+                            <button class="btn btn-primary" type="button" onclick="agregarOpcion('tipos_servicio')">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        <ul class="list-group" id="listaServicios" style="max-height: 300px; overflow-y: auto;">
+                            <!-- Items cargados dinámicamente -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     $(document).ready(function () {
+        // Cargar opciones al iniciar
+        cargarOpciones();
+
+        // Configurar botón modal para que al cerrar recargue los selects
+        $('#configModal').on('hidden.bs.modal', function () {
+            cargarOpciones();
+        });
+
         // Buscador AJAX de clientes (igual que en reporte_tecnico.php)
         const searchInput = document.getElementById('cliente_search');
         const resultsDiv = document.getElementById('search_results');
@@ -469,6 +516,112 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
             });
         });
     });
+
+    // --- Funciones para Gestión de Opciones JSON ---
+
+    function cargarOpciones() {
+        $.ajax({
+            url: 'admin_opciones.php',
+            data: { action: 'read' },
+            dataType: 'json',
+            success: function (response) {
+                if (response.success) {
+                    const data = response.data;
+
+                    // Llenar Selects en Formulario Principal
+                    actualizarSelect('#tipo_falla', data.tipos_falla);
+                    actualizarSelect('#tipo_servicio', data.tipos_servicio);
+
+                    // Llenar Listas en Modal
+                    actualizarListaModal('#listaFallas', 'tipos_falla', data.tipos_falla);
+                    actualizarListaModal('#listaServicios', 'tipos_servicio', data.tipos_servicio);
+                }
+            }
+        });
+    }
+
+    function actualizarSelect(selector, opciones) {
+        const select = $(selector);
+        const valorActual = select.val();
+        select.empty();
+        select.append('<option value="">Seleccione...</option>');
+        opciones.forEach(op => {
+            select.append(`<option value="${op}">${op}</option>`);
+        });
+        if (valorActual && opciones.includes(valorActual)) {
+            select.val(valorActual);
+        }
+    }
+
+    function actualizarListaModal(selector, tipo, opciones) {
+        const lista = $(selector);
+        lista.empty();
+        opciones.forEach(op => {
+            lista.append(`
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${op}
+                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarOpcion('${tipo}', '${op}')">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </li>
+            `);
+        });
+    }
+
+    function agregarOpcion(tipo) {
+        const inputId = tipo === 'tipos_falla' ? '#nuevoTipoFalla' : '#nuevoTipoServicio';
+        const valor = $(inputId).val().trim();
+
+        if (!valor) return;
+
+        $.post('admin_opciones.php', {
+            action: 'add',
+            type: tipo,
+            value: valor
+        }, function (response) {
+            if (response.success) {
+                $(inputId).val('');
+                cargarOpciones(); // Recarga todo
+                const toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+                toast.fire({
+                    icon: 'success',
+                    title: 'Agregado correctamente'
+                });
+            } else {
+                Swal.fire('Error', response.message, 'error');
+            }
+        }, 'json');
+    }
+
+    function eliminarOpcion(tipo, valor) {
+        Swal.fire({
+            title: '¿Eliminar opción?',
+            text: `Se eliminará "${valor}" de la lista`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('admin_opciones.php', {
+                    action: 'delete',
+                    type: tipo,
+                    value: valor
+                }, function (response) {
+                    if (response.success) {
+                        cargarOpciones();
+                    } else {
+                        Swal.fire('Error', response.message, 'error');
+                    }
+                }, 'json');
+            }
+        });
+    }
 </script>
 
 <?php require_once $path_to_root . 'paginas/includes/layout_foot.php'; ?>

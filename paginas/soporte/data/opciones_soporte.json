@@ -1,0 +1,24 @@
+{
+    "tipos_falla": [
+        "Sin Señal / LOS",
+        "Internet Lento",
+        "Cortes Intermitentes",
+        "Router Dañado",
+        "ONU Apagada/Dañada",
+        "Antena Desalineada",
+        "Cable Dañado",
+        "Fibra Cortada",
+        "Problema Eléctrico",
+        "Configuración Incorrecta",
+        "Dispositivo del Cliente",
+        "Saturación de Red",
+        "Mantenimiento Preventivo",
+        "Cambio de Equipo",
+        "Otro"
+    ],
+    "tipos_servicio": [
+        "Fibra Óptica",
+        "Radio Enlace",
+        "Mixto"
+    ]
+}
