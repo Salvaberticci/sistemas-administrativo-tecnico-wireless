@@ -258,16 +258,19 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 30. VALOR CONEXION DBM
     $row[] = clean($aRow['valor_conexion_dbm']);
 
-    // 31. INSTALADOR (Repetido)
+    // 31. INSTALADOR (Cierre)
     $row[] = clean($aRow['instalador']);
 
-    // 32. SUGERENCIAS (Observaciones)
+    // 32. EVIDENCIA FIBRA (Antes estaba al final, causaba desplazamiento)
+    $row[] = clean($aRow['evidencia_fibra']);
+
+    // 33. SUGERENCIAS (Observaciones)
     $row[] = clean($aRow['observaciones']);
 
-    // 33. PRECINTO ODN
+    // 34. PRECINTO ODN
     $row[] = clean($aRow['num_presinto_odn']);
 
-    // 34. EVIDENCIA FOTO
+    // 35. EVIDENCIA FOTO (Foto)
     $link = $aRow['evidencia_foto'];
     if (!empty($link)) {
         $row[] = "<a href='{$link}' target='_blank' class='btn btn-sm btn-outline-primary'><i class='fa-solid fa-image'></i></a>";
@@ -275,7 +278,7 @@ while ($aRow = $rResult->fetch_assoc()) {
         $row[] = '-';
     }
 
-    // 34B. FIRMA CLIENTE
+    // 36. FIRMA CLIENTE
     $firmaCliente = $aRow['firma_cliente'] ?? '';
     if (!empty($firmaCliente)) {
         $row[] = "<a href='../../uploads/firmas/{$firmaCliente}' target='_blank' class='btn btn-sm btn-outline-info'><i class='fa-solid fa-signature'></i></a>";
@@ -283,16 +286,13 @@ while ($aRow = $rResult->fetch_assoc()) {
         $row[] = '-';
     }
 
-    // 34C. FIRMA TECNICO
+    // 37. FIRMA TECNICO
     $firmaTecnico = $aRow['firma_tecnico'] ?? '';
     if (!empty($firmaTecnico)) {
         $row[] = "<a href='../../uploads/firmas/{$firmaTecnico}' target='_blank' class='btn btn-sm btn-outline-success'><i class='fa-solid fa-signature'></i></a>";
     } else {
         $row[] = '-';
     }
-
-    // 34D. EVIDENCIA FIBRA  
-    $row[] = clean($aRow['evidencia_fibra']);
 
     // --- EXTRAS ---
 
