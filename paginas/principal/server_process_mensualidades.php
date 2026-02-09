@@ -182,14 +182,6 @@ while ($aRow = $rResult->fetch_assoc()) {
 
     // 7. Acciones
     $acciones = '';
-    // Pagar
-    if ($estado != 'PAGADO') {
-        $acciones .= '<button type="button" class="btn btn-sm btn-success me-1" 
-                        data-bs-toggle="modal" data-bs-target="#modalPagar" 
-                        data-id="' . $id_cobro . '" data-monto="' . $aRow['monto_total'] . '" 
-                        data-nombre="' . htmlspecialchars($aRow['nombre_completo']) . '" title="Pagar">
-                        <i class="fas fa-money-bill-wave"></i></button>';
-    }
     // Modificar
     $acciones .= '<a href="modifica_cobro1.php?id=' . $id_cobro . '" class="btn btn-sm btn-warning me-1" title="Modificar"><i class="fas fa-edit"></i></a>';
     // Eliminar
