@@ -121,10 +121,15 @@ require_once '../includes/sidebar.php';
                         </p>
                     </div>
 
-                    <div class="col-12 mt-4 text-end">
-                        <a href="gestion_mensualidades.php?maintenance_done=1" class="btn btn-secondary me-2">Cancelar y
-                            Volver</a>
-                        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                    <div class="col-12 mt-4 d-flex justify-content-between">
+                        <a href="gestion_mensualidades.php?maintenance_done=1" class="btn btn-light border">
+                            <i class="fas fa-arrow-left me-2"></i>Volver
+                        </a>
+                        <div>
+                            <a href="gestion_mensualidades.php?maintenance_done=1"
+                                class="btn btn-secondary me-2">Cancelar</a>
+                            <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                        </div>
                     </div>
                 </form>
             </div>
