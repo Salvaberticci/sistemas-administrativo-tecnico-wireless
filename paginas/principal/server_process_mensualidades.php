@@ -43,7 +43,8 @@ $aSearchColumns = [
     'COALESCE(h.justificacion, pl.nombre_plan)',   // 3
     'cxc.monto_total',                             // 4
     'cxc.id_banco',                                // 5
-    'cxc.estado'                                   // 6
+    'cxc.estado',                                  // 6
+    'cxc.origen'                                   // 7
 ];
 
 // 4. Handle Filters (Date Range & Account)
@@ -97,6 +98,7 @@ $sSelect = "
     cxc.monto_total,
     cxc.estado,
     cxc.id_banco,
+    cxc.origen,
     pl.nombre_plan,
     h.justificacion,
     (SELECT COUNT(h2.id) FROM cobros_manuales_historial h2 WHERE h2.id_cobro_cxc = cxc.id_cobro) AS es_manual
@@ -180,7 +182,12 @@ while ($aRow = $rResult->fetch_assoc()) {
         $badge_class = 'danger';
     $row[] = '<span class="badge bg-' . $badge_class . '">' . $estado . '</span>';
 
-    // 7. Acciones
+    // 7. Origen (Badge)
+    $origen = $aRow['origen'] ?: 'SISTEMA';
+    $orig_badge = ($origen == 'LINK') ? 'info' : 'secondary';
+    $row[] = '<span class="badge bg-' . $orig_badge . '">' . $origen . '</span>';
+
+    // 8. Acciones
     $acciones = '';
     // Modificar
     $acciones .= '<a href="modifica_cobro1.php?id=' . $id_cobro . '" class="btn btn-sm btn-warning me-1" title="Modificar"><i class="fas fa-edit"></i></a>';

@@ -50,6 +50,27 @@ require_once '../includes/sidebar.php';
         max-height: 200px;
         overflow-y: auto;
     }
+
+    @keyframes pulse-warning {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+        }
+
+        70% {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+        }
+
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+        }
+    }
+
+    .pulse-warning {
+        animation: pulse-warning 2s infinite;
+    }
 </style>
 
 <main class="main-content">
@@ -70,6 +91,16 @@ require_once '../includes/sidebar.php';
                     data-bs-target="#modalGestionBancos" title="Gestionar Cuentas Bancarias">
                     <i class="fa-solid fa-university me-1"></i> Ctas.
                 </button>
+                <?php
+                // Contar reportes pendientes
+                $res_pend = $conn->query("SELECT COUNT(*) FROM pagos_reportados WHERE estado = 'PENDIENTE'");
+                $cant_pend = $res_pend ? $res_pend->fetch_array()[0] : 0;
+                if ($cant_pend > 0):
+                    ?>
+                    <a href="aprobar_pagos.php" class="btn btn-warning shadow-sm me-2 fw-bold pulse-warning">
+                        <i class="fas fa-bell me-2"></i> <?php echo $cant_pend; ?> Pagos Pendientes
+                    </a>
+                <?php endif; ?>
                 <button type="button" class="btn btn-success shadow-sm" data-bs-toggle="modal"
                     data-bs-target="#modalGenerarCobro">
                     <i class="fas fa-plus-circle me-1"></i> Generar Cobro
@@ -117,6 +148,14 @@ require_once '../includes/sidebar.php';
                             <option value="">Todas las Cuentas</option>
                         </select>
                     </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1">Origen</label>
+                        <select class="form-select form-select-sm" id="filtro_origen">
+                            <option value="">Cualquier Origen</option>
+                            <option value="SISTEMA">Sistema (Manual)</option>
+                            <option value="LINK">Link (Web)</option>
+                        </select>
+                    </div>
                     <div class="col-md-3 text-end">
                         <p class="text-muted small mb-0"><i class="fas fa-info-circle me-1"></i> Use los filtros para
                             buscar por fecha o cuenta.</p>
@@ -139,6 +178,7 @@ require_once '../includes/sidebar.php';
                                 <th>Monto</th>
                                 <th>Cuenta</th>
                                 <th>Estado</th>
+                                <th>Origen</th>
                                 <th class="text-end">Acciones</th>
                             </tr>
                         </thead>
@@ -528,17 +568,18 @@ require_once '../includes/sidebar.php';
                     d.fecha_inicio = $('#fecha_inicio').val();
                     d.fecha_fin = $('#fecha_fin').val();
                     d.id_banco = $('#filtro_cuenta').val();
+                    d.origen = $('#filtro_origen').val();
                     d.sSearch = d.search.value; // Map modern search to legacy param
                 }
             },
             "columns": [
-                { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 }, { "data": 4 }, { "data": 5 }, { "data": 6 },
-                { "data": 7, "orderable": false, "searchable": false, "className": "text-end" }
+                { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 }, { "data": 4 }, { "data": 5 }, { "data": 6 }, { "data": 7 },
+                { "data": 8, "orderable": false, "searchable": false, "className": "text-end" }
             ],
             "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
         });
 
-        $('#fecha_inicio, #fecha_fin, #filtro_cuenta').on('change', function () {
+        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen').on('change', function () {
             tablaUnica.ajax.reload();
         });
 
