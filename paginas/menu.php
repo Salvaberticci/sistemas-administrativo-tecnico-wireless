@@ -84,6 +84,17 @@ require_once 'includes/sidebar.php';
                     </div>
                 </a>
             </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="principal/aprobar_pagos.php" class="text-decoration-none">
+                    <div class="card h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <i class="fa-solid fa-check-double fa-3x text-warning mb-3"></i>
+                            <h5 class="card-title text-dark">Aprobar Pagos</h5>
+                            <p class="card-text text-muted small">Revisar reportes de clientes</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
         </div>
 
         <footer class="mt-5 text-center text-muted small">

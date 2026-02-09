@@ -80,6 +80,10 @@ if (!isset($path_fix)) {
                                 href="<?php echo $path_fix; ?>paginas/principal/gestion_deudores.php"><i
                                     class="fa-solid fa-triangle-exclamation w-20 me-2 text-danger"></i> Clientes
                                 Deudores</a></li>
+                        <li><a class="dropdown-item"
+                                href="<?php echo $path_fix; ?>paginas/principal/aprobar_pagos.php"><i
+                                    class="fa-solid fa-check-double w-20 me-2 text-warning"></i> Aprobar Pagos
+                                Web</a></li>
                     </ul>
                 </li>
 
