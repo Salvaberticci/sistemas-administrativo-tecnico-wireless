@@ -96,6 +96,17 @@ require_once 'includes/sidebar.php';
                 </a>
             </div>
             <div class="col-md-6 col-lg-3">
+                <a href="principal/historial_pagos_reportados.php" class="text-decoration-none">
+                    <div class="card h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <i class="fa-solid fa-clock-rotate-left fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title text-dark">Historial Pagos</h5>
+                            <p class="card-text text-muted small">Ver reportes procesados</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3">
                 <a href="../reportar_pago.php" target="_blank" class="text-decoration-none">
                     <div class="card h-100 hover-lift border-0 shadow-sm" style="background-color: #f0f7ff;">
                         <div class="card-body text-center p-4">
