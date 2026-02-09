@@ -46,7 +46,7 @@ $sql = "
     RIGHT JOIN cuentas_por_cobrar cxc ON cxc.id_contrato = cxc_main.id 
     JOIN contratos co ON cxc.id_contrato = co.id
     " . $where_clause . "
-    ORDER BY cxc.fecha_vencimiento ASC
+    ORDER BY cxc.fecha_emision DESC
 ";
 // Fixed join logic slightly to ensure we target table correctly, though original query was:
 // FROM cuentas_por_cobrar cxc JOIN contratos co ON cxc.id_contrato = co.id
@@ -64,7 +64,7 @@ $sql = "
     FROM cuentas_por_cobrar cxc
     JOIN contratos co ON cxc.id_contrato = co.id
     " . $where_clause . "
-    ORDER BY cxc.fecha_vencimiento ASC
+    ORDER BY cxc.fecha_emision DESC
 ";
 
 $stmt = $conn->prepare($sql);
