@@ -1,8 +1,8 @@
 <?php
 // Asegúrate de que esta ruta sea correcta
-require_once '../../dompdf/autoload.inc.php'; 
-require_once '../conexion.php'; 
-require_once 'encabezado_reporte.php'; 
+require_once '../../dompdf/autoload.inc.php';
+require_once '../conexion.php';
+require_once 'encabezado_reporte.php';
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -15,7 +15,7 @@ $fecha_fin = isset($_GET['fecha_fin']) ? $_GET['fecha_fin'] : '';
 $estado_filtro = isset($_GET['estado']) ? $_GET['estado'] : 'TODOS';
 $params = [];
 $types = '';
-$where_clause = " WHERE 1=1 "; 
+$where_clause = " WHERE 1=1 ";
 $cobros = [];
 $total_monto = 0;
 
@@ -26,7 +26,8 @@ if ($estado_filtro !== 'TODOS') {
 }
 
 if (!empty($fecha_inicio) && !empty($fecha_fin)) {
-    $where_clause .= " AND cxc.fecha_vencimiento >= ? AND cxc.fecha_vencimiento <= ? ";
+    // Usamos fecha_emision para un filtrado general
+    $where_clause .= " AND cxc.fecha_emision >= ? AND cxc.fecha_emision <= ? ";
     $params[] = $fecha_inicio;
     $params[] = $fecha_fin;
     $types .= 'ss';
@@ -45,7 +46,7 @@ $sql = "
     FROM cuentas_por_cobrar cxc
     JOIN contratos co ON cxc.id_contrato = co.id
     " . $where_clause . "
-    ORDER BY cxc.fecha_vencimiento ASC
+    ORDER BY cxc.fecha_emision DESC
 ";
 
 $stmt = $conn->prepare($sql);
@@ -55,10 +56,10 @@ if ($stmt) {
         // Enlaza los parámetros dinámicamente
         $stmt->bind_param($types, ...$params);
     }
-    
+
     $stmt->execute();
     $resultado = $stmt->get_result();
-    
+
     while ($fila = $resultado->fetch_assoc()) {
         $cobros[] = $fila;
         $total_monto += $fila['monto_total'];
@@ -73,37 +74,84 @@ $cantidad_clientes = count($cobros);
 // ----------------------------------------------------------------------
 
 // Inicia la captura del buffer de salida
-ob_start(); 
+ob_start();
 ?>
 
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-       <link rel="icon" type="image/jpg" href="../../images/logo.jpg"/>
-     <?php 
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="icon" type="image/jpg" href="../../images/logo.jpg" />
+    <?php
     // Llamada a la función para obtener el encabezado estandarizado
-    echo generar_encabezado_empresa('Reporte Filtrado de Cuentas por Cobrar'); 
+    echo generar_encabezado_empresa('Reporte Filtrado de Cuentas por Cobrar');
     ?>
     <style>
-        body { font-family: 'Arial', sans-serif; font-size: 10px; }
-        h1 { text-align: center; font-size: 16px; margin-bottom: 15px; }
-        .resumen { margin-bottom: 20px; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #59acffff; padding: 6px 8px; text-align: left; }
-        th { background-color: #8fd0ffff; text-align: center; font-size: 10px; }
-        .total { font-weight: bold; }
-        .danger { color: red; font-weight: bold; }
-        .success { color: green; }
-        .center { text-align: center; }
-        .right { text-align: right; }
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 10px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .resumen {
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #59acffff;
+            padding: 6px 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #8fd0ffff;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        .total {
+            font-weight: bold;
+        }
+
+        .danger {
+            color: red;
+            font-weight: bold;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .right {
+            text-align: right;
+        }
     </style>
 </head>
+
 <body>
 
-    
+
     <p class="resumen">
-        <strong>Filtros:</strong> Estado: <?php echo htmlspecialchars($estado_filtro); ?> | Vencimiento: <?php echo htmlspecialchars($fecha_inicio); ?> al <?php echo htmlspecialchars($fecha_fin); ?><br>
+        <strong>Filtros:</strong> Estado: <?php echo htmlspecialchars($estado_filtro); ?> | Rango:
+        <?php echo htmlspecialchars($fecha_inicio); ?> al <?php echo htmlspecialchars($fecha_fin); ?><br>
         <strong>CANTIDAD DE CLIENTES:</strong> <?php echo $cantidad_clientes; ?><br>
         <strong>TOTAL MONTO REPORTADO:</strong> $<?php echo number_format($total_monto, 2); ?>
     </p>
@@ -122,13 +170,13 @@ ob_start();
         </thead>
         <tbody>
             <?php foreach ($cobros as $fila): ?>
-            <tr>
-                <td class="center"><?php echo htmlspecialchars($fila['id_cobro']); ?></td>
-                <td><?php echo htmlspecialchars($fila['cliente']); ?></td>
-                <td class="center"><?php echo htmlspecialchars($fila['fecha_emision']); ?></td>
-                <td class="center"><?php echo htmlspecialchars($fila['fecha_vencimiento']); ?></td>
-                <td class="center">
-                    <?php 
+                <tr>
+                    <td class="center"><?php echo htmlspecialchars($fila['id_cobro']); ?></td>
+                    <td><?php echo htmlspecialchars($fila['cliente']); ?></td>
+                    <td class="center"><?php echo htmlspecialchars($fila['fecha_emision']); ?></td>
+                    <td class="center"><?php echo htmlspecialchars($fila['fecha_vencimiento']); ?></td>
+                    <td class="center">
+                        <?php
                         $dias = '';
                         $class = '';
                         if ($fila['estado'] !== 'PAGADO' && $fila['dias_vencido'] > 0) {
@@ -138,20 +186,21 @@ ob_start();
                             $dias = '-';
                         }
                         echo "<span class='{$class}'>{$dias}</span>";
-                    ?>
-                </td>
-                <td class="right">$<?php echo number_format($fila['monto_total'], 2); ?></td>
-                <td class="center">
-                    <span class="<?php echo ($fila['estado'] == 'PAGADO') ? 'success' : 'danger'; ?>">
-                        <?php echo htmlspecialchars($fila['estado']); ?>
-                    </span>
-                </td>
-            </tr>
+                        ?>
+                    </td>
+                    <td class="right">$<?php echo number_format($fila['monto_total'], 2); ?></td>
+                    <td class="center">
+                        <span class="<?php echo ($fila['estado'] == 'PAGADO') ? 'success' : 'danger'; ?>">
+                            <?php echo htmlspecialchars($fila['estado']); ?>
+                        </span>
+                    </td>
+                </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
 
 </body>
+
 </html>
 
 <?php

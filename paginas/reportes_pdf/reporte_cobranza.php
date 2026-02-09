@@ -1,5 +1,5 @@
 <?php
-require_once '../conexion.php'; 
+require_once '../conexion.php';
 
 // 1. CAPTURA Y SANEO DE PARÁMETROS DE FILTRO
 // Fechas: Por defecto, un mes atrás hasta hoy.
@@ -22,10 +22,10 @@ if ($estado_filtro !== 'TODOS') {
     $types .= 's';
 }
 
-// Filtro por Rango de Fechas (Aplicado a la fecha de vencimiento)
+// Filtro por Rango de Fechas (Aplicado a la fecha de emisión)
 if (!empty($fecha_inicio) && !empty($fecha_fin)) {
-    // Usamos la fecha de vencimiento para que el reporte sea sobre la deuda
-    $where_clause .= " AND cxc.fecha_vencimiento >= ? AND cxc.fecha_vencimiento <= ? ";
+    // Usamos la fecha de emisión para que el reporte sea sobre la creación del cobro
+    $where_clause .= " AND cxc.fecha_emision >= ? AND cxc.fecha_emision <= ? ";
     $params[] = $fecha_inicio;
     $params[] = $fecha_fin;
     $types .= 'ss';
@@ -75,14 +75,14 @@ if ($stmt) {
         // La función call_user_func_array es necesaria para bind_param cuando se usan parámetros dinámicos
         $stmt->bind_param($types, ...$params);
     }
-    
+
     $stmt->execute();
     $resultado = $stmt->get_result();
-    
+
     while ($fila = $resultado->fetch_assoc()) {
         $cobros[] = $fila;
         $total_monto += $fila['monto_total'];
-        
+
         // Sumamos el total vencido si la factura está pendiente y vencida
         if ($fila['estado'] !== 'PAGADO' && $fila['dias_vencido'] > 0) {
             $total_vencido += $fila['monto_total'];
@@ -101,13 +101,13 @@ include $path_to_root . 'paginas/includes/layout_head.php';
 
 <main class="main-content">
     <?php include $path_to_root . 'paginas/includes/header.php'; ?>
-    
+
     <div class="page-content">
         <!-- Header Section -->
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
-                 <h2 class="h4 fw-bold mb-1 text-primary">Reporte Dinámico de Cobranzas</h2>
-                 <p class="text-muted mb-0">Análisis financiero y estado de cuentas</p>
+                <h2 class="h4 fw-bold mb-1 text-primary">Reporte Dinámico de Cobranzas</h2>
+                <p class="text-muted mb-0">Análisis financiero y estado de cuentas</p>
             </div>
             <a href="../menu.php" class="btn btn-outline-secondary">
                 <i class="fa-solid fa-arrow-left me-2"></i>Volver al Menú
@@ -117,47 +117,58 @@ include $path_to_root . 'paginas/includes/layout_head.php';
         <!-- Filtros -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
-                 <h6 class="mb-0 fw-bold text-primary"><i class="fa-solid fa-filter me-2"></i>Filtros de Búsqueda</h6>
+                <h6 class="mb-0 fw-bold text-primary"><i class="fa-solid fa-filter me-2"></i>Filtros de Búsqueda</h6>
             </div>
             <div class="card-body p-4 bg-light">
                 <form action="reporte_cobranza.php" method="GET" class="row g-3 align-items-end">
-                    
+
                     <div class="col-md-3">
-                        <label for="estado" class="form-label fw-semibold text-secondary small text-uppercase">Estado</label>
+                        <label for="estado"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Estado</label>
                         <select class="form-select bg-white" name="estado" id="estado">
-                            <option value="TODOS" <?php echo ($estado_filtro == 'TODOS') ? 'selected' : ''; ?>>TODOS</option>
-                            <option value="PENDIENTE" <?php echo ($estado_filtro == 'PENDIENTE') ? 'selected' : ''; ?>>PENDIENTE</option>
-                            <option value="VENCIDO" <?php echo ($estado_filtro == 'VENCIDO') ? 'selected' : ''; ?>>VENCIDO</option>
-                            <option value="PAGADO" <?php echo ($estado_filtro == 'PAGADO') ? 'selected' : ''; ?>>PAGADO</option>
-                            <option value="CANCELADO" <?php echo ($estado_filtro == 'CANCELADO') ? 'selected' : ''; ?>>CANCELADO</option>
+                            <option value="TODOS" <?php echo ($estado_filtro == 'TODOS') ? 'selected' : ''; ?>>TODOS
+                            </option>
+                            <option value="PENDIENTE" <?php echo ($estado_filtro == 'PENDIENTE') ? 'selected' : ''; ?>>
+                                PENDIENTE</option>
+                            <option value="VENCIDO" <?php echo ($estado_filtro == 'VENCIDO') ? 'selected' : ''; ?>>VENCIDO
+                            </option>
+                            <option value="PAGADO" <?php echo ($estado_filtro == 'PAGADO') ? 'selected' : ''; ?>>PAGADO
+                            </option>
+                            <option value="CANCELADO" <?php echo ($estado_filtro == 'CANCELADO') ? 'selected' : ''; ?>>
+                                CANCELADO</option>
                         </select>
                     </div>
 
                     <div class="col-md-3">
-                        <label for="fecha_inicio" class="form-label fw-semibold text-secondary small text-uppercase">Vencimiento Desde</label>
-                        <input type="date" class="form-control" name="fecha_inicio" value="<?php echo htmlspecialchars($fecha_inicio); ?>">
+                        <label for="fecha_inicio"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Fecha Desde</label>
+                        <input type="date" class="form-control" name="fecha_inicio"
+                            value="<?php echo htmlspecialchars($fecha_inicio); ?>">
                     </div>
                     <div class="col-md-3">
-                        <label for="fecha_fin" class="form-label fw-semibold text-secondary small text-uppercase">Vencimiento Hasta</label>
-                        <input type="date" class="form-control" name="fecha_fin" value="<?php echo htmlspecialchars($fecha_fin); ?>">
+                        <label for="fecha_fin" class="form-label fw-semibold text-secondary small text-uppercase">Fecha
+                            Hasta</label>
+                        <input type="date" class="form-control" name="fecha_fin"
+                            value="<?php echo htmlspecialchars($fecha_fin); ?>">
                     </div>
 
                     <div class="col-md-3 d-flex gap-2">
                         <button type="submit" class="btn btn-primary flex-grow-1">
                             <i class="fa-solid fa-magnifying-glass me-2"></i>Aplicar
                         </button>
-                        
-                        <?php 
-                            $export_params = http_build_query($_GET); 
+
+                        <?php
+                        $export_params = http_build_query($_GET);
                         ?>
-                        <a href="exportar_cuentas_por_cobrar.php?<?php echo $export_params; ?>" class="btn btn-danger" target="_blank" title="Exportar a PDF">
+                        <a href="exportar_cuentas_por_cobrar.php?<?php echo $export_params; ?>" class="btn btn-danger"
+                            target="_blank" title="Exportar a PDF">
                             <i class="fa-solid fa-file-pdf"></i>
                         </a>
                     </div>
                 </form>
             </div>
         </div>
-        
+
         <?php if (isset($error)): ?>
             <div class="alert alert-danger shadow-sm border-0">
                 <i class="fa-solid fa-circle-exclamation me-2"></i><?php echo $error; ?>
@@ -169,7 +180,7 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                 <p class="text-muted mb-0">Intenta ajustar los filtros de búsqueda.</p>
             </div>
         <?php else: ?>
-            
+
             <!-- KPIs -->
             <div class="row mb-4">
                 <!-- Total Card -->
@@ -185,14 +196,15 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Vencido Card -->
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm h-100 bg-danger text-white overflow-hidden position-relative">
-                         <div class="card-body p-4">
+                        <div class="card-body p-4">
                             <h6 class="text-white-50 text-uppercase fw-bold mb-2">Deuda Vencida</h6>
                             <div class="d-flex align-items-center mb-0">
-                                <h2 class="display-6 fw-bold mb-0 me-3">$<?php echo number_format($total_vencido, 2); ?></h2>
+                                <h2 class="display-6 fw-bold mb-0 me-3">$<?php echo number_format($total_vencido, 2); ?>
+                                </h2>
                                 <i class="fa-solid fa-clock-rotate-left fa-2x opacity-25 ms-auto"></i>
                             </div>
                             <p class="text-white-50 small mb-0 mt-2">Monto pendiente con fecha pasada</p>
@@ -219,17 +231,19 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($cobros as $fila): 
+                                <?php foreach ($cobros as $fila):
                                     $is_vencido = ($fila['estado'] !== 'PAGADO' && $fila['dias_vencido'] > 0);
                                     $row_bg = $is_vencido ? 'bg-danger bg-opacity-10' : '';
-                                ?>
-                                <tr class="<?php echo $row_bg; ?>">
-                                    <td class="ps-4 fw-medium text-muted">#<?php echo htmlspecialchars($fila['id_cobro']); ?></td>
-                                    <td class="fw-bold text-dark"><?php echo htmlspecialchars($fila['cliente']); ?></td>
-                                    <td><?php echo htmlspecialchars($fila['fecha_emision']); ?></td>
-                                    <td class="<?php echo $is_vencido ? 'text-danger fw-bold' : ''; ?>"><?php echo htmlspecialchars($fila['fecha_vencimiento']); ?></td>
-                                    <td class="text-center">
-                                        <?php 
+                                    ?>
+                                    <tr class="<?php echo $row_bg; ?>">
+                                        <td class="ps-4 fw-medium text-muted">
+                                            #<?php echo htmlspecialchars($fila['id_cobro']); ?></td>
+                                        <td class="fw-bold text-dark"><?php echo htmlspecialchars($fila['cliente']); ?></td>
+                                        <td><?php echo htmlspecialchars($fila['fecha_emision']); ?></td>
+                                        <td class="<?php echo $is_vencido ? 'text-danger fw-bold' : ''; ?>">
+                                            <?php echo htmlspecialchars($fila['fecha_vencimiento']); ?></td>
+                                        <td class="text-center">
+                                            <?php
                                             if ($fila['estado'] !== 'PAGADO' && $fila['dias_vencido'] > 0) {
                                                 echo "<span class='badge bg-danger'>{$fila['dias_vencido']} días</span>";
                                             } elseif ($fila['estado'] == 'PAGADO') {
@@ -237,26 +251,34 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                                             } else {
                                                 echo "<span class='badge bg-success'>A tiempo</span>";
                                             }
-                                        ?>
-                                    </td>
-                                    <td class="text-end fw-bold">$<?php echo number_format($fila['monto_total'], 2); ?></td>
-                                    <td class="text-center">
-                                        <?php 
-                                        $badge_class = 'secondary';
-                                        switch ($fila['estado']) {
-                                            case 'PAGADO': $badge_class = 'success'; break;
-                                            case 'VENCIDO': $badge_class = 'danger'; break;
-                                            case 'PENDIENTE': $badge_class = 'warning text-dark'; break;
-                                        }
-                                        ?>
-                                        <span class="badge bg-<?php echo $badge_class; ?>"><?php echo htmlspecialchars($fila['estado']); ?></span>
-                                    </td>
-                                    <td class="text-end pe-4">
-                                        <a href="../principal/modifica_cobro.php?id=<?php echo $fila['id_cobro']; ?>" class="btn btn-sm btn-outline-primary rounded-2">
-                                            <i class="fa-solid fa-eye me-1"></i>Detalles
-                                        </a>
-                                    </td>
-                                </tr>
+                                            ?>
+                                        </td>
+                                        <td class="text-end fw-bold">$<?php echo number_format($fila['monto_total'], 2); ?></td>
+                                        <td class="text-center">
+                                            <?php
+                                            $badge_class = 'secondary';
+                                            switch ($fila['estado']) {
+                                                case 'PAGADO':
+                                                    $badge_class = 'success';
+                                                    break;
+                                                case 'VENCIDO':
+                                                    $badge_class = 'danger';
+                                                    break;
+                                                case 'PENDIENTE':
+                                                    $badge_class = 'warning text-dark';
+                                                    break;
+                                            }
+                                            ?>
+                                            <span
+                                                class="badge bg-<?php echo $badge_class; ?>"><?php echo htmlspecialchars($fila['estado']); ?></span>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <a href="../principal/modifica_cobro.php?id=<?php echo $fila['id_cobro']; ?>"
+                                                class="btn btn-sm btn-outline-primary rounded-2">
+                                                <i class="fa-solid fa-eye me-1"></i>Detalles
+                                            </a>
+                                        </td>
+                                    </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
