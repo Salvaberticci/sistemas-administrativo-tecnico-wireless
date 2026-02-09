@@ -163,6 +163,36 @@ $error_mensaje = null;
 $resultado = false; // Inicializamos a falso por si hay errores de validación
 
 // =========================================================================
+// 1.5 VALIDACIÓN DE CLAVES FORÁNEAS (Evitar error de FK si el ID no existe)
+// =========================================================================
+
+// Función auxiliar para validar existencia
+function validarFK($conn, $tabla, $columna, $valor)
+{
+    if (empty($valor))
+        return null;
+    $sql = "SELECT $columna FROM $tabla WHERE $columna = $valor LIMIT 1";
+    $res = $conn->query($sql);
+    return ($res && $res->num_rows > 0) ? $valor : null;
+}
+
+// Validar Vendedor
+$id_vendedor = validarFK($conn, 'vendedores', 'id_vendedor', $id_vendedor);
+// Validar Plan
+$id_plan = validarFK($conn, 'planes', 'id_plan', $id_plan);
+// Validar Municipio
+$id_municipio = validarFK($conn, 'municipios', 'id_municipio', $id_municipio);
+// Validar Parroquia
+$id_parroquia = validarFK($conn, 'parroquias', 'id_parroquia', $id_parroquia);
+// Validar Comunidad
+$id_comunidad = validarFK($conn, 'comunidades', 'id_comunidad', $id_comunidad);
+// Validar OLT
+$id_olt = validarFK($conn, 'olts', 'id_olt', $id_olt);
+// Validar PON
+$id_pon = validarFK($conn, 'puertos_pon', 'id_pon', $id_pon);
+
+
+// =========================================================================
 // 2. <<<< VALIDACIÓN AGREGADA >>>>: Verificar si la IP ya existe 
 // =========================================================================
 $sql_check_ip = "SELECT * FROM contratos WHERE ip = ?";
