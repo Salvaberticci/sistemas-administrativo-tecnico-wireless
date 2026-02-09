@@ -1,4 +1,6 @@
 <?php
+// Iniciar buffer de salida al principio absoluto
+ob_start();
 
 /**
  * Script para insertar nuevos datos de registro
@@ -14,8 +16,30 @@
 // Conexión a la base de datos
 require '../conexion.php';
 
-// Iniciar buffer de salida para capturar cualquier error/warning PHP inesperado
-ob_start();
+// Manejo de errores para respuestas JSON
+if (isset($_POST['generate_link']) && $_POST['generate_link'] === '1') {
+    function jsonErrorHandler($errno, $errstr, $errfile, $errline)
+    {
+        // Limpiar buffer
+        if (ob_get_length())
+            ob_clean();
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'msg' => "PHP Error: $errstr en $errfile:$errline"]);
+        exit;
+    }
+    set_error_handler("jsonErrorHandler");
+
+    register_shutdown_function(function () {
+        $error = error_get_last();
+        if ($error && ($error['type'] === E_ERROR || $error['type'] === E_PARSE || $error['type'] === E_CORE_ERROR || $error['type'] === E_COMPILE_ERROR)) {
+            if (ob_get_length())
+                ob_clean();
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'msg' => "Fatal Error: {$error['message']} en {$error['file']}:{$error['line']}"]);
+        }
+    });
+}
+
 
 // 1. CAPTURA Y SANEO DE DATOS
 // Se usa real_escape_string para prevenir inyección SQL.
