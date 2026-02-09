@@ -30,8 +30,8 @@ $resultado = $conn->query($sql);
                 <div class="row align-items-center">
                     <div class="col">
                         <h5 class="fw-bold text-primary mb-0">Reportes de Pago Pendientes</h5>
-                        <p class="text-muted small mb-0">RevisiÃ³n manual de reportes enviados por clientes vÃ­a link
-                            pÃºblico</p>
+                        <p class="text-muted small mb-0">Revisión manual de reportes enviados por clientes vía link
+                            público</p>
                     </div>
                     <div class="col-auto">
                         <a href="historial_pagos_reportados.php" class="btn btn-outline-primary btn-sm">
@@ -56,7 +56,7 @@ $resultado = $conn->query($sql);
                         <thead class="table-light">
                             <tr>
                                 <th>Fecha Reporte</th>
-                                <th>Cliente / CÃ©dula</th>
+                                <th>Cliente / Cédula</th>
                                 <th>Detalle Pago</th>
                                 <th>Meses</th>
                                 <th>Comprobante</th>
@@ -95,7 +95,7 @@ $resultado = $conn->query($sql);
                                         <td>
                                             <div class="small">
                                                 <strong>Monto:</strong> (Revisar Capture)<br>
-                                                <strong>MÃ©todo:</strong>
+                                                <strong>Método:</strong>
                                                 <?php echo htmlspecialchars($row['metodo_pago']); ?><br>
                                                 <?php if ($row['referencia']): ?>
                                                     <strong>Ref:</strong>
@@ -179,7 +179,7 @@ $resultado = $conn->query($sql);
                                     <option value="">Seleccione contrato...</option>
                                     <!-- Se llenarÃ¡ con AJAX o JS si ya se detectÃ³ -->
                                 </select>
-                                <div class="small text-muted mt-1">Si la cÃ©dula no coincide, busque el contrato
+                                <div class="small text-muted mt-1">Si la Cédula no coincide, busque el contrato
                                     correcto.</div>
                             </div>
                             <div class="col-md-6">
