@@ -348,12 +348,13 @@
         const modalLink = new bootstrap.Modal(document.getElementById('modalLink'));
 
         btnGenerarLink.addEventListener('click', function () {
-            if (!document.getElementById('soporteForm').checkValidity()) {
-                document.getElementById('soporteForm').reportValidity();
+            const form = document.getElementById('formReporte');
+            if (!form.checkValidity()) {
+                form.reportValidity();
                 return;
             }
 
-            const formData = new FormData(document.getElementById('soporteForm'));
+            const formData = new FormData(form);
             formData.append('generate_link', '1');
 
             // Validar si hay cliente seleccionado
