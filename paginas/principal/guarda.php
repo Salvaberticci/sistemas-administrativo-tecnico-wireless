@@ -14,6 +14,9 @@
 // Conexión a la base de datos
 require '../conexion.php';
 
+// Iniciar buffer de salida para capturar cualquier error/warning PHP inesperado
+ob_start();
+
 // 1. CAPTURA Y SANEO DE DATOS
 // Se usa real_escape_string para prevenir inyección SQL.
 $ip = $conn->real_escape_string($_POST['ip']);
@@ -146,6 +149,8 @@ if ($stmt_check_ip->num_rows > 0) {
     // Si la IP ya existe, configuramos el error. No se ejecuta el código de inserción.
     $error_mensaje = "Error de Validación: La dirección IP <strong>'{$ip}'</strong> ya se encuentra registrada en otro contrato.";
     if ($generate_link) {
+        ob_end_clean();
+        header('Content-Type: application/json');
         echo json_encode(['status' => 'error', 'msg' => strip_tags($error_mensaje)]);
         exit;
     }
@@ -240,6 +245,10 @@ if ($stmt_check_ip->num_rows > 0) {
 
     // 4. RETORNO JSON SI ES START LINK
     if ($generate_link) {
+        // Limpiamos cualquier salida previa (warnings, errores, espacios en blanco)
+        ob_end_clean();
+        header('Content-Type: application/json');
+
         if ($resultado) {
             // Construir link absoluto
             $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
@@ -367,7 +376,8 @@ $conn->close();
             <h3 class="text-center text-success">✅ REGISTRO GUARDADO</h3>
             <?php if ($error_mensaje && strpos($error_mensaje, 'ADVERTENCIA') !== false) { ?>
                 <p class="text-center text-warning">El nuevo contrato ha sido registrado, pero se generó una advertencia:
-                    <?php echo $error_mensaje; ?></p>
+                    <?php echo $error_mensaje; ?>
+                </p>
             <?php } else { ?>
                 <p class="text-center">El nuevo contrato ha sido registrado exitosamente y se ha generado la primera factura.
                 </p>
