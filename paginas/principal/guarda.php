@@ -211,9 +211,9 @@ if ($stmt_check_ip->num_rows > 0) {
 
     $stmt = $conn->prepare($sql);
 
-    // Total string: sssssiiiiissssssiisddds (23) + ssssids (7) + sssssssssss (11) + ss (2) + ss (2) = 45
+    // Total string: sssssiiiiissssssiisdddds (24) + ssssids (7) + sssssssssss (11) + ss (2) + ss (2) = 45
     // Recalculated types string carefully to match new columns
-    $types = "sssssiiiiissssssiisddds" . "ssssidsssssssssssss" . "ss";
+    $types = "sssssiiiiissssssiisdddds" . "ssssidsssssssssssss" . "ss";
 
     $stmt->bind_param(
         $types,
