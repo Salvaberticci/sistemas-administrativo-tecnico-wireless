@@ -156,22 +156,7 @@
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Tipo de Falla</label>
                                 <select class="form-select" name="tipo_falla" id="tipo_falla" required>
-                                    <option value="">-- Seleccionar tipo de falla --</option>
-                                    <option value="Sin Señal / LOS">Sin Señal / LOS</option>
-                                    <option value="Internet Lento">Internet Lento</option>
-                                    <option value="Cortes Intermitentes">Cortes Intermitentes</option>
-                                    <option value="Router Dañado">Router Dañado</option>
-                                    <option value="ONU Apagada/Dañada">ONU Apagada/Dañada</option>
-                                    <option value="Antena Desalineada">Antena Desalineada</option>
-                                    <option value="Cable Dañado">Cable Dañado</option>
-                                    <option value="Fibra Cortada">Fibra Cortada</option>
-                                    <option value="Problema Eléctrico">Problema Eléctrico</option>
-                                    <option value="Configuración Incorrecta">Configuración Incorrecta</option>
-                                    <option value="Dispositivo del Cliente">Problema en Dispositivo del Cliente</option>
-                                    <option value="Saturación de Red">Saturación de Red</option>
-                                    <option value="Mantenimiento Preventivo">Mantenimiento Preventivo</option>
-                                    <option value="Cambio de Equipo">Cambio de Equipo</option>
-                                    <option value="Otro">Otro</option>
+                                    <option value="">Cargando opciones...</option>
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -317,6 +302,28 @@
                 calcularSaldo();
             }
         });
+
+        // Cargar opciones de falla dinámicamente
+        function cargarOpcionesFalla() {
+            fetch('admin_opciones.php?action=read')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const select = document.getElementById('tipo_falla');
+                        select.innerHTML = '<option value="">-- Seleccionar tipo de falla --</option>';
+                        data.data.tipos_falla.forEach(opcion => {
+                            const option = document.createElement('option');
+                            option.value = opcion;
+                            option.textContent = opcion;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error cargando opciones:', error));
+        }
+
+        // Iniciar carga
+        cargarOpcionesFalla();
 
         // Buscador AJAX
         const searchInput = document.getElementById('cliente_search');
