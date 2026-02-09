@@ -9,10 +9,6 @@ require_once $path_to_root . 'paginas/conexion.php';
 require_once $path_to_root . 'paginas/includes/layout_head.php';
 ?>
 
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
-    rel="stylesheet" />
-
 <style>
     .priority-badge {
         display: inline-block;
@@ -97,10 +93,16 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                 <h5 class="fw-bold mb-3"><i class="fa-solid fa-user me-2"></i>Información del Cliente</h5>
                 <div class="row g-3">
                     <div class="col-md-8">
-                        <label class="form-label">Cliente <span class="text-danger">*</span></label>
-                        <select class="form-select" id="id_contrato" name="id_contrato" required>
-                            <option value="">Buscar cliente por nombre, cédula o IP...</option>
-                        </select>
+                        <label class="form-label">Buscar Cliente <span class="text-danger">*</span></label>
+                        <div class="input-group position-relative">
+                            <span class="input-group-text"><i class="fa-solid fa-search"></i></span>
+                            <input type="text" class="form-control" id="cliente_search"
+                                placeholder="Buscar por Nombre, ID o Cédula..." autocomplete="off">
+                        </div>
+                        <input type="hidden" name="id_contrato" id="id_contrato" required>
+                        <div id="search_results" class="list-group position-absolute w-100 shadow mt-1"
+                            style="z-index: 1000; display: none; max-height: 300px; overflow-y: auto;"></div>
+                        <div id="cliente_seleccionado" class="form-text text-success fw-bold mt-2"></div>
                         <div class="invalid-feedback">Debe seleccionar un cliente</div>
                     </div>
                     <div class="col-md-4">
@@ -309,42 +311,67 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
 </main>
 
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     $(document).ready(function () {
-        // Inicializar Select2 para búsqueda de clientes
-        $('#id_contrato').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Buscar cliente por nombre, cédula o IP...',
-            ajax: {
-                url: 'buscar_clientes_ajax.php',
-                dataType: 'json',
-                delay: 250,
-                data: function (params) {
-                    return { q: params.term };
-                },
-                processResults: function (data) {
-                    return {
-                        results: data.map(cliente => ({
-                            id: cliente.id,
-                            text: `${cliente.nombre_completo} - ${cliente.cedula} - IP: ${cliente.ip}`,
-                            telefono: cliente.telefono,
-                            direccion: cliente.direccion,
-                            sector: cliente.sector
-                        }))
-                    };
-                }
+        // Buscador AJAX de clientes (igual que en reporte_tecnico.php)
+        const searchInput = document.getElementById('cliente_search');
+        const resultsDiv = document.getElementById('search_results');
+        const idInput = document.getElementById('id_contrato');
+        const selectedDiv = document.getElementById('cliente_seleccionado');
+        let clienteData = null;
+
+        searchInput.addEventListener('input', function () {
+            const term = this.value;
+            if (term.length < 3) {
+                resultsDiv.style.display = 'none';
+                return;
             }
+
+            fetch(`../principal/buscar_contratos.php?q=${term}`)
+                .then(r => r.json())
+                .then(data => {
+                    resultsDiv.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(item => {
+                            const a = document.createElement('a');
+                            a.className = 'list-group-item list-group-item-action';
+                            a.innerHTML = `<strong>${item.nombre_completo}</strong><br><small class="text-muted">ID: ${item.id} | Cédula: ${item.cedula} | IP: ${item.ip}</small>`;
+                            a.href = '#';
+                            a.onclick = (e) => {
+                                e.preventDefault();
+                                searchInput.value = item.nombre_completo;
+                                idInput.value = item.id;
+                                selectedDiv.textContent = '✓ Cliente Seleccionado: ' + item.nombre_completo;
+                                resultsDiv.style.display = 'none';
+
+                                // Guardar datos del cliente
+                                clienteData = item;
+                                $('#telefono_cliente').val(item.telefono || '');
+                                $('#direccion').val(item.direccion || '');
+                                $('#sector').val(item.sector || '');
+                            };
+                            resultsDiv.appendChild(a);
+                        });
+                        resultsDiv.style.display = 'block';
+                    } else {
+                        resultsDiv.innerHTML = '<div class="list-group-item text-muted">No se encontraron resultados</div>';
+                        resultsDiv.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error en búsqueda:', err);
+                    resultsDiv.innerHTML = '<div class="list-group-item text-danger">Error al buscar</div>';
+                    resultsDiv.style.display = 'block';
+                });
         });
 
-        // Al seleccionar cliente, llenar datos
-        $('#id_contrato').on('select2:select', function (e) {
-            const data = e.params.data;
-            $('#telefono_cliente').val(data.telefono || '');
-            $('#direccion').val(data.direccion || '');
-            $('#sector').val(data.sector || '');
+        // Ocultar resultados al hacer clic fuera
+        document.addEventListener('click', function (e) {
+            if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                resultsDiv.style.display = 'none';
+            }
         });
 
         // Manejo de selección de prioridad
