@@ -349,6 +349,12 @@ require_once '../includes/sidebar.php';
                         </div>
                     </div>
 
+                    <div class="col-md-6" id="div_saldo_pendiente" style="display:none;">
+                        <label for="saldo_pendiente" class="form-label text-danger fw-bold">Saldo Pendiente ($)</label>
+                        <input type="number" step="0.01" class="form-control border-danger text-danger fw-bold"
+                            id="saldo_pendiente" name="saldo_pendiente" readonly>
+                    </div>
+
                     <div class="col-md-6">
                         <label for="medio_pago" class="form-label">Medio de Pago</label>
                         <select class="form-select" id="medio_pago" name="medio_pago">
@@ -719,6 +725,31 @@ require_once '../includes/sidebar.php';
             var prorrateo = parseFloat($('#monto_prorrateo_usd').val()) || 0;
             var total = instalacion + adicionales + prorrateo;
             $('#monto_pagar').val(total.toFixed(2));
+            calcularSaldo();
+        }
+
+        // 12. Calcular saldo pendiente al escribir en monto pagado
+        $('#monto_pagado').on('input', function () {
+            calcularSaldo();
+        });
+
+        // 13. Función para calcular saldo pendiente
+        function calcularSaldo() {
+            var total = parseFloat($('#monto_pagar').val()) || 0;
+            var pagado = parseFloat($('#monto_pagado').val()) || 0;
+            var saldo = total - pagado;
+
+            if (pagado > 0 && saldo > 0) {
+                $('#saldo_pendiente').val(saldo.toFixed(2));
+                $('#div_saldo_pendiente').fadeIn();
+            } else if (saldo > 0) {
+                // Si el total es mayor que 0 pero no se ha pagado nada
+                $('#saldo_pendiente').val(saldo.toFixed(2));
+                $('#div_saldo_pendiente').fadeIn();
+            } else {
+                $('#div_saldo_pendiente').fadeOut();
+                $('#saldo_pendiente').val("0.00");
+            }
         }
 
     });
