@@ -319,7 +319,7 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
             theme: 'bootstrap-5',
             placeholder: 'Buscar cliente por nombre, cédula o IP...',
             ajax: {
-                url: '../principal/buscar_clientes_ajax.php',
+                url: 'buscar_clientes_ajax.php',
                 dataType: 'json',
                 delay: 250,
                 data: function (params) {
