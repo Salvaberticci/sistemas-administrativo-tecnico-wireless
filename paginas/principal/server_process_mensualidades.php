@@ -44,7 +44,8 @@ $aSearchColumns = [
     'cxc.monto_total',                             // 4
     'cxc.id_banco',                                // 5
     'cxc.estado',                                  // 6
-    'cxc.origen'                                   // 7
+    'cxc.origen',                                  // 7
+    'cxc.estado_sae_plus'                          // 8
 ];
 
 // 4. Handle Filters (Date Range & Account)
@@ -105,6 +106,7 @@ $sSelect = "
     cxc.estado,
     cxc.id_banco,
     cxc.origen,
+    cxc.estado_sae_plus,
     pl.nombre_plan,
     h.justificacion,
     (SELECT COUNT(h2.id) FROM cobros_manuales_historial h2 WHERE h2.id_cobro_cxc = cxc.id_cobro) AS es_manual
@@ -193,7 +195,16 @@ while ($aRow = $rResult->fetch_assoc()) {
     $orig_badge = ($origen == 'LINK') ? 'info' : 'secondary';
     $row[] = '<span class="badge bg-' . $orig_badge . '">' . $origen . '</span>';
 
-    // 8. Acciones
+    // 8. Estado SAE Plus (Select Dropdown)
+    $sae_status = $aRow['estado_sae_plus'] ?: 'NO CARGADO';
+    $sae_class = ($sae_status == 'CARGADO') ? 'text-success fw-bold' : 'text-danger';
+    $sae_select = '<select class="form-select form-select-sm sae-status-select ' . $sae_class . '" data-id="' . $id_cobro . '">
+        <option value="NO CARGADO" ' . ($sae_status == 'NO CARGADO' ? 'selected' : '') . '>No Cargado</option>
+        <option value="CARGADO" ' . ($sae_status == 'CARGADO' ? 'selected' : '') . '>Cargado</option>
+    </select>';
+    $row[] = $sae_select;
+
+    // 9. Acciones
     $acciones = '';
     // Modificar
     $acciones .= '<a href="modifica_cobro1.php?id=' . $id_cobro . '" class="btn btn-sm btn-warning me-1" title="Modificar"><i class="fas fa-edit"></i></a>';

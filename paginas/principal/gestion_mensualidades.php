@@ -179,6 +179,7 @@ require_once '../includes/sidebar.php';
                                 <th>Cuenta</th>
                                 <th>Estado</th>
                                 <th>Origen</th>
+                                <th>Estado SAE Plus</th>
                                 <th class="text-end">Acciones</th>
                             </tr>
                         </thead>
@@ -573,14 +574,48 @@ require_once '../includes/sidebar.php';
                 }
             },
             "columns": [
-                { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 }, { "data": 4 }, { "data": 5 }, { "data": 6 }, { "data": 7 },
-                { "data": 8, "orderable": false, "searchable": false, "className": "text-end" }
+                { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 }, { "data": 4 }, { "data": 5 }, { "data": 6 }, { "data": 7 }, { "data": 8 },
+                { "data": 9, "orderable": false, "searchable": false, "className": "text-end" }
             ],
             "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
         });
 
         $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen').on('change', function () {
             tablaUnica.ajax.reload();
+        });
+
+        // Handler para cambio de estado SAE Plus
+        $(document).on('change', '.sae-status-select', function () {
+            const select = $(this);
+            const id = select.data('id');
+            const nuevoEstado = select.val();
+
+            select.prop('disabled', true);
+
+            fetch('actualizar_estado_sae.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id_cobro=${id}&estado_sae_plus=${nuevoEstado}`
+            })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        // Cambiar clase para feedback visual
+                        if (nuevoEstado === 'CARGADO') {
+                            select.removeClass('text-danger').addClass('text-success fw-bold');
+                        } else {
+                            select.removeClass('text-success fw-bold').addClass('text-danger');
+                        }
+                    } else {
+                        alert('Error al actualizar estado: ' + res.message);
+                    }
+                })
+                .catch(err => {
+                    alert('Error técnico: ' + err);
+                })
+                .finally(() => {
+                    select.prop('disabled', false);
+                });
         });
 
         // === MODAL PAGAR LÓGICA ===
