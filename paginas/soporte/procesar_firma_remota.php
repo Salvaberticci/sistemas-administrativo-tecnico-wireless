@@ -71,7 +71,7 @@ try {
 
     } else if ($type === 'contrato') {
         // Verificar validez del token
-        $check = $conn->query("SELECT id_contrato FROM contratos WHERE token_firma = '$token' AND estado_firma = 'PENDIENTE'");
+        $check = $conn->query("SELECT id FROM contratos WHERE token_firma = '$token' AND estado_firma = 'PENDIENTE'");
         if ($check->num_rows === 0) {
             throw new Exception("Token inválido o documento ya firmado");
         }
