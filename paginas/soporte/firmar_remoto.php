@@ -18,7 +18,7 @@ if (empty($token)) {
     if ($type === 'soporte') {
         $sql = "SELECT s.*, c.nombre_completo, c.cedula, c.direccion 
                 FROM soportes s 
-                JOIN contratos c ON s.id_contrato = c.id_contrato 
+                JOIN contratos c ON s.id_contrato = c.id 
                 WHERE s.token_firma = '$token' AND s.estado_firma = 'PENDIENTE'";
         $res = $conn->query($sql);
         if ($res && $res->num_rows > 0) {
