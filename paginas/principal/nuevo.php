@@ -178,35 +178,22 @@ require_once '../includes/sidebar.php';
 
                     <div class="col-md-6">
                         <?php
-                        // ⚠️ CARGA JSON VENDEDORES
-                        $jsonVendedores = 'data/vendedores.json';
-                        $vendedoresList = [];
-                        if (file_exists($jsonVendedores)) {
-                            $vendedoresList = json_decode(file_get_contents($jsonVendedores), true) ?: [];
-                        }
+                        // ⚠️ MODIFICADO: Usar siempre base de datos, ignorar JSON para evitar error de claves foráneas
+                        $sql_vendedores_fb = "SELECT * FROM vendedores ORDER BY nombre_vendedor ASC";
+                        $res_fb = $conn->query($sql_vendedores_fb);
                         ?>
                         <label for="id_vendedor" class="form-label">Vendedor</label>
 
                         <select name="id_vendedor" id="id_vendedor" class="form-select" required>
                             <option value="">-- Seleccione un Vendedor --</option>
                             <?php
-                            if (!empty($vendedoresList)) {
-                                foreach ($vendedoresList as $vend) {
-                                    echo '<option value="' . htmlspecialchars($vend) . '">' .
-                                        htmlspecialchars($vend) .
-                                        '</option>';
+                            if ($res_fb && $res_fb->num_rows > 0) {
+                                while ($row = $res_fb->fetch_assoc()) {
+                                    // Usar id_vendedor como VALUE, nombre_vendedor como TEXTO
+                                    echo '<option value="' . htmlspecialchars($row['id_vendedor']) . '">' . htmlspecialchars($row['nombre_vendedor']) . '</option>';
                                 }
                             } else {
-                                // Fallback SQL or Empty
-                                $sql_vendedores_fb = "SELECT nombre_vendedor FROM vendedores ORDER BY nombre_vendedor ASC";
-                                $res_fb = $conn->query($sql_vendedores_fb);
-                                if ($res_fb && $res_fb->num_rows > 0) {
-                                    while ($row = $res_fb->fetch_assoc()) {
-                                        echo '<option value="' . htmlspecialchars($row['nombre_vendedor']) . '">' . htmlspecialchars($row['nombre_vendedor']) . '</option>';
-                                    }
-                                } else {
-                                    echo '<option value="" disabled>Sin vendedores registrados</option>';
-                                }
+                                echo '<option value="" disabled>Sin vendedores registrados</option>';
                             }
                             ?>
                         </select>
