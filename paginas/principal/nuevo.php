@@ -367,11 +367,6 @@ require_once '../includes/sidebar.php';
                         </select>
                     </div>
 
-                    <div class="col-md-6">
-                        <label for="dias_prorrateo" class="form-label">Días de Prorrateo</label>
-                        <input type="number" class="form-control" id="dias_prorrateo" name="dias_prorrateo" value="0">
-                    </div>
-
                     <div class="col-md-12">
                         <label for="observaciones" class="form-label">Observaciones</label>
                         <textarea class="form-control" id="observaciones" name="observaciones" rows="2"></textarea>
