@@ -59,10 +59,17 @@ require_once $path_to_root . 'paginas/includes/sidebar.php';
         <!-- Header -->
         <div class="row mb-4">
             <div class="col-12">
-                <h2 class="h3 fw-bold text-primary mb-1">
-                    <i class="fa-solid fa-chart-line me-2"></i>Gestión de Fallas Técnicas
-                </h2>
-                <p class="text-muted">Dashboard de análisis y estadísticas de reportes técnicos</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="h3 fw-bold text-primary mb-1">
+                            <i class="fa-solid fa-chart-line me-2"></i>Gestión de Fallas Técnicas
+                        </h2>
+                        <p class="text-muted">Dashboard de análisis y estadísticas de reportes técnicos</p>
+                    </div>
+                    <a href="registro_falla.php" class="btn btn-danger">
+                        <i class="fa-solid fa-bolt me-1"></i>Registrar Falla
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -136,6 +143,87 @@ require_once $path_to_root . 'paginas/includes/sidebar.php';
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Nuevos KPIs Avanzados -->
+        <div class="row g-3 mb-4" id="kpiCardsAvanzados">
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card border-0 shadow-sm h-100" style="border-left-color: #17a2b8 !important;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Tiempo Promedio Respuesta</p>
+                                <h3 class="fw-bold mb-0 text-info" id="tiempo_promedio">
+                                    <span class="spinner-border spinner-border-sm"></span>
+                                </h3>
+                                <small class="text-muted">horas</small>
+                            </div>
+                            <div class="text-info">
+                                <i class="fa-solid fa-clock fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card border-0 shadow-sm h-100" style="border-left-color: #dc3545 !important;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Fallas Críticas Activas</p>
+                                <h3 class="fw-bold mb-0 text-danger" id="fallas_criticas_activas">
+                                    <span class="spinner-border spinner-border-sm"></span>
+                                </h3>
+                            </div>
+                            <div class="text-danger">
+                                <i class="fa-solid fa-fire fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card border-0 shadow-sm h-100" style="border-left-color: #fd7e14 !important;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Clientes Recurrentes</p>
+                                <h3 class="fw-bold mb-0" style="color: #fd7e14;" id="clientes_recurrentes_count">
+                                    <span class="spinner-border spinner-border-sm"></span>
+                                </h3>
+                                <small class="text-muted">>3 fallas/mes</small>
+                            </div>
+                            <div style="color: #fd7e14;">
+                                <i class="fa-solid fa-user-clock fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card border-0 shadow-sm h-100" style="border-left-color: #6f42c1 !important;">
+                    <div class="card-body">
+                        <div>
+                            <p class="text-muted mb-1 small">Zona Más Afectada</p>
+                            <h6 class="fw-bold mb-0" style="color: #6f42c1;" id="zona_top">
+                                <span class="spinner-border spinner-border-sm"></span>
+                            </h6>
+                            <small class="text-muted" id="zona_top_count">-- fallas</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerta de Caídas Críticas Activas -->
+        <div class="alert alert-danger d-none" id="alertCaidasCriticas" role="alert">
+            <h6 class="alert-heading fw-bold">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i>Caídas Críticas Activas
+            </h6>
+            <ul id="listaCaidasCriticas" class="mb-0"></ul>
         </div>
 
         <!-- Filtros -->
@@ -290,6 +378,7 @@ require_once $path_to_root . 'paginas/includes/sidebar.php';
         const fechaDesde = $('#fecha_desde').val();
         const fechaHasta = $('#fecha_hasta').val();
 
+        // Cargar estadísticas estándar
         $.ajax({
             url: 'obtener_estadisticas.php',
             data: { fecha_desde: fechaDesde, fecha_hasta: fechaHasta },
@@ -303,6 +392,62 @@ require_once $path_to_root . 'paginas/includes/sidebar.php';
                 alert('Error al cargar estadísticas');
             }
         });
+
+        // Cargar métricas avanzadas
+        $.ajax({
+            url: 'obtener_metricas_avanzadas.php',
+            data: { fecha_desde: fechaDesde, fecha_hasta: fechaHasta },
+            success: function (data) {
+                if (data.success) {
+                    actualizarKPIsAvanzados(data);
+                }
+            },
+            error: function () {
+                console.error('Error al cargar métricas avanzadas');
+            }
+        });
+    }
+
+    function actualizarKPIsAvanzados(data) {
+        // Tiempo promedio de respuesta
+        const tiempoPromedio = data.tiempo_respuesta?.promedio_respuesta || 0;
+        $('#tiempo_promedio').text(tiempoPromedio);
+
+        // Fallas críticas activas
+        const fallasActivas = data.fallas_criticas?.activas || 0;
+        $('#fallas_criticas_activas').text(fallasActivas);
+
+        // Clientes recurrentes
+        const clientesRecurrentes = data.clientes_recurrentes?.length || 0;
+        $('#clientes_recurrentes_count').text(clientesRecurrentes);
+
+        // Zona más afectada
+        const zonas = data.zonas_afectadas || {};
+        const zonasArray = Object.entries(zonas).map(([zona, info]) => ({
+            zona: zona,
+            total: info.total
+        })).sort((a, b) => b.total - a.total);
+
+        if (zonasArray.length > 0) {
+            $('#zona_top').text(zonasArray[0].zona);
+            $('#zona_top_count').text(zonasArray[0].total + ' fallas');
+        } else {
+            $('#zona_top').text('N/A');
+            $('#zona_top_count').text('');
+        }
+
+        // Mostrar alerta de caídas críticas si hay activas
+        const caidasActivas = data.caidas_recientes?.filter(c => c.estado === 'Activa') || [];
+        if (caidasActivas.length > 0) {
+            $('#alertCaidasCriticas').removeClass('d-none');
+            const lista = caidasActivas.map(caida =>
+                `<li><strong>Ticket #${caida.id}</strong> - ${caida.tipo} en ${caida.zona} 
+                 (${caida.clientes_afectados} clientes, ${caida.horas_caida}h)</li>`
+            ).join('');
+            $('#listaCaidasCriticas').html(lista);
+        } else {
+            $('#alertCaidasCriticas').addClass('d-none');
+        }
     }
 
     function actualizarKPIs(general) {

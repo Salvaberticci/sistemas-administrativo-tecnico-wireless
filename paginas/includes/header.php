@@ -94,6 +94,9 @@ if (!isset($path_fix)) {
                         <li><a class="dropdown-item"
                                 href="<?php echo $path_fix; ?>paginas/soporte/gestion_fallas.php"><i
                                     class="fa-solid fa-chart-line w-20 me-2 text-muted"></i> Gestión de Fallas</a></li>
+                        <li><a class="dropdown-item"
+                                href="<?php echo $path_fix; ?>paginas/soporte/registro_falla.php"><i
+                                    class="fa-solid fa-bolt w-20 me-2 text-danger"></i> Registrar Falla Rápida</a></li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
