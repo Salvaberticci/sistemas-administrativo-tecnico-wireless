@@ -84,6 +84,9 @@ if (!isset($path_fix)) {
                                 href="<?php echo $path_fix; ?>paginas/principal/aprobar_pagos.php"><i
                                     class="fa-solid fa-check-double w-20 me-2 text-warning"></i> Aprobar Pagos
                                 Web</a></li>
+                        <li><a class="dropdown-item" href="<?php echo $path_fix; ?>reportar_pago.php" target="_blank"><i
+                                    class="fa-solid fa-external-link-alt w-20 me-2 text-info"></i> Link Reporte de
+                                Pago</a></li>
                     </ul>
                 </li>
 

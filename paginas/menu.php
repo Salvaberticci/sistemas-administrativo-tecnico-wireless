@@ -95,6 +95,17 @@ require_once 'includes/sidebar.php';
                     </div>
                 </a>
             </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="../reportar_pago.php" target="_blank" class="text-decoration-none">
+                    <div class="card h-100 hover-lift border-0 shadow-sm" style="background-color: #f0f7ff;">
+                        <div class="card-body text-center p-4">
+                            <i class="fa-solid fa-paper-plane fa-3x text-info mb-3"></i>
+                            <h5 class="card-title text-dark">Link de Pago</h5>
+                            <p class="card-text text-muted small">Copiar para el cliente</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
         </div>
 
         <footer class="mt-5 text-center text-muted small">
