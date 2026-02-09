@@ -171,7 +171,7 @@ function validarFK($conn, $tabla, $columna, $valor)
 {
     if (empty($valor))
         return null;
-    $sql = "SELECT $columna FROM $tabla WHERE $columna = $valor LIMIT 1";
+    $sql = "SELECT $columna FROM $tabla WHERE $columna = '$valor' LIMIT 1";
     $res = $conn->query($sql);
     return ($res && $res->num_rows > 0) ? $valor : null;
 }
