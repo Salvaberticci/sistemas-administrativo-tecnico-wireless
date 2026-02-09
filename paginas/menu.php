@@ -41,7 +41,7 @@ require_once 'includes/sidebar.php';
                 </a>
             </div>
             <div class="col-md-6 col-lg-3">
-                <a href="principal/gestion_cobros.php" class="text-decoration-none">
+                <a href="principal/gestion_mensualidades.php" class="text-decoration-none">
                     <div class="card h-100 hover-lift">
                         <div class="card-body text-center p-4">
                             <i class="fa-solid fa-money-bill-wave fa-3x text-success mb-3"></i>

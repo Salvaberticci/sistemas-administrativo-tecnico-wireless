@@ -2,46 +2,27 @@
 // Script para insertar una cuenta por cobrar generada manualmente y registrar el detalle en el historial.
 // Este script es el procesador del formulario que se encuentra ahora dentro de gestion_cobros.php (modal).
 
-require_once '../conexion.php'; 
+require_once '../conexion.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // 1. Obtener y sanitizar datos del formulario
     $id_contrato = isset($_POST['id_contrato']) ? intval($_POST['id_contrato']) : 0;
     $monto_total = isset($_POST['monto']) ? floatval($_POST['monto']) : 0.0;
-    
+
     // CAMPOS DE JUSTIFICACIÓN
-    $autorizado_por = isset($_POST['autorizado_por']) ? $conn->real_escape_string($_POST['autorizado_por']) : ''; 
-    $justificacion = isset($_POST['justificacion']) ? $conn->real_escape_string($_POST['justificacion']) : 'No especificada.'; 
-    
-    $fecha_vencimiento = isset($_POST['fecha_vencimiento']) ? $conn->real_escape_string($_POST['fecha_vencimiento']) : '';
-    
-    // Validar Pago Inmediato
-    $pago_inmediato = isset($_POST['pago_inmediato']) ? true : false;
-    $fecha_pago = null;
-    $referencia_pago = null;
-    $id_banco = null;
+    $autorizado_por = isset($_POST['autorizado_por']) ? $conn->real_escape_string($_POST['autorizado_por']) : '';
+    $justificacion = isset($_POST['justificacion']) ? $conn->real_escape_string($_POST['justificacion']) : 'No especificada.';
 
-    if ($pago_inmediato) {
-        $estado = 'PAGADO';
-        $fecha_pago = isset($_POST['fecha_pago']) ? $conn->real_escape_string($_POST['fecha_pago']) : date('Y-m-d H:i:s');
-        $referencia_pago = isset($_POST['referencia_pago']) ? $conn->real_escape_string($_POST['referencia_pago']) : '';
-        $id_banco = isset($_POST['id_banco_pago']) ? intval($_POST['id_banco_pago']) : null;
-        
-        // Use fecha_pago as emission as well if desired, but keeping emission as today is safer for accounting.
-        // User asked for "Fecha de Registro" field.
-    }
+    // 2. Definir fechas
+    $fecha_emision = date('Y-m-d');
+    $fecha_vencimiento = date('Y-m-d'); // Ya no se pide, se asume hoy
 
-    $message = "Error desconocido.";
-    $class = "danger";
+    if ($id_contrato > 0 && $monto_total > 0 && !empty($autorizado_por) && !empty($justificacion)) {
 
-    if ($id_contrato > 0 && $monto_total > 0 && !empty($fecha_vencimiento) && !empty($autorizado_por) && !empty($justificacion)) {
-        
-        // Iniciar transacción: CRUCIAL para evitar datos incompletos.
         $conn->begin_transaction();
-        
+
         try {
-            // 2. INSERTAR la Cuenta Por Cobrar (CXC)
-            // UPDATED: Added payment columns
+            // 3. INSERTAR la Cuenta Por Cobrar (CXC)
             $sql_cxc = "INSERT INTO cuentas_por_cobrar (
                 id_contrato, 
                 fecha_emision, 
@@ -63,10 +44,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             )";
 
             if ($conn->query($sql_cxc) === TRUE) {
-                // Obtener el ID de cobro generado automáticamente
-                $id_cobro_cxc = $conn->insert_id; 
+                $id_cobro_cxc = $conn->insert_id;
 
-                // 3. INSERTAR el Registro en la Tabla de Historial (cobros_manuales_historial)
+                // 4. INSERTAR el Registro en la Tabla de Historial
                 $sql_historial = "INSERT INTO cobros_manuales_historial (
                     id_cobro_cxc, 
                     id_contrato, 
@@ -82,22 +62,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 )";
 
                 if ($conn->query($sql_historial) === TRUE) {
-                    // Confirmar si ambos se guardaron
+
+                    // 5. GESTIÓN DE DEUDORES (PAGO PARCIAL)
+                    if ($pago_inmediato) {
+                        $monto_pagado_hoy = isset($_POST['monto_pagado_hoy']) ? floatval($_POST['monto_pagado_hoy']) : $monto_total;
+                        $saldo_pendiente = $monto_total - $monto_pagado_hoy;
+
+                        if ($saldo_pendiente > 0) {
+                            $sql_deudor = "INSERT INTO clientes_deudores (id_contrato, monto_total, monto_pagado, saldo_pendiente, estado, notas) 
+                                          VALUES (?, ?, ?, ?, 'PENDIENTE', ?)";
+                            $stmt_deudor = $conn->prepare($sql_deudor);
+                            $notas_deuda = "Saldo pendiente de cobro manual #$id_cobro_cxc ($justificacion)";
+                            $stmt_deudor->bind_param("iddds", $id_contrato, $monto_total, $monto_pagado_hoy, $saldo_pendiente, $notas_deuda);
+
+                            if (!$stmt_deudor->execute()) {
+                                throw new Exception("Error al registrar deuda: " . $stmt_deudor->error);
+                            }
+                            $stmt_deudor->close();
+                            $message = "Cobro #$id_cobro_cxc registrado con PAGO PARCIAL. Se generó una deuda de $$saldo_pendiente.";
+                        } else {
+                            $message = "Cobro manual de $$monto_total registrado y PAGADO con éxito.";
+                        }
+                    } else {
+                        $message = "Cobro manual de $$monto_total registrado como PENDIENTE.";
+                    }
+
                     $conn->commit();
-                    $message = "Cobro manual de $$monto_total registrado con éxito (Factura #$id_cobro_cxc).";
                     $class = "success";
                 } else {
-                    // Revertir si falla la inserción del historial
-                    throw new Exception("Error al registrar el detalle del historial. SQL Error: " . $conn->error);
+                    throw new Exception("Error al registrar el detalle del historial: " . $conn->error);
                 }
-
             } else {
-                // Revertir si falla la inserción de la cuenta por cobrar principal
-                throw new Exception("Error al registrar la cuenta por cobrar principal. SQL Error: " . $conn->error);
+                throw new Exception("Error al registrar la cuenta por cobrar principal: " . $conn->error);
             }
 
         } catch (Exception $e) {
-            $conn->rollback(); // Revertir si hubo cualquier error
+            $conn->rollback();
             $message = "ERROR al registrar el cobro: " . $e->getMessage();
             $class = "danger";
         }
@@ -108,12 +108,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $conn->close();
 
-    // Redirigir siempre a gestion_cobros.php para mostrar el mensaje de éxito/error en la lista.
-    header("Location: gestion_cobros.php?maintenance_done=1&message=" . urlencode($message) . "&class=" . $class);
+    // Redirigir siempre a gestion_mensualidades.php para mostrar el mensaje de éxito/error en la lista.
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode($message) . "&class=" . $class);
     exit();
 } else {
     // Si acceden directamente al procesador, los enviamos a la lista
-    header("Location: gestion_cobros.php?maintenance_done=1");
+    header("Location: gestion_mensualidades.php?maintenance_done=1");
     exit();
 }
 ?>

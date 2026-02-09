@@ -11,16 +11,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 2. Preparar la consulta UPDATE
     $estado = 'PAGADO';
-    $fecha_pago = date('Y-m-d H:i:s'); 
-    
+    $fecha_pago = date('Y-m-d H:i:s');
+
     // Actualizamos el estado, la fecha de pago, la referencia y el banco.
     $stmt = $conn->prepare("UPDATE cuentas_por_cobrar SET estado = ?, fecha_pago = ?, referencia_pago = ?, id_banco = ? WHERE id_cobro = ?");
-    
+
     if ($stmt === false) {
         header("Location: gestion_cobros.php?message=Error al preparar la consulta de pago.&class=danger");
         exit();
     }
-    
+
     $stmt->bind_param("sssii", $estado, $fecha_pago, $referencia_pago, $id_banco, $id_cobro);
 
     // 3. Ejecutar la consulta
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn->close();
 } else {
     // Si no es un método POST, redirigir
-    header("Location: gestion_cobros.php");
+    header("Location: gestion_mensualidades.php");
 }
 exit();
 ?>

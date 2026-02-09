@@ -1,6 +1,6 @@
 <?php
 // Incluye su archivo de conexión
-require_once '../conexion.php'; 
+require_once '../conexion.php';
 
 // ----------------------------------------------------------------------
 // 1. CAPTURA Y VALIDACIÓN DEL ID DEL CONTRATO
@@ -9,7 +9,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("Error: ID de contrato no especificado o inválido.");
 }
 
-$id_contrato = (int)$_GET['id'];
+$id_contrato = (int) $_GET['id'];
 $nombre_cliente = "Cliente Desconocido"; // Valor por defecto
 
 // ----------------------------------------------------------------------
@@ -59,13 +59,16 @@ require_once '../includes/sidebar.php';
 
     <div class="page-content">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
+            <div
+                class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
                 <div>
                     <h5 class="fw-bold text-primary mb-1">Historial de Pagos</h5>
-                    <p class="text-muted small mb-0">Cliente: <strong><?php echo htmlspecialchars($nombre_cliente); ?></strong> (Contrato #<?php echo $id_contrato; ?>)</p>
+                    <p class="text-muted small mb-0">Cliente:
+                        <strong><?php echo htmlspecialchars($nombre_cliente); ?></strong> (Contrato
+                        #<?php echo $id_contrato; ?>)</p>
                 </div>
                 <div>
-                    <a href="gestion_cobros.php?maintenance_done=1" class="btn btn-secondary btn-sm">
+                    <a href="gestion_mensualidades.php?maintenance_done=1" class="btn btn-secondary btn-sm">
                         <i class="fas fa-arrow-left me-2"></i>Volver a Cuentas por Cobrar
                     </a>
                 </div>
@@ -87,18 +90,20 @@ require_once '../includes/sidebar.php';
                         <tbody>
                             <?php if (!empty($pagos)): ?>
                                 <?php foreach ($pagos as $fila): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($fila['id_cobro']); ?></td>
-                                    <td><?php echo htmlspecialchars($fila['fecha_emision']); ?></td>
-                                    <td><?php echo htmlspecialchars($fila['fecha_vencimiento']); ?></td>
-                                    <td><?php echo htmlspecialchars($fila['fecha_pago']); ?></td>
-                                    <td class="fw-bold text-success">$<?php echo number_format($fila['monto_total'], 2); ?></td>
-                                    <td><?php echo htmlspecialchars($fila['referencia_pago']); ?></td>
-                                </tr>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($fila['id_cobro']); ?></td>
+                                        <td><?php echo htmlspecialchars($fila['fecha_emision']); ?></td>
+                                        <td><?php echo htmlspecialchars($fila['fecha_vencimiento']); ?></td>
+                                        <td><?php echo htmlspecialchars($fila['fecha_pago']); ?></td>
+                                        <td class="fw-bold text-success">$<?php echo number_format($fila['monto_total'], 2); ?>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($fila['referencia_pago']); ?></td>
+                                    </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">No se encontraron pagos registrados para este cliente.</td>
+                                    <td colspan="6" class="text-center text-muted py-4">No se encontraron pagos registrados
+                                        para este cliente.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

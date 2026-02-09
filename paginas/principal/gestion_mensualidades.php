@@ -150,7 +150,7 @@ require_once '../includes/sidebar.php';
     </div>
 </main>
 
-<!-- ================= MODALES (Migrados de gestion_cobros.php) ================= -->
+<!-- ================= MODALES (Migrados de gestión de cobros) ================= -->
 
 <!-- Modal Gestionar Bancos (NUEVO) -->
 <div class="modal fade" id="modalGestionBancos" tabindex="-1" aria-hidden="true">
@@ -276,7 +276,7 @@ require_once '../includes/sidebar.php';
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-12 mb-3">
                             <label class="form-label fw-semibold text-secondary small d-block">Monto del Cargo</label>
 
                             <div class="btn-group w-100 mb-2" role="group">
@@ -295,10 +295,6 @@ require_once '../includes/sidebar.php';
                             <input type="hidden" name="monto" id="monto_cobro_hidden"> <!-- Valor final en USD -->
                             <div id="equiv_cobro" class="form-text fw-bold text-primary mt-1"></div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold text-secondary small">Fecha Vencimiento</label>
-                            <input type="date" class="form-control" name="fecha_vencimiento" required>
-                        </div>
                     </div>
                     <div class="mb-3">
                         <div class="form-check form-switch">
@@ -314,6 +310,12 @@ require_once '../includes/sidebar.php';
                         <h6 class="fw-bold text-muted small mb-3">Detalles del Pago</h6>
                         <div class="row">
                             <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-secondary small">¿Cuánto paga hoy? ($)</label>
+                                <input type="number" step="0.01" class="form-control fw-bold text-success"
+                                    name="monto_pagado_hoy" id="monto_pagado_hoy">
+                                <div id="equiv_pago_hoy" class="form-text small fw-bold text-primary mt-1"></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold text-secondary small">Fecha de Registro</label>
                                 <input type="date" class="form-control" name="fecha_pago"
                                     value="<?php echo date('Y-m-d'); ?>">
@@ -325,10 +327,10 @@ require_once '../includes/sidebar.php';
                                     <!-- Llenado por JS -->
                                 </select>
                             </div>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label fw-semibold text-secondary small">Número de Referencia</label>
-                            <input type="text" class="form-control" name="referencia_pago">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-secondary small">Número de Referencia</label>
+                                <input type="text" class="form-control" name="referencia_pago">
+                            </div>
                         </div>
                     </div>
 
@@ -414,26 +416,57 @@ require_once '../includes/sidebar.php';
         const displayEquivCobro = document.getElementById('equiv_cobro');
         const radiosMonedaCobro = document.getElementsByName('moneda_cobro');
 
+        // Nuevo: Monto Pagado Hoy
+        const inputPagoHoy = document.getElementById('monto_pagado_hoy');
+        const displayEquivPagoHoy = document.getElementById('equiv_pago_hoy');
+
         function calcCobro() {
             if (!TASA_BCV) return;
             let val = parseFloat(inputMontoCobro.value) || 0;
             let esBs = document.getElementById('moneda_cobro_bs').checked;
 
+            let usd = 0;
+            let bs = 0;
+
             if (esBs) {
-                let usd = val / TASA_BCV;
+                usd = val / TASA_BCV;
+                bs = val;
                 inputMontoCobroHidden.value = usd.toFixed(2);
                 displayEquivCobro.textContent = `Equivalente: $${usd.toFixed(2)}`;
             } else {
+                usd = val;
+                bs = val * TASA_BCV;
                 inputMontoCobroHidden.value = val.toFixed(2);
-                let bs = val * TASA_BCV;
                 displayEquivCobro.textContent = `Equivalente: Bs. ${bs.toFixed(2)}`;
+            }
+
+            // Auto-llenar monto pagado hoy
+            if (inputPagoHoy && !inputPagoHoy.dataset.manuallyChanged) {
+                inputPagoHoy.value = usd.toFixed(2);
+                if (displayEquivPagoHoy) {
+                    displayEquivPagoHoy.textContent = `Equivalente: Bs. ${(usd * TASA_BCV).toFixed(2)}`;
+                }
             }
         }
 
         if (inputMontoCobro) {
-            inputMontoCobro.addEventListener('input', calcCobro);
+            inputMontoCobro.addEventListener('input', (e) => {
+                if (inputPagoHoy) inputPagoHoy.dataset.manuallyChanged = ''; // Reset flag if total changes
+                calcCobro();
+            });
             radiosMonedaCobro.forEach(r => r.addEventListener('change', calcCobro));
         }
+
+        if (inputPagoHoy) {
+            inputPagoHoy.addEventListener('input', function () {
+                this.dataset.manuallyChanged = 'true';
+                let val = parseFloat(this.value) || 0;
+                if (displayEquivPagoHoy) {
+                    displayEquivPagoHoy.textContent = `Equivalente: Bs. ${(val * TASA_BCV).toFixed(2)}`;
+                }
+            });
+        }
+
 
         // === CONVERSIÓN EN MODAL PAGAR ===
         const inputMontoPagar = document.getElementById('input_monto_pagar');

@@ -9,11 +9,11 @@ require '../conexion.php';
 // Asegúrate de que el ID esté presente y sea un número
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     $error_message = "Error: ID de cobro no válido.";
-    header("Location: gestion_cobros.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
     exit();
 }
 
-$id_cobro = (int)$_GET['id'];
+$id_cobro = (int) $_GET['id'];
 $success_message = "";
 
 // 1. Obtener el estado del cobro antes de eliminar (para validación)
@@ -26,13 +26,13 @@ $stmt_check->close();
 
 if (!$cobro) {
     $error_message = "Error: El cobro #{$id_cobro} no existe.";
-    header("Location: gestion_cobros.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
     exit();
 }
 
 if ($cobro['estado'] == 'PAGADO') {
     $error_message = "Error: No se puede eliminar un cobro que ya está PAGADO.";
-    header("Location: gestion_cobros.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
     exit();
 }
 
@@ -41,7 +41,7 @@ if ($cobro['estado'] == 'PAGADO') {
 // ***************************************************************
 $stmt_historial = $conn->prepare("DELETE FROM cobros_manuales_historial WHERE id_cobro_cxc = ?");
 $stmt_historial->bind_param("i", $id_cobro);
-$stmt_historial->execute(); 
+$stmt_historial->execute();
 $stmt_historial->close();
 // Si esta ejecución falla, no se detiene el script, pero deberías considerarlo para manejo de errores avanzado.
 
@@ -56,7 +56,7 @@ if ($stmt->execute()) {
     header("Location: gestion_cobros.php?maintenance_done=1&eliminacion_exitosa=" . $id_cobro);
 } else {
     $error_message = "Error al eliminar la cuenta por cobrar #{$id_cobro}: " . $stmt->error;
-    header("Location: gestion_cobros.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
 }
 
 $stmt->close();
