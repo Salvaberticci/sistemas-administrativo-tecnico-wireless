@@ -43,24 +43,24 @@ if (isset($_POST['generate_link']) && $_POST['generate_link'] === '1') {
 
 // 1. CAPTURA Y SANEO DE DATOS
 // Se usa real_escape_string para prevenir inyección SQL.
-$ip = $conn->real_escape_string($_POST['ip']);
-$cedula = $conn->real_escape_string($_POST['cedula']);
-$nombre_completo = $conn->real_escape_string($_POST['nombre_completo']);
-$telefono = $conn->real_escape_string($_POST['telefono']);
-$correo = $conn->real_escape_string($_POST['correo']);
-$id_municipio = $conn->real_escape_string($_POST['id_municipio']);
-$id_parroquia = $conn->real_escape_string($_POST['id_parroquia']);
+$ip = $conn->real_escape_string($_POST['ip'] ?? '');
+$cedula = $conn->real_escape_string($_POST['cedula'] ?? '');
+$nombre_completo = $conn->real_escape_string($_POST['nombre_completo'] ?? '');
+$telefono = $conn->real_escape_string($_POST['telefono'] ?? '');
+$correo = $conn->real_escape_string($_POST['correo'] ?? '');
+$id_municipio = $conn->real_escape_string($_POST['id_municipio'] ?? '');
+$id_parroquia = $conn->real_escape_string($_POST['id_parroquia'] ?? '');
 // ⚠️ NUEVO CAMPO: Captura de id_comunidad
-$id_comunidad = $conn->real_escape_string($_POST['id_comunidad']);
-$id_plan = $conn->real_escape_string($_POST['id_plan']);
-$id_vendedor = $conn->real_escape_string($_POST['id_vendedor']);
-$direccion = $conn->real_escape_string($_POST['direccion']);
-$fecha_instalacion = $conn->real_escape_string($_POST['fecha_instalacion']);
-$ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap']);
-$puerto_nap = $conn->real_escape_string($_POST['puerto_nap']);
-$num_presinto_odn = $conn->real_escape_string($_POST['num_presinto_odn']);
-$id_olt = $conn->real_escape_string($_POST['id_olt']);
-$id_pon = $conn->real_escape_string($_POST['id_pon'] ?? null);
+$id_comunidad = $conn->real_escape_string($_POST['id_comunidad'] ?? '');
+$id_plan = $conn->real_escape_string($_POST['id_plan'] ?? '');
+$id_vendedor = $conn->real_escape_string($_POST['id_vendedor'] ?? '');
+$direccion = $conn->real_escape_string($_POST['direccion'] ?? '');
+$fecha_instalacion = $conn->real_escape_string($_POST['fecha_instalacion'] ?? '');
+$ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap'] ?? '');
+$puerto_nap = $conn->real_escape_string($_POST['puerto_nap'] ?? '');
+$num_presinto_odn = $conn->real_escape_string($_POST['num_presinto_odn'] ?? '');
+$id_olt = $conn->real_escape_string($_POST['id_olt'] ?? '');
+$id_pon = $conn->real_escape_string($_POST['id_pon'] ?? '');
 $estado = 'ACTIVO'; // Estado inicial por defecto
 
 // NUEVOS CAMPOS ADMINISTRATIVOS Y TÉCNICOS
@@ -78,18 +78,19 @@ $medio_pago = $conn->real_escape_string($_POST['medio_pago'] ?? '');
 $moneda_pago = $conn->real_escape_string($_POST['moneda_pago'] ?? 'USD');
 $dias_prorrateo = intval($_POST['dias_prorrateo'] ?? 0);
 // Calculamos monto prorrateo si fuera necesario, por ahora lo dejamos en 0 o se podría calcular
-$monto_prorrateo_usd = 0;
+$monto_prorrateo_usd = floatval($_POST['monto_prorrateo_usd'] ?? 0);
 
-// DETALLES TÉCNICOS
+// DATOS TÉCNICOS ESPECÍFICOS
 $tipo_conexion = $conn->real_escape_string($_POST['tipo_conexion'] ?? '');
 $mac_onu = $conn->real_escape_string($_POST['mac_onu'] ?? '');
 $ip_onu = $conn->real_escape_string($_POST['ip_onu'] ?? '');
-$nap_tx_power = $conn->real_escape_string($_POST['nap_tx_power'] ?? '');
-$onu_rx_power = $conn->real_escape_string($_POST['onu_rx_power'] ?? '');
-$distancia_drop = $conn->real_escape_string($_POST['distancia_drop'] ?? '');
 $punto_acceso = $conn->real_escape_string($_POST['punto_acceso'] ?? '');
 $valor_conexion_dbm = $conn->real_escape_string($_POST['valor_conexion_dbm'] ?? '');
-$evidencia_fibra = $conn->real_escape_string($_POST['evidencia_fibra'] ?? '');
+
+$nap_tx_power = isset($_POST['nap_tx_power']) ? $conn->real_escape_string($_POST['nap_tx_power']) : '';
+$onu_rx_power = isset($_POST['onu_rx_power']) ? $conn->real_escape_string($_POST['onu_rx_power']) : '';
+$distancia_drop = isset($_POST['distancia_drop']) ? $conn->real_escape_string($_POST['distancia_drop']) : '';
+$evidencia_fibra = isset($_POST['evidencia_fibra']) ? $conn->real_escape_string($_POST['evidencia_fibra']) : '';
 
 // PROCESAR FOTO EVIDENCIA
 $evidencia_foto = null;
