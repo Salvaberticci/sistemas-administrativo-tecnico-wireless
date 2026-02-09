@@ -2,7 +2,7 @@
 // aprobar_pagos.php - Panel administrativo para revisar pagos reportados por clientes
 require_once '../conexion.php';
 
-// Configuración Layout
+// ConfiguraciÃ³n Layout
 $path_to_root = "../../";
 $page_title = "Aprobar Reportes de Pago";
 require_once '../includes/layout_head.php';
@@ -30,8 +30,8 @@ $resultado = $conn->query($sql);
                 <div class="row align-items-center">
                     <div class="col">
                         <h5 class="fw-bold text-primary mb-0">Reportes de Pago Pendientes</h5>
-                        <p class="text-muted small mb-0">Revisión manual de reportes enviados por clientes vía link
-                            público</p>
+                        <p class="text-muted small mb-0">RevisiÃ³n manual de reportes enviados por clientes vÃ­a link
+                            pÃºblico</p>
                     </div>
                     <div class="col-auto">
                         <a href="historial_pagos_reportados.php" class="btn btn-outline-primary btn-sm">
@@ -56,14 +56,14 @@ $resultado = $conn->query($sql);
                         <thead class="table-light">
                             <tr>
                                 <th>Fecha Reporte</th>
-                                <th>Cliente / Cédula</th>
+                                <th>Cliente / CÃ©dula</th>
                                 <th>Detalle Pago</th>
                                 <th>Meses</th>
                                 <th>Comprobante</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tbodyReportes">
                             <?php if ($resultado && $resultado->num_rows > 0): ?>
                                 <?php while ($row = $resultado->fetch_assoc()): ?>
                                     <tr>
@@ -95,7 +95,7 @@ $resultado = $conn->query($sql);
                                         <td>
                                             <div class="small">
                                                 <strong>Monto:</strong> (Revisar Capture)<br>
-                                                <strong>Método:</strong>
+                                                <strong>MÃ©todo:</strong>
                                                 <?php echo htmlspecialchars($row['metodo_pago']); ?><br>
                                                 <?php if ($row['referencia']): ?>
                                                     <strong>Ref:</strong>
@@ -159,7 +159,7 @@ $resultado = $conn->query($sql);
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title fw-bold">Confirmar Aprobación de Pago</h5>
+                    <h5 class="modal-title fw-bold">Confirmar AprobaciÃ³n de Pago</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="procesar_aprobacion_admin.php" method="POST">
@@ -168,7 +168,7 @@ $resultado = $conn->query($sql);
                         <input type="hidden" name="accion" value="APROBAR">
 
                         <div class="alert alert-info py-2 small">
-                            Al aprobar, se creará un registro en el historial de mensualidades como
+                            Al aprobar, se crearÃ¡ un registro en el historial de mensualidades como
                             <strong>PAGADO</strong> con origen <strong>LINK</strong>.
                         </div>
 
@@ -177,9 +177,9 @@ $resultado = $conn->query($sql);
                                 <label class="form-label fw-bold">Contrato Asociado</label>
                                 <select name="id_contrato" id="ap_id_contrato" class="form-select" required>
                                     <option value="">Seleccione contrato...</option>
-                                    <!-- Se llenará con AJAX o JS si ya se detectó -->
+                                    <!-- Se llenarÃ¡ con AJAX o JS si ya se detectÃ³ -->
                                 </select>
-                                <div class="small text-muted mt-1">Si la cédula no coincide, busque el contrato
+                                <div class="small text-muted mt-1">Si la cÃ©dula no coincide, busque el contrato
                                     correcto.</div>
                             </div>
                             <div class="col-md-6">
@@ -235,8 +235,8 @@ $resultado = $conn->query($sql);
                         <input type="hidden" name="id_reporte" id="rej_id_reporte">
                         <input type="hidden" name="accion" value="RECHAZAR">
                         <i class="fas fa-exclamation-circle fa-4x text-danger mb-3"></i>
-                        <h5 class="mb-3">¿Seguro que desea rechazar este reporte?</h5>
-                        <p class="text-muted">Esta acción no registrará el pago y marcará el reporte como rechazado.</p>
+                        <h5 class="mb-3">Â¿Seguro que desea rechazar este reporte?</h5>
+                        <p class="text-muted">Esta acciÃ³n no registrarÃ¡ el pago y marcarÃ¡ el reporte como rechazado.</p>
                         <div class="modal-footer border-top-0 pt-0">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="btn btn-danger px-4">RECHAZAR PAGO</button>
@@ -260,12 +260,12 @@ $resultado = $conn->query($sql);
                         <input type="hidden" name="id_reporte" id="el_id_reporte">
                         <input type="hidden" name="accion" value="ELIMINAR">
                         <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
-                        <h6 class="fw-bold">¿Eliminar permanentemente?</h6>
-                        <p class="text-muted small">Esto borrará el registro y su imagen del servidor.</p>
+                        <h6 class="fw-bold">Â¿Eliminar permanentemente?</h6>
+                        <p class="text-muted small">Esto borrarÃ¡ el registro y su imagen del servidor.</p>
                     </div>
                     <div class="modal-footer border-top-0 pt-0">
                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">No</button>
-                        <button type="submit" class="btn btn-danger px-4">Sí, Eliminar</button>
+                        <button type="submit" class="btn btn-danger px-4">SÃ­, Eliminar</button>
                     </div>
                 </form>
             </div>
@@ -285,11 +285,11 @@ $resultado = $conn->query($sql);
         document.getElementById('ap_fecha_pago').value = data.fecha_pago;
         document.getElementById('ap_referencia').value = data.referencia;
         document.getElementById('ap_id_banco').value = data.id_banco_destino || '';
-        document.getElementById('ap_meses_notas').innerHTML = `<strong>Meses reportados:</strong> ${data.meses_pagados}<br><strong>Justificación:</strong> ${data.concepto || 'N/A'}`;
+        document.getElementById('ap_meses_notas').innerHTML = `<strong>Meses reportados:</strong> ${data.meses_pagados}<br><strong>JustificaciÃ³n:</strong> ${data.concepto || 'N/A'}`;
 
-        console.log("Preparando aprobación para reporte:", data);
+        console.log("Preparando aprobaciÃ³n para reporte:", data);
 
-        // Cargar contratos dinámicamente o seleccionar el detectado
+        // Cargar contratos dinÃ¡micamente o seleccionar el detectado
         const select = document.getElementById('ap_id_contrato');
         select.innerHTML = '<option value="">Cargando contratos...</option>';
 
@@ -310,4 +310,29 @@ $resultado = $conn->query($sql);
         document.getElementById('rej_id_reporte').value = id;
         modalRechazar.show();
     }
+    function confirmarEliminacion(id) {
+        const modalEliminar = new bootstrap.Modal(document.getElementById('modalEliminarReporte'));
+        document.getElementById('el_id_reporte').value = id;
+        modalEliminar.show();
+    }
+
+    // AUTO-REFRESH cada 5 segundos
+    let isModalOpen = false;
+
+    // Detectar si hay algún modal abierto para pausar el refresco
+    $(document).on('show.bs.modal', '.modal', function () { isModalOpen = true; });
+    $(document).on('hidden.bs.modal', '.modal', function () { isModalOpen = false; });
+
+    setInterval(function() {
+        if (!isModalOpen) {
+            console.log("Refrescando tabla de reportes...");
+            fetch('get_reportes_pendientes_ajax.php')
+                .then(r => r.text())
+                .then(html => {
+                    const container = document.getElementById('tbodyReportes');
+                    if (container) container.innerHTML = html;
+                })
+                .catch(err => console.error("Error en auto-refresh:", err));
+        }
+    }, 5000);
 </script>
