@@ -92,7 +92,7 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
             <div class="form-section">
                 <h5 class="fw-bold mb-3"><i class="fa-solid fa-user me-2"></i>Información del Cliente</h5>
                 <div class="row g-3">
-                    <div class="col-md-8">
+                    <div class="col-12">
                         <label class="form-label">Buscar Cliente <span class="text-danger">*</span></label>
                         <div class="input-group position-relative">
                             <span class="input-group-text"><i class="fa-solid fa-search"></i></span>
@@ -104,10 +104,6 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                             style="z-index: 1000; display: none; max-height: 300px; overflow-y: auto;"></div>
                         <div id="cliente_seleccionado" class="form-text text-success fw-bold mt-2"></div>
                         <div class="invalid-feedback">Debe seleccionar un cliente</div>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Teléfono</label>
-                        <input type="text" class="form-control" id="telefono_cliente" readonly>
                     </div>
                 </div>
             </div>
@@ -348,7 +344,6 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
 
                                 // Guardar datos del cliente
                                 clienteData = item;
-                                $('#telefono_cliente').val(item.telefono || '');
                                 $('#direccion').val(item.direccion || '');
                                 $('#sector').val(item.sector || '');
                             };
