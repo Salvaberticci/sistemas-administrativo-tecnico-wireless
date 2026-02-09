@@ -33,6 +33,11 @@ $resultado = $conn->query($sql);
                         <p class="text-muted small mb-0">Revisión manual de reportes enviados por clientes vía link
                             público</p>
                     </div>
+                    <div class="col-auto">
+                        <a href="historial_pagos_reportados.php" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-history me-1"></i> Ver Historial
+                        </a>
+                    </div>
                 </div>
             </div>
 
