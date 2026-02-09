@@ -80,11 +80,17 @@ if ($length != -1) {
 $sOrder = "";
 // Use mapped sort parameters
 if (isset($aSearchColumns[$sortColIndex])) {
-    $sOrder = "ORDER BY " . $aSearchColumns[$sortColIndex] . " " . $conn->real_escape_string($sortDir);
+    // Si se ordena por fecha (col 0), incluir id_cobro como desempate para garantizar cronicidad
+    $direction = $conn->real_escape_string($sortDir);
+    if ($sortColIndex == 0) {
+        $sOrder = "ORDER BY " . $aSearchColumns[0] . " $direction, cxc.id_cobro DESC";
+    } else {
+        $sOrder = "ORDER BY " . $aSearchColumns[$sortColIndex] . " $direction";
+    }
 }
 
 if ($sOrder == "") {
-    $sOrder = "ORDER BY COALESCE(cxc.fecha_pago, cxc.fecha_emision) DESC";
+    $sOrder = "ORDER BY cxc.id_cobro DESC";
 }
 
 // 6. Final Queries
