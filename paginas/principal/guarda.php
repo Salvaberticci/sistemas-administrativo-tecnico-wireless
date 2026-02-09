@@ -181,15 +181,15 @@ $id_vendedor = validarFK($conn, 'vendedores', 'id_vendedor', $id_vendedor);
 // Validar Plan
 $id_plan = validarFK($conn, 'planes', 'id_plan', $id_plan);
 // Validar Municipio
-$id_municipio = validarFK($conn, 'municipios', 'id_municipio', $id_municipio);
+$id_municipio = validarFK($conn, 'municipio', 'id_municipio', $id_municipio);
 // Validar Parroquia
-$id_parroquia = validarFK($conn, 'parroquias', 'id_parroquia', $id_parroquia);
+$id_parroquia = validarFK($conn, 'parroquia', 'id_parroquia', $id_parroquia);
 // Validar Comunidad
-$id_comunidad = validarFK($conn, 'comunidades', 'id_comunidad', $id_comunidad);
+$id_comunidad = validarFK($conn, 'comunidad', 'id_comunidad', $id_comunidad);
 // Validar OLT
-$id_olt = validarFK($conn, 'olts', 'id_olt', $id_olt);
+$id_olt = validarFK($conn, 'olt', 'id_olt', $id_olt);
 // Validar PON
-$id_pon = validarFK($conn, 'puertos_pon', 'id_pon', $id_pon);
+$id_pon = validarFK($conn, 'pon', 'id_pon', $id_pon);
 
 
 // =========================================================================
