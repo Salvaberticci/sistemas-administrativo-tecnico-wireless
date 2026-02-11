@@ -3,7 +3,7 @@
 require_once '../conexion.php';
 
 $path_to_root = "../../";
-$page_title = "Conciliación Bancaria (OCR)";
+$page_title = "Conciliación Bancaria (Excel vs Capture)";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>
@@ -12,11 +12,17 @@ require_once '../includes/sidebar.php';
     .drop-zone {
         border: 2px dashed #0d6efd;
         border-radius: 10px;
-        padding: 40px;
+        padding: 30px;
         text-align: center;
         background: #f8fbff;
         cursor: pointer;
         transition: all 0.3s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
     }
 
     .drop-zone:hover {
@@ -24,19 +30,35 @@ require_once '../includes/sidebar.php';
         border-color: #0a58ca;
     }
 
-    #pdf-preview-container {
-        max-height: 400px;
-        overflow-y: auto;
-        border: 1px solid #dee2e6;
-        display: none;
+    .drop-zone.active {
+        background-color: #d1e7dd;
+        border-color: #198754;
     }
 
-    .status-badge {
-        width: 10px;
-        height: 10px;
-        display: inline-block;
+    #preview-image {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: none;
+        margin: 0 auto;
+    }
+
+    .result-card {
+        transition: all 0.3s ease;
+    }
+
+    .step-number {
+        width: 30px;
+        height: 30px;
+        background-color: #0d6efd;
+        color: white;
         border-radius: 50%;
-        margin-right: 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 10px;
     }
 </style>
 
@@ -48,81 +70,143 @@ require_once '../includes/sidebar.php';
             <!-- Header -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <h3 class="fw-bold text-primary"><i class="fa-solid fa-scale-balanced me-2"></i>Conciliación
-                        Bancaria Inteligente</h3>
-                    <p class="text-muted">Carga el PDF del estado de cuenta para extraer y validar referencias
-                        bancarias.</p>
+                    <h3 class="fw-bold text-primary"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Conciliación:
+                        Capture vs Banco</h3>
+                    <p class="text-muted">Sube el Excel del Banco y el Capture del Pago Móvil para verificar si la
+                        operación fue exitosa.</p>
                 </div>
             </div>
 
             <div class="row g-4">
-                <!-- Columna de Carga -->
-                <div class="col-lg-4">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-header bg-white fw-bold">1. Cargar Estado de Cuenta</div>
+                <!-- Columna Izquierda: Entradas -->
+                <div class="col-lg-5">
+                    <!-- Paso 1: Cargar Excel -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h6 class="mb-0 fw-bold text-success d-flex align-items-center">
+                                <span class="step-number bg-success">1</span> Archivo del Banco (Excel)
+                            </h6>
+                        </div>
                         <div class="card-body">
-                            <div id="drop-zone" class="drop-zone mb-3">
-                                <i class="fa-solid fa-file-pdf fa-3x text-danger mb-3"></i>
-                                <h6>Arrastra el PDF aquí o haz clic</h6>
-                                <p class="text-muted small">Máximo 10MB</p>
-                                <input type="file" id="pdf-input" accept="application/pdf" style="display: none;">
+                            <div id="drop-zone-excel" class="drop-zone">
+                                <i class="fa-solid fa-file-excel fa-3x text-success mb-3"></i>
+                                <h6 id="excel-label">Arrastra el Excel (.xls, .xlsx)</h6>
+                                <p class="text-muted small mb-0">Debe tener columna "Referencia"</p>
+                                <input type="file" id="excel-input" accept=".xlsx, .xls, .csv" style="display: none;">
                             </div>
+                            <div id="excel-info" class="mt-3 text-center text-success fw-bold small"
+                                style="display: none;"></div>
+                        </div>
+                    </div>
 
-                            <div id="processing-status" style="display: none;">
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                                    <span id="status-text" class="small fw-bold">Procesando PDF...</span>
-                                </div>
-                                <div class="progress" style="height: 10px;">
-                                    <div id="ocr-progress"
-                                        class="progress-bar progress-bar-striped progress-bar-animated"
-                                        role="progressbar" style="width: 0%"></div>
-                                </div>
+                    <!-- Paso 2: Cargar Capture -->
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h6 class="mb-0 fw-bold text-primary d-flex align-items-center">
+                                <span class="step-number bg-primary">2</span> Capture de Pago (Imagen)
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="drop-zone-img" class="drop-zone">
+                                <i class="fa-solid fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                <h6 id="img-label">Sube el Capture del Pago</h6>
+                                <input type="file" id="img-input" accept="image/*" style="display: none;">
                             </div>
-
-                            <div id="pdf-preview-container" class="mt-3 text-center">
-                                <canvas id="pdf-canvas" class="img-fluid border"></canvas>
-                                <div class="mt-2 small text-muted">Previsualización de página 1</div>
+                            <div class="mt-3 text-center">
+                                <img id="preview-image" alt="Vista previa">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Columna de Resultados -->
-                <div class="col-lg-8">
+                <!-- Columna Derecha: Resultados -->
+                <div class="col-lg-7">
                     <div class="card shadow-sm h-100">
-                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                            <span class="fw-bold">2. Análisis de Referencias</span>
-                            <div id="btn-actions" style="display: none;">
-                                <button class="btn btn-sm btn-outline-primary" onclick="analizarReferencias()"><i
-                                        class="fa-solid fa-magnifying-glass me-1"></i>Validar en DB</button>
-                                <button class="btn btn-sm btn-outline-success" onclick="exportarConciliacion()"><i
-                                        class="fa-solid fa-file-excel me-1"></i>Exportar</button>
+                        <div class="card-header bg-white fw-bold"><i
+                                class="fa-solid fa-magnifying-glass-chart me-2"></i>Resultados del Análisis</div>
+                        <div class="card-body d-flex flex-column justify-content-center">
+
+                            <!-- Estado del Proceso -->
+                            <div id="processing-status" class="text-center py-5" style="display: none;">
+                                <div class="spinner-border text-primary mb-3" role="status"
+                                    style="width: 3rem; height: 3rem;"></div>
+                                <h5 class="fw-bold animate__animated animate__pulse animate__infinite">Analizando imagen
+                                    con IA...</h5>
+                                <p class="text-muted" id="ocr-status-text">Extrayendo número de operación...</p>
+                                <div class="progress mt-3 mx-auto" style="width: 80%; height: 8px;">
+                                    <div id="ocr-progress"
+                                        class="progress-bar progress-bar-striped progress-bar-animated"
+                                        style="width: 0%"></div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table id="tabla-conciliacion" class="table table-hover align-middle mb-0"
-                                    style="font-size: 0.9rem;">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Referencia Extraída</th>
-                                            <th>Estatus</th>
-                                            <th>Cliente / Contrato</th>
-                                            <th>Monto Reg.</th>
-                                            <th>Tipo</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="resultado-cuerpo">
-                                        <tr>
-                                            <td colspan="5" class="text-center py-5 text-muted">
-                                                <i class="fa-solid fa-wand-magic-sparkles fa-2x mb-3 d-block"></i>
-                                                Carga un PDF para iniciar el análisis inteligente.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+
+                            <!-- Estado Inicial -->
+                            <div id="initial-state" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-arrow-left fa-3x mb-3 opacity-25"></i>
+                                <h5>Esperando archivos...</h5>
+                                <p>Carga primero el Excel del banco y luego la imagen del capture.</p>
                             </div>
+
+                            <!-- Resultado: ÉXITO -->
+                            <div id="result-success" class="result-card text-center py-4" style="display: none;">
+                                <div class="mb-3">
+                                    <span class="fa-stack fa-4x text-success">
+                                        <i class="fa-solid fa-circle fa-stack-2x"></i>
+                                        <i class="fa-solid fa-check fa-stack-1x fa-inverse"></i>
+                                    </span>
+                                </div>
+                                <h3 class="fw-bold text-success mb-2">¡PAGO ENCONTRADO!</h3>
+                                <p class="lead mb-4">La referencia coincide con un registro del banco.</p>
+
+                                <div class="card border-success bg-light mx-4 text-start shadow-sm">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6 border-end">
+                                                <h6 class="fw-bold text-muted small text-uppercase">Detectado en Capture
+                                                </h6>
+                                                <p class="fs-4 fw-bold text-dark mb-0" id="ref-ocr">---</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="fw-bold text-success small text-uppercase"><i
+                                                        class="fa-solid fa-database me-1"></i> Datos del Banco</h6>
+                                                <ul class="list-unstyled mb-0 small" id="bank-details-list">
+                                                    <!-- Detalles llenados por JS -->
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resultado: NO ENCONTRADO -->
+                            <div id="result-error" class="result-card text-center py-4" style="display: none;">
+                                <div class="mb-3">
+                                    <span class="fa-stack fa-4x text-danger">
+                                        <i class="fa-solid fa-circle fa-stack-2x"></i>
+                                        <i class="fa-solid fa-xmark fa-stack-1x fa-inverse"></i>
+                                    </span>
+                                </div>
+                                <h3 class="fw-bold text-danger mb-2">NO ENCONTRADO</h3>
+                                <p class="lead mb-4">El número no aparece en el Excel cargado.</p>
+
+                                <div class="card border-danger bg-light mx-4 text-start shadow-sm">
+                                    <div class="card-body">
+                                        <p class="mb-1"><strong>🔍 Número Buscado (OCR):</strong> <span
+                                                id="ref-ocr-error" class="fw-bold fs-5 text-danger"></span></p>
+                                        <hr>
+                                        <p class="text-muted small mt-2 mb-0">
+                                            <i class="fa-solid fa-triangle-exclamation me-1"></i> <strong>Posibles
+                                                causas:</strong><br>
+                                            1. El número de referencia está mal escrito en el Excel.<br>
+                                            2. El OCR leyó mal un dígito (ver imagen).<br>
+                                            3. El pago aún no se ha hecho efectivo en este estado de cuenta.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline-secondary mt-3" onclick="retryOCR()">Intentar de
+                                    nuevo</button>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -131,172 +215,252 @@ require_once '../includes/sidebar.php';
     </div>
 </main>
 
-<!-- Scripts necesarios -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- SheetJS para Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+<!-- Tesseract.js para OCR -->
 <script src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+<!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // Configurar pdf.js
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    let bankData = []; // Array of row objects from Excel
+    let ocrResultText = "";
+    let workbook = null;
 
-    const dropZone = document.getElementById('drop-zone');
-    const pdfInput = document.getElementById('pdf-input');
-    const statusDiv = document.getElementById('processing-status');
-    const ocrBar = document.getElementById('ocr-progress');
-    const statusText = document.getElementById('status-text');
-    const resultsTable = document.getElementById('resultado-cuerpo');
-    const actionsDiv = document.getElementById('btn-actions');
+    // --- MANEJO DE EXCEL ---
+    const dropZoneExcel = document.getElementById('drop-zone-excel');
+    const excelInput = document.getElementById('excel-input');
+    const excelInfo = document.getElementById('excel-info');
 
-    let referenciasEncontradas = [];
-
-    dropZone.addEventListener('click', () => pdfInput.click());
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('bg-light'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('bg-light'));
-    dropZone.addEventListener('drop', (e) => {
+    dropZoneExcel.addEventListener('click', () => excelInput.click());
+    dropZoneExcel.addEventListener('dragover', (e) => { e.preventDefault(); dropZoneExcel.classList.add('active'); });
+    dropZoneExcel.addEventListener('dragleave', () => dropZoneExcel.classList.remove('active'););
+    dropZoneExcel.addEventListener('drop', (e) => {
         e.preventDefault();
-        dropZone.classList.remove('bg-light');
-        if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+        dropZoneExcel.classList.remove('active');
+        if (e.dataTransfer.files[0]) handleExcel(e.dataTransfer.files[0]);
+    });
+    excelInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) handleExcel(e.target.files[0]);
     });
 
-    pdfInput.addEventListener('change', (e) => {
-        if (e.target.files[0]) processFile(e.target.files[0]);
-    });
-
-    async function processFile(file) {
-        if (file.type !== 'application/pdf') {
-            Swal.fire('Error', 'Por favor selecciona un archivo PDF', 'error');
-            return;
-        }
-
-        statusDiv.style.display = 'block';
-        statusText.innerText = 'Renderizando PDF...';
-        ocrBar.style.width = '10%';
-
+    function handleExcel(file) {
         const reader = new FileReader();
-        reader.onload = async function () {
-            const typedarray = new Uint8Array(this.result);
-            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+        reader.onload = function (e) {
+            const data = new Uint8Array(e.target.result);
+            workbook = XLSX.read(data, { type: 'array' });
 
-            referenciasEncontradas = [];
-            resultsTable.innerHTML = '';
+            // Asumimos primera hoja
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
 
-            // Procesar solo las primeras 5 páginas para evitar saturación
-            const pagesToProcess = Math.min(pdf.numPages, 5);
+            // Convertir a JSON
+            // range: 0 -> empieza desde fila 1. Si hay encabezados extraños, ajustar.
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-            for (let i = 1; i <= pagesToProcess; i++) {
-                statusText.innerText = `Analizando página ${i} de ${pagesToProcess}...`;
-                ocrBar.style.width = `${(i / pagesToProcess) * 100}%`;
+            if (jsonData.length > 0) {
+                bankData = jsonData;
+                console.log("Datos Excel Cargados:", bankData.length, "filas");
+                console.log("Encabezados detectados:", Object.keys(bankData[0])); // Debug
 
-                const page = await pdf.getPage(i);
-                const text = await performOCR(page, i === 1);
-                extractReferences(text);
-            }
+                excelInfo.innerHTML = `<i class="fa-solid fa-check-circle me-1"></i> ${file.name} cargado (${bankData.length} filas)`;
+                excelInfo.style.display = 'block';
+                document.getElementById('excel-label').innerText = "Excel Cargado";
+                dropZoneExcel.classList.add('border-success');
 
-            statusDiv.style.display = 'none';
-            if (referenciasEncontradas.length > 0) {
-                mostrarReferenciasEnTabla();
-                actionsDiv.style.display = 'block';
-                Swal.fire('Éxito', `Se extrajeron ${referenciasEncontradas.length} referencias únicas.`, 'success');
+                // Si ya hay imagen procesada, re-verificar
+                if (ocrResultText) processExtractedText(ocrResultText);
             } else {
-                Swal.fire('Aviso', 'No se detectaron patrones de referencia claros. Intenta con un PDF con mejor resolución.', 'warning');
+                Swal.fire('Error', 'El archivo Excel parece estar vacío o no es válido.', 'error');
             }
         };
         reader.readAsArrayBuffer(file);
     }
 
-    async function performOCR(page, isFirstPage) {
-        const viewport = page.getViewport({ scale: 2.0 });
-        const canvas = isFirstPage ? document.getElementById('pdf-canvas') : document.createElement('canvas');
-        if (isFirstPage) document.getElementById('pdf-preview-container').style.display = 'block';
+    // --- MANEJO DE IMAGEN (OCR) ---
+    const dropZoneImg = document.getElementById('drop-zone-img');
+    const imgInput = document.getElementById('img-input');
+    const previewImage = document.getElementById('preview-image');
 
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+    // Elementos de estado
+    const statusDiv = document.getElementById('processing-status');
+    const initialStateDiv = document.getElementById('initial-state');
+    const resultSuccess = document.getElementById('result-success');
+    const resultError = document.getElementById('result-error');
+    const ocrProgress = document.getElementById('ocr-progress');
+    const ocrStatusText = document.getElementById('ocr-status-text');
 
-        await page.render({ canvasContext: context, viewport: viewport }).promise;
+    dropZoneImg.addEventListener('click', () => imgInput.click());
+    dropZoneImg.addEventListener('dragover', (e) => { e.preventDefault(); dropZoneImg.classList.add('active'); });
+    dropZoneImg.addEventListener('dragleave', () => dropZoneImg.classList.remove('active'););
+    dropZoneImg.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZoneImg.classList.remove('active');
+        if (e.dataTransfer.files[0]) processImage(e.dataTransfer.files[0]);
+    });
+    imgInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) processImage(e.target.files[0]);
+    });
 
-        // OCR con Tesseract
-        const { data: { text } } = await Tesseract.recognize(canvas, 'spa', {
-            logger: m => console.log(m)
-        });
+    async function processImage(file) {
+        // Validar si hay Excel cargado primero (opcional pero recomendado)
+        if (bankData.length === 0) {
+            Swal.fire('Atención', 'Por favor carga primero el archivo Excel del banco.', 'info');
+            // Permitimos cargar imagen pero mantenemos aviso
+        }
 
-        return text;
-    }
+        // Reset UI
+        initialStateDiv.style.display = 'none';
+        resultSuccess.style.display = 'none';
+        resultError.style.display = 'none';
+        statusDiv.style.display = 'block';
+        ocrProgress.style.width = '0%';
+        ocrResultText = "";
 
-    function extractReferences(text) {
-        // Buscamos números de 6 a 12 dígitos que suelen ser referencias
-        const regex = /\b\d{6,12}\b/g;
-        const matches = text.match(regex) || [];
-        matches.forEach(ref => {
-            if (!referenciasEncontradas.includes(ref)) {
-                referenciasEncontradas.push(ref);
-            }
-        });
-    }
+        // Preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+            document.getElementById('img-label').innerText = "Imagen Cargada";
+        };
+        reader.readAsDataURL(file);
 
-    function mostrarReferenciasEnTabla() {
-        resultsTable.innerHTML = referenciasEncontradas.map(ref => `
-            <tr id="row-${ref}">
-                <td class="fw-bold">${ref}</td>
-                <td><span class="badge bg-secondary">Pendiente de Validar</span></td>
-                <td>---</td>
-                <td>---</td>
-                <td>---</td>
-            </tr>
-        `).join('');
-    }
+        // OCR Processing
+        ocrStatusText.innerText = "Inicializando OCR...";
 
-    function analizarReferencias() {
-        if (referenciasEncontradas.length === 0) return;
-
-        Swal.fire({
-            title: 'Validando...',
-            text: 'Cruzando referencias con la base de datos',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
-        fetch('buscar_referencias_conciliacion.php', {
-            method: 'POST',
-            body: JSON.stringify({ referencias: referenciasEncontradas }),
-            headers: { 'Content-Type': 'application/json' }
-        })
-            .then(r => r.json())
-            .then(data => {
-                Swal.close();
-                data.forEach(item => {
-                    const row = document.getElementById(`row-${item.referencia}`);
-                    if (row) {
-                        if (item.encontrado) {
-                            row.classList.add('table-success');
-                            row.innerHTML = `
-                            <td class="fw-bold">${item.referencia}</td>
-                            <td><span class="badge bg-success">Encontrado</span></td>
-                            <td>${item.nombre_completo} <br> <small class="text-muted">ID: ${item.id_contrato}</small></td>
-                            <td class="fw-bold">$${item.monto_pagado}</td>
-                            <td><span class="badge bg-info">${item.tipo}</span></td>
-                        `;
-                        } else {
-                            row.innerHTML = `
-                            <td class="fw-bold text-danger">${item.referencia}</td>
-                            <td><span class="badge bg-danger">No Registrado</span></td>
-                            <td>No existe en sistema</td>
-                            <td>---</td>
-                            <td>---</td>
-                        `;
+        try {
+            const result = await Tesseract.recognize(
+                file,
+                'spa', // Usar español para mejor detección de palabras
+                {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            let prog = Math.round(m.progress * 100);
+                            ocrProgress.style.width = `${prog}%`;
+                            ocrStatusText.innerText = `Leyendo texto... ${prog}%`;
                         }
                     }
-                });
-            })
-            .catch(err => {
-                Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
-                console.error(err);
-            });
+                }
+            );
+
+            ocrResultText = result.data.text;
+            console.log("TEXTO OCR RAW:", ocrResultText);
+
+            processExtractedText(ocrResultText);
+
+        } catch (err) {
+            console.error(err);
+            statusDiv.style.display = 'none';
+            initialStateDiv.style.display = 'block';
+            Swal.fire('Error OCR', 'No se pudo leer la imagen. Intenta con una captura más nítida.', 'error');
+        }
     }
 
-    function exportarConciliacion() {
-        Swal.fire('Próximamente', 'La exportación a Excel estará disponible en la siguiente actualización.', 'info');
+    function processExtractedText(text) {
+        // Estrategia: Buscar números que se parezcan a referencias
+        // Referencia ejemplo usuario: 3701185137377 (13 dígitos)
+        // Patrones comunes: 6 a 20 dígitos.
+
+        // 1. Limpiar texto de ruido, dejar solo alphanum y espacios, newlines
+        // Convertir a array de palabras/tokens
+        const tokens = text.match(/\b\d{5,25}\b/g) || [];
+
+        console.log("Tokens numéricos detectados:", tokens);
+
+        if (tokens.length === 0) {
+            showError("No se detectaron números válidos en la imagen.");
+            return;
+        }
+
+        // Si no hay Excel cargado, pausar aquí
+        if (bankData.length === 0) {
+            statusDiv.style.display = 'none';
+            initialStateDiv.style.display = 'block';
+            return; // Esperar a que carguen Excel
+        }
+
+        // BUSCAR CORRESPONDENCIA
+        let foundMatch = null;
+        let matchedRef = "";
+
+        // Buscar columna 'Referencia' o similar
+        const headers = Object.keys(bankData[0]);
+        // Posibles nombres de columna en el Excel del usuario
+        // "Referencia", "Ref", "Nro Operacion", "Doc", "Documento"
+        const colRef = headers.find(h => {
+            const hLower = h.toLowerCase();
+            return hLower.includes('referencia') || hLower.includes('ref') || hLower.includes('operacion') || hLower.includes('doc');
+        });
+
+        console.log("Columna de referencia identificada:", colRef || "NINGUNA (Buscando global)");
+
+        // Iterar sobre cada número encontrado en el OCR y buscarlo en el Excel
+        for (let token of tokens) {
+            // Limpieza extra del token
+            let cleanToken = token.trim();
+
+            // Buscar en todas las filas del Excel
+            for (let row of bankData) {
+                let cellValue = "";
+
+                if (colRef) {
+                    cellValue = String(row[colRef]).trim();
+                } else {
+                    // Búsqueda profunda en toda la fila sí no se halló columna header
+                    cellValue = Object.values(row).join(" ");
+                }
+
+                // Comparación flexible (contains)
+                // A veces el excel tiene '000123' y OCR lee '123', o viceversa.
+                if (cellValue.includes(cleanToken) && cleanToken.length > 5) {
+                    foundMatch = row;
+                    matchedRef = cleanToken;
+                    break;
+                }
+            }
+            if (foundMatch) break;
+        }
+
+        statusDiv.style.display = 'none';
+
+        if (foundMatch) {
+            showSuccess(matchedRef, foundMatch);
+        } else {
+            // Mostrar los tokens que intentó buscar para feedback
+            showError(tokens.join(", "));
+        }
+    }
+
+    function showSuccess(ref, rowData) {
+        resultSuccess.style.display = 'block';
+        resultError.style.display = 'none';
+
+        document.getElementById('ref-ocr').innerText = ref;
+
+        let listHtml = '';
+        for (let [key, val] of Object.entries(rowData)) {
+            if (val && String(val).trim() !== '') {
+                listHtml += `<li class="mb-1"><strong class="text-dark">${key}:</strong> ${val}</li>`;
+            }
+        }
+        document.getElementById('bank-details-list').innerHTML = listHtml;
+    }
+
+    function showError(refAttempt) {
+        resultSuccess.style.display = 'none';
+        resultError.style.display = 'block';
+
+        // Truncar si es muy largo
+        let displayRef = refAttempt;
+        if (displayRef.length > 50) displayRef = displayRef.substring(0, 50) + "...";
+
+        document.getElementById('ref-ocr-error').innerText = displayRef;
+    }
+
+    function retryOCR() {
+        imgInput.value = '';
+        document.getElementById('drop-zone-img').click();
     }
 </script>
 
