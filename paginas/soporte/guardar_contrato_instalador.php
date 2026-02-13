@@ -79,7 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 return $res->fetch_assoc()['id_municipio'];
             } else {
                 // Insertar nuevo
-                $sqlIns = "INSERT INTO municipio (nombre_municipio, estado_municipio) VALUES ('$nombre', 1)";
+                $sqlIns = "INSERT INTO municipio (nombre_municipio) VALUES ('$nombre')";
                 if ($conn->query($sqlIns)) {
                     return $conn->insert_id;
                 }
@@ -100,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 return $res->fetch_assoc()['id_parroquia'];
             } else {
                 // Insertar nuevo
-                $sqlIns = "INSERT INTO parroquia (id_municipio, nombre_parroquia, estado_parroquia) VALUES ($id_municipio, '$nombre', 1)";
+                $sqlIns = "INSERT INTO parroquia (id_municipio, nombre_parroquia) VALUES ($id_municipio, '$nombre')";
                 if ($conn->query($sqlIns)) {
                     return $conn->insert_id;
                 }
@@ -244,7 +244,52 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         $conn->commit();
-        echo json_encode(['status' => 'success', 'msg' => 'Contrato registrado correctamente', 'id' => $id_contrato]);
+
+        // ---------------------------------------------------------
+        // ENVIO AUTOMÁTICO DE CORREO CON CONTRATO PDF
+        // ---------------------------------------------------------
+        $email_sent = false;
+        $pdf_path = '';
+
+        if (!empty($correo)) {
+            // 1. Generar el PDF guardándolo en el servidor
+            // Determinamos la URL base actual para llamar al generador
+            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+            $host = $_SERVER['HTTP_HOST'];
+            $path = dirname($_SERVER['PHP_SELF']);
+            // Subimos un nivel ../soporte -> ../reportes_pdf
+            $pdf_url = $protocol . "://" . $host . str_replace('soporte', 'reportes_pdf', $path) . "/generar_contrato_pdf.php?id_contrato=" . $id_contrato . "&save_to_file=1";
+
+            // Usamos curl para generar el PDF
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $pdf_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Solo para dev local
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            $resp_json = json_decode($response, true);
+
+            if ($resp_json && isset($resp_json['status']) && $resp_json['status'] == 'success') {
+                $pdf_path = $resp_json['path']; // Ruta relativa guardada por el script
+
+                // Convertir ruta relativa a absoluta para PHPMailer
+                // El script PDF guarda en ../../uploads... desde reportes_pdf
+                // Aquí estamos en soporte, ../../uploads es lo mismo.
+                // Ajustamos la ruta para que sea relativa a ESTE script (guardar_contrato)
+                // Ruta relativa guardada: ../../uploads/contratos/pdf/Nombre.pdf
+                // Como estamos en soporte, ../../uploads funciona igual.
+
+                $pdf_absolute_path = realpath(__DIR__ . '/../../') . str_replace('../../', '/', $pdf_path);
+
+
+                // 2. Enviar el Correo
+                require_once 'enviar_contrato_email.php';
+                $email_sent = enviarContratoEmail($correo, $nombre_completo, $pdf_absolute_path);
+            }
+        }
+
+        echo json_encode(['status' => 'success', 'msg' => 'Contrato registrado correctamente. ' . ($email_sent ? 'Correo enviado.' : 'Correo no enviado.'), 'id' => $id_contrato]);
 
     } catch (Exception $e) {
         $conn->rollback();

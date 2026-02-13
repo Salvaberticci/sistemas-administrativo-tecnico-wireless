@@ -37,7 +37,6 @@ function encode_image_to_base64($path, $mime)
 {
     if (!file_exists($path)) {
         // En caso de error, devuelve un marcador de posición transparente
-        echo "Advertencia: Archivo de imagen no encontrado en la ruta: " . $path . "\n";
         return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
     }
     $data = file_get_contents($path);
@@ -62,7 +61,9 @@ $sql = "SELECT
             pl.nombre_plan AS nombre_plan,
             pl.monto AS costo_mensual,
             pa.nombre_parroquia AS nombre_parroquia,
-            mu.nombre_municipio AS nombre_municipio
+            mu.nombre_municipio AS nombre_municipio,
+            c.firma_cliente,
+            c.firma_tecnico
         FROM contratos c
         INNER JOIN planes pl ON c.id_plan = pl.id_plan
         INNER JOIN parroquia pa ON c.id_parroquia = pa.id_parroquia
@@ -129,6 +130,35 @@ $placeholders = [
     '{IMG_PIE_B64}' => $img_pie_b64,
 ];
 
+// ----------------------------------------------------------------------
+// 7. INCLUSIÓN DE FIRMAS (NUEVO)
+// ----------------------------------------------------------------------
+
+$firma_cliente_path = '../../uploads/firmas/' . $contrato_data['firma_cliente'];
+$firma_tecnico_path = '../../uploads/firmas/' . $contrato_data['firma_tecnico'];
+
+// Placeholder por defecto si no hay firma (espacio en blanco o texto)
+$img_firma_cliente = ''; // O una imagen transparente
+$img_firma_tecnico = '';
+
+if (!empty($contrato_data['firma_cliente']) && file_exists($firma_cliente_path)) {
+    $img_firma_cliente = '<img src="' . encode_image_to_base64($firma_cliente_path, 'image/png') . '" style="max-height: 80px; max-width: 150px;">';
+} else {
+    $img_firma_cliente = '<br><br><br>'; // Espacio para firma manual si falla digital
+}
+
+// Firma Empresa (Firma del técnico o representante)
+if (!empty($contrato_data['firma_tecnico']) && file_exists($firma_tecnico_path)) {
+    $img_firma_tecnico = '<img src="' . encode_image_to_base64($firma_tecnico_path, 'image/png') . '" style="max-height: 80px; max-width: 150px;">';
+} else {
+    // Si no hay firma digital del técnico, usar firma genérica de la empresa si existe imagen, o dejar espacio
+    $img_firma_tecnico = '<br><br><br>';
+}
+
+// Agregar placeholders de firmas
+$placeholders['{FIRMA_CLIENTE_IMG}'] = $img_firma_cliente;
+$placeholders['{FIRMA_EMPRESA_IMG}'] = $img_firma_tecnico;
+
 
 // 4. ESTRUCTURA DEL DOCUMENTO (MODIFICADO)
 
@@ -192,24 +222,40 @@ $html_contrato_plantilla = '
         <span style="float: right;"><span class="field-label">e-mail:</span> {EMAIL_CLIENTE_F}</span></p>
 
         <div class="signature-area">
-            <div class="signature-box" style="margin-right: 10%;">
-                <div class="signature-line">
-                    {NOMBRE_CLIENTE}<br>
-                </div>
-                <div class="signature-role">
-                    C.I.: {CEDULA_CLIENTE}<br>
-                    EL CLIENTE
-                </div>
-            </div>
-            <p>
-                <br>
-                <br>
-                <br>
-            </p>
-             </div> <div id="footer-image-container">
+            <table style="width: 100%; border: none; margin-top: 50px;">
+                <tr>
+                    <td style="width: 45%; border: none; text-align: center; vertical-align: bottom;">
+                        <div class="signature-box" style="width: 100%;">
+                            <div style="margin-bottom: 5px;">{FIRMA_CLIENTE_IMG}</div>
+                            <div class="signature-line">
+                                {NOMBRE_CLIENTE}<br>
+                            </div>
+                            <div class="signature-role">
+                                C.I.: {CEDULA_CLIENTE}<br>
+                                EL CLIENTE
+                            </div>
+                        </div>
+                    </td>
+                    <td style="width: 10%; border: none;"></td>
+                    <td style="width: 45%; border: none; text-align: center; vertical-align: bottom;">
+                        <div class="signature-box" style="width: 100%;">
+                             <div style="margin-bottom: 5px;">{FIRMA_EMPRESA_IMG}</div>
+                            <div class="signature-line">
+                                {NOMBRE_EMPRESA_REPRESENTANTE}<br>
+                            </div>
+                            <div class="signature-role">
+                                {CARGO_REPRESENTANTE}<br>
+                                POR LA EMPRESA
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            
+             <br><br>
+             <div id="footer-image-container">
                 <img src="{IMG_PIE_B64}" class="footer-image">
-                </div>
-            </div> 
+            </div>
         </div>        
 ';
 
@@ -384,6 +430,28 @@ $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
-// Envía el PDF al navegador para descarga/visualización
-$dompdf->stream("Contrato_N_" . $contrato_data['id_contrato'] . ".pdf", ["Attachment" => false]);
-exit(0);
+
+// ----------------------------------------------------------------------
+// 9. SALIDA (STREAM O FILE)
+// ----------------------------------------------------------------------
+
+if (isset($_GET['save_to_file']) && $_GET['save_to_file'] == 1) {
+    // Modo guardar en servidor (para email)
+    $output = $dompdf->output();
+    $pdf_dir = '../../uploads/contratos/pdf/';
+    if (!file_exists($pdf_dir)) {
+        mkdir($pdf_dir, 0755, true);
+    }
+    $file_name = 'Contrato_' . $id_contrato . '_' . date('YmdHis') . '.pdf';
+    $file_path = $pdf_dir . $file_name;
+
+    file_put_contents($file_path, $output);
+
+    // Retornar ruta JSON
+    echo json_encode(['status' => 'success', 'path' => $file_path, 'file_name' => $file_name]);
+    exit;
+} else {
+    // Modo descarga normal navegador
+    $dompdf->stream("Contrato_N_" . $contrato_data['id_contrato'] . ".pdf", ["Attachment" => false]);
+    exit(0);
+}

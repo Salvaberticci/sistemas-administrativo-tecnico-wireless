@@ -237,21 +237,26 @@
                                 </div>
 
                                 <div class="row mb-3">
-                                    <div class="col-md-6 mb-2">
+                                    <div class="col-md-4 mb-2">
                                         <label class="form-label fw-bold">Monto Total a Pagar ($)</label>
                                         <input type="number" step="0.01" class="form-control" name="monto_pagar"
                                             id="monto_pagar" placeholder="0.00">
                                     </div>
-                                    <div class="col-md-6 mb-2">
+                                    <div class="col-md-4 mb-2">
                                         <label class="form-label fw-bold">Monto Pagado</label>
                                         <div class="input-group">
                                             <input type="number" step="0.01" class="form-control" name="monto_pagado"
-                                                placeholder="0.00">
+                                                id="monto_pagado" placeholder="0.00">
                                             <select class="form-select" name="moneda_pago" style="max-width: 80px;">
                                                 <option value="USD">USD</option>
                                                 <option value="BS">BS</option>
                                             </select>
                                         </div>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label fw-bold text-danger">Restante a Pagar ($)</label>
+                                        <input type="number" step="0.01" class="form-control text-danger fw-bold"
+                                            id="monto_debe" readonly placeholder="0.00">
                                     </div>
                                 </div>
 
@@ -757,6 +762,34 @@
 
             const btn = document.querySelector('button[onclick="copiarLink()"]'); // Simple selector logic
             // Visual feedback handled by user logic usually, simplified here
+        }
+
+        // CÁLCULO AUTOMÁTICO DE RESTANTE A PAGAR
+        const inputMontoPagar = document.getElementById('monto_pagar');
+        const inputMontoPagado = document.getElementById('monto_pagado');
+        const inputMontoDebe = document.getElementById('monto_debe');
+
+        function calcularDebe() {
+            const total = parseFloat(inputMontoPagar.value) || 0;
+            const pagado = parseFloat(inputMontoPagado.value) || 0;
+            const debe = total - pagado;
+
+            // Si el debe es negativo (pagó de más), mostramos 0 o negativo según preferencia. 
+            // Generalmente "Debe" es >= 0.
+            inputMontoDebe.value = debe.toFixed(2);
+
+            if (debe > 0) {
+                inputMontoDebe.classList.add('is-invalid'); // Visual highlight optional
+                inputMontoDebe.style.color = 'red';
+            } else {
+                inputMontoDebe.classList.remove('is-invalid');
+                inputMontoDebe.style.color = 'green';
+            }
+        }
+
+        if (inputMontoPagar && inputMontoPagado && inputMontoDebe) {
+            inputMontoPagar.addEventListener('input', calcularDebe);
+            inputMontoPagado.addEventListener('input', calcularDebe);
         }
     </script>
 
