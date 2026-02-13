@@ -386,12 +386,22 @@
                                         </div>
                                     </div>
 
-                                    <!-- 4. Evidencia Fotográfica -->
-                                    <div class="section-title">Evidencia Fotográfica en Instalación</div>
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold">Subir Foto</label>
-                                        <input type="file" class="form-control" id="foto_instalacion" accept="image/*">
-                                        <div id="preview_foto"></div>
+                                    <!-- 4. Evidencia Fotográfica y Documentación -->
+                                    <div class="section-title">Evidencia y Documentación</div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Foto Instalación Terminada</label>
+                                            <input type="file" class="form-control" name="evidencia_foto_file"
+                                                id="foto_instalacion" accept="image/*">
+                                            <div id="preview_foto" class="mt-2 text-center"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Documento de Identidad
+                                                (Cédula/RIF)</label>
+                                            <input type="file" class="form-control" name="evidencia_documento_file"
+                                                id="foto_documento" accept="image/*">
+                                            <div id="preview_documento" class="mt-2 text-center"></div>
+                                        </div>
                                     </div>
 
                                     <!-- 5. Firmas Digitales -->
@@ -600,13 +610,25 @@
 
             // Preview de Foto
 
-            // Preview de Foto
+            // Preview de Foto Instalación
             $('#foto_instalacion').on('change', function (e) {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = function (event) {
                         $('#preview_foto').html(`<img src="${event.target.result}" class="preview-image">`);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Preview de Foto Documento
+            $('#foto_documento').on('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        $('#preview_documento').html(`<img src="${event.target.result}" class="preview-image">`);
                     };
                     reader.readAsDataURL(file);
                 }
@@ -635,58 +657,58 @@
         const btnGenerarLink = document.getElementById('btnGenerarLink');
         const modalLink = new bootstrap.Modal(document.getElementById('modalLink'));
 
-        btnGenerarLink.addEventListener('click', function() {
+        btnGenerarLink.addEventListener('click', function () {
             const form = document.getElementById('formContrato');
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
             }
-            
+
             // Para link NO validamos firmas obligatorias en este punto
             const formData = new FormData(form);
             formData.append('generate_link', '1');
-            
+
             // UI Loading
             const originalText = this.innerHTML;
             this.disabled = true;
             this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
-            
+
             fetch('guardar_contrato_instalador.php', {
                 method: 'POST',
                 body: formData
             })
-            .then(r => r.json())
-            .then(data => {
-                this.disabled = false;
-                this.innerHTML = originalText;
-                
-                if (data.status === 'success') {
-                     // Mostrar Modal
-                    const linkCompleto = window.location.origin + window.location.pathname.replace('registro_contrato_instalador.php', '') + data.link;
-                    document.getElementById('linkInput').value = linkCompleto;
-                    
-                    // Configurar WhatsApp
-                    const telefono = formData.get('telefono') || '';
-                    const mensaje = `Estimado cliente, por favor firme su contrato de servicio en el siguiente enlace: ${linkCompleto}`;
-                    
-                    // Intentar abrir whatsapp directo si hay telefono, sino share generico
-                    let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-                    // Si el numero tiene formato valido (simple check), podriamos usarlo:
-                    // if(telefono.length > 9) whatsappUrl = `https://wa.me/58${telefono.substring(1)}?text=...`; 
-                    
-                    document.getElementById('btnWhatsapp').href = whatsappUrl;
+                .then(r => r.json())
+                .then(data => {
+                    this.disabled = false;
+                    this.innerHTML = originalText;
 
-                    modalLink.show();
-                } else {
-                     Swal.fire('Error', data.msg || 'Error desconocido', 'error');
-                }
-            })
-            .catch(err => {
-                this.disabled = false;
-                this.innerHTML = originalText;
-                console.error(err);
-                Swal.fire('Error', 'Error de conexión', 'error');
-            });
+                    if (data.status === 'success') {
+                        // Mostrar Modal
+                        const linkCompleto = window.location.origin + window.location.pathname.replace('registro_contrato_instalador.php', '') + data.link;
+                        document.getElementById('linkInput').value = linkCompleto;
+
+                        // Configurar WhatsApp
+                        const telefono = formData.get('telefono') || '';
+                        const mensaje = `Estimado cliente, por favor firme su contrato de servicio en el siguiente enlace: ${linkCompleto}`;
+
+                        // Intentar abrir whatsapp directo si hay telefono, sino share generico
+                        let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+                        // Si el numero tiene formato valido (simple check), podriamos usarlo:
+                        // if(telefono.length > 9) whatsappUrl = `https://wa.me/58${telefono.substring(1)}?text=...`; 
+
+                        document.getElementById('btnWhatsapp').href = whatsappUrl;
+
+                        modalLink.show();
+                    } else {
+                        Swal.fire('Error', data.msg || 'Error desconocido', 'error');
+                    }
+                })
+                .catch(err => {
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+                    console.error(err);
+                    Swal.fire('Error', 'Error de conexión', 'error');
+                });
         });
 
         function guardarContrato(formData) {
@@ -730,9 +752,9 @@
         function copiarLink() {
             const copyText = document.getElementById("linkInput");
             copyText.select();
-            copyText.setSelectionRange(0, 99999); 
+            copyText.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(copyText.value);
-            
+
             const btn = document.querySelector('button[onclick="copiarLink()"]'); // Simple selector logic
             // Visual feedback handled by user logic usually, simplified here
         }

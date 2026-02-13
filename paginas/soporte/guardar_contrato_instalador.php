@@ -168,6 +168,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $evidencia_foto = savePhoto($_FILES['evidencia_foto_file']);
         }
 
+        $evidencia_documento = null;
+        if (isset($_FILES['evidencia_documento_file'])) {
+            $evidencia_documento = savePhoto($_FILES['evidencia_documento_file']);
+        }
+
         // Valores por defecto para campos requeridos
         $id_comunidad = 0;
         $id_plan = 1; // Cambiar según necesidad o agregar campo al formulario
@@ -199,7 +204,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             monto_pagar, monto_pagado, moneda_pago, observaciones,
             tipo_conexion, mac_onu, ip_onu, ident_caja_nap, puerto_nap,
             nap_tx_power, onu_rx_power, distancia_drop, instalador, evidencia_fibra,
-            punto_acceso, valor_conexion_dbm, num_presinto_odn, evidencia_foto,
+            punto_acceso, valor_conexion_dbm, num_presinto_odn, evidencia_foto, evidencia_documento,
             firma_cliente, firma_tecnico, id_olt, id_pon, estado, token_firma, estado_firma
         ) VALUES (
             '$ip', '$cedula', '$nombre_completo', '$id_municipio', '$id_parroquia', '$id_comunidad', '$id_plan', '$id_vendedor',
@@ -208,7 +213,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             '$monto_pagar', '$monto_pagado', '$moneda_pago', '$observaciones',
             '$tipo_conexion', '$mac_onu', '$ip_onu', '$ident_caja_nap', '$puerto_nap',
             '$nap_tx_power', '$onu_rx_power', '$distancia_drop', '$instalador', '$evidencia_fibra',
-            '$punto_acceso', '$valor_conexion_dbm', '$num_presinto_odn', '$evidencia_foto',
+            '$punto_acceso', '$valor_conexion_dbm', '$num_presinto_odn', '$evidencia_foto', '$evidencia_documento',
             '$firma_cliente', '$firma_tecnico', '$id_olt', '$id_pon', '$estado', " . ($token_firma ? "'$token_firma'" : "NULL") . ", '$estado_firma'
         )";
 
