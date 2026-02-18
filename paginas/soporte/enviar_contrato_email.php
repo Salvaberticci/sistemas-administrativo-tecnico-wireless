@@ -6,18 +6,10 @@ use PHPMailer\PHPMailer\Exception;
 
 // Cargar autoloader de Composer (ajusta la ruta según tu estructura)
 require __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../config.php';
 
 function enviarContratoEmail($destinatario, $nombre_cliente, $ruta_pdf)
 {
-
-    // Configuración SMTP PROVISTA POR EL USUARIO
-    define('MAIL_HOST', 'smtp.gmail.com');
-    define('MAIL_USERNAME', 'soportegalanetescuque@gmail.com');
-    define('MAIL_PASSWORD', 'vvik kzmj inal zdwa'); // Contraseña de aplicación
-    define('MAIL_SMTP_SECURE', 'tls');
-    define('MAIL_PORT', 587);
-    define('MAIL_FROM_EMAIL', 'soportegalanetescuque@gmail.com');
-    define('MAIL_FROM_NAME', 'Wireless Applications Nómina');
 
     $mail = new PHPMailer(true);
 
