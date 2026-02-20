@@ -185,8 +185,15 @@ if (!isset($path_fix)) {
 <div class="bg-white border-bottom py-2 shadow-sm d-none d-lg-block">
     <div class="container-fluid px-4">
         <div class="d-flex justify-content-between align-items-center">
-            <h5 class="m-0 text-secondary fw-bold"><i
-                    class="fa-solid fa-angle-right me-2 opacity-50 small"></i><?php echo htmlspecialchars($page_title); ?>
+            <h5 class="m-0 text-secondary fw-bold d-flex align-items-center gap-2">
+                <?php if (isset($back_url)): ?>
+                    <a href="<?php echo $back_url; ?>" class="btn btn-sm btn-light border shadow-sm py-1 px-2 text-dark"
+                        title="Volver">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Salida
+                    </a>
+                <?php endif; ?>
+                <i class="fa-solid fa-angle-right opacity-50 small <?php echo isset($back_url) ? 'd-none' : ''; ?>"></i>
+                <?php echo htmlspecialchars($page_title); ?>
             </h5>
             <small class="text-muted"><?php echo date('d/m/Y'); ?></small>
         </div>
