@@ -66,6 +66,14 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
                     data-bs-target="#modalSales">
                     <i class="fa-solid fa-file-signature me-1"></i> Nueva Venta
                 </button>
+                <div class="vr mx-1"></div>
+                <button type="button" class="btn btn-success shadow-sm" onclick="exportExcel()">
+                    <i class="fa-solid fa-file-excel me-1"></i> Exportar
+                </button>
+                <button type="button" class="btn btn-outline-success shadow-sm" data-bs-toggle="modal"
+                    data-bs-target="#modalImportExcel">
+                    <i class="fa-solid fa-file-import me-1"></i> Importar
+                </button>
             </div>
         </div>
 
@@ -377,9 +385,42 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
     </div>
 </div>
 
+<!-- Modal Importar Excel -->
+<div class="modal fade" id="modalImportExcel" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-import me-2"></i>Importar desde Excel</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div id="dropzone-excel" class="dropzone-area mb-3">
+                    <i class="fa-solid fa-file-circle-plus fa-3x text-success mb-3"></i>
+                    <h6>Arrastra tu archivo Excel aquí</h6>
+                    <p class="text-muted small">O haz clic para seleccionar (Formato .xlsx, .xls)</p>
+                    <input type="file" id="input-excel-import" accept=".xlsx, .xls" style="display: none;">
+                </div>
+                <div id="import-preview" style="display:none;">
+                    <div class="alert alert-info py-2 small mb-0">
+                        <i class="fa-solid fa-info-circle me-1"></i>
+                        Se han detectado <span id="import-count" class="fw-bold">0</span> registros listos para
+                        procesar.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="btn-confirm-import" class="btn btn-success px-4" disabled>Procesar
+                    Importación</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php require_once '../includes/layout_foot.php'; ?>
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
 <script>
     $(document).ready(function () {
         var table = $('#tabla_prorrogas').DataTable({
@@ -475,4 +516,104 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
                 $('#modalProcesarPago').modal('show');
             });
     }
+
+    function exportExcel() {
+        window.location.href = 'exportar_prorrogas_excel.php';
+    }
+
+    // Lógica de Importación de Excel
+    const dropzone = document.getElementById('dropzone-excel');
+    const inputExcel = document.getElementById('input-excel-import');
+    let dataToImport = [];
+
+    dropzone.onclick = () => inputExcel.click();
+
+    inputExcel.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) handleExcelFile(file);
+    };
+
+    dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('bg-light', 'border-primary'); };
+    dropzone.ondragleave = () => dropzone.classList.remove('bg-light', 'border-primary');
+    dropzone.ondrop = (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('bg-light', 'border-primary');
+        const file = e.dataTransfer.files[0];
+        if (file) handleExcelFile(file);
+    };
+
+    function handleExcelFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+            // Buscar la cabecera real
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            let headerIdx = -1;
+            for (let i = 0; i < Math.min(rows.length, 10); i++) {
+                if (rows[i].some(c => String(c).toUpperCase().includes('CEDULA'))) {
+                    headerIdx = i;
+                    break;
+                }
+            }
+
+            if (headerIdx === -1) {
+                alert('No se encontró la columna CEDULA en las primeras filas.');
+                return;
+            }
+
+            const json = XLSX.utils.sheet_to_json(sheet, { range: headerIdx });
+            dataToImport = json.map(row => {
+                // Mapear nombres de columnas insensibles a mayúsculas
+                const mapped = {};
+                Object.keys(row).forEach(k => {
+                    const key = k.toUpperCase().trim();
+                    if (key.includes('CEDULA')) mapped.cedula = row[k];
+                    if (key.includes('NOMBRE')) mapped.nombre = row[k];
+                    if (key.includes('SAEPLUS')) mapped.saeplus = row[k];
+                    if (key.includes('CORTE')) mapped.corte = row[k];
+                    if (key.includes('PRORROGA')) mapped.prorroga = row[k];
+                    if (key.includes('REGULAR')) mapped.regular = row[k];
+                });
+                return mapped;
+            }).filter(r => r.cedula && r.nombre);
+
+            if (dataToImport.length > 0) {
+                document.getElementById('import-preview').style.display = 'block';
+                document.getElementById('import-count').innerText = dataToImport.length;
+                document.getElementById('btn-confirm-import').disabled = false;
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    document.getElementById('btn-confirm-import').onclick = function () {
+        this.disabled = true;
+        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Procesando...';
+
+        fetch('importar_prorrogas_excel.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: dataToImport })
+        })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    alert('Importación completada: ' + res.imported + ' registros nuevos.');
+                    location.reload();
+                } else {
+                    alert('Error: ' + res.message);
+                    this.disabled = false;
+                    this.innerHTML = 'Procesar Importación';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error de conexión');
+                this.disabled = false;
+                this.innerHTML = 'Procesar Importación';
+            });
+    };
 </script>
