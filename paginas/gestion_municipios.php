@@ -17,36 +17,69 @@ $sql = "SELECT m.id_municipio, m.nombre_municipio, p.id_parroquia, p.nombre_parr
 if ($action === 'delete_municipio' && isset($_GET['id'])) {
     $id_to_delete = $_GET['id'];
     // Se asume eliminación en cascada en la BD o que se maneja la eliminación de dependencias
-    $stmt = $conn->prepare("DELETE FROM `municipio` WHERE `id_municipio` = ?");
-    $stmt->bind_param("i", $id_to_delete);
-    if ($stmt->execute()) {
-        $message = "Municipio, parroquias y comunidades eliminados con éxito.";
-        $message_class = 'success';
-    } else {
-        $message = "Error al eliminar el municipio: " . $stmt->error;
-        $message_class = 'error';
+    try {
+        $stmt = $conn->prepare("DELETE FROM `municipio` WHERE `id_municipio` = ?");
+        $stmt->bind_param("i", $id_to_delete);
+        if ($stmt->execute()) {
+            $message = "Municipio, parroquias y comunidades eliminados con éxito.";
+            $message_class = 'success';
+        } else {
+            throw new Exception($stmt->error);
+        }
+    } catch (mysqli_sql_exception $e) {
+        if ($e->getCode() == 1451) {
+            $message = "No se puede eliminar este Municipio porque tiene registros asociados (Parroquias, Comunidades o Contratos). Debe eliminar primero los registros dependientes.";
+        } else {
+            $message = "Error al eliminar el municipio: " . $e->getMessage();
+        }
+        $message_class = 'danger';
+    } catch (Exception $e) {
+        $message = "Error al eliminar el municipio: " . $e->getMessage();
+        $message_class = 'danger';
     }
 } elseif ($action === 'delete_parroquia' && isset($_GET['id'])) {
     $id_to_delete = $_GET['id'];
-    $stmt = $conn->prepare("DELETE FROM `parroquia` WHERE `id_parroquia` = ?");
-    $stmt->bind_param("i", $id_to_delete);
-    if ($stmt->execute()) {
-        $message = "Parroquia y sus comunidades eliminadas con éxito.";
-        $message_class = 'success';
-    } else {
-        $message = "Error al eliminar la parroquia: " . $stmt->error;
-        $message_class = 'error';
+    try {
+        $stmt = $conn->prepare("DELETE FROM `parroquia` WHERE `id_parroquia` = ?");
+        $stmt->bind_param("i", $id_to_delete);
+        if ($stmt->execute()) {
+            $message = "Parroquia y sus comunidades eliminadas con éxito.";
+            $message_class = 'success';
+        } else {
+            throw new Exception($stmt->error);
+        }
+    } catch (mysqli_sql_exception $e) {
+        if ($e->getCode() == 1451) {
+            $message = "No se puede eliminar esta Parroquia porque tiene registros asociados (Comunidades o Contratos).";
+        } else {
+            $message = "Error al eliminar la parroquia: " . $e->getMessage();
+        }
+        $message_class = 'danger';
+    } catch (Exception $e) {
+        $message = "Error al eliminar la parroquia: " . $e->getMessage();
+        $message_class = 'danger';
     }
 } elseif ($action === 'delete_comunidad' && isset($_GET['id'])) {
     $id_to_delete = $_GET['id'];
-    $stmt = $conn->prepare("DELETE FROM `comunidad` WHERE `id_comunidad` = ?");
-    $stmt->bind_param("i", $id_to_delete);
-    if ($stmt->execute()) {
-        $message = "Comunidad eliminada con éxito.";
-        $message_class = 'success';
-    } else {
-        $message = "Error al eliminar la comunidad: " . $stmt->error;
-        $message_class = 'error';
+    try {
+        $stmt = $conn->prepare("DELETE FROM `comunidad` WHERE `id_comunidad` = ?");
+        $stmt->bind_param("i", $id_to_delete);
+        if ($stmt->execute()) {
+            $message = "Comunidad eliminada con éxito.";
+            $message_class = 'success';
+        } else {
+            throw new Exception($stmt->error);
+        }
+    } catch (mysqli_sql_exception $e) {
+        if ($e->getCode() == 1451) {
+            $message = "No se puede eliminar esta Comunidad porque tiene Contratos asociados.";
+        } else {
+            $message = "Error al eliminar la comunidad: " . $e->getMessage();
+        }
+        $message_class = 'danger';
+    } catch (Exception $e) {
+        $message = "Error al eliminar la comunidad: " . $e->getMessage();
+        $message_class = 'danger';
     }
 }
 
