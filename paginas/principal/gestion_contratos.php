@@ -823,53 +823,108 @@ require_once '../includes/sidebar.php';
 <script>
     // --- EXPORTAR EXCEL ---
     async function exportExcel() {
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Contratos');
-
-        // Obtener headers de la tabla (excluyendo columnas ocultas si se desea, aquí tomamos todos los visibles en el DOM de headers)
-        const headers = [];
-        document.querySelectorAll('#mitabla thead th').forEach(th => {
-            headers.push(th.innerText.trim());
+        // Mostrar mensaje de carga
+        Swal.fire({
+            title: 'Generando Excel...',
+            html: 'Obteniendo datos del servidor...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
         });
 
-        // Estilo Header
-        const headerRow = worksheet.addRow(headers);
-        headerRow.eachCell((cell) => {
-            cell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: '003366' } // Azul oscuro corporativo
-            };
-            cell.font = {
-                color: { argb: 'FFFFFF' },
-                bold: true
-            };
-            cell.alignment = { horizontal: 'center' };
-        });
+        try {
+            // 1. Obtener TODOS los datos crudos desde el backend
+            const response = await fetch('get_all_contratos_json.php');
+            if (!response.ok) throw new Error('Error de red al obtener datos');
+            const data = await response.json();
 
-        // Obtener datos (usando DataTables API si es posible, o DOM fallback)
-        // Usamos la instancia DataTable para obtener TODOS los datos, no solo la página actual
-        const table = $('#mitabla').DataTable();
-        const data = table.rows({ search: 'applied' }).data().toArray(); // Obtiene datos filtrados
+            if (!data || data.length === 0) {
+                throw new Error('No hay datos para exportar.');
+            }
 
-        data.forEach(rowData => {
-            worksheet.addRow(rowData);
-        });
+            // 2. Crear Workbook
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Contratos');
 
-        // Ajustar ancho de columnas (simple auto-width)
-        worksheet.columns.forEach(column => {
-            column.width = 20;
-        });
+            // 3. Definir Columnas y Encabezados (Mismo orden que el array $colMap en importación)
+            worksheet.columns = [
+                { header: 'ID', key: 'id_contrato', width: 10 },
+                { header: 'SAR', key: 'fecha_registro', width: 15 },
+                { header: 'Cédula', key: 'cedula_cliente', width: 15 },
+                { header: 'Cliente', key: 'nombre_cliente', width: 25 },
+                { header: 'Municipio', key: 'nombre_municipio', width: 15 },
+                { header: 'Parroquia', key: 'nombre_parroquia', width: 15 },
+                { header: 'Dirección', key: 'direccion_instalacion', width: 30 },
+                { header: 'Telf. 1', key: 'telefono_cliente', width: 15 },
+                { header: 'Telf. 2', key: 'telefono_extra', width: 15 },
+                { header: 'Correo', key: 'email_cliente', width: 25 },
+                { header: 'Correo (Alt)', key: 'email_extra', width: 25 },
+                { header: 'F. Instalación', key: 'fecha_instalacion', width: 15 },
+                { header: 'Medio Pago', key: 'metodo_pago', width: 15 },
+                { header: 'Monto Pagar', key: 'costo_instalacion', width: 15 },
+                { header: 'Monto Pagado', key: 'monto_pagado', width: 15 },
+                { header: 'Días Prorrateo', key: 'dias_prorrateo', width: 10 },
+                { header: 'Monto Prorr. ($)', key: 'monto_prorrateo', width: 15 },
+                { header: 'Observ.', key: 'observaciones', width: 30 },
+                { header: 'Tipo Conex.', key: 'tipo_conexion', width: 15 },
+                { header: 'Num. ONU', key: 'numero_onu', width: 15 },
+                { header: 'MAC/Serial', key: 'mac_serial', width: 20 },
+                { header: 'IP ONU', key: 'ip_onu', width: 15 },
+                { header: 'Caja NAP', key: 'caja_nap', width: 10 },
+                { header: 'Puerto NAP', key: 'puerto_nap', width: 10 },
+                { header: 'NAP TX (dBm)', key: 'potencia_nap_tx', width: 10 },
+                { header: 'ONU RX (dBm)', key: 'potencia_onu_rx', width: 10 },
+                { header: 'Dist. Drop (m)', key: 'distancia_drop', width: 10 },
+                { header: 'Instalador', key: 'id_instalador', width: 15 },
+                { header: 'Evidencia Fibra', key: 'evidencia_foto_fibra', width: 20 },
+                { header: 'IP Servicio', key: 'ip_servicio', width: 15 },
+                { header: 'Punto Acceso', key: 'punto_acceso', width: 15 },
+                { header: 'Val. Conex. (dBm)', key: 'valor_conexion', width: 10 },
+                { header: 'Precinto ODN', key: 'precinto_odn', width: 15 },
+                { header: 'Vendedor (Edit)', key: 'id_vendedor', width: 15 },
+                { header: 'SAE Plus (Edit)', key: 'codigo_sae_plus', width: 15 },
+                { header: 'Plan', key: 'nombre_plan', width: 15 },
+                { header: 'OLT', key: 'nombre_olt', width: 15 },
+                { header: 'PON', key: 'nombre_pon', width: 10 },
+                { header: 'Estado', key: 'status', width: 10 }
+            ];
 
-        // Generar archivo
-        const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Contratos_Wireless_' + new Date().toISOString().split('T')[0] + '.xlsx';
-        a.click();
-        window.URL.revokeObjectURL(url);
+            // Estilo Header
+            const headerRow = worksheet.getRow(1);
+            headerRow.eachCell((cell) => {
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: '003366' }
+                };
+                cell.font = {
+                    color: { argb: 'FFFFFF' },
+                    bold: true
+                };
+                cell.alignment = { horizontal: 'center' };
+            });
+
+            // 4. Agregar filas directamente (ya vienen limpias del SQL/JSON)
+            // Solo necesitamos asegurarnos que las keys coincidan
+            worksheet.addRows(data);
+
+            // Generar archivo
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Contratos_Wireless_' + new Date().toISOString().split('T')[0] + '.xlsx';
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.close();
+
+        } catch (error) {
+            console.error("Error exportando Excel:", error);
+            Swal.fire('Error', 'Hubo un problema al generar el Excel: ' + error.message, 'error');
+        }
     }
 
     // Configuración DataTables original
