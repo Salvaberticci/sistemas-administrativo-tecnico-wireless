@@ -427,7 +427,8 @@ require_once '../includes/sidebar.php';
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-chart-pie me-2"></i>Estadísticas y Reportes
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-chart-bar me-2"></i>Estadísticas [VERSIÓN 3 -
+                        BARRAS]
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
@@ -472,9 +473,8 @@ require_once '../includes/sidebar.php';
                         </div>
                     </div>
 
-                    <!-- Resultados -->
                     <!-- Resultados Gráficas -->
-                    <div class="row">
+                    <div class="row g-4">
                         <div class="col-md-4">
                             <h6 class="fw-bold text-primary text-center">Instalaciones por Instalador</h6>
                             <div class="chart-container" style="position: relative; height:300px; width:100%">
@@ -491,6 +491,25 @@ require_once '../includes/sidebar.php';
                             <h6 class="fw-bold text-info text-center">Contratos por Ubicación</h6>
                             <div class="chart-container" style="position: relative; height:300px; width:100%">
                                 <canvas id="chartLocation"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <h6 class="fw-bold text-warning text-center">Tipo de Instalación</h6>
+                            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                                <canvas id="chartType"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="fw-bold text-danger text-center">Instalaciones Mensuales</h6>
+                            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                                <canvas id="chartMonthly"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="fw-bold text-secondary text-center">Tipo de Conexión</h6>
+                            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                                <canvas id="chartConnection"></canvas>
                             </div>
                         </div>
                     </div>
@@ -514,6 +533,7 @@ require_once '../includes/sidebar.php';
             var modalStats = document.getElementById('modalStats');
             modalStats.addEventListener('show.bs.modal', function () {
                 fetchStatsLists();
+                fetchModalStats(); // Load charts immediately
             });
 
             // Botón Filtrar
@@ -583,69 +603,91 @@ require_once '../includes/sidebar.php';
                 end: end,
                 installer: inst,
                 vendor: vend,
-                type: type
+                type: type,
+                _t: new Date().getTime() // Cache busting
             });
 
             fetch('get_contract_stats.php?' + params.toString())
                 .then(response => response.json())
                 .then(data => {
-                    renderStatsChart('chartInstaller', data.by_installer, 'nombre', 'Total Instalaciones');
-                    renderStatsChart('chartVendor', data.by_vendor, 'nombre_vendedor', 'Total Ventas'); // labels for vendors are now names
-                    renderStatsChart('chartLocation', data.by_location, 'ubicacion', 'Total Contratos');
+                    // 1. Zonas de Ventas (Vertical Blue)
+                    renderStatsChartV4('chartLocation', data.by_location, 'ubicacion', 'Zonas de Ventas', false, '#3a7bd5');
+
+                    // 2. Instalaciones por Tipo (Vertical Blue)
+                    renderStatsChartV4('chartType', data.by_type, 'tipo', 'Instalaciones por Tipo', false, '#3a7bd5');
+
+                    // 3. Instalaciones (Monthly Vertical Blue)
+                    renderStatsChartV4('chartMonthly', data.by_month, 'mes', 'Instalaciones', false, '#3a7bd5');
+
+                    // 4. Tipo de Instalación (Horizontal Multi-color)
+                    renderStatsChartV4('chartConnection', data.by_connection, 'conexion', 'Tipos de Conexión', true, null);
+
+                    // 5. Instaladores (Horizontal Blue)
+                    renderStatsChartV4('chartInstaller', data.by_installer, 'nombre', 'Instaladores', true, '#3a7bd5');
+
+                    // 6. Vendedor (Horizontal Blue)
+                    renderStatsChartV4('chartVendor', data.by_vendor, 'nombre_vendedor', 'Ventas', true, '#3a7bd5');
                 });
         }
 
-        function renderStatsChart(canvasId, data, labelKey, title, isVendor = false) {
+        function renderStatsChartV4(canvasId, data, labelKey, title, isHorizontal = false, customColor = null) {
+            console.log('Rendering V4 Chart:', canvasId, title);
             const ctx = document.getElementById(canvasId).getContext('2d');
 
-            // Destroy existing chart if present
             if (chartInstances[canvasId]) {
                 chartInstances[canvasId].destroy();
             }
 
             if (!data || data.length === 0) {
-                // Render empty chart or message? Chart.js handles empty data gracefully usually, but let's pass empty
-                // Maybe better to clear canvas?
-                // For now, let's create a "No Data" chart or leave blank
                 chartInstances[canvasId] = new Chart(ctx, {
-                    type: 'pie',
-                    data: { labels: ['Sin Datos'], datasets: [{ data: [1], backgroundColor: ['#e9ecef'] }] },
-                    options: { plugins: { tooltip: { enabled: false }, legend: { display: false }, title: { display: true, text: 'Sin Resultados' } } }
+                    type: 'bar',
+                    data: { labels: ['Sin Datos'], datasets: [{ data: [0], backgroundColor: ['#e9ecef'] }] },
+                    options: {
+                        indexAxis: isHorizontal ? 'y' : 'x',
+                        plugins: { legend: { display: false }, title: { display: true, text: 'Sin Resultados' } }
+                    }
                 });
                 return;
             }
 
-            // MODIFIED: Append count to labels to show in legend
-            const labels = data.map(item => {
-                let name = item[labelKey];
-                return `${name} (${item.total})`;
-            });
+            const labels = data.map(item => item[labelKey]);
             const values = data.map(item => item.total);
-
-            // Generate Colors
-            const colors = generateColors(data.length);
+            const colors = customColor ? new Array(data.length).fill(customColor) : generateColors(data.length);
 
             chartInstances[canvasId] = new Chart(ctx, {
-                type: 'pie',
+                type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
+                        label: 'Cantidad',
                         data: values,
                         backgroundColor: colors,
-                        borderWidth: 1
+                        borderColor: colors.map(c => c.startsWith('hsl') ? c.replace('60%', '50%') : c),
+                        borderWidth: 1,
+                        barPercentage: 0.8
                     }]
                 },
                 options: {
+                    indexAxis: isHorizontal ? 'y' : 'x',
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { boxWidth: 10, font: { size: 10 } }
+                        legend: { display: false },
+                        title: { display: true, text: title, font: { size: 14, weight: 'bold' } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 },
+                            grid: { display: false }
                         },
-                        title: {
-                            display: true,
-                            text: title
+                        x: {
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: isHorizontal ? 0 : 90,
+                                minRotation: isHorizontal ? 0 : 45
+                            },
+                            grid: { display: false }
                         }
                     }
                 }
@@ -668,28 +710,25 @@ require_once '../includes/sidebar.php';
             const vend = document.getElementById('statVendor').value;
             const type = document.getElementById('statContractType').value;
 
-            // Capture Charts as Images
-            const imgInstaller = document.getElementById('chartInstaller').toDataURL('image/png');
-            const imgVendor = document.getElementById('chartVendor').toDataURL('image/png');
-            const imgLocation = document.getElementById('chartLocation').toDataURL('image/png');
-
-            // Create dynamic form for POST request
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '../../paginas/reportes_pdf/generar_estadisticas_pdf.php';
-            form.target = '_blank'; // Open in new tab
-
-            // Add Params
+            // Capture 6 Charts
             const fields = {
                 start: start,
                 end: end,
                 installer: inst,
                 vendor: vend,
                 type: type,
-                img_installer: imgInstaller,
-                img_vendor: imgVendor,
-                img_location: imgLocation
+                img_installer: document.getElementById('chartInstaller').toDataURL('image/png'),
+                img_vendor: document.getElementById('chartVendor').toDataURL('image/png'),
+                img_location: document.getElementById('chartLocation').toDataURL('image/png'),
+                img_type: document.getElementById('chartType').toDataURL('image/png'),
+                img_monthly: document.getElementById('chartMonthly').toDataURL('image/png'),
+                img_connection: document.getElementById('chartConnection').toDataURL('image/png')
             };
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '../../paginas/reportes_pdf/generar_estadisticas_pdf.php';
+            form.target = '_blank';
 
             for (const key in fields) {
                 if (fields.hasOwnProperty(key)) {

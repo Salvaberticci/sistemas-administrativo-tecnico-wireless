@@ -98,6 +98,33 @@ if ($action === 'modal_stats') {
                      GROUP BY m.nombre_municipio, p.nombre_parroquia
                      ORDER BY total DESC";
 
+    // 4. Por Tipo de Instalación
+    $sql_type = "SELECT 
+                        COALESCE(NULLIF(tipo_instalacion, ''), 'Sin Definir') as tipo, 
+                        COUNT(*) as total 
+                       FROM contratos 
+                       $sql_where 
+                       GROUP BY tipo 
+                       ORDER BY total DESC";
+
+    // 5. Por Mes (Fecha Instalación)
+    $sql_monthly = "SELECT 
+                        DATE_FORMAT(fecha_instalacion, '%Y-%m') as mes, 
+                        COUNT(*) as total 
+                       FROM contratos 
+                       $sql_where 
+                       GROUP BY mes 
+                       ORDER BY mes ASC";
+
+    // 6. Por Tipo de Conexión
+    $sql_connection = "SELECT 
+                        COALESCE(NULLIF(tipo_conexion, ''), 'Sin Definir') as conexion, 
+                        COUNT(*) as total 
+                       FROM contratos 
+                       $sql_where 
+                       GROUP BY conexion 
+                       ORDER BY total DESC";
+
     // Ejecutar Query Instaladores
     $stmt = $conn->prepare($sql_installers);
     if ($stmt) {
@@ -146,10 +173,58 @@ if ($action === 'modal_stats') {
         $stmt->close();
     }
 
+    // Ejecutar Query Tipo de Instalación
+    $stmt = $conn->prepare($sql_type);
+    if ($stmt) {
+        if (!empty($types)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $res_type = $stmt->get_result();
+        $stats_type = [];
+        while ($row = $res_type->fetch_assoc()) {
+            $stats_type[] = $row;
+        }
+        $stmt->close();
+    }
+
+    // Ejecutar Query Mensual
+    $stmt = $conn->prepare($sql_monthly);
+    if ($stmt) {
+        if (!empty($types)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $res_monthly = $stmt->get_result();
+        $stats_monthly = [];
+        while ($row = $res_monthly->fetch_assoc()) {
+            $stats_monthly[] = $row;
+        }
+        $stmt->close();
+    }
+
+    // Ejecutar Query Conexión
+    $stmt = $conn->prepare($sql_connection);
+    if ($stmt) {
+        if (!empty($types)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $res_conn = $stmt->get_result();
+        $stats_connection = [];
+        while ($row = $res_conn->fetch_assoc()) {
+            $stats_connection[] = $row;
+        }
+        $stmt->close();
+    }
+
     echo json_encode([
         'by_installer' => $stats_installers ?? [],
         'by_vendor' => $stats_vendors ?? [],
-        'by_location' => $stats_location ?? []
+        'by_location' => $stats_location ?? [],
+        'by_type' => $stats_type ?? [],
+        'by_month' => $stats_monthly ?? [],
+        'by_connection' => $stats_connection ?? []
     ]);
     exit;
 }
