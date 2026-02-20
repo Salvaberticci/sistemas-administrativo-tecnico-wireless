@@ -1384,6 +1384,55 @@ require_once '../includes/sidebar.php';
             }
         });
 
+        // --- IMPORTAR EXCEL (AJAX) ---
+        $('#formImportExcel').on('submit', function (e) {
+            e.preventDefault();
+
+            // Mostrar loading
+            Swal.fire({
+                title: 'Importando...',
+                html: 'Procesando archivo, por favor espere.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const formData = new FormData(this);
+
+            fetch('importar_excel_contratos.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.close();
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Importación Exitosa',
+                        html: `<p>${data.message}</p>
+                               <ul class="text-start">
+                                   <li>Actualizados: <b>${data.stats.updated}</b></li>
+                                   <li>Nuevos: <b>${data.stats.inserted}</b></li>
+                                   <li>Errores: <b class="text-danger">${data.stats.errors}</b></li>
+                               </ul>`,
+                        icon: 'success'
+                    }).then(() => {
+                        // Recargar la tabla o la página para ver cambios
+                        location.reload(); 
+                    });
+                    $('#modalImportExcel').modal('hide');
+                    $('#formImportExcel')[0].reset();
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Error de conexión al importar.', 'error');
+            });
+        });
+
         // --- UBICACIONES ---
         $('#modalUbicaciones').on('show.bs.modal', function () {
             loadUbicaciones();
