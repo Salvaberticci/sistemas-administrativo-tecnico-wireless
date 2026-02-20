@@ -420,12 +420,16 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
 <?php require_once '../includes/layout_foot.php'; ?>
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
     $(document).ready(function () {
         var table = $('#tabla_prorrogas').DataTable({
             "ajax": "get_prorrogas_data.php",
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+            },
             "columns": [
                 { "data": "fecha_registro" },
                 {
