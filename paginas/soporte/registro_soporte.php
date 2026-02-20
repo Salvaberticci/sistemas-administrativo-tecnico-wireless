@@ -3,6 +3,9 @@
 // Formulario de Registro de Soporte Técnico (Vista Admin)
 
 $path_to_root = "../../";
+$page_title = "Registrar Soporte Técnico";
+$breadcrumb = ["Soporte", "Historial de Soportes"];
+$back_url = "historial_soportes.php";
 include_once $path_to_root . 'paginas/conexion.php';
 include $path_to_root . 'paginas/includes/layout_head.php';
 include $path_to_root . 'paginas/includes/sidebar.php';

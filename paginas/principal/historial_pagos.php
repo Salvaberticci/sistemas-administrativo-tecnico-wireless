@@ -50,6 +50,8 @@ if ($resultado->num_rows > 0) {
 // Configuración Layout
 $path_to_root = "../../";
 $page_title = "Historial de Pagos - " . $nombre_cliente;
+$breadcrumb = ["Cobranzas", "Gestión de Mensualidades y Pagos"];
+$back_url = "gestion_mensualidades.php?maintenance_done=1";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>
@@ -65,7 +67,8 @@ require_once '../includes/sidebar.php';
                     <h5 class="fw-bold text-primary mb-1">Historial de Pagos</h5>
                     <p class="text-muted small mb-0">Cliente:
                         <strong><?php echo htmlspecialchars($nombre_cliente); ?></strong> (Contrato
-                        #<?php echo $id_contrato; ?>)</p>
+                        #<?php echo $id_contrato; ?>)
+                    </p>
                 </div>
                 <div>
                     <a href="gestion_mensualidades.php?maintenance_done=1" class="btn btn-secondary btn-sm">

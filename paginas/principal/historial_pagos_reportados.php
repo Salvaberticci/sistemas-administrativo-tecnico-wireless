@@ -5,6 +5,8 @@ require_once '../conexion.php';
 // Configuración Layout
 $path_to_root = "../../";
 $page_title = "Historial de Reportes de Pago";
+$breadcrumb = ["Cobranzas"];
+$back_url = "../menu.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 
@@ -74,10 +76,10 @@ $resultado = $conn->query($sql);
                         <label class="form-label small fw-bold">Estado</label>
                         <select name="estado" class="form-select form-select-sm">
                             <option value="">Todos (Procesados)</option>
-                            <option value="APROBADO" <?php echo ($estado_filtro == 'APROBADO') ? 'selected' : ''; ?>
-                                >Aprobados</option>
-                            <option value="RECHAZADO" <?php echo ($estado_filtro == 'RECHAZADO') ? 'selected' : ''; ?>
-                                >Rechazados</option>
+                            <option value="APROBADO" <?php echo ($estado_filtro == 'APROBADO') ? 'selected' : ''; ?>>
+                                Aprobados</option>
+                            <option value="RECHAZADO" <?php echo ($estado_filtro == 'RECHAZADO') ? 'selected' : ''; ?>>
+                                Rechazados</option>
                         </select>
                     </div>
                     <div class="col-md-3">

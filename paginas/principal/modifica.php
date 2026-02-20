@@ -18,6 +18,8 @@ $row = $resultado->fetch_assoc();
 // Configuración del Layout
 $path_to_root = "../../";
 $page_title = "Modificar Registro";
+$breadcrumb = ["Admin", "Gestión de Contratos"];
+$back_url = "gestion_contratos.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>

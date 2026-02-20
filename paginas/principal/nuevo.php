@@ -32,6 +32,8 @@ if ($resultado_olts && $resultado_olts->num_rows > 0) {
 
 $path_to_root = "../../";
 $page_title = "Nuevo Contrato";
+$breadcrumb = ["Admin", "Gestión de Contratos"];
+$back_url = "gestion_contratos.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>

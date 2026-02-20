@@ -3,6 +3,9 @@
 require_once 'conexion.php';
 
 $path_to_root = "../";
+$page_title = "Gestión de PON";
+$breadcrumb = ["Técnica"];
+$back_url = "menu.php";
 include $path_to_root . 'paginas/includes/layout_head.php';
 include $path_to_root . 'paginas/includes/sidebar.php';
 include $path_to_root . 'paginas/includes/header.php';
@@ -10,9 +13,9 @@ include $path_to_root . 'paginas/includes/header.php';
 $message = '';
 $message_class = '';
 $action = isset($_GET['action']) ? $_GET['action'] : '';
-$stmt = null; 
+$stmt = null;
 // Variables de comunidades y asignaciones eliminadas
-$olts_disponibles = []; 
+$olts_disponibles = [];
 
 // Variables para la búsqueda
 $search_term = isset($_GET['search']) ? $conn->real_escape_string($_GET['search']) : '';
@@ -36,7 +39,7 @@ if ($result_olts && $result_olts->num_rows > 0) {
 // LÓGICA DE GESTIÓN (MODIFICAR - POST)
 // ----------------------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_pon'])) {
-    $id = $_POST['id_pon']; 
+    $id = $_POST['id_pon'];
     $nombre = $_POST['nombre_pon'];
     $olt_id = $_POST['olt_id'];
     $descripcion = $_POST['descripcion'];
@@ -51,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_pon'])) {
         $stmt_update_pon = $conn->prepare("UPDATE pon SET nombre_pon = ?, id_olt = ?, descripcion = ? WHERE id_pon = ?");
         // "sisi" = string (nombre), integer (olt_id), string (descripcion), integer (id)
         $stmt_update_pon->bind_param("sisi", $nombre, $olt_id, $descripcion, $id);
-        
+
         if (!$stmt_update_pon->execute()) {
             throw new Exception("Error al actualizar el registro PON: " . $stmt_update_pon->error);
         }
@@ -60,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_pon'])) {
             $message = "¡PON actualizado con éxito!";
             $message_class = 'success';
         } else {
-             $message = "ADVERTENCIA: No se realizaron cambios en el PON.";
+            $message = "ADVERTENCIA: No se realizaron cambios en el PON.";
             $message_class = 'warning';
         }
         $stmt_update_pon->close();
@@ -82,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_pon'])) {
 // ----------------------------------------------------------------------------------
 if ($action === 'delete_pon' && isset($_GET['id'])) {
     $id_to_delete = $_GET['id'];
-    
+
     // Eliminamos la transacción ya que solo se toca la tabla 'pon'
     try {
         // La eliminación de pon_comunidad ha sido eliminada
@@ -160,9 +163,11 @@ $get_class = isset($_GET['class']) ? $_GET['class'] : $message_class;
 
             <!-- Alertas -->
             <?php if (!empty($get_message)): ?>
-                <div class="alert alert-<?php echo $get_class === 'success' ? 'success' : ($get_class === 'warning' ? 'warning' : 'danger'); ?> alert-dismissible fade show shadow-sm" role="alert">
+                <div class="alert alert-<?php echo $get_class === 'success' ? 'success' : ($get_class === 'warning' ? 'warning' : 'danger'); ?> alert-dismissible fade show shadow-sm"
+                    role="alert">
                     <div class="d-flex align-items-center gap-2">
-                        <i class="fa-solid <?php echo $get_class === 'success' ? 'fa-circle-check' : ($get_class === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-xmark'); ?>"></i>
+                        <i
+                            class="fa-solid <?php echo $get_class === 'success' ? 'fa-circle-check' : ($get_class === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-xmark'); ?>"></i>
                         <div><?php echo htmlspecialchars($get_message); ?></div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -180,9 +185,9 @@ $get_class = isset($_GET['class']) ? $_GET['class'] : $message_class;
                                     <span class="input-group-text bg-white border-end-0 text-muted">
                                         <i class="fa-solid fa-magnifying-glass"></i>
                                     </span>
-                                    <input type="text" name="search" class="form-control border-start-0 ps-0" 
-                                           placeholder="Buscar por nombre, descripción o OLT..." 
-                                           value="<?php echo htmlspecialchars($search_term); ?>">
+                                    <input type="text" name="search" class="form-control border-start-0 ps-0"
+                                        placeholder="Buscar por nombre, descripción o OLT..."
+                                        value="<?php echo htmlspecialchars($search_term); ?>">
                                 </div>
                             </div>
                             <div class="col-md-2">
@@ -211,38 +216,36 @@ $get_class = isset($_GET['class']) ? $_GET['class'] : $message_class;
                             <tbody>
                                 <?php if ($result && $result->num_rows > 0): ?>
                                     <?php while ($row = $result->fetch_assoc()): ?>
-                                        <tr data-id="<?php echo htmlspecialchars($row['id_pon']); ?>" 
-                                            data-nombre="<?php echo htmlspecialchars($row['nombre_pon']); ?>" 
-                                            data-olt-id="<?php echo htmlspecialchars($row['id_olt']); ?>" 
+                                        <tr data-id="<?php echo htmlspecialchars($row['id_pon']); ?>"
+                                            data-nombre="<?php echo htmlspecialchars($row['nombre_pon']); ?>"
+                                            data-olt-id="<?php echo htmlspecialchars($row['id_olt']); ?>"
                                             data-descripcion="<?php echo htmlspecialchars($row['descripcion']); ?>">
-                                            
-                                            <td class="ps-4 fw-medium text-secondary">#<?php echo htmlspecialchars($row['id_pon']); ?></td>
-                                            <td class="fw-bold text-dark"><?php echo htmlspecialchars($row['nombre_pon']); ?></td>
+
+                                            <td class="ps-4 fw-medium text-secondary">
+                                                #<?php echo htmlspecialchars($row['id_pon']); ?></td>
+                                            <td class="fw-bold text-dark"><?php echo htmlspecialchars($row['nombre_pon']); ?>
+                                            </td>
                                             <td>
-                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">
+                                                <span
+                                                    class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">
                                                     <?php echo htmlspecialchars($row['nombre_olt']); ?>
                                                 </span>
                                             </td>
                                             <td class="text-muted small text-truncate" style="max-width: 300px;">
                                                 <?php echo htmlspecialchars($row['descripcion']); ?>
                                             </td>
-                                            
+
                                             <td class="text-end pe-4">
                                                 <div class="btn-group gap-2">
-                                                    <button type="button" 
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#modificaModal"
-                                                            data-id="<?php echo htmlspecialchars($row['id_pon']); ?>"
-                                                            class="btn btn-sm btn-outline-primary rounded-2" 
-                                                            title="Modificar">
+                                                    <button type="button" data-bs-toggle="modal" data-bs-target="#modificaModal"
+                                                        data-id="<?php echo htmlspecialchars($row['id_pon']); ?>"
+                                                        class="btn btn-sm btn-outline-primary rounded-2" title="Modificar">
                                                         <i class="fa-solid fa-pen-to-square"></i>
                                                     </button>
-                                                    <button type="button" 
-                                                            data-bs-href="gestion_pon.php?action=delete_pon&id=<?php echo htmlspecialchars($row['id_pon']); ?>" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#eliminaModal" 
-                                                            class="btn btn-sm btn-outline-danger rounded-2" 
-                                                            title="Eliminar">
+                                                    <button type="button"
+                                                        data-bs-href="gestion_pon.php?action=delete_pon&id=<?php echo htmlspecialchars($row['id_pon']); ?>"
+                                                        data-bs-toggle="modal" data-bs-target="#eliminaModal"
+                                                        class="btn btn-sm btn-outline-danger rounded-2" title="Eliminar">
                                                         <i class="fa-solid fa-trash-can"></i>
                                                     </button>
                                                 </div>
@@ -264,15 +267,11 @@ $get_class = isset($_GET['class']) ? $_GET['class'] : $message_class;
                     </div>
                 </div>
             </div>
-            
-            <div class="mt-4 text-center">
-                <a href="../menu.php" class="btn btn-outline-secondary px-4">
-                    <i class="fa-solid fa-arrow-left me-2"></i>Volver al Menú
-                </a>
-            </div>
+
+
         </div>
     </div>
-    
+
     <?php include $path_to_root . 'paginas/includes/layout_foot.php'; ?>
 </main>
 
@@ -284,21 +283,25 @@ $get_class = isset($_GET['class']) ? $_GET['class'] : $message_class;
                 <h5 class="modal-title fw-bold" id="modificaModalLabel">
                     <i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar PON
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <form id="formModificacionPON" class="needs-validation" method="POST" action="gestion_pon.php" novalidate>
                 <div class="modal-body p-4">
-                    <input type="hidden" name="update_pon" value="1"> 
+                    <input type="hidden" name="update_pon" value="1">
                     <input type="hidden" name="id_pon" id="modal-id_pon">
-                    
+
                     <div class="mb-3">
-                        <label for="modal-nombre_pon" class="form-label fw-semibold text-secondary small text-uppercase">Nombre del PON</label>
-                        <input type="text" class="form-control" id="modal-nombre_pon" name="nombre_pon" required placeholder="Ej: PON-01">
+                        <label for="modal-nombre_pon"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Nombre del PON</label>
+                        <input type="text" class="form-control" id="modal-nombre_pon" name="nombre_pon" required
+                            placeholder="Ej: PON-01">
                         <div class="invalid-feedback">Por favor ingrese el nombre del PON.</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="modal-olt_id" class="form-label fw-semibold text-secondary small text-uppercase">OLT Asignada</label>
+                        <label for="modal-olt_id" class="form-label fw-semibold text-secondary small text-uppercase">OLT
+                            Asignada</label>
                         <select class="form-select" id="modal-olt_id" name="olt_id" required>
                             <option value="">-- Seleccione una OLT --</option>
                             <?php foreach ($olts_disponibles as $olt): ?>
@@ -311,12 +314,15 @@ $get_class = isset($_GET['class']) ? $_GET['class'] : $message_class;
                     </div>
 
                     <div class="mb-3">
-                        <label for="modal-descripcion" class="form-label fw-semibold text-secondary small text-uppercase">Descripción</label>
-                        <textarea class="form-control" id="modal-descripcion" name="descripcion" rows="3" placeholder="Detalles adicionales..."></textarea>
+                        <label for="modal-descripcion"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Descripción</label>
+                        <textarea class="form-control" id="modal-descripcion" name="descripcion" rows="3"
+                            placeholder="Detalles adicionales..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-top-0 py-3">
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-secondary px-4"
+                        data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary px-4" id="btn-actualizar-pon">Guardar Cambios</button>
                 </div>
             </form>
@@ -336,7 +342,8 @@ $get_class = isset($_GET['class']) ? $_GET['class'] : $message_class;
                 <p class="text-muted small mb-4">Esta acción no se puede deshacer.</p>
                 <div class="d-grid gap-2">
                     <a href="#" class="btn btn-danger btn-ok fw-medium">Eliminar</a>
-                    <button type="button" class="btn btn-light text-secondary fw-medium" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-light text-secondary fw-medium"
+                        data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -344,65 +351,65 @@ $get_class = isset($_GET['class']) ? $_GET['class'] : $message_class;
 </div>
 
 <script>
-// -----------------------------------------------------
-// 1. LÓGICA DEL MODAL DE MODIFICACIÓN (modificaModal)
-// -----------------------------------------------------
-const modificaModalElement = document.getElementById('modificaModal');
-const formModificacionPON = document.getElementById('formModificacionPON');
+    // -----------------------------------------------------
+    // 1. LÓGICA DEL MODAL DE MODIFICACIÓN (modificaModal)
+    // -----------------------------------------------------
+    const modificaModalElement = document.getElementById('modificaModal');
+    const formModificacionPON = document.getElementById('formModificacionPON');
 
-if (modificaModalElement) {
-    modificaModalElement.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        const id = button.getAttribute('data-id');
-        const row = document.querySelector(`tr[data-id="${id}"]`);
+    if (modificaModalElement) {
+        modificaModalElement.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const row = document.querySelector(`tr[data-id="${id}"]`);
 
-        if (row) {
-            const nombre = row.getAttribute('data-nombre');
-            const olt_id = row.getAttribute('data-olt-id'); 
-            const descripcion = row.getAttribute('data-descripcion');
-            
-            document.getElementById('modificaModalLabel').innerHTML = `<i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar PON: ${nombre}`;
-            document.getElementById('modal-id_pon').value = id;
-            document.getElementById('modal-nombre_pon').value = nombre;
-            document.getElementById('modal-olt_id').value = olt_id; 
-            document.getElementById('modal-descripcion').value = descripcion;
+            if (row) {
+                const nombre = row.getAttribute('data-nombre');
+                const olt_id = row.getAttribute('data-olt-id');
+                const descripcion = row.getAttribute('data-descripcion');
 
-            formModificacionPON.classList.remove('was-validated');
+                document.getElementById('modificaModalLabel').innerHTML = `<i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar PON: ${nombre}`;
+                document.getElementById('modal-id_pon').value = id;
+                document.getElementById('modal-nombre_pon').value = nombre;
+                document.getElementById('modal-olt_id').value = olt_id;
+                document.getElementById('modal-descripcion').value = descripcion;
+
+                formModificacionPON.classList.remove('was-validated');
+            }
+        });
+
+        const btnActualizarPON = document.getElementById('btn-actualizar-pon');
+
+        if (btnActualizarPON && formModificacionPON) {
+            btnActualizarPON.addEventListener('click', function (event) {
+
+                const bootstrapValido = formModificacionPON.checkValidity();
+
+                if (!bootstrapValido) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    formModificacionPON.classList.add('was-validated');
+                } else {
+                    formModificacionPON.submit();
+                }
+            });
         }
-    });
+    }
 
-    const btnActualizarPON = document.getElementById('btn-actualizar-pon');
+    // -----------------------------------------------------
+    // 2. LÓGICA DEL MODAL DE ELIMINACIÓN (eliminaModal)
+    // -----------------------------------------------------
+    const eliminaModalElement = document.getElementById('eliminaModal');
 
-    if (btnActualizarPON && formModificacionPON) {
-        btnActualizarPON.addEventListener('click', function(event) {
-            
-            const bootstrapValido = formModificacionPON.checkValidity();
+    if (eliminaModalElement) {
+        eliminaModalElement.addEventListener('shown.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const url = button.getAttribute('data-bs-href');
 
-            if (!bootstrapValido) {
-                event.preventDefault(); 
-                event.stopPropagation();
-                formModificacionPON.classList.add('was-validated');
-            } else {
-                formModificacionPON.submit(); 
+            const btnOk = eliminaModalElement.querySelector('.btn-ok');
+            if (btnOk) {
+                btnOk.href = url;
             }
         });
     }
-}
-
-// -----------------------------------------------------
-// 2. LÓGICA DEL MODAL DE ELIMINACIÓN (eliminaModal)
-// -----------------------------------------------------
-const eliminaModalElement = document.getElementById('eliminaModal');
-
-if (eliminaModalElement) { 
-    eliminaModalElement.addEventListener('shown.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        const url = button.getAttribute('data-bs-href'); 
-        
-        const btnOk = eliminaModalElement.querySelector('.btn-ok');
-        if (btnOk) {
-            btnOk.href = url;
-        }
-    });
-}
 </script>

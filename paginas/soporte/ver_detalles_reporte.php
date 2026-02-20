@@ -4,6 +4,8 @@
  */
 $path_to_root = "../../";
 $page_title = "Detalles del Reporte";
+$breadcrumb = ["Soporte", "Gestión de Fallas"];
+$back_url = "gestion_fallas.php";
 require_once $path_to_root . 'paginas/conexion.php';
 require_once $path_to_root . 'paginas/includes/layout_head.php';
 require_once $path_to_root . 'paginas/includes/sidebar.php';

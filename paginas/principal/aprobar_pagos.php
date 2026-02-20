@@ -5,6 +5,8 @@ require_once '../conexion.php';
 // Configuración Layout
 $path_to_root = "../../";
 $page_title = "Aprobar Reportes de Pago";
+$breadcrumb = ["Cobranzas"];
+$back_url = "../menu.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 
@@ -20,6 +22,10 @@ $sql = "
 ";
 $resultado = $conn->query($sql);
 ?>
+
+
+
+<script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 
 <main class="main-content">
     <?php include '../includes/header.php'; ?>
@@ -274,8 +280,6 @@ $resultado = $conn->query($sql);
 
 </main>
 
-<?php require_once '../includes/layout_foot.php'; ?>
-
 <script>
     const modalAprobar = new bootstrap.Modal(document.getElementById('modalConfirmarAprobacion'));
     const modalRechazar = new bootstrap.Modal(document.getElementById('modalRechazar'));
@@ -323,7 +327,7 @@ $resultado = $conn->query($sql);
     $(document).on('show.bs.modal', '.modal', function () { isModalOpen = true; });
     $(document).on('hidden.bs.modal', '.modal', function () { isModalOpen = false; });
 
-    setInterval(function() {
+    setInterval(function () {
         if (!isModalOpen) {
             console.log("Refrescando tabla de reportes...");
             fetch('get_reportes_pendientes_ajax.php')
@@ -336,3 +340,5 @@ $resultado = $conn->query($sql);
         }
     }, 5000);
 </script>
+
+<?php require_once '../includes/layout_foot.php'; ?>

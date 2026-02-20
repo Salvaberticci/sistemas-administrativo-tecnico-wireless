@@ -184,6 +184,7 @@ if ($stmt) {
 $conn->close();
 
 $page_title = "Gestión de Ubicaciones";
+$breadcrumb = ["Técnica"];
 $back_url = "menu.php";
 require_once 'includes/layout_head.php';
 // require_once 'includes/sidebar.php'; // Sidebar is deprecated

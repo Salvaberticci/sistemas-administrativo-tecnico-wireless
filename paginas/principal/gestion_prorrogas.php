@@ -3,6 +3,8 @@ require_once '../conexion.php';
 
 $path_to_root = "../../";
 $page_title = "Gestión de Prórrogas y Ventas";
+$breadcrumb = ["Cobranzas"];
+$back_url = "../menu.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 
@@ -417,7 +419,7 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
     </div>
 </div>
 
-<?php require_once '../includes/layout_foot.php'; ?>
+
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -523,19 +525,19 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: id })
                 })
-                .then(r => r.json())
-                .then(res => {
-                    if (res.success) {
-                        Swal.fire('Eliminado', res.message, 'success');
-                        $('#tabla_prorrogas').DataTable().ajax.reload();
-                    } else {
-                        Swal.fire('Error', res.message, 'error');
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
-                });
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            Swal.fire('Eliminado', res.message, 'success');
+                            $('#tabla_prorrogas').DataTable().ajax.reload();
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                    });
             }
         });
     }
@@ -750,3 +752,5 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
             });
     };
 </script>
+
+<?php require_once '../includes/layout_foot.php'; ?>

@@ -185,17 +185,25 @@ if (!isset($path_fix)) {
 <div class="bg-white border-bottom py-2 shadow-sm d-none d-lg-block">
     <div class="container-fluid px-4">
         <div class="d-flex justify-content-between align-items-center">
-            <h5 class="m-0 text-secondary fw-bold d-flex align-items-center gap-2">
+            <h5 class="m-0 text-secondary fw-bold d-flex align-items-center gap-2 flex-wrap">
                 <?php if (isset($back_url)): ?>
-                    <a href="<?php echo $back_url; ?>" class="btn btn-sm btn-light border shadow-sm py-1 px-2 text-dark"
-                        title="Volver">
+                    <a href="<?php echo $back_url; ?>"
+                        class="btn btn-sm btn-light border shadow-sm py-1 px-2 text-dark me-2" title="Volver">
                         <i class="fa-solid fa-arrow-left me-1"></i> Volver
                     </a>
                 <?php endif; ?>
-                <i class="fa-solid fa-angle-right opacity-50 small <?php echo isset($back_url) ? 'd-none' : ''; ?>"></i>
-                <?php echo htmlspecialchars($page_title); ?>
+
+                <div class="d-flex align-items-center gap-2 breadcrumb-path">
+                    <?php if (isset($breadcrumb) && is_array($breadcrumb)): ?>
+                        <?php foreach ($breadcrumb as $step): ?>
+                            <span class="text-muted opacity-75 fw-normal small"><?php echo htmlspecialchars($step); ?></span>
+                            <i class="fa-solid fa-chevron-right opacity-25 small" style="font-size: 0.7rem;"></i>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    <span class="text-primary"><?php echo htmlspecialchars($page_title); ?></span>
+                </div>
             </h5>
-            <small class="text-muted"><?php echo date('d/m/Y'); ?></small>
+            <small class="text-muted d-none d-xl-block"><?php echo date('d/m/Y'); ?></small>
         </div>
     </div>
 </div>

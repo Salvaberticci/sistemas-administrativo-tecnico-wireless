@@ -1,5 +1,5 @@
 <?php
-require_once '../conexion.php'; 
+require_once '../conexion.php';
 
 // 1. CAPTURA DE PARÁMETROS DE FILTRO
 $busqueda_filtro = isset($_GET['busqueda']) ? $_GET['busqueda'] : ''; // 🔍 NUEVO: Filtro de búsqueda textual
@@ -8,9 +8,9 @@ $id_parroquia_filtro = isset($_GET['parroquia']) ? $_GET['parroquia'] : 'TODOS';
 $estado_contrato_filtro = isset($_GET['estado_contrato']) ? $_GET['estado_contrato'] : 'TODOS';
 $id_vendedor_filtro = isset($_GET['vendedor']) ? $_GET['vendedor'] : 'TODOS';
 $id_plan_filtro = isset($_GET['plan']) ? $_GET['plan'] : 'TODOS';
-$cobros_estado_filtro = isset($_GET['estado_cobros']) ? $_GET['estado_cobros'] : 'TODOS'; 
+$cobros_estado_filtro = isset($_GET['estado_cobros']) ? $_GET['estado_cobros'] : 'TODOS';
 $id_olt_filtro = isset($_GET['olt']) ? $_GET['olt'] : 'TODOS';
-$id_pon_filtro = isset($_GET['pon']) ? $_GET['pon'] : 'TODOS'; 
+$id_pon_filtro = isset($_GET['pon']) ? $_GET['pon'] : 'TODOS';
 
 $clientes = [];
 $total_clientes = 0;
@@ -20,12 +20,12 @@ $municipios = $conn->query("SELECT id_municipio, nombre_municipio FROM municipio
 $vendedores = $conn->query("SELECT id_vendedor, nombre_vendedor FROM vendedores ORDER BY nombre_vendedor")->fetch_all(MYSQLI_ASSOC);
 $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan")->fetch_all(MYSQLI_ASSOC);
 $estados_contrato = ['ACTIVO', 'INACTIVO', 'SUSPENDIDO', 'CANCELADO'];
-$estados_cobros = ['PENDIENTE', 'VENCIDO', 'PAGADO', 'TODOS']; 
+$estados_cobros = ['PENDIENTE', 'VENCIDO', 'PAGADO', 'TODOS'];
 $olts = $conn->query("SELECT id_olt, nombre_olt FROM olt ORDER BY nombre_olt")->fetch_all(MYSQLI_ASSOC);
 $pons = $conn->query("SELECT id_pon, nombre_pon FROM pon ORDER BY nombre_pon")->fetch_all(MYSQLI_ASSOC);
 
 // Carga condicional de parroquias
-$parroquias_filtradas = []; 
+$parroquias_filtradas = [];
 if ($id_municipio_filtro !== 'TODOS') {
     $stmt_parroquias = $conn->prepare("SELECT id_parroquia, nombre_parroquia FROM parroquia WHERE id_municipio = ? ORDER BY nombre_parroquia");
     if ($stmt_parroquias) {
@@ -38,9 +38,9 @@ if ($id_municipio_filtro !== 'TODOS') {
 }
 
 // 2. CONSTRUCCIÓN DINÁMICA DE LA CLÁUSULA WHERE
-$where_clause = " WHERE 1=1 "; 
-$params = []; 
-$types = ''; 
+$where_clause = " WHERE 1=1 ";
+$params = [];
+$types = '';
 
 // Para reportes de clientes, siempre necesitamos JOINs
 $join_clause = "
@@ -101,7 +101,7 @@ if ($id_pon_filtro !== 'TODOS') {
     $types .= 'i';
 }
 if ($cobros_estado_filtro !== 'TODOS') {
-    $join_clause .= " INNER JOIN cuentas_por_cobrar cxc ON c.id = cxc.id_contrato "; 
+    $join_clause .= " INNER JOIN cuentas_por_cobrar cxc ON c.id = cxc.id_contrato ";
     $where_clause .= " AND cxc.estado = ? ";
     $params[] = $cobros_estado_filtro;
     $types .= 's';
@@ -124,7 +124,7 @@ $sql = "
 $stmt = $conn->prepare($sql);
 
 if (!empty($params)) {
-    $stmt->bind_param($types, ...$params); 
+    $stmt->bind_param($types, ...$params);
 }
 
 $stmt->execute();
@@ -138,18 +138,21 @@ if ($resultado->num_rows > 0) {
 // --- TEMPLATE START ---
 $path_to_root = "../../";
 $page_title = "Reporte de Clientes";
+$breadcrumb = ["Reportes"];
+$back_url = "../menu.php";
 include $path_to_root . 'paginas/includes/layout_head.php';
 ?>
 
 <main class="main-content">
     <?php include $path_to_root . 'paginas/includes/header.php'; ?>
-    
+
     <div class="page-content">
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
-                 <h2 class="h4 fw-bold mb-1 text-primary">Análisis de Cartera de Clientes</h2>
-                 <p class="text-muted mb-0">Total Encontrado: <span class="fw-bold text-dark"><?php echo number_format($total_clientes, 0, ',', '.'); ?></span></p>
+                <h2 class="h4 fw-bold mb-1 text-primary">Análisis de Cartera de Clientes</h2>
+                <p class="text-muted mb-0">Total Encontrado: <span
+                        class="fw-bold text-dark"><?php echo number_format($total_clientes, 0, ',', '.'); ?></span></p>
             </div>
             <a href="../menu.php" class="btn btn-outline-secondary">
                 <i class="fa-solid fa-arrow-left me-2"></i>Volver al Menú
@@ -158,26 +161,30 @@ include $path_to_root . 'paginas/includes/layout_head.php';
 
         <!-- Filtros -->
         <div class="card border-0 shadow-sm mb-4">
-             <div class="card-header bg-white border-bottom">
-                 <h6 class="mb-0 fw-bold text-primary"><i class="fa-solid fa-filter me-2"></i>Criterios de Búsqueda Avanzada</h6>
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fa-solid fa-filter me-2"></i>Criterios de Búsqueda
+                    Avanzada</h6>
             </div>
             <div class="card-body p-4 bg-light">
                 <form method="GET" class="row g-3">
-                    
+
                     <!-- 🔍 NUEVO: Barra de Búsqueda Principal -->
                     <div class="col-12 mb-2">
-                        <label for="busqueda" class="form-label fw-semibold text-secondary small text-uppercase">Búsqueda General</label>
+                        <label for="busqueda"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Búsqueda General</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
-                            <input type="text" class="form-control border-start-0 ps-0" id="busqueda" name="busqueda" 
-                                   value="<?php echo htmlspecialchars($busqueda_filtro); ?>" 
-                                   placeholder="Nombre, Cédula, IP o Teléfono...">
+                            <span class="input-group-text bg-white border-end-0"><i
+                                    class="fa-solid fa-search text-muted"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="busqueda" name="busqueda"
+                                value="<?php echo htmlspecialchars($busqueda_filtro); ?>"
+                                placeholder="Nombre, Cédula, IP o Teléfono...">
                         </div>
                     </div>
 
                     <!-- Estado Contrato -->
-                     <div class="col-md-3">
-                        <label for="estado_contrato" class="form-label fw-semibold text-secondary small text-uppercase">Estado Contrato</label>
+                    <div class="col-md-3">
+                        <label for="estado_contrato"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Estado Contrato</label>
                         <select name="estado_contrato" id="estado_contrato" class="form-select bg-white">
                             <option value="TODOS">TODOS</option>
                             <?php foreach ($estados_contrato as $estado): ?>
@@ -190,7 +197,8 @@ include $path_to_root . 'paginas/includes/layout_head.php';
 
                     <!-- Municipio -->
                     <div class="col-md-3">
-                        <label for="municipio" class="form-label fw-semibold text-secondary small text-uppercase">Municipio</label>
+                        <label for="municipio"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Municipio</label>
                         <select name="municipio" id="municipio" class="form-select bg-white">
                             <option value="TODOS">TODOS</option>
                             <?php foreach ($municipios as $m): ?>
@@ -203,10 +211,11 @@ include $path_to_root . 'paginas/includes/layout_head.php';
 
                     <!-- Parroquia -->
                     <div class="col-md-3">
-                        <label for="parroquia" class="form-label fw-semibold text-secondary small text-uppercase">Parroquia</label>
+                        <label for="parroquia"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Parroquia</label>
                         <select name="parroquia" id="parroquia" class="form-select bg-white">
                             <option value="TODOS">TODOS</option>
-                            <?php 
+                            <?php
                             if (!empty($parroquias_filtradas)):
                                 foreach ($parroquias_filtradas as $p): ?>
                                     <option value="<?php echo $p['id_parroquia']; ?>" <?php echo ($id_parroquia_filtro == $p['id_parroquia']) ? 'selected' : ''; ?>>
@@ -220,7 +229,8 @@ include $path_to_root . 'paginas/includes/layout_head.php';
 
                     <!-- Plan -->
                     <div class="col-md-3">
-                         <label for="plan" class="form-label fw-semibold text-secondary small text-uppercase">Plan</label>
+                        <label for="plan"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Plan</label>
                         <select name="plan" id="plan" class="form-select bg-white">
                             <option value="TODOS">TODOS</option>
                             <?php foreach ($planes as $pl): ?>
@@ -233,7 +243,8 @@ include $path_to_root . 'paginas/includes/layout_head.php';
 
                     <!-- Vendedor -->
                     <div class="col-md-3">
-                        <label for="vendedor" class="form-label fw-semibold text-secondary small text-uppercase">Vendedor</label>
+                        <label for="vendedor"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Vendedor</label>
                         <select name="vendedor" id="vendedor" class="form-select bg-white">
                             <option value="TODOS">TODOS</option>
                             <?php foreach ($vendedores as $v): ?>
@@ -243,10 +254,10 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    
+
                     <!-- OLT -->
                     <div class="col-md-3">
-                         <label for="olt" class="form-label fw-semibold text-secondary small text-uppercase">OLT</label>
+                        <label for="olt" class="form-label fw-semibold text-secondary small text-uppercase">OLT</label>
                         <select name="olt" id="olt" class="form-select bg-white">
                             <option value="TODOS">TODOS</option>
                             <?php foreach ($olts as $o): ?>
@@ -269,11 +280,12 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    
+
                     <!-- Estado Cobranza -->
                     <div class="col-md-3">
-                        <label for="estado_cobros" class="form-label fw-semibold text-secondary small text-uppercase">Estado Deuda</label>
-                         <select name="estado_cobros" id="estado_cobros" class="form-select bg-white">
+                        <label for="estado_cobros"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Estado Deuda</label>
+                        <select name="estado_cobros" id="estado_cobros" class="form-select bg-white">
                             <option value="TODOS">TODOS</option>
                             <?php foreach ($estados_cobros as $est): ?>
                                 <option value="<?php echo $est; ?>" <?php echo ($cobros_estado_filtro === $est) ? 'selected' : ''; ?>>
@@ -285,12 +297,12 @@ include $path_to_root . 'paginas/includes/layout_head.php';
 
                     <!-- Botones -->
                     <div class="col-12 d-flex justify-content-between align-items-center mt-4 border-top pt-3">
-                         <a href="reporte_clientes.php" class="btn btn-outline-secondary">
-                             <i class="fa-solid fa-redo me-2"></i>Limpiar
-                         </a>
-                         <button type="button" onclick="this.form.submit()" class="btn btn-primary px-5">
-                             <i class="fa-solid fa-filter me-2"></i>Filtrar Resultados
-                         </button>
+                        <a href="reporte_clientes.php" class="btn btn-outline-secondary">
+                            <i class="fa-solid fa-redo me-2"></i>Limpiar
+                        </a>
+                        <button type="button" onclick="this.form.submit()" class="btn btn-primary px-5">
+                            <i class="fa-solid fa-filter me-2"></i>Filtrar Resultados
+                        </button>
                     </div>
                 </form>
             </div>
@@ -298,73 +310,97 @@ include $path_to_root . 'paginas/includes/layout_head.php';
 
         <!-- Botones de Exportación -->
         <div class="d-flex justify-content-end mb-3 gap-2">
-                 <a href="exportar_clientes_pdf.php?<?php echo http_build_query($_GET); ?>" class="btn btn-danger shadow-sm" target="_blank">
-                    <i class="fa-solid fa-file-pdf me-2"></i>Exportar PDF
-                </a>
-                <a href="exportar_clientes_excel.php?<?php echo http_build_query($_GET); ?>" class="btn btn-success shadow-sm">
-                    <i class="fa-solid fa-file-excel me-2"></i>Exportar Excel
-                </a>
+            <a href="exportar_clientes_pdf.php?<?php echo http_build_query($_GET); ?>" class="btn btn-danger shadow-sm"
+                target="_blank">
+                <i class="fa-solid fa-file-pdf me-2"></i>Exportar PDF
+            </a>
+            <a href="exportar_clientes_excel.php?<?php echo http_build_query($_GET); ?>"
+                class="btn btn-success shadow-sm">
+                <i class="fa-solid fa-file-excel me-2"></i>Exportar Excel
+            </a>
         </div>
 
         <?php if ($total_clientes > 0): ?>
             <!-- Tabla Resultados -->
-             <div class="card border-0 shadow-lg mb-4">
-                 <div class="card-body p-0">
-                     <div class="table-responsive">
+            <div class="card border-0 shadow-lg mb-4">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0 table-sm">
                             <thead class="bg-light">
                                 <tr>
                                     <th class="ps-3 text-secondary text-uppercase small fw-bold">ID</th>
                                     <th class="text-secondary text-uppercase small fw-bold">Cliente</th>
                                     <th class="text-secondary text-uppercase small fw-bold">Cédula</th>
-                                     <th class="text-secondary text-uppercase small fw-bold">Teléfono</th>
+                                    <th class="text-secondary text-uppercase small fw-bold">Teléfono</th>
                                     <th class="text-secondary text-uppercase small fw-bold">Ubicación</th>
                                     <th class="text-secondary text-uppercase small fw-bold">Plan</th>
                                     <th class="text-secondary text-uppercase small fw-bold">Red</th>
                                     <th class="text-center text-secondary text-uppercase small fw-bold">Estado</th>
                                 </tr>
                             </thead>
-                             <tbody>
+                            <tbody>
                                 <?php foreach ($clientes as $fila): ?>
-                                <tr>
-                                    <td class="ps-3 fw-medium text-muted small">#<?php echo htmlspecialchars($fila['id']); ?></td>
-                                    <td>
-                                        <div class="fw-bold text-dark"><?php echo htmlspecialchars($fila['nombre_completo']); ?></div>
-                                        <div class="small text-muted"><?php echo htmlspecialchars($fila['ip']); ?></div>
-                                    </td>
-                                    <td class="text-nowrap"><?php echo htmlspecialchars($fila['cedula']); ?></td>
-                                     <td class="text-nowrap"><?php echo htmlspecialchars($fila['telefono']); ?></td>
-                                    <td>
-                                        <div class="d-block small text-dark"><?php echo htmlspecialchars($fila['municipio'] ?? '-'); ?></div>
-                                        <div class="d-block text-muted" style="font-size: 0.75rem;"><?php echo htmlspecialchars($fila['parroquia'] ?? '-'); ?></div>
-                                    </td>
-                                    <td><span class="badge bg-light text-dark border"><?php echo htmlspecialchars($fila['plan'] ?? '-'); ?></span></td>
-                                    <td>
-                                        <div class="d-block small text-dark"><?php echo htmlspecialchars($fila['olt_nombre'] ?? '-'); ?></div>
-                                        <div class="d-block text-muted" style="font-size: 0.75rem;"><?php echo htmlspecialchars($fila['pon_nombre'] ?? '-'); ?></div>
-                                    </td>
-                                    <td class="text-center">
-                                       <span class="badge bg-<?php 
+                                    <tr>
+                                        <td class="ps-3 fw-medium text-muted small">
+                                            #<?php echo htmlspecialchars($fila['id']); ?></td>
+                                        <td>
+                                            <div class="fw-bold text-dark">
+                                                <?php echo htmlspecialchars($fila['nombre_completo']); ?>
+                                            </div>
+                                            <div class="small text-muted"><?php echo htmlspecialchars($fila['ip']); ?></div>
+                                        </td>
+                                        <td class="text-nowrap"><?php echo htmlspecialchars($fila['cedula']); ?></td>
+                                        <td class="text-nowrap"><?php echo htmlspecialchars($fila['telefono']); ?></td>
+                                        <td>
+                                            <div class="d-block small text-dark">
+                                                <?php echo htmlspecialchars($fila['municipio'] ?? '-'); ?>
+                                            </div>
+                                            <div class="d-block text-muted" style="font-size: 0.75rem;">
+                                                <?php echo htmlspecialchars($fila['parroquia'] ?? '-'); ?>
+                                            </div>
+                                        </td>
+                                        <td><span
+                                                class="badge bg-light text-dark border"><?php echo htmlspecialchars($fila['plan'] ?? '-'); ?></span>
+                                        </td>
+                                        <td>
+                                            <div class="d-block small text-dark">
+                                                <?php echo htmlspecialchars($fila['olt_nombre'] ?? '-'); ?>
+                                            </div>
+                                            <div class="d-block text-muted" style="font-size: 0.75rem;">
+                                                <?php echo htmlspecialchars($fila['pon_nombre'] ?? '-'); ?>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-<?php
                                             switch ($fila['estado_contrato']) {
-                                                case 'ACTIVO': echo 'success'; break;
-                                                case 'SUSPENDIDO': echo 'warning text-dark'; break;
-                                                case 'INACTIVO': echo 'secondary'; break;
-                                                case 'CANCELADO': echo 'danger'; break;
-                                                default: echo 'info';
+                                                case 'ACTIVO':
+                                                    echo 'success';
+                                                    break;
+                                                case 'SUSPENDIDO':
+                                                    echo 'warning text-dark';
+                                                    break;
+                                                case 'INACTIVO':
+                                                    echo 'secondary';
+                                                    break;
+                                                case 'CANCELADO':
+                                                    echo 'danger';
+                                                    break;
+                                                default:
+                                                    echo 'info';
                                             }
-                                        ?>">
-                                            <?php echo htmlspecialchars($fila['estado_contrato']); ?>
-                                        </span>
-                                    </td>
-                                </tr>
+                                            ?>">
+                                                <?php echo htmlspecialchars($fila['estado_contrato']); ?>
+                                            </span>
+                                        </td>
+                                    </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
-                     </div>
-                 </div>
-             </div>
+                    </div>
+                </div>
+            </div>
         <?php else: ?>
-             <div class="alert alert-warning shadow-sm border-0 text-center py-4">
+            <div class="alert alert-warning shadow-sm border-0 text-center py-4">
                 <i class="fa-solid fa-triangle-exclamation fa-2x mb-3 text-warning d-block"></i>
                 <h5 class="fw-bold text-dark">No se encontraron clientes</h5>
                 <p class="text-muted mb-0">No hay coincidencias con los filtros actuales.</p>
@@ -374,14 +410,14 @@ include $path_to_root . 'paginas/includes/layout_head.php';
 </main>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const selectMunicipio = document.getElementById('municipio');
         const selectParroquia = document.getElementById('parroquia');
-        
+
         // Guardar el valor de la parroquia seleccionada en el filtro inicial
         const parroquiaFiltroInicial = selectParroquia.value;
 
-        selectMunicipio.addEventListener('change', function() {
+        selectMunicipio.addEventListener('change', function () {
             const idMunicipio = this.value;
 
             // Limpiar el select de Parroquias, manteniendo la opción 'TODOS'
@@ -396,26 +432,26 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                             const option = document.createElement('option');
                             option.value = parroquia.id_parroquia;
                             option.textContent = parroquia.nombre_parroquia;
-                            
+
                             // Si estamos en la carga inicial y el municipio fue cambiado por JS, 
                             // necesitamos que la parroquia filtrada se mantenga seleccionada.
                             if (parroquia.id_parroquia == parroquiaFiltroInicial) {
                                 option.selected = true;
                             }
-                            
+
                             selectParroquia.appendChild(option);
                         });
                     })
                     .catch(error => console.error('Error al obtener parroquias:', error));
             }
         });
-        
+
         // Ejecutar el evento 'change' en la carga inicial si hay un municipio preseleccionado
         // Esto asegura que si el usuario regresa con filtros aplicados, la lista de parroquias sea correcta.
         if (selectMunicipio.value !== 'TODOS' && selectParroquia.options.length <= 1) {
             selectMunicipio.dispatchEvent(new Event('change'));
         }
-        
+
     });
 </script>
 

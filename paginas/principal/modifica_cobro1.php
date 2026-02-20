@@ -57,6 +57,8 @@ $stmt_select->close();
 // Configuración Layout
 $path_to_root = "../../";
 $page_title = "Modificar Cobro #" . $id_cobro;
+$breadcrumb = ["Cobranzas", "Gestión de Mensualidades y Pagos"];
+$back_url = "gestion_mensualidades.php?maintenance_done=1";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>

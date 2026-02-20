@@ -5,6 +5,8 @@
  */
 $path_to_root = "../../";
 $page_title = "Gestión de Fallas Técnicas";
+$breadcrumb = ["Soporte"];
+$back_url = "../menu.php";
 require_once $path_to_root . 'paginas/conexion.php';
 require_once $path_to_root . 'paginas/includes/layout_head.php';
 require_once $path_to_root . 'paginas/includes/sidebar.php';

@@ -3,6 +3,9 @@
 require_once 'conexion.php';
 
 $path_to_root = "../";
+$page_title = "Gestión de Planes";
+$breadcrumb = ["Admin"];
+$back_url = "menu.php";
 include $path_to_root . 'paginas/includes/layout_head.php';
 include $path_to_root . 'paginas/includes/sidebar.php';
 include $path_to_root . 'paginas/includes/header.php';
@@ -10,7 +13,7 @@ include $path_to_root . 'paginas/includes/header.php';
 $message = '';
 $message_class = '';
 $action = isset($_GET['action']) ? $_GET['action'] : '';
-$stmt = null; 
+$stmt = null;
 
 // Variables para la búsqueda
 $search_term = isset($_GET['search']) ? $_GET['search'] : '';
@@ -35,13 +38,13 @@ if ($action === 'delete_plan' && isset($_GET['id'])) {
 
 // --- LÓGICA DE MODIFICACIÓN (PROCESAR FORMULARIO POST) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_plan'])) {
-    $id = $_POST['id_plan_update']; 
+    $id = $_POST['id_plan_update'];
     $nombre = $_POST['nombre_plan'];
     $monto = $_POST['monto'];
     $descripcion = $_POST['descripcion'];
-    
+
     $monto_float = str_replace(',', '.', $monto);
-    
+
     $stmt = $conn->prepare("UPDATE planes SET nombre_plan = ?, monto = ?, descripcion = ? WHERE id_plan = ?");
     $stmt->bind_param("sssi", $nombre, $monto_float, $descripcion, $id);
 
@@ -57,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_plan'])) {
         $message = "Error al actualizar el plan: " . $stmt->error;
         $message_class = 'error';
     }
-    
+
     if ($stmt) {
         $stmt->close();
     }
@@ -119,9 +122,11 @@ if (isset($_GET['message'])) {
 
             <!-- Alertas -->
             <?php if ($message): ?>
-                <div class="alert alert-<?php echo $message_class === 'success' ? 'success' : ($message_class === 'warning' ? 'warning' : 'danger'); ?> alert-dismissible fade show shadow-sm" role="alert">
+                <div class="alert alert-<?php echo $message_class === 'success' ? 'success' : ($message_class === 'warning' ? 'warning' : 'danger'); ?> alert-dismissible fade show shadow-sm"
+                    role="alert">
                     <div class="d-flex align-items-center gap-2">
-                        <i class="fa-solid <?php echo $message_class === 'success' ? 'fa-circle-check' : ($message_class === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-xmark'); ?>"></i>
+                        <i
+                            class="fa-solid <?php echo $message_class === 'success' ? 'fa-circle-check' : ($message_class === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-xmark'); ?>"></i>
                         <div><?php echo htmlspecialchars($message); ?></div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -139,9 +144,9 @@ if (isset($_GET['message'])) {
                                     <span class="input-group-text bg-white border-end-0 text-muted">
                                         <i class="fa-solid fa-magnifying-glass"></i>
                                     </span>
-                                    <input type="text" name="search" class="form-control border-start-0 ps-0" 
-                                           placeholder="Buscar por nombre de plan..." 
-                                           value="<?php echo htmlspecialchars($search_term); ?>">
+                                    <input type="text" name="search" class="form-control border-start-0 ps-0"
+                                        placeholder="Buscar por nombre de plan..."
+                                        value="<?php echo htmlspecialchars($search_term); ?>">
                                 </div>
                             </div>
                             <div class="col-md-2">
@@ -166,10 +171,13 @@ if (isset($_GET['message'])) {
                                 <?php if (!empty($data)): ?>
                                     <?php foreach ($data as $row): ?>
                                         <tr>
-                                            <td class="ps-4 fw-medium text-secondary">#<?php echo htmlspecialchars($row['id_plan']); ?></td>
-                                            <td class="fw-bold text-dark"><?php echo htmlspecialchars($row['nombre_plan']); ?></td>
+                                            <td class="ps-4 fw-medium text-secondary">
+                                                #<?php echo htmlspecialchars($row['id_plan']); ?></td>
+                                            <td class="fw-bold text-dark"><?php echo htmlspecialchars($row['nombre_plan']); ?>
+                                            </td>
                                             <td>
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">
+                                                <span
+                                                    class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">
                                                     $<?php echo htmlspecialchars($row['monto']); ?>
                                                 </span>
                                             </td>
@@ -178,23 +186,19 @@ if (isset($_GET['message'])) {
                                             </td>
                                             <td class="text-end pe-4">
                                                 <div class="btn-group gap-2">
-                                                    <button type="button" 
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#modalModificacionPlan"
-                                                            data-id="<?php echo htmlspecialchars($row['id_plan']); ?>"
-                                                            data-nombre="<?php echo htmlspecialchars($row['nombre_plan']); ?>"
-                                                            data-monto="<?php echo htmlspecialchars($row['monto']); ?>"
-                                                            data-descripcion="<?php echo htmlspecialchars($row['descripcion']); ?>"
-                                                            class="btn btn-sm btn-outline-primary rounded-2" 
-                                                            title="Modificar">
+                                                    <button type="button" data-bs-toggle="modal"
+                                                        data-bs-target="#modalModificacionPlan"
+                                                        data-id="<?php echo htmlspecialchars($row['id_plan']); ?>"
+                                                        data-nombre="<?php echo htmlspecialchars($row['nombre_plan']); ?>"
+                                                        data-monto="<?php echo htmlspecialchars($row['monto']); ?>"
+                                                        data-descripcion="<?php echo htmlspecialchars($row['descripcion']); ?>"
+                                                        class="btn btn-sm btn-outline-primary rounded-2" title="Modificar">
                                                         <i class="fa-solid fa-pen-to-square"></i>
                                                     </button>
-                                                    <button type="button" 
-                                                            data-bs-href="gestion_planes.php?action=delete_plan&id=<?php echo urlencode($row['id_plan']); ?>" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#eliminaModal" 
-                                                            class="btn btn-sm btn-outline-danger rounded-2" 
-                                                            title="Eliminar">
+                                                    <button type="button"
+                                                        data-bs-href="gestion_planes.php?action=delete_plan&id=<?php echo urlencode($row['id_plan']); ?>"
+                                                        data-bs-toggle="modal" data-bs-target="#eliminaModal"
+                                                        class="btn btn-sm btn-outline-danger rounded-2" title="Eliminar">
                                                         <i class="fa-solid fa-trash-can"></i>
                                                     </button>
                                                 </div>
@@ -216,7 +220,7 @@ if (isset($_GET['message'])) {
                     </div>
                 </div>
             </div>
-            
+
             <div class="mt-4 text-center">
                 <a href="../menu.php" class="btn btn-outline-secondary px-4">
                     <i class="fa-solid fa-arrow-left me-2"></i>Volver al Menú
@@ -224,7 +228,7 @@ if (isset($_GET['message'])) {
             </div>
         </div>
     </div>
-    
+
     <?php include $path_to_root . 'paginas/includes/layout_foot.php'; ?>
 </main>
 
@@ -236,33 +240,41 @@ if (isset($_GET['message'])) {
                 <h5 class="modal-title fw-bold" id="modalModificacionPlanLabel">
                     <i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar Plan
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <form id="form-modificacion-plan" action="gestion_planes.php" method="POST" novalidate>
                 <div class="modal-body p-4">
                     <input type="hidden" name="update_plan" value="1">
                     <input type="hidden" name="id_plan_update" id="id_plan_modal" value="">
-                    
+
                     <div class="mb-3">
-                        <label for="nombre_plan_modal" class="form-label fw-semibold text-secondary small text-uppercase">Nombre del Plan</label>
-                        <input type="text" id="nombre_plan_modal" name="nombre_plan" class="form-control" required placeholder="Ej: Fibra 100MB"> 
+                        <label for="nombre_plan_modal"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Nombre del Plan</label>
+                        <input type="text" id="nombre_plan_modal" name="nombre_plan" class="form-control" required
+                            placeholder="Ej: Fibra 100MB">
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="monto_modal" class="form-label fw-semibold text-secondary small text-uppercase">Monto (USD)</label>
+                        <label for="monto_modal"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Monto (USD)</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" id="monto_modal" name="monto" step="0.01" class="form-control" required placeholder="0.00"> 
+                            <input type="number" id="monto_modal" name="monto" step="0.01" class="form-control" required
+                                placeholder="0.00">
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="descripcion_modal" class="form-label fw-semibold text-secondary small text-uppercase">Descripción</label>
-                        <textarea id="descripcion_modal" name="descripcion" class="form-control" rows="3" placeholder="Detalles del servicio..."></textarea> 
+                        <label for="descripcion_modal"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Descripción</label>
+                        <textarea id="descripcion_modal" name="descripcion" class="form-control" rows="3"
+                            placeholder="Detalles del servicio..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-top-0 py-3">
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-secondary px-4"
+                        data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" id="btn-actualizar-plan" class="btn btn-primary px-4">Actualizar</button>
                 </div>
             </form>
@@ -282,7 +294,8 @@ if (isset($_GET['message'])) {
                 <p class="text-muted small mb-4">Esta acción no se puede deshacer.</p>
                 <div class="d-grid gap-2">
                     <a class="btn btn-danger btn-ok fw-medium">Eliminar</a>
-                    <button type="button" class="btn btn-light text-secondary fw-medium" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-light text-secondary fw-medium"
+                        data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -295,7 +308,7 @@ if (isset($_GET['message'])) {
     if (eliminaModal) {
         eliminaModal.addEventListener('shown.bs.modal', event => {
             let button = event.relatedTarget
-            let url = button.getAttribute('data-bs-href') 
+            let url = button.getAttribute('data-bs-href')
             eliminaModal.querySelector('.btn-ok').href = url
         })
     }
@@ -305,19 +318,19 @@ if (isset($_GET['message'])) {
 
     if (modalModificacionPlan) {
         modalModificacionPlan.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget; 
-            
+            const button = event.relatedTarget;
+
             const id = button.getAttribute('data-id');
             const nombre = button.getAttribute('data-nombre');
             const monto = button.getAttribute('data-monto');
             const descripcion = button.getAttribute('data-descripcion');
-            
+
             document.getElementById('modalModificacionPlanLabel').innerHTML = `<i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar Plan: ${nombre}`;
             document.getElementById('id_plan_modal').value = id;
             document.getElementById('nombre_plan_modal').value = nombre;
             document.getElementById('monto_modal').value = parseFloat(monto).toFixed(2);
             document.getElementById('descripcion_modal').value = descripcion;
-            
+
             document.getElementById('form-modificacion-plan').classList.remove('was-validated');
         });
     }
@@ -327,9 +340,9 @@ if (isset($_GET['message'])) {
     const formModificacionPlan = document.getElementById('form-modificacion-plan');
 
     if (btnActualizarPlan && formModificacionPlan) {
-        btnActualizarPlan.addEventListener('click', function(event) {
+        btnActualizarPlan.addEventListener('click', function (event) {
             if (formModificacionPlan.checkValidity()) {
-                formModificacionPlan.submit(); 
+                formModificacionPlan.submit();
             } else {
                 formModificacionPlan.classList.add('was-validated');
             }

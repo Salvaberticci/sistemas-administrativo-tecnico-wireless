@@ -26,6 +26,8 @@ if ($bancos) {
 
 $path_to_root = "../../";
 $page_title = "Gestión de Mensualidades y Pagos";
+$breadcrumb = ["Cobranzas"];
+$back_url = "../menu.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>
@@ -422,14 +424,13 @@ require_once '../includes/sidebar.php';
             <div class="modal-body p-4 text-center">
                 <div class="mb-3 text-success"><i class="fas fa-check-circle fa-4x"></i></div>
                 <h5 class="fw-bold mb-2" id="modalExitoLabel">Operación Exitosa</h5>
-                <p class="text-muted mb-4" id="modal_exito_mensaje_principal">Acción completada.</p>
+                <p class="text-muted mb-4" id="modal_ex_mensaje_principal">Acción completada.</p>
                 <button type="button" class="btn btn-success w-100" data-bs-dismiss="modal">Aceptar</button>
             </div>
         </div>
     </div>
 </div>
 
-<?php require_once '../includes/layout_foot.php'; ?>
 
 <!-- Scripts JS -->
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
@@ -686,7 +687,7 @@ require_once '../includes/sidebar.php';
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('message') || urlParams.has('pago_exitoso') || urlParams.has('eliminacion_exitosa')) {
             var exitoModal = new bootstrap.Modal(document.getElementById('modalExito'));
-            document.getElementById('modal_exito_mensaje_principal').textContent = urlParams.get('message') || 'Operación realizada con éxito.';
+            document.getElementById('modal_ex_mensaje_principal').textContent = urlParams.get('message') || 'Operación realizada con éxito.';
             exitoModal.show();
             if (history.replaceState) {
                 var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?maintenance_done=1';
@@ -784,3 +785,5 @@ require_once '../includes/sidebar.php';
             .then(res => { if (res.success) { cargarBancos(); } else { alert('Error al eliminar'); } });
     };
 </script>
+
+<?php require_once '../includes/layout_foot.php'; ?>

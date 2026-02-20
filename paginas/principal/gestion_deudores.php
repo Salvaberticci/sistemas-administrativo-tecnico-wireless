@@ -6,6 +6,8 @@ require_once '../conexion.php';
 
 $path_to_root = "../../";
 $page_title = "Clientes Deudores";
+$breadcrumb = ["Cobranzas"];
+$back_url = "../menu.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>
@@ -17,7 +19,8 @@ require_once '../includes/sidebar.php';
 
     <div class="page-content">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
+            <div
+                class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
                 <div>
                     <h5 class="fw-bold text-danger mb-1">Clientes Deudores</h5>
                     <p class="text-muted small mb-0">Listado de clientes con saldos pendientes</p>
@@ -49,10 +52,10 @@ require_once '../includes/sidebar.php';
                                     WHERE d.estado = 'PENDIENTE'
                                     ORDER BY d.fecha_registro DESC";
                             $result = $conn->query($sql);
-                            
+
                             while ($row = $result->fetch_assoc()) {
                                 $estado_badge = '<span class="badge bg-danger">PENDIENTE</span>';
-                                    
+
                                 echo "<tr>
                                     <td>{$row['id']}</td>
                                     <td class='fw-bold'>{$row['nombre_completo']}</td>
@@ -79,7 +82,7 @@ require_once '../includes/sidebar.php';
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="d-flex justify-content-center mt-4">
                     <a href="../../paginas/menu.php" class="btn btn-outline-secondary">
                         <i class="fa-solid fa-arrow-left me-2"></i> Volver al Menú
@@ -90,35 +93,36 @@ require_once '../includes/sidebar.php';
     </div>
 </main>
 
-<?php require_once '../includes/layout_foot.php'; ?>
 
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 
 <script>
-$(document).ready(function() {
-    $('#tabla_deudores').DataTable({
-        "language": {
-            "lengthMenu": "Mostrar _MENU_",
-            "zeroRecords": "No hay deudores registrados",
-            "info": "_START_ - _END_ de _TOTAL_",
-            "search": "Buscar:",
-            "paginate": { "next": ">", "previous": "<" }
-        },
-        "order": [[7, "desc"]] // Ordenar por fecha descendente
-    });
-});
-
-function marcarPagado(id) {
-    if (confirm('¿Confirma que este cliente ha pagado su deuda?')) {
-        $.post('marcar_pagado.php', { id: id }, function(resp) {
-            if (resp === 'OK') {
-                alert('Cliente marcado como pagado');
-                location.reload();
-            } else {
-                alert('Error al actualizar');
-            }
+    $(document).ready(function () {
+        $('#tabla_deudores').DataTable({
+            "language": {
+                "lengthMenu": "Mostrar _MENU_",
+                "zeroRecords": "No hay deudores registrados",
+                "info": "_START_ - _END_ de _TOTAL_",
+                "search": "Buscar:",
+                "paginate": { "next": ">", "previous": "<" }
+            },
+            "order": [[7, "desc"]] // Ordenar por fecha descendente
         });
+    });
+
+    function marcarPagado(id) {
+        if (confirm('¿Confirma que este cliente ha pagado su deuda?')) {
+            $.post('marcar_pagado.php', { id: id }, function (resp) {
+                if (resp === 'OK') {
+                    alert('Cliente marcado como pagado');
+                    location.reload();
+                } else {
+                    alert('Error al actualizar');
+                }
+            });
+        }
     }
-}
 </script>
+
+<?php require_once '../includes/layout_foot.php'; ?>

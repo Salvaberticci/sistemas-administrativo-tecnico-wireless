@@ -6,6 +6,8 @@ require '../conexion.php';
 
 $path_to_root = "../../";
 $page_title = "Gestión de Contratos";
+$breadcrumb = ["Admin"];
+$back_url = "../menu.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>
@@ -812,10 +814,8 @@ require_once '../includes/sidebar.php';
 </div>
 
 
-<?php require_once '../includes/layout_foot.php'; ?>
 
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
-<script src="<?php echo $path_to_root; ?>js/bootstrap.bundle.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
@@ -1010,6 +1010,8 @@ require_once '../includes/sidebar.php';
         });
     });
 </script>
+
+<?php require_once '../includes/layout_foot.php'; ?>
 
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -1404,33 +1406,33 @@ require_once '../includes/sidebar.php';
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                Swal.close();
-                if (data.success) {
-                    Swal.fire({
-                        title: 'Importación Exitosa',
-                        html: `<p>${data.message}</p>
+                .then(response => response.json())
+                .then(data => {
+                    Swal.close();
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Importación Exitosa',
+                            html: `<p>${data.message}</p>
                                <ul class="text-start">
                                    <li>Actualizados: <b>${data.stats.updated}</b></li>
                                    <li>Nuevos: <b>${data.stats.inserted}</b></li>
                                    <li>Errores: <b class="text-danger">${data.stats.errors}</b></li>
                                </ul>`,
-                        icon: 'success'
-                    }).then(() => {
-                        // Recargar la tabla o la página para ver cambios
-                        location.reload(); 
-                    });
-                    $('#modalImportExcel').modal('hide');
-                    $('#formImportExcel')[0].reset();
-                } else {
-                    Swal.fire('Error', data.message, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire('Error', 'Error de conexión al importar.', 'error');
-            });
+                            icon: 'success'
+                        }).then(() => {
+                            // Recargar la tabla o la página para ver cambios
+                            location.reload();
+                        });
+                        $('#modalImportExcel').modal('hide');
+                        $('#formImportExcel')[0].reset();
+                    } else {
+                        Swal.fire('Error', data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'Error de conexión al importar.', 'error');
+                });
         });
 
         // --- UBICACIONES ---

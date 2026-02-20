@@ -32,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $path_to_root = "../";
 $page_title = "Registro de Planes";
+$breadcrumb = ["Admin", "Gestión de Planes"];
+$back_url = "gestion_planes.php";
 require_once 'includes/layout_head.php';
 require_once 'includes/sidebar.php';
 ?>
@@ -41,7 +43,8 @@ require_once 'includes/sidebar.php';
 
     <div class="page-content">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
+            <div
+                class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
                 <div>
                     <h5 class="fw-bold text-primary mb-1">Registro de Plan</h5>
                     <p class="text-muted small mb-0">Crear nuevo plan de servicio</p>
@@ -50,7 +53,8 @@ require_once 'includes/sidebar.php';
 
             <div class="card-body px-4">
                 <?php if ($message): ?>
-                    <div class="alert alert-<?php echo $message_class === 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert">
+                    <div class="alert alert-<?php echo $message_class === 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show"
+                        role="alert">
                         <?php echo htmlspecialchars($message); ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
@@ -61,17 +65,17 @@ require_once 'includes/sidebar.php';
                         <label for="nombre_plan" class="form-label">Nombre del Plan</label>
                         <input type="text" class="form-control" id="nombre_plan" name="nombre_plan" required autofocus>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <label for="monto" class="form-label">Monto (USD)</label>
                         <input type="number" class="form-control" id="monto" name="monto" step="0.01" required>
                     </div>
-                    
+
                     <div class="col-12">
                         <label for="descripcion" class="form-label">Descripción</label>
                         <textarea class="form-control" id="descripcion" name="descripcion" rows="4"></textarea>
                     </div>
-                    
+
                     <div class="col-12">
                         <a href="gestion_planes.php" class="btn btn-secondary">Volver</a>
                         <button type="submit" class="btn btn-success">Registrar Plan</button>

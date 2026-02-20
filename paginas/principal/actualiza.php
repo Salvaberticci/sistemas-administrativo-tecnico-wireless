@@ -111,6 +111,8 @@ if (empty($errores)) {
 // Configuración del Layout
 $path_to_root = "../../";
 $page_title = "Actualización de Contrato";
+$breadcrumb = ["Admin", "Gestión de Contratos"];
+$back_url = "gestion_contratos.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>

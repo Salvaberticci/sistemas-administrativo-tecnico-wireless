@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_banco'])) {
     $numero_cuenta = $_POST['numero_cuenta'];
     $cedula_propietario = $_POST['cedula_propietario'];
     $nombre_propietario = $_POST['nombre_propietario'];
-    
+
     // Asegúrate de que el número de parámetros de bind_param coincida con los '?' en el UPDATE
     $stmt = $conn->prepare("UPDATE bancos SET nombre_banco = ?, numero_cuenta = ?, cedula_propietario = ?, nombre_propietario = ? WHERE id_banco = ?");
     $stmt->bind_param("ssssi", $nombre_banco, $numero_cuenta, $cedula_propietario, $nombre_propietario, $id);
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_banco'])) {
         $message = "Error al actualizar el banco: " . $stmt->error;
         $message_class = 'error';
     }
-    
+
     if ($stmt) {
         $stmt->close();
     }
@@ -97,6 +97,8 @@ if (isset($_GET['message'])) {
 ?>
 <?php
 $page_title = "Gestión de Bancos";
+$breadcrumb = ["Admin"];
+$back_url = "menu.php";
 require_once 'includes/layout_head.php';
 require_once 'includes/sidebar.php';
 ?>
@@ -105,9 +107,10 @@ require_once 'includes/sidebar.php';
     <?php include 'includes/header.php'; ?>
 
     <div class="page-content">
-        
+
         <?php if ($message): ?>
-            <div class="alert alert-<?php echo $message_class == 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert">
+            <div class="alert alert-<?php echo $message_class == 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show"
+                role="alert">
                 <?php echo htmlspecialchars($message); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -118,7 +121,8 @@ require_once 'includes/sidebar.php';
                 <h5 class="mb-3 mb-md-0">Listado de Bancos</h5>
                 <div class="d-flex gap-2 w-100 w-md-auto">
                     <form action="gestion_bancos.php" method="GET" class="d-flex gap-2 flex-grow-1 header-search">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Buscar..." value="<?php echo htmlspecialchars($search_term); ?>">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Buscar..."
+                            value="<?php echo htmlspecialchars($search_term); ?>">
                         <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-search"></i></button>
                     </form>
                     <a href="registro_bancos.php" class="btn btn-primary btn-sm text-nowrap">
@@ -126,7 +130,7 @@ require_once 'includes/sidebar.php';
                     </a>
                 </div>
             </div>
-            
+
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
@@ -146,36 +150,35 @@ require_once 'includes/sidebar.php';
                                     <tr>
                                         <td class="ps-4 text-muted">#<?php echo htmlspecialchars($row['id_banco']); ?></td>
                                         <td class="fw-bold"><?php echo htmlspecialchars($row['nombre_banco']); ?></td>
-                                        <td class="font-monospace text-muted"><?php echo htmlspecialchars($row['numero_cuenta']); ?></td>
+                                        <td class="font-monospace text-muted">
+                                            <?php echo htmlspecialchars($row['numero_cuenta']); ?></td>
                                         <td><?php echo htmlspecialchars($row['cedula_propietario']); ?></td>
                                         <td><?php echo htmlspecialchars($row['nombre_propietario']); ?></td>
                                         <td class="text-end pe-4">
-                                           <div class="btn-group">
-                                                <a href="#" 
-                                                   data-bs-toggle="modal"
-                                                   data-bs-target="#modalModificacionBanco"
-                                                   data-id="<?php echo htmlspecialchars($row['id_banco']); ?>"
-                                                   data-nombre="<?php echo htmlspecialchars($row['nombre_banco']); ?>"
-                                                   data-cuenta="<?php echo htmlspecialchars($row['numero_cuenta']); ?>"
-                                                   data-cedula="<?php echo htmlspecialchars($row['cedula_propietario']); ?>"
-                                                   data-propietario="<?php echo htmlspecialchars($row['nombre_propietario']); ?>"
-                                                   class="btn btn-light btn-sm text-primary" title="Modificar">
-                                                   <i class="fa-solid fa-pen"></i>
+                                            <div class="btn-group">
+                                                <a href="#" data-bs-toggle="modal" data-bs-target="#modalModificacionBanco"
+                                                    data-id="<?php echo htmlspecialchars($row['id_banco']); ?>"
+                                                    data-nombre="<?php echo htmlspecialchars($row['nombre_banco']); ?>"
+                                                    data-cuenta="<?php echo htmlspecialchars($row['numero_cuenta']); ?>"
+                                                    data-cedula="<?php echo htmlspecialchars($row['cedula_propietario']); ?>"
+                                                    data-propietario="<?php echo htmlspecialchars($row['nombre_propietario']); ?>"
+                                                    class="btn btn-light btn-sm text-primary" title="Modificar">
+                                                    <i class="fa-solid fa-pen"></i>
                                                 </a>
-                                                <a href="#" 
-                                                   data-bs-href="gestion_bancos.php?action=delete_banco&id=<?php echo urlencode($row['id_banco']); ?>" 
-                                                   data-bs-toggle="modal" 
-                                                   data-bs-target="#eliminaModal" 
-                                                   class="btn btn-light btn-sm text-danger" 
-                                                   title="Eliminar">
-                                                   <i class="fa-solid fa-trash"></i>
+                                                <a href="#"
+                                                    data-bs-href="gestion_bancos.php?action=delete_banco&id=<?php echo urlencode($row['id_banco']); ?>"
+                                                    data-bs-toggle="modal" data-bs-target="#eliminaModal"
+                                                    class="btn btn-light btn-sm text-danger" title="Eliminar">
+                                                    <i class="fa-solid fa-trash"></i>
                                                 </a>
-                                           </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <tr><td colspan="6" class="text-center p-4 text-muted">No se encontraron bancos.</td></tr>
+                                <tr>
+                                    <td colspan="6" class="text-center p-4 text-muted">No se encontraron bancos.</td>
+                                </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -197,25 +200,32 @@ require_once 'includes/sidebar.php';
                 <div class="modal-body">
                     <input type="hidden" name="update_banco" value="1">
                     <input type="hidden" name="id_banco_update" id="id_banco_modal" value="">
-                    
+
                     <div class="mb-3">
-                        <label for="nombre_banco_modal" class="form-label small text-muted fw-bold text-uppercase">Nombre del Banco</label>
-                        <input type="text" id="nombre_banco_modal" name="nombre_banco" class="form-control" required> 
+                        <label for="nombre_banco_modal"
+                            class="form-label small text-muted fw-bold text-uppercase">Nombre del Banco</label>
+                        <input type="text" id="nombre_banco_modal" name="nombre_banco" class="form-control" required>
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="numero_cuenta_modal" class="form-label small text-muted fw-bold text-uppercase">Número de Cuenta</label>
-                        <input type="text" id="numero_cuenta_modal" name="numero_cuenta" class="form-control font-monospace" required> 
+                        <label for="numero_cuenta_modal"
+                            class="form-label small text-muted fw-bold text-uppercase">Número de Cuenta</label>
+                        <input type="text" id="numero_cuenta_modal" name="numero_cuenta"
+                            class="form-control font-monospace" required>
                     </div>
 
                     <div class="row">
                         <div class="col-md-5 mb-3">
-                            <label for="cedula_propietario_modal" class="form-label small text-muted fw-bold text-uppercase">Cédula</label>
-                            <input type="text" id="cedula_propietario_modal" name="cedula_propietario" class="form-control" required> 
+                            <label for="cedula_propietario_modal"
+                                class="form-label small text-muted fw-bold text-uppercase">Cédula</label>
+                            <input type="text" id="cedula_propietario_modal" name="cedula_propietario"
+                                class="form-control" required>
                         </div>
                         <div class="col-md-7 mb-3">
-                            <label for="nombre_propietario_modal" class="form-label small text-muted fw-bold text-uppercase">Propietario</label>
-                            <input type="text" id="nombre_propietario_modal" name="nombre_propietario" class="form-control" required> 
+                            <label for="nombre_propietario_modal"
+                                class="form-label small text-muted fw-bold text-uppercase">Propietario</label>
+                            <input type="text" id="nombre_propietario_modal" name="nombre_propietario"
+                                class="form-control" required>
                         </div>
                     </div>
                 </div>
@@ -255,7 +265,7 @@ require_once 'includes/sidebar.php';
     if (eliminaModal) {
         eliminaModal.addEventListener('shown.bs.modal', event => {
             let button = event.relatedTarget
-            let url = button.getAttribute('data-bs-href') 
+            let url = button.getAttribute('data-bs-href')
             eliminaModal.querySelector('.btn-ok').href = url
         })
     }
@@ -264,20 +274,20 @@ require_once 'includes/sidebar.php';
     const modalModificacionBanco = document.getElementById('modalModificacionBanco');
     if (modalModificacionBanco) {
         modalModificacionBanco.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget; 
+            const button = event.relatedTarget;
             const id = button.getAttribute('data-id');
             const nombre = button.getAttribute('data-nombre');
             const cuenta = button.getAttribute('data-cuenta');
             const cedula = button.getAttribute('data-cedula');
             const propietario = button.getAttribute('data-propietario');
-            
+
             document.getElementById('modalModificacionBancoLabel').textContent = `Editar Banco`;
             document.getElementById('id_banco_modal').value = id;
             document.getElementById('nombre_banco_modal').value = nombre;
             document.getElementById('numero_cuenta_modal').value = cuenta;
             document.getElementById('cedula_propietario_modal').value = cedula;
             document.getElementById('nombre_propietario_modal').value = propietario;
-            
+
             document.getElementById('form-modificacion-banco').classList.remove('was-validated');
         });
     }
@@ -286,12 +296,12 @@ require_once 'includes/sidebar.php';
     const btnActualizarBanco = document.getElementById('btn-actualizar-banco');
     const formModificacionBanco = document.getElementById('form-modificacion-banco');
     if (btnActualizarBanco && formModificacionBanco) {
-        btnActualizarBanco.addEventListener('click', function(event) {
+        btnActualizarBanco.addEventListener('click', function (event) {
             if (formModificacionBanco.checkValidity()) {
                 formModificacionBanco.submit();
             } else {
                 formModificacionBanco.classList.add('was-validated');
-                formModificacionBanco.reportValidity(); 
+                formModificacionBanco.reportValidity();
             }
         });
     }

@@ -4,6 +4,8 @@ require_once '../conexion.php';
 
 $path_to_root = "../../";
 $page_title = "Conciliación Bancaria (Excel vs Capture)";
+$breadcrumb = ["Cobranzas"];
+$back_url = "../menu.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>

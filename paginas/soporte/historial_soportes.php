@@ -3,6 +3,9 @@
 // Listado de soportes técnicos realizados
 
 $path_to_root = "../../";
+$page_title = "Historial de Soportes";
+$breadcrumb = ["Soporte"];
+$back_url = "../menu.php";
 include_once $path_to_root . 'paginas/conexion.php';
 include $path_to_root . 'paginas/includes/layout_head.php';
 include $path_to_root . 'paginas/includes/sidebar.php';
@@ -27,7 +30,8 @@ include $path_to_root . 'paginas/includes/header.php';
 
             <!-- Alertas -->
             <?php if (isset($_GET['status'])): ?>
-                <div class="alert alert-<?php echo $_GET['status'] == 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert">
+                <div class="alert alert-<?php echo $_GET['status'] == 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show"
+                    role="alert">
                     <?php echo isset($_GET['msg']) ? htmlspecialchars($_GET['msg']) : ''; ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -76,7 +80,8 @@ include $path_to_root . 'paginas/includes/header.php';
                 </div>
                 <div class="mb-3">
                     <label for="monto_abono" class="form-label fw-bold">Monto a Abonar ($)</label>
-                    <input type="number" step="0.01" min="0.01" class="form-control" name="monto_abono" id="monto_abono" required>
+                    <input type="number" step="0.01" min="0.01" class="form-control" name="monto_abono" id="monto_abono"
+                        required>
                 </div>
             </div>
             <div class="modal-footer">
@@ -97,7 +102,7 @@ include $path_to_root . 'paginas/includes/header.php';
             </div>
             <div class="modal-body">
                 <input type="hidden" name="id_soporte_edit" id="id_soporte_edit">
-                
+
                 <div class="mb-3">
                     <label for="fecha_edit" class="form-label">Fecha</label>
                     <input type="date" class="form-control" name="fecha_edit" id="fecha_edit" required>
@@ -111,13 +116,16 @@ include $path_to_root . 'paginas/includes/header.php';
 
                 <div class="mb-3">
                     <label for="descripcion_edit" class="form-label">Descripción</label>
-                    <textarea class="form-control" name="descripcion_edit" id="descripcion_edit" rows="3" required></textarea>
+                    <textarea class="form-control" name="descripcion_edit" id="descripcion_edit" rows="3"
+                        required></textarea>
                 </div>
 
                 <div class="mb-3">
                     <label for="monto_total_edit" class="form-label fw-bold">Monto Total ($)</label>
-                    <input type="number" step="0.01" min="0" class="form-control" name="monto_total_edit" id="monto_total_edit" required>
-                    <div class="form-text text-muted">Nota: Al modificar el total, la deuda del cliente se recalculará automáticamente.</div>
+                    <input type="number" step="0.01" min="0" class="form-control" name="monto_total_edit"
+                        id="monto_total_edit" required>
+                    <div class="form-text text-muted">Nota: Al modificar el total, la deuda del cliente se recalculará
+                        automáticamente.</div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -134,13 +142,16 @@ include $path_to_root . 'paginas/includes/header.php';
         <form action="eliminar_soporte.php" method="POST" class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title">Eliminar Soporte</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" name="id_soporte_eliminar" id="id_soporte_eliminar">
                 <p class="fw-bold">¿Estás seguro de eliminar el soporte #<span id="txt_id_eliminar"></span>?</p>
                 <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i> <strong>Advertencia:</strong> Esta acción también eliminará cualquier deuda o cobro asociado a este soporte en el módulo de cobranzas. Esta acción es irreversible.
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Advertencia:</strong> Esta acción también
+                    eliminará cualquier deuda o cobro asociado a este soporte en el módulo de cobranzas. Esta acción es
+                    irreversible.
                 </div>
             </div>
             <div class="modal-footer">
@@ -156,118 +167,119 @@ include $path_to_root . 'paginas/includes/header.php';
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script>
-$(document).ready(function() {
-    $('#tablaSoportes').DataTable({
-        "order": [[ 0, "desc" ]],
-        "bProcessing": true,
-        "bServerSide": true,
-        "sAjaxSource": "server_process_soportes.php", 
-        "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
-        },
-        "aoColumnDefs": [
-            { "mData": 0, "aTargets": [0] }, // ID
-            { "mData": 1, "aTargets": [1] }, // Fecha
-            { "mData": 2, "aTargets": [2] }, // Cliente
-            { "mData": 3, "aTargets": [3] }, // Descripción
-            { "mData": 4, "aTargets": [4] }, // Técnico
-            { 
-                "mData": 5, 
-                "aTargets": [5],
-                "mRender": function(data, type, row) {
-                    return '$' + parseFloat(data).toFixed(2);
-                }
-            }, // Total
-            { 
-                "mData": 6, 
-                "aTargets": [6],
-                "mRender": function(data, type, row) {
-                    return '$' + parseFloat(data).toFixed(2);
-                }
-            }, // Pagado
-            { 
-                "mData": 7, // Deuda / Estado
-                "aTargets": [7],
-                "mRender": function(data, type, row) {
-                    var total = parseFloat(row[5]);
-                    var pagado = parseFloat(row[6]);
-                    
-                    if (pagado >= (total - 0.01)) {
-                        return '<span class="badge bg-success">Pagado</span>';
-                    } else {
-                        var deuda = total - pagado;
-                        return '<span class="badge bg-danger">Debe: $' + deuda.toFixed(2) + '</span>';
-                    }
-                }
+    $(document).ready(function () {
+        $('#tablaSoportes').DataTable({
+            "order": [[0, "desc"]],
+            "bProcessing": true,
+            "bServerSide": true,
+            "sAjaxSource": "server_process_soportes.php",
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
             },
-            {
-                "mData": null, // Acciones
-                "aTargets": [8],
-                "bSortable": false,
-                "mRender": function(data, type, row) {
-                    var id = row[0];
-                    var fecha = row[1]; // DD/MM/YYYY
-                    var descripcion = row[3];
-                    var tecnico = row[4];
-                    var total = parseFloat(row[5]);
-                    var pagado = parseFloat(row[6]);
-                    var deuda = total - pagado;
-                    
-                    var btnEdit = `<button type="button" class="btn btn-sm btn-warning me-1" title="Editar"
+            "aoColumnDefs": [
+                { "mData": 0, "aTargets": [0] }, // ID
+                { "mData": 1, "aTargets": [1] }, // Fecha
+                { "mData": 2, "aTargets": [2] }, // Cliente
+                { "mData": 3, "aTargets": [3] }, // Descripción
+                { "mData": 4, "aTargets": [4] }, // Técnico
+                {
+                    "mData": 5,
+                    "aTargets": [5],
+                    "mRender": function (data, type, row) {
+                        return '$' + parseFloat(data).toFixed(2);
+                    }
+                }, // Total
+                {
+                    "mData": 6,
+                    "aTargets": [6],
+                    "mRender": function (data, type, row) {
+                        return '$' + parseFloat(data).toFixed(2);
+                    }
+                }, // Pagado
+                {
+                    "mData": 7, // Deuda / Estado
+                    "aTargets": [7],
+                    "mRender": function (data, type, row) {
+                        var total = parseFloat(row[5]);
+                        var pagado = parseFloat(row[6]);
+
+                        if (pagado >= (total - 0.01)) {
+                            return '<span class="badge bg-success">Pagado</span>';
+                        } else {
+                            var deuda = total - pagado;
+                            return '<span class="badge bg-danger">Debe: $' + deuda.toFixed(2) + '</span>';
+                        }
+                    }
+                },
+                {
+                    "mData": null, // Acciones
+                    "aTargets": [8],
+                    "bSortable": false,
+                    "mRender": function (data, type, row) {
+                        var id = row[0];
+                        var fecha = row[1]; // DD/MM/YYYY
+                        var descripcion = row[3];
+                        var tecnico = row[4];
+                        var total = parseFloat(row[5]);
+                        var pagado = parseFloat(row[6]);
+                        var deuda = total - pagado;
+
+                        var btnEdit = `<button type="button" class="btn btn-sm btn-warning me-1" title="Editar"
                         onclick="abrirEditar('${id}', '${fecha}', '${descripcion}', '${tecnico}', '${total}')">
                         <i class="fas fa-edit"></i></button>`;
-                    
-                    var btnPay = '';
-                    if (deuda > 0.01) {
-                        btnPay = `<button type="button" class="btn btn-sm btn-success me-1" title="Abonar"
+
+                        var btnPay = '';
+                        if (deuda > 0.01) {
+                            btnPay = `<button type="button" class="btn btn-sm btn-success me-1" title="Abonar"
                             onclick="abrirAbonar('${id}', '${deuda.toFixed(2)}')">
                             <i class="fas fa-dollar-sign"></i></button>`;
-                    }
+                        }
 
-                    var btnDel = `<button type="button" class="btn btn-sm btn-danger" title="Eliminar"
+                        var btnDel = `<button type="button" class="btn btn-sm btn-danger" title="Eliminar"
                         onclick="abrirEliminar('${id}')">
                         <i class="fas fa-trash-alt"></i></button>`;
 
-                    return '<div class="d-flex justify-content-center">' + btnEdit + btnPay + btnDel + '</div>';
+                        return '<div class="d-flex justify-content-center">' + btnEdit + btnPay + btnDel + '</div>';
+                    }
                 }
-            }
-        ]
+            ]
+        });
     });
-});
 
-function abrirAbonar(id, deuda) {
-    $('#id_soporte_abono').val(id);
-    $('#txt_id_soporte').text(id);
-    $('#txt_deuda_actual').text(deuda);
-    $('#monto_abono').attr('max', deuda); // No permitir pagar más de la deuda
-    var modal = new bootstrap.Modal(document.getElementById('modalAbonar'));
-    modal.show();
-}
-
-function abrirEditar(id, fecha, descripcion, tecnico, total) {
-    // Convertir fecha de DD/MM/YYYY a YYYY-MM-DD para el input date
-    var parts = fecha.split('/');
-    var fechaISO = '';
-    if (parts.length === 3) {
-        fechaISO = parts[2] + '-' + parts[1] + '-' + parts[0];
+    function abrirAbonar(id, deuda) {
+        $('#id_soporte_abono').val(id);
+        $('#txt_id_soporte').text(id);
+        $('#txt_deuda_actual').text(deuda);
+        $('#monto_abono').attr('max', deuda); // No permitir pagar más de la deuda
+        var modal = new bootstrap.Modal(document.getElementById('modalAbonar'));
+        modal.show();
     }
 
-    $('#id_soporte_edit').val(id);
-    $('#fecha_edit').val(fechaISO);
-    $('#tecnico_edit').val(tecnico);
-    $('#descripcion_edit').val(descripcion);
-    $('#monto_total_edit').val(total); // Asignar el total actual
-    
-    var modal = new bootstrap.Modal(document.getElementById('modalEditar'));
-    modal.show();
-}
+    function abrirEditar(id, fecha, descripcion, tecnico, total) {
+        // Convertir fecha de DD/MM/YYYY a YYYY-MM-DD para el input date
+        var parts = fecha.split('/');
+        var fechaISO = '';
+        if (parts.length === 3) {
+            fechaISO = parts[2] + '-' + parts[1] + '-' + parts[0];
+        }
 
-function abrirEliminar(id) {
-    $('#id_soporte_eliminar').val(id);
-    $('#txt_id_eliminar').text(id);
-    var modal = new bootstrap.Modal(document.getElementById('modalEliminar'));
-    modal.show();
-}
+        $('#id_soporte_edit').val(id);
+        $('#fecha_edit').val(fechaISO);
+        $('#tecnico_edit').val(tecnico);
+        $('#descripcion_edit').val(descripcion);
+        $('#monto_total_edit').val(total); // Asignar el total actual
+
+        var modal = new bootstrap.Modal(document.getElementById('modalEditar'));
+        modal.show();
+    }
+
+    function abrirEliminar(id) {
+        $('#id_soporte_eliminar').val(id);
+        $('#txt_id_eliminar').text(id);
+        var modal = new bootstrap.Modal(document.getElementById('modalEliminar'));
+        modal.show();
+    }
 </script>
 </body>
+
 </html>

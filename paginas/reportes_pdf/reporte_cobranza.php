@@ -96,6 +96,8 @@ if ($stmt) {
 // --- TEMPLATE START ---
 $path_to_root = "../../";
 $page_title = "Reporte de Cobranzas";
+$breadcrumb = ["Reportes"];
+$back_url = "../menu.php";
 include $path_to_root . 'paginas/includes/layout_head.php';
 ?>
 
@@ -241,7 +243,8 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                                         <td class="fw-bold text-dark"><?php echo htmlspecialchars($fila['cliente']); ?></td>
                                         <td><?php echo htmlspecialchars($fila['fecha_emision']); ?></td>
                                         <td class="<?php echo $is_vencido ? 'text-danger fw-bold' : ''; ?>">
-                                            <?php echo htmlspecialchars($fila['fecha_vencimiento']); ?></td>
+                                            <?php echo htmlspecialchars($fila['fecha_vencimiento']); ?>
+                                        </td>
                                         <td class="text-center">
                                             <?php
                                             if ($fila['estado'] !== 'PAGADO' && $fila['dias_vencido'] > 0) {

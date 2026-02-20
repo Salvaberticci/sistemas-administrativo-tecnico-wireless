@@ -4,6 +4,7 @@ require_once 'conexion.php';
 
 $path_to_root = "../";
 $page_title = "Gestión de OLTs";
+$breadcrumb = ["Técnica"];
 $back_url = "menu.php";
 include $path_to_root . 'paginas/includes/layout_head.php';
 include $path_to_root . 'paginas/includes/sidebar.php';
@@ -271,10 +272,10 @@ $conn->close();
                                             </td>
                                             <td class="text-end pe-4">
                                                 <div class="btn-group gap-2">
-                                                            <?php
-                                                            $olt_id = $row['id_olt'];
-                                                            $assigned_ids = isset($assigned_parroquias[$olt_id]) ? json_encode($assigned_parroquias[$olt_id]) : '[]';
-                                                            ?>
+                                                    <?php
+                                                    $olt_id = $row['id_olt'];
+                                                    $assigned_ids = isset($assigned_parroquias[$olt_id]) ? json_encode($assigned_parroquias[$olt_id]) : '[]';
+                                                    ?>
                                                     <button type="button" data-bs-toggle="modal"
                                                         data-bs-target="#modalModificacionOLT"
                                                         data-id="<?php echo htmlspecialchars($olt_id); ?>"
