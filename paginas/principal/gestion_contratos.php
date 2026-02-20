@@ -86,6 +86,18 @@ require_once '../includes/sidebar.php';
                         data-bs-toggle="modal" data-bs-target="#modalStats" id="btnOpenStats">
                         <i class="fa-solid fa-chart-pie"></i> <span class="d-none d-md-inline">Estadísticas</span>
                     </button>
+                    <!-- BOTONES EXCEL NUEVOS -->
+                    <div class="vr mx-1"></div>
+                    <button type="button" class="btn btn-success d-flex align-items-center gap-2 shadow-sm"
+                        onclick="exportExcel()">
+                        <i class="fa-solid fa-file-excel"></i> <span class="d-none d-md-inline">Exportar</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-success d-flex align-items-center gap-2 shadow-sm"
+                        data-bs-toggle="modal" data-bs-target="#modalImportExcel">
+                        <i class="fa-solid fa-file-import"></i> <span class="d-none d-md-inline">Importar</span>
+                    </button>
+                    <div class="vr mx-1"></div>
+
                     <button type="button" class="btn btn-outline-info d-flex align-items-center gap-2"
                         data-bs-toggle="modal" data-bs-target="#modalTipos">
                         <i class="fa-solid fa-tags"></i> <span class="d-none d-md-inline">Editar Tipos de
@@ -767,14 +779,100 @@ require_once '../includes/sidebar.php';
         </div>
     </div>
 </div>
+<!-- Modal Importar Excel -->
+<div class="modal fade" id="modalImportExcel" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-excel me-2"></i>Importar Contratos</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-info border-0 shadow-sm small">
+                    <i class="fa-solid fa-circle-info me-2"></i>
+                    Sube un archivo Excel (.xlsx) con los datos de los contratos.
+                    Asegúrate de que las columnas coincidan con el formato de exportación.
+                </div>
+
+                <form id="formImportExcel" action="importar_excel_contratos.php" method="POST"
+                    enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Archivo Excel</label>
+                        <input type="file" name="archivo_excel" class="form-control" accept=".xlsx, .xls" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success shadow-sm">
+                            <i class="fa-solid fa-upload me-2"></i> Cargar y Procesar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 <?php require_once '../includes/layout_foot.php'; ?>
 
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
+<script src="<?php echo $path_to_root; ?>js/bootstrap.bundle.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 
 <script>
+    // --- EXPORTAR EXCEL ---
+    async function exportExcel() {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Contratos');
+
+        // Obtener headers de la tabla (excluyendo columnas ocultas si se desea, aquí tomamos todos los visibles en el DOM de headers)
+        const headers = [];
+        document.querySelectorAll('#mitabla thead th').forEach(th => {
+            headers.push(th.innerText.trim());
+        });
+
+        // Estilo Header
+        const headerRow = worksheet.addRow(headers);
+        headerRow.eachCell((cell) => {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: '003366' } // Azul oscuro corporativo
+            };
+            cell.font = {
+                color: { argb: 'FFFFFF' },
+                bold: true
+            };
+            cell.alignment = { horizontal: 'center' };
+        });
+
+        // Obtener datos (usando DataTables API si es posible, o DOM fallback)
+        // Usamos la instancia DataTable para obtener TODOS los datos, no solo la página actual
+        const table = $('#mitabla').DataTable();
+        const data = table.rows({ search: 'applied' }).data().toArray(); // Obtiene datos filtrados
+
+        data.forEach(rowData => {
+            worksheet.addRow(rowData);
+        });
+
+        // Ajustar ancho de columnas (simple auto-width)
+        worksheet.columns.forEach(column => {
+            column.width = 20;
+        });
+
+        // Generar archivo
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Contratos_Wireless_' + new Date().toISOString().split('T')[0] + '.xlsx';
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    // Configuración DataTables original
     $(document).ready(function () {
         var table = $('#mitabla').DataTable({
             "scrollX": true,      // Habilitar scroll horizontal nativo de DataTables
