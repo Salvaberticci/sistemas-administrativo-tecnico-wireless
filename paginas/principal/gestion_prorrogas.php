@@ -446,8 +446,8 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
                 {
                     "data": "id_prorroga", "className": "text-end", "render": function (id, type, row) {
                         return `<div class="btn-group">
-                            <button class="btn btn-sm btn-outline-info" onclick="verDetalle(${id})"><i class="fa-solid fa-eye"></i></button>
-                            ${row.estado == 'PENDIENTE' ? `<button class="btn btn-sm btn-outline-success" onclick="procesarPago(${id})"><i class="fa-solid fa-dollar-sign"></i></button>` : ''}
+                            ${row.estado == 'PENDIENTE' ? `<button class="btn btn-sm btn-outline-success" title="Procesar Pago" onclick="procesarPago(${id})"><i class="fa-solid fa-dollar-sign"></i></button>` : ''}
+                            <button class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="eliminarProrroga(${id})"><i class="fa-solid fa-trash"></i></button>
                         </div>`;
                     }
                 }
@@ -502,8 +502,38 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
         }
     });
 
-    function verDetalle(id) {
-        // Implementar visualización si se requiere
+    function eliminarProrroga(id) {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('eliminar_prorroga.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        Swal.fire('Eliminado', res.message, 'success');
+                        $('#tabla_prorrogas').DataTable().ajax.reload();
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                });
+            }
+        });
     }
 
     function procesarPago(id) {
