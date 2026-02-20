@@ -189,7 +189,7 @@ if (!isset($path_fix)) {
                 <?php if (isset($back_url)): ?>
                     <a href="<?php echo $back_url; ?>" class="btn btn-sm btn-light border shadow-sm py-1 px-2 text-dark"
                         title="Volver">
-                        <i class="fa-solid fa-arrow-left me-1"></i> Salida
+                        <i class="fa-solid fa-arrow-left me-1"></i> Volver
                     </a>
                 <?php endif; ?>
                 <i class="fa-solid fa-angle-right opacity-50 small <?php echo isset($back_url) ? 'd-none' : ''; ?>"></i>
