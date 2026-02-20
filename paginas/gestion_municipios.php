@@ -150,7 +150,6 @@ if ($stmt) {
 }
 $conn->close();
 
-?>
 $page_title = "Gestión de Ubicaciones";
 $back_url = "menu.php";
 require_once 'includes/layout_head.php';
