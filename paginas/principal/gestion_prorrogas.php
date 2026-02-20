@@ -518,7 +518,63 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
     }
 
     function exportExcel() {
-        window.location.href = 'exportar_prorrogas_excel.php';
+        // Obtener datos actuales de la tabla (o de una API)
+        fetch('get_prorrogas_data.php')
+            .then(r => r.json())
+            .then(res => {
+                const data = res.data.filter(r => r.tipo_solicitud === 'PRORROGA');
+                
+                // Preparar matriz de datos para XLSX
+                const wb = XLSX.utils.book_new();
+                
+                // 1. Título y Mes (Fila 1)
+                const header1 = [
+                    "Galanet-Prórroga " + new Date().getFullYear(), "", "", "", "", "", 
+                    new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date()).toUpperCase()
+                ];
+                
+                // 2. Cabeceras (Fila 2)
+                const header2 = ["CEDULA", "NOMBRE", "SAEPLUS", "CORTE", "PRORROGA", "REGULAR?", "CARGADO"];
+                
+                // 3. Filas de Datos
+                const rows = data.map(r => [
+                    r.cedula_titular || '',
+                    r.nombre_titular || '',
+                    r.existe_saeplus || 'NO',
+                    r.fecha_corte ? new Date(r.fecha_corte + ' 00:00:00').getDate() : '',
+                    r.dia_prorroga || '',
+                    r.prorroga_regular || 'SI',
+                    r.estado || 'PENDIENTE'
+                ]);
+
+                // Combinar todo en una sola hoja
+                const ws_data = [header1, header2, ...rows];
+                const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+                // Configurar anchos de columna (Sincronizado con imagen)
+                ws['!cols'] = [
+                    { wch: 15 }, // CEDULA
+                    { wch: 45 }, // NOMBRE
+                    { wch: 10 }, // SAEPLUS
+                    { wch: 10 }, // CORTE
+                    { wch: 12 }, // PRORROGA
+                    { wch: 12 }, // REGULAR?
+                    { wch: 15 }  // CARGADO
+                ];
+
+                // Hacer que la primera fila se vea bien uniendo celdas para el título
+                if(!ws['!merges']) ws['!merges'] = [];
+                ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }); // Unir desde A1 hasta F1 para el título
+
+                XLSX.utils.book_append_sheet(wb, ws, "Prórrogas");
+                
+                // Generar y descargar XLSX
+                XLSX.writeFile(wb, "Galanet-Prorroga_" + new Date().getFullYear() + ".xlsx");
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error al obtener datos para exportar');
+            });
     }
 
     // Lógica de Importación de Excel
