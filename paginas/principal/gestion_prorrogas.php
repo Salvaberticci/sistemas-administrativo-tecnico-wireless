@@ -421,6 +421,7 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
     $(document).ready(function () {
         var table = $('#tabla_prorrogas').DataTable({
@@ -517,63 +518,105 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
             });
     }
 
-    function exportExcel() {
-        // Obtener datos actuales de la tabla (o de una API)
+    async function exportExcel() {
         fetch('get_prorrogas_data.php')
             .then(r => r.json())
-            .then(res => {
+            .then(async res => {
                 const data = res.data.filter(r => r.tipo_solicitud === 'PRORROGA');
-                
-                // Preparar matriz de datos para XLSX
-                const wb = XLSX.utils.book_new();
-                
+
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('Prórrogas');
+
                 // 1. Título y Mes (Fila 1)
-                const header1 = [
-                    "Galanet-Prórroga " + new Date().getFullYear(), "", "", "", "", "", 
-                    new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date()).toUpperCase()
-                ];
-                
+                const monthName = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date()).toUpperCase();
+                worksheet.mergeCells('A1:F1');
+                const titleCell = worksheet.getCell('A1');
+                titleCell.value = "Galanet-Prórroga " + new Date().getFullYear();
+                titleCell.font = { name: 'Arial', family: 4, size: 14, bold: true };
+                titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
+
+                const monthCell = worksheet.getCell('G1');
+                monthCell.value = monthName;
+                monthCell.font = { name: 'Arial', family: 4, size: 12, bold: true };
+                monthCell.alignment = { vertical: 'middle', horizontal: 'right' };
+
                 // 2. Cabeceras (Fila 2)
-                const header2 = ["CEDULA", "NOMBRE", "SAEPLUS", "CORTE", "PRORROGA", "REGULAR?", "CARGADO"];
-                
+                const headers = ["CEDULA", "NOMBRE", "SAEPLUS", "CORTE", "PRORROGA", "REGULAR?", "CARGADO"];
+                const headerRow = worksheet.getRow(2);
+                headerRow.values = headers;
+                headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+                headerRow.eachCell((cell) => {
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FF1E4D2B' } // Verde oscuro tipo imagen
+                    };
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                });
+
                 // 3. Filas de Datos
-                const rows = data.map(r => [
-                    r.cedula_titular || '',
-                    r.nombre_titular || '',
-                    r.existe_saeplus || 'NO',
-                    r.fecha_corte ? new Date(r.fecha_corte + ' 00:00:00').getDate() : '',
-                    r.dia_prorroga || '',
-                    r.prorroga_regular || 'SI',
-                    r.estado || 'PENDIENTE'
-                ]);
+                data.forEach((r, index) => {
+                    const row = worksheet.addRow([
+                        r.cedula_titular || '',
+                        r.nombre_titular || '',
+                        r.existe_saeplus || 'NO',
+                        r.fecha_corte ? new Date(r.fecha_corte + ' 00:00:00').getDate() : '',
+                        r.dia_prorroga || '',
+                        r.prorroga_regular || 'SI',
+                        r.estado || 'PENDIENTE'
+                    ]);
 
-                // Combinar todo en una sola hoja
-                const ws_data = [header1, header2, ...rows];
-                const ws = XLSX.utils.aoa_to_sheet(ws_data);
+                    row.eachCell((cell, colNumber) => {
+                        cell.border = {
+                            top: { style: 'thin' },
+                            left: { style: 'thin' },
+                            bottom: { style: 'thin' },
+                            right: { style: 'thin' }
+                        };
 
-                // Configurar anchos de columna (Sincronizado con imagen)
-                ws['!cols'] = [
-                    { wch: 15 }, // CEDULA
-                    { wch: 45 }, // NOMBRE
-                    { wch: 10 }, // SAEPLUS
-                    { wch: 10 }, // CORTE
-                    { wch: 12 }, // PRORROGA
-                    { wch: 12 }, // REGULAR?
-                    { wch: 15 }  // CARGADO
-                ];
+                        // Colores por estado en la última columna
+                        if (colNumber === 7) {
+                            const status = (r.estado || 'PENDIENTE').toUpperCase();
+                            if (status === 'PROCESADO') {
+                                cell.font = { color: { argb: 'FF157347' }, bold: true }; // Verde éxito
+                            } else if (status === 'RECHAZADO') {
+                                cell.font = { color: { argb: 'FFBB2D3B' }, bold: true }; // Rojo error
+                            } else {
+                                cell.font = { color: { argb: 'FF6C757D' }, bold: true }; // Gris pendiente
+                            }
+                        }
+                    });
+                });
 
-                // Hacer que la primera fila se vea bien uniendo celdas para el título
-                if(!ws['!merges']) ws['!merges'] = [];
-                ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }); // Unir desde A1 hasta F1 para el título
+                // Configurar anchos de columna
+                worksheet.getColumn(1).width = 15; // CEDULA
+                worksheet.getColumn(2).width = 45; // NOMBRE
+                worksheet.getColumn(3).width = 10; // SAEPLUS
+                worksheet.getColumn(4).width = 10; // CORTE
+                worksheet.getColumn(5).width = 12; // PRORROGA
+                worksheet.getColumn(6).width = 12; // REGULAR?
+                worksheet.getColumn(7).width = 15; // CARGADO
 
-                XLSX.utils.book_append_sheet(wb, ws, "Prórrogas");
-                
-                // Generar y descargar XLSX
-                XLSX.writeFile(wb, "Galanet-Prorroga_" + new Date().getFullYear() + ".xlsx");
+                // Descargar archivo
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "Galanet-Prorroga_" + new Date().getFullYear() + ".xlsx";
+                a.click();
+                window.URL.revokeObjectURL(url);
             })
             .catch(err => {
                 console.error(err);
-                alert('Error al obtener datos para exportar');
+                alert('Error al generar el Excel con estilos');
             });
     }
 
