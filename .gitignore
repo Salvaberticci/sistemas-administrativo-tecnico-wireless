@@ -1,6 +1,7 @@
 # Dependencias
 vendor/
 dompdf/
+node_modules/
 
 # Archivos de Datos y Uploads
 uploads/
@@ -9,10 +10,19 @@ db/
 *.json
 !composer.json
 !composer.lock
+!package.json
+!package-lock.json
 !db_locations.json
 !paginas/soporte/data/opciones_soporte.json
 
 # Archivos Temporales y de Depuración
+*.txt
+*.log
+*.html
+temp.js
+check_syntax.js
+debug_pdf.php
+fix_indices.php
 paginas/check_cxc.php
 paginas/check_mensualidades.php
 debug_vendedores.php
@@ -20,3 +30,4 @@ insert_pedro.php
 
 # Configuraciones Sensibles
 paginas/config.php
+.env
