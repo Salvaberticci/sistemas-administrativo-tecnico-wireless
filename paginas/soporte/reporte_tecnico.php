@@ -87,7 +87,8 @@
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label fw-bold">IP Asignada</label>
-                                    <input type="text" class="form-control" name="ip" placeholder="0.0.0.0">
+                                    <input type="text" class="form-control" id="rt_ip" name="ip" placeholder="0.0.0.0"
+                                        pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$">
                                 </div>
                             </div>
 
@@ -120,15 +121,18 @@
                             <div class="row text-center mb-3">
                                 <div class="col-4">
                                     <label class="form-label small">Bajada (MB)</label>
-                                    <input type="text" class="form-control" name="bw_bajada" placeholder="00">
+                                    <input type="text" class="form-control" id="bw_bajada" name="bw_bajada"
+                                        placeholder="00" inputmode="decimal" pattern="[0-9]+([.][0-9]+)?">
                                 </div>
                                 <div class="col-4">
                                     <label class="form-label small">Subida (MB)</label>
-                                    <input type="text" class="form-control" name="bw_subida" placeholder="00">
+                                    <input type="text" class="form-control" id="bw_subida" name="bw_subida"
+                                        placeholder="00" inputmode="decimal" pattern="[0-9]+([.][0-9]+)?">
                                 </div>
                                 <div class="col-4">
                                     <label class="form-label small">Ping (ms)</label>
-                                    <input type="text" class="form-control" name="bw_ping" placeholder="00 ms">
+                                    <input type="text" class="form-control" id="bw_ping" name="bw_ping"
+                                        placeholder="00 ms" inputmode="decimal" pattern="[0-9]+([.][0-9]+)?">
                                 </div>
                             </div>
                             <div class="mb-3">
@@ -147,7 +151,8 @@
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label">Valores (dBm)</label>
-                                    <input type="text" class="form-control" name="valores_antena" placeholder="Ej. -55">
+                                    <input type="text" class="form-control" id="valores_antena" name="valores_antena"
+                                        placeholder="Ej. -55" pattern="-?[0-9.]+">
                                 </div>
                             </div>
 
@@ -280,6 +285,29 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        // =================================================================
+        // VALIDACIÓN Y RESTRICCIÓN DE CAMPOS EN TIEMPO REAL
+        // =================================================================
+
+        // IP: solo dígitos y puntos
+        document.getElementById('rt_ip')?.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9.]/g, '');
+        });
+
+        // Ancho de banda y ping: solo dígitos y punto decimal
+        ['bw_bajada', 'bw_subida', 'bw_ping'].forEach(function (id) {
+            document.getElementById(id)?.addEventListener('input', function () {
+                this.value = this.value.replace(/[^0-9.]/g, '');
+            });
+        });
+
+        // Valores antena (dBm): dígitos, punto decimal y un guión inicial
+        document.getElementById('valores_antena')?.addEventListener('input', function () {
+            let val = this.value.replace(/[^0-9.-]/g, '');
+            if (val.indexOf('-') > 0) val = val.substring(0, val.indexOf('-')) + val.substring(val.indexOf('-') + 1);
+            this.value = val;
+        });
+
         // Inicializar Signature Pads
         const canvasTech = document.getElementById('sigTech');
         const canvasCli = document.getElementById('sigCli');

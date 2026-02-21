@@ -59,6 +59,10 @@ if (isset($_POST['id_banco']) && $_POST['id_banco'] != '') {
     $whereConditions[] = "cxc.id_banco = '" . $conn->real_escape_string($_POST['id_banco']) . "'";
 }
 
+if (isset($_POST['estado_sae']) && $_POST['estado_sae'] != '') {
+    $whereConditions[] = "cxc.estado_sae_plus = '" . $conn->real_escape_string($_POST['estado_sae']) . "'";
+}
+
 // Global Search
 if ($searchVal != "") {
     $searchValue = $conn->real_escape_string($searchVal);

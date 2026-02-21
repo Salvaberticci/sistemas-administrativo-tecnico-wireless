@@ -151,16 +151,15 @@ require_once '../includes/sidebar.php';
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label small fw-bold text-muted mb-1">Origen</label>
-                        <select class="form-select form-select-sm" id="filtro_origen">
-                            <option value="">Cualquier Origen</option>
-                            <option value="SISTEMA">Sistema (Manual)</option>
-                            <option value="LINK">Link (Web)</option>
+                        <label class="form-label small fw-bold text-muted mb-1">Estado SAE Plus</label>
+                        <select class="form-select form-select-sm" id="filtro_sae">
+                            <option value="">Cualquier Estado</option>
+                            <option value="NO CARGADO">No Cargado</option>
+                            <option value="CARGADO">Cargado</option>
                         </select>
                     </div>
-                    <div class="col-md-3 text-end">
-                        <p class="text-muted small mb-0"><i class="fas fa-info-circle me-1"></i> Use los filtros para
-                            buscar por fecha o cuenta.</p>
+                    <div class="col-md-1 text-end">
+                        <p class="text-muted small mb-0"><i class="fas fa-info-circle me-1"></i></p>
                     </div>
                 </div>
             </div>
@@ -571,6 +570,7 @@ require_once '../includes/sidebar.php';
                     d.fecha_fin = $('#fecha_fin').val();
                     d.id_banco = $('#filtro_cuenta').val();
                     d.origen = $('#filtro_origen').val();
+                    d.estado_sae = $('#filtro_sae').val();
                     d.sSearch = d.search.value; // Map modern search to legacy param
                 }
             },
@@ -581,7 +581,7 @@ require_once '../includes/sidebar.php';
             "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
         });
 
-        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen').on('change', function () {
+        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen, #filtro_sae').on('change', function () {
             tablaUnica.ajax.reload();
         });
 

@@ -110,14 +110,14 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
                                 <div class="col-md-6">
                                     <label class="form-label">Nombres y Apellidos <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="nombre" placeholder="Ej: Juan Pérez"
-                                        required>
+                                    <input type="text" class="form-control" id="nombre" name="nombre"
+                                        placeholder="Ej: Juan Pérez" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Número de Teléfono <span
                                             class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control" name="telefono" placeholder="Ej: 04121234567"
-                                        required>
+                                    <input type="tel" class="form-control" id="telefono" name="telefono"
+                                        placeholder="Ej: 04121234567" required pattern="[0-9+\-\s]{7,15}">
                                 </div>
                             </div>
 
@@ -155,71 +155,80 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
-                                <div class="col-md-6 d-none" id="div_referencia">
-                                    <label class="form-label">Número de Referencia <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="referencia" id="referencia"
-                                        placeholder="Últimos 4 o 6 dígitos">
-                                </div>
+                                <label class="form-label">Número de Referencia <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="referencia" id="referencia"
+                                    placeholder="Últimos 4 o 6 dígitos" inputmode="numeric" pattern="[0-9]{4,20}">
+                            </div>
 
-                                <div class="col-md-12">
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="paga_varios_meses"
-                                            name="paga_varios_meses">
-                                        <label class="form-check-label fw-bold" for="paga_varios_meses">¿Pagará más de
-                                            un mes?</label>
-                                    </div>
-                                    <div id="container_meses">
-                                        <label class="form-label">Concepto del Pago (Mes) <span
-                                                class="text-danger">*</span></label>
-                                        <select class="form-select selector-mes" name="meses[]" required>
-                                            <option value="">Seleccione mes...</option>
-                                        </select>
-                                    </div>
-                                    <div id="add_mes_btn" class="mt-2 d-none">
-                                        <button type="button" class="btn btn-sm btn-outline-primary"
-                                            onclick="agregarMes()">
-                                            <i class="fas fa-plus me-1"></i> Agregar otro mes
-                                        </button>
-                                    </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Monto Pagado (Bs) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">Bs.</span>
+                                    <input type="number" step="0.01" class="form-control fw-bold" name="monto_bs"
+                                        id="monto_bs" placeholder="0,00" required>
                                 </div>
-
-                                <div class="col-md-12">
-                                    <label class="form-label">Notas Adicionales / Concepto de Pago</label>
-                                    <textarea class="form-control" name="concepto" rows="2"
-                                        placeholder="Describa el detalle del pago"></textarea>
-                                    <div class="important-note mt-1 text-primary">
-                                        <i class="fas fa-info-circle me-1"></i> ⚠️ En caso de cancelar la mensualidad de
-                                        un tercero, describa a quién corresponde el pago para agilizar la acreditación.
-                                    </div>
-                                </div>
-
-                                <div class="col-md-12">
-                                    <label class="form-label">Comprobante / Capture del Pago <span
-                                            class="text-danger">*</span></label>
-                                    <input type="file" class="form-control" name="capture_pago" accept="image/*"
-                                        required>
-                                    <div class="important-note mt-1">Solo se aceptan archivos de imagen (JPG, PNG).
-                                    </div>
+                                <div class="important-note mt-1">
+                                    Ingrese el monto exacto que aparece en su comprobante.
                                 </div>
                             </div>
 
-                            <div class="d-grid mt-4">
-                                <button type="submit" class="btn btn-report text-white btn-lg">
-                                    <i class="fas fa-paper-plane me-2"></i> ENVIAR REPORTE DE PAGO
-                                </button>
+                            <div class="col-md-12">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="paga_varios_meses"
+                                        name="paga_varios_meses">
+                                    <label class="form-check-label fw-bold" for="paga_varios_meses">¿Pagará más de
+                                        un mes?</label>
+                                </div>
+                                <div id="container_meses">
+                                    <label class="form-label">Concepto del Pago (Mes) <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select selector-mes" name="meses[]" required>
+                                        <option value="">Seleccione mes...</option>
+                                    </select>
+                                </div>
+                                <div id="add_mes_btn" class="mt-2 d-none">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="agregarMes()">
+                                        <i class="fas fa-plus me-1"></i> Agregar otro mes
+                                    </button>
+                                </div>
                             </div>
 
-                        </form>
+                            <div class="col-md-12">
+                                <label class="form-label">Notas Adicionales / Concepto de Pago</label>
+                                <textarea class="form-control" name="concepto" rows="2"
+                                    placeholder="Describa el detalle del pago"></textarea>
+                                <div class="important-note mt-1 text-primary">
+                                    <i class="fas fa-info-circle me-1"></i> ⚠️ En caso de cancelar la mensualidad de
+                                    un tercero, describa a quién corresponde el pago para agilizar la acreditación.
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label">Comprobante / Capture del Pago <span
+                                        class="text-danger">*</span></label>
+                                <input type="file" class="form-control" name="capture_pago" accept="image/*" required>
+                                <div class="important-note mt-1">Solo se aceptan archivos de imagen (JPG, PNG).
+                                </div>
+                            </div>
                     </div>
-                    <div class="card-footer bg-light text-center py-3 border-0 rounded-bottom">
-                        <p class="mb-0 text-muted small">&copy;
-                            <?php echo date('Y'); ?> Wireless Supply, C.A. Todos los derechos reservados.
-                        </p>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-report text-white btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i> ENVIAR REPORTE DE PAGO
+                        </button>
                     </div>
+
+                    </form>
+                </div>
+                <div class="card-footer bg-light text-center py-3 border-0 rounded-bottom">
+                    <p class="mb-0 text-muted small">&copy;
+                        <?php echo date('Y'); ?> Wireless Supply, C.A. Todos los derechos reservados.
+                    </p>
                 </div>
             </div>
         </div>
+    </div>
     </div>
 
     <script src="js/bootstrap.bundle.min.js"></script>
@@ -306,26 +315,75 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
         }
 
         inputFecha.addEventListener('change', actualizarTodosLosSelects);
-        
+
         // Ejecutar inicialmente
         actualizarTodosLosSelects();
 
         function agregarMes() {
+            const selects = containerMeses.querySelectorAll('.selector-mes');
+            if (selects.length >= 3) {
+                Swal.fire('Límite alcanzado', 'Solo puede reportar un máximo de 3 meses por pago.', 'warning');
+                return;
+            }
+
             const div = document.createElement('div');
-            div.className = 'mt-2 d-flex align-items-center';
-            
+            div.className = 'mt-2 d-flex align-items-center month-row';
+
             div.innerHTML = `
                 <select class="form-select selector-mes me-2" name="meses[]" required>
                     <option value="">Seleccione mes...</option>
                 </select>
-                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removerMes(this)">
                     <i class="fas fa-times"></i>
                 </button>
             `;
             containerMeses.appendChild(div);
             actualizarTodosLosSelects();
+            verificarLimiteMeses();
         }
+
+        window.removerMes = function (btn) {
+            btn.parentElement.remove();
+            verificarLimiteMeses();
+        }
+
+        function verificarLimiteMeses() {
+            const selects = containerMeses.querySelectorAll('.selector-mes');
+            if (selects.length >= 3) {
+                btnAddMes.classList.add('d-none');
+            } else {
+                if (checkVariosMeses.checked) {
+                    btnAddMes.classList.remove('d-none');
+                }
+            }
+        }
+
+        // ==============================================================
+        // VALIDACIÓN Y RESTRICCIÓN DE CAMPOS EN TIEMPO REAL
+        // ==============================================================
+
+        // Cédula: solo dígitos (en este formulario no lleva prefijo V/J)
+        document.getElementById('cedula')?.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Nombre: solo letras y espacios
+        document.getElementById('nombre')?.addEventListener('input', function () {
+            this.value = this.value.replace(/[^A-Za-zñÑáéíóúÁÉÍÓÚ\s]/g, '');
+        });
+
+        // Teléfono: solo dígitos, +, - y espacios
+        document.getElementById('telefono')?.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9+\-\s]/g, '');
+        });
+
+        // Referencia: solo dígitos
+        document.getElementById('referencia')?.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
     </script>
 </body>
 
 </html>
+```

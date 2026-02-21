@@ -26,6 +26,8 @@ $resultado = $conn->query($sql);
 
 
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
+<script src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <main class="main-content">
     <?php include '../includes/header.php'; ?>
@@ -64,6 +66,7 @@ $resultado = $conn->query($sql);
                                 <th>Fecha Reporte</th>
                                 <th>Cliente / Cédula</th>
                                 <th>Detalle Pago</th>
+                                <th>Monto (Bs)</th>
                                 <th>Meses</th>
                                 <th>Comprobante</th>
                                 <th class="text-center">Acciones</th>
@@ -114,9 +117,21 @@ $resultado = $conn->query($sql);
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="text-wrap small">
-                                                <?php echo htmlspecialchars($row['meses_pagados']); ?>
+                                            <span class="badge bg-primary fs-6">
+                                                Bs. <?php echo number_format($row['monto_bs'], 2, ',', '.'); ?>
                                             </span>
+                                        </td>
+                                        <td>
+                                            <?php
+                                            $meses_array = array_filter(explode(',', $row['meses_pagados']));
+                                            $cant_meses = count($meses_array);
+                                            ?>
+                                            <span class="badge bg-info text-dark mb-1 d-inline-block">
+                                                <?php echo $cant_meses; ?> mes<?php echo $cant_meses != 1 ? 'es' : ''; ?>
+                                            </span>
+                                            <div class="text-wrap small text-muted">
+                                                <?php echo htmlspecialchars($row['meses_pagados']); ?>
+                                            </div>
                                         </td>
                                         <td>
                                             <a href="../../<?php echo $row['capture_path']; ?>" target="_blank"
@@ -173,9 +188,15 @@ $resultado = $conn->query($sql);
                         <input type="hidden" name="id_reporte" id="ap_id_reporte">
                         <input type="hidden" name="accion" value="APROBAR">
 
-                        <div class="alert alert-info py-2 small">
-                            Al aprobar, se creará un registro en el historial de mensualidades como
-                            <strong>PAGADO</strong> con origen <strong>LINK</strong>.
+                        <div class="alert alert-info py-2 small d-flex justify-content-between align-items-center">
+                            <span>Al aprobar, se creará un registro en el historial de mensualidades como
+                                <strong>PAGADO</strong>.</span>
+                            <div class="text-end">
+                                <div class="fw-bold text-dark">Monto ingresado por Cliente: <span id="val_monto_usuario"
+                                        class="badge bg-primary">0,00 Bs.</span></div>
+                                <div class="fw-bold text-dark">Monto detectado en Capture: <span id="val_monto_ocr"
+                                        class="badge bg-secondary">Esperando...</span></div>
+                            </div>
                         </div>
 
                         <div class="row g-3">
@@ -190,8 +211,12 @@ $resultado = $conn->query($sql);
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Monto a Registrar ($)</label>
-                                <input type="number" step="0.01" name="monto_total" class="form-control" required
-                                    placeholder="Verificar en el capture">
+                                <input type="number" step="0.01" name="monto_total" id="ap_monto_total"
+                                    class="form-control fw-bold" required placeholder="Detectando...">
+                                <div id="ocrStatus" class="small mt-1">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    <span class="text-primary ms-1" id="ocrText">Analizando capture con OCR...</span>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Fecha Pago</label>
@@ -281,19 +306,61 @@ $resultado = $conn->query($sql);
 </main>
 
 <script>
-    const modalAprobar = new bootstrap.Modal(document.getElementById('modalConfirmarAprobacion'));
-    const modalRechazar = new bootstrap.Modal(document.getElementById('modalRechazar'));
+    // Global variables for modals and OCR
+    let modalAprobar, modalRechazar;
+    let currentCapturePath = '';
 
-    function prepararAprobacion(data) {
+    $(document).ready(function () {
+        // Initialize modals safely after Bootstrap is loaded from layout_foot.php
+        const elAprobar = document.getElementById('modalConfirmarAprobacion');
+        const elRechazar = document.getElementById('modalRechazar');
+
+        if (elAprobar) modalAprobar = new bootstrap.Modal(elAprobar);
+        if (elRechazar) modalRechazar = new bootstrap.Modal(elRechazar);
+
+        // AUTO-REFRESH cada 5 segundos
+        let isModalOpen = false;
+
+        // Detectar si hay algún modal abierto para pausar el refresco
+        $(document).on('show.bs.modal', '.modal', function () { isModalOpen = true; });
+        $(document).on('hidden.bs.modal', '.modal', function () { isModalOpen = false; });
+
+        setInterval(function () {
+            if (!isModalOpen) {
+                console.log("Refrescando tabla de reportes...");
+                fetch('get_reportes_pendientes_ajax.php')
+                    .then(r => r.text())
+                    .then(html => {
+                        const container = document.getElementById('tbodyReportes');
+                        if (container) container.innerHTML = html;
+                    })
+                    .catch(err => console.error("Error en auto-refresh:", err));
+            }
+        }, 5000);
+    });
+
+    window.prepararAprobacion = function (data) {
+        currentCapturePath = data.capture_path; // Guardar path para OCR
         document.getElementById('ap_id_reporte').value = data.id_reporte;
         document.getElementById('ap_fecha_pago').value = data.fecha_pago;
         document.getElementById('ap_referencia').value = data.referencia;
         document.getElementById('ap_id_banco').value = data.id_banco_destino || '';
+        document.getElementById('ap_monto_total').value = ''; // Limpiar previo
+
+        // Mostrar monto reportado por el usuario
+        const montoBs = parseFloat(data.monto_bs || 0);
+        document.getElementById('val_monto_usuario').innerText = montoBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs.';
+        document.getElementById('val_monto_ocr').innerText = 'Procesando...';
+        document.getElementById('val_monto_ocr').className = 'badge bg-secondary';
+
         document.getElementById('ap_meses_notas').innerHTML = `<strong>Meses reportados:</strong> ${data.meses_pagados}<br><strong>Justificación:</strong> ${data.concepto || 'N/A'}`;
+
+        // Reset OCR UI
+        document.getElementById('ocrStatus').style.display = 'block';
+        document.getElementById('ocrText').innerText = 'Analizando capture con OCR...';
 
         console.log("Preparando aprobación para reporte:", data);
 
-        // Cargar contratos dinámicamente o seleccionar el detectado
         const select = document.getElementById('ap_id_contrato');
         select.innerHTML = '<option value="">Cargando contratos...</option>';
 
@@ -307,38 +374,130 @@ $resultado = $conn->query($sql);
                 });
             });
 
-        modalAprobar.show();
+        if (modalAprobar) {
+            modalAprobar.show();
+        } else {
+            modalAprobar = new bootstrap.Modal(document.getElementById('modalConfirmarAprobacion'));
+            modalAprobar.show();
+        }
+
+        // Auto-trigger OCR after short delay to allow modal animation
+        setTimeout(() => ejecutarOCR(), 500);
     }
 
-    function confirmarRechazo(id) {
+    window.confirmarRechazo = function (id) {
         document.getElementById('rej_id_reporte').value = id;
-        modalRechazar.show();
+        if (modalRechazar) {
+            modalRechazar.show();
+        } else {
+            modalRechazar = new bootstrap.Modal(document.getElementById('modalRechazar'));
+            modalRechazar.show();
+        }
     }
-    function confirmarEliminacion(id) {
+
+    window.confirmarEliminacion = function (id) {
         const modalEliminar = new bootstrap.Modal(document.getElementById('modalEliminarReporte'));
         document.getElementById('el_id_reporte').value = id;
         modalEliminar.show();
     }
 
-    // AUTO-REFRESH cada 5 segundos
-    let isModalOpen = false;
-
-    // Detectar si hay algún modal abierto para pausar el refresco
-    $(document).on('show.bs.modal', '.modal', function () { isModalOpen = true; });
-    $(document).on('hidden.bs.modal', '.modal', function () { isModalOpen = false; });
-
-    setInterval(function () {
-        if (!isModalOpen) {
-            console.log("Refrescando tabla de reportes...");
-            fetch('get_reportes_pendientes_ajax.php')
-                .then(r => r.text())
-                .then(html => {
-                    const container = document.getElementById('tbodyReportes');
-                    if (container) container.innerHTML = html;
-                })
-                .catch(err => console.error("Error en auto-refresh:", err));
+    // --- LÓGICA OCR (Auto-ejecuta al abrir modal) ---
+    async function ejecutarOCR() {
+        if (!currentCapturePath) {
+            document.getElementById('ocrStatus').style.display = 'none';
+            return;
         }
-    }, 5000);
+
+        const status = document.getElementById('ocrStatus');
+        const statusText = document.getElementById('ocrText');
+        const inputMonto = document.getElementById('ap_monto_total');
+
+        status.style.display = 'block';
+        statusText.innerText = 'Inicializando OCR...';
+
+        try {
+            // Path absoluto para Tesseract (considerando que estamos en paginas/principal/)
+            const imageUrl = `../../${currentCapturePath}`;
+
+            const result = await Tesseract.recognize(
+                imageUrl,
+                'spa',
+                {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            let prog = Math.round(m.progress * 100);
+                            statusText.innerText = `Leyendo... ${prog}%`;
+                        }
+                    }
+                }
+            );
+
+            const text = result.data.text;
+            console.log("OCR Text extracted:", text);
+
+            // Regex mejorada: Busca patrones como "Bs. 1.234,56", "Monto: 500.00" o "1.234,56 Bs"
+            // Caso 1: Etiqueta -> Numero (Bs. 1.000)
+            const regexLabelNum = /(?:Bs|VES|Monto|Pagado|Importe|Total)[.:\s]*([\d.]+,\d{2}|[\d,]+.\d{2}|[\d.,]+)/gi;
+            // Caso 2: Numero -> Etiqueta (1.000 Bs)
+            const regexNumLabel = /([\d.]+,\d{2}|[\d,]+.\d{2}|[\d.,]+)[.:\s]*(?:Bs|VES)/gi;
+
+            let detectedVal = null;
+
+            // Intentar Caso 1
+            let m1 = [...text.matchAll(regexLabelNum)];
+            for (const match of m1) {
+                let clean = match[1].trim();
+                let val = parseOCRNumber(clean);
+                if (val > 0) { detectedVal = val; break; }
+            }
+
+            // Intentar Caso 2 si no se detectó nada
+            if (!detectedVal) {
+                let m2 = [...text.matchAll(regexNumLabel)];
+                for (const match of m2) {
+                    let clean = match[1].trim();
+                    let val = parseOCRNumber(clean);
+                    if (val > 0) { detectedVal = val; break; }
+                }
+            }
+
+            function parseOCRNumber(str) {
+                // Normalizar formato (quitar puntos de miles, cambiar coma a punto decimal)
+                let clean = str;
+                if (clean.includes(',') && clean.includes('.')) {
+                    // Formato XXX.XXX,XX o XXX,XXX.XX (depende del OCR)
+                    // Asumimos el más común en Venezuela: . miles , decimal
+                    if (clean.lastIndexOf(',') > clean.lastIndexOf('.')) {
+                        clean = clean.replace(/\./g, '').replace(',', '.');
+                    } else {
+                        clean = clean.replace(/,/g, '');
+                    }
+                } else if (clean.includes(',')) {
+                    clean = clean.replace(',', '.');
+                }
+                return parseFloat(clean);
+            }
+
+            if (detectedVal) {
+                inputMonto.value = detectedVal.toFixed(2);
+                const displayVal = detectedVal.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs.';
+                statusText.innerHTML = '<span class="text-success"><i class="fas fa-check"></i> Monto detectado en capture: <strong>Bs. ' + displayVal + '</strong></span>';
+
+                // Actualizar comparativa en el modal
+                const valOcrEl = document.getElementById('val_monto_ocr');
+                valOcrEl.innerText = displayVal;
+                valOcrEl.className = 'badge bg-success';
+            } else {
+                statusText.innerHTML = '<span class="text-warning"><i class="fas fa-exclamation-triangle"></i> No detectado en capture — ingrese manualmente</span>';
+                document.getElementById('val_monto_ocr').innerText = 'No detectado';
+                document.getElementById('val_monto_ocr').className = 'badge bg-warning text-dark';
+            }
+
+        } catch (err) {
+            console.error("OCR Error:", err);
+            statusText.innerHTML = '<span class="text-muted"><i class="fas fa-times"></i> OCR no disponible</span>';
+        }
+    }
 </script>
 
 <?php require_once '../includes/layout_foot.php'; ?>

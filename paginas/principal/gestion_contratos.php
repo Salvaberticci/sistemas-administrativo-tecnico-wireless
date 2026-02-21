@@ -31,6 +31,35 @@ require_once '../includes/sidebar.php';
         color: #495057;
     }
 
+    /* Nuevos estilos para Signature Pad y secciones */
+    .section-title {
+        background-color: #f8f9fa;
+        padding: 10px 15px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .signature-pad {
+        border: 2px dashed #ccc;
+        border-radius: 5px;
+        width: 100%;
+        height: 180px;
+        background-color: #fff;
+        touch-action: none;
+    }
+
+    .signature-prev {
+        max-height: 120px;
+        border: 1px solid #dee2e6;
+        padding: 5px;
+        border-radius: 4px;
+        background: #f8f9fa;
+        display: block;
+        margin-bottom: 10px;
+    }
+
     /* Celdas mas compactas */
     #mitabla tbody td {
         font-size: 0.85rem;
@@ -255,7 +284,6 @@ require_once '../includes/sidebar.php';
                                 <th>ONU RX (dBm)</th>
                                 <th>Dist. Drop (m)</th>
                                 <th>Instalador</th>
-                                <th>IP Servicio</th>
                                 <th>Punto Acceso</th>
                                 <th>Val. Conex. (dBm)</th>
 
@@ -767,15 +795,23 @@ require_once '../includes/sidebar.php';
 
 <!-- Modals -->
 <div class="modal fade" id="eliminaModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-body text-center p-4">
                 <div class="mb-3 text-danger"><i class="fa-solid fa-trash-can fa-3x"></i></div>
                 <h5 class="fw-bold">Eliminar Contrato</h5>
-                <p class="text-muted small">¿Confirma eliminar este registro permanentemente?</p>
+                <p class="text-muted small">¿Confirma eliminar este registro permanentemente? Esta acción no se puede
+                    deshacer.</p>
+
+                <div class="mb-3 text-start">
+                    <label for="delete_password" class="form-label small fw-bold">Confirme su Contraseña</label>
+                    <input type="password" class="form-control" id="delete_password"
+                        placeholder="Ingrese su contraseña administrativa">
+                </div>
+
                 <div class="d-flex justify-content-center gap-2 mt-3">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                    <a class="btn btn-danger btn-ok text-white">Eliminar</a>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
                 </div>
             </div>
         </div>
@@ -813,12 +849,397 @@ require_once '../includes/sidebar.php';
     </div>
 </div>
 
+<!-- ===== MODAL EDITAR CONTRATO ===== -->
+<div class="modal fade" id="modalEditarContrato" tabindex="-1" aria-labelledby="modalEditarContratoLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalEditarContratoLabel">
+                    <i class="fa-solid fa-pen me-2"></i>Editar Contrato #<span id="editContratoId">-</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+
+                <!-- Alert for errors/success -->
+                <div id="editContratoAlert" class="alert d-none mb-3" role="alert"></div>
+
+                <!-- Spinner -->
+                <div id="editContratoSpinner" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted small">Cargando datos...</p>
+                </div>
+
+                <form id="formEditarContrato" class="d-none">
+                    <input type="hidden" id="edit_id" name="id">
+
+                    <!-- SECCIÓN: INFO CLIENTE -->
+                    <div class="section-title bg-light p-2 fw-bold border-start border-primary border-4 mb-3">
+                        <i class="fa-solid fa-user me-2 text-primary"></i>Información del Cliente
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Cédula <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="edit_cedula" name="cedula"
+                                required pattern="[VJEGPvjegp][0-9]+" placeholder="V12345678"
+                                style="text-transform: uppercase;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Estado <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="edit_estado" name="estado" required>
+                                <option value="ACTIVO">ACTIVO</option>
+                                <option value="INACTIVO">INACTIVO</option>
+                                <option value="SUSPENDIDO">SUSPENDIDO</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Nombre Completo <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="edit_nombre"
+                                name="nombre_completo" required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Teléfono</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_telefono" name="telefono"
+                                inputmode="tel" pattern="[0-9-+\s]{7,15}" placeholder="0424-1234567">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Teléfono (Alt)</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_telefono2"
+                                name="telefono_secundario" inputmode="tel" pattern="[0-9-+\s]{7,15}"
+                                placeholder="0414-7654321">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Correo</label>
+                            <input type="email" class="form-control form-control-sm" id="edit_correo" name="correo">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Correo (Alt)</label>
+                            <input type="email" class="form-control form-control-sm" id="edit_correo2"
+                                name="correo_adicional">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Fecha de Instalación</label>
+                            <input type="date" class="form-control form-control-sm" id="edit_fecha"
+                                name="fecha_instalacion">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-bold">Dirección</label>
+                            <textarea class="form-control form-control-sm" id="edit_direccion" name="direccion"
+                                rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN: UBICACIÓN -->
+                    <div class="section-title bg-light p-2 fw-bold border-start border-success border-4 mb-3">
+                        <i class="fa-solid fa-map-location-dot me-2 text-success"></i>Ubicación
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Municipio</label>
+                            <select class="form-select form-select-sm" id="edit_municipio" name="id_municipio">
+                                <option value="">Cargando municipios...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Parroquia</label>
+                            <select class="form-select form-select-sm" id="edit_parroquia" name="id_parroquia" disabled>
+                                <option value="">-- Seleccione municipio --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Comunidad</label>
+                            <select class="form-select form-select-sm" id="edit_comunidad" name="id_comunidad" disabled>
+                                <option value="">-- Seleccione parroquia --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN: CONTRATO / PLAN -->
+                    <div class="section-title bg-light p-2 fw-bold border-start border-warning border-4 mb-3">
+                        <i class="fa-solid fa-file-contract me-2 text-warning"></i>Plan y Comercial
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Plan</label>
+                            <select class="form-select form-select-sm" id="edit_plan" name="id_plan">
+                                <option value="">-- Seleccione --</option>
+                                <?php
+                                $sql_planes = "SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan ASC";
+                                $res_planes = $conn->query($sql_planes);
+                                while ($p = $res_planes->fetch_assoc()) {
+                                    echo '<option value="' . $p['id_plan'] . '">' . htmlspecialchars($p['nombre_plan']) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Vendedor</label>
+                            <select class="form-select form-select-sm" id="edit_vendedor" name="id_vendedor">
+                                <option value="">-- Seleccione --</option>
+                                <?php
+                                $sql_vends = "SELECT id_vendedor, nombre_vendedor FROM vendedores ORDER BY nombre_vendedor ASC";
+                                $res_vends = $conn->query($sql_vends);
+                                while ($v = $res_vends->fetch_assoc()) {
+                                    echo '<option value="' . $v['id_vendedor'] . '">' . htmlspecialchars($v['nombre_vendedor']) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN: RED -->
+                    <div class="section-title bg-light p-2 fw-bold border-start border-info border-4 mb-3">
+                        <i class="fa-solid fa-network-wired me-2 text-info"></i>Red y NAP
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">OLT</label>
+                            <select class="form-select form-select-sm" id="edit_olt" name="id_olt">
+                                <option value="">-- Seleccione --</option>
+                                <?php
+                                $sql_olts = "SELECT id_olt, nombre_olt FROM olt ORDER BY nombre_olt ASC";
+                                $res_olts = $conn->query($sql_olts);
+                                while ($o = $res_olts->fetch_assoc()) {
+                                    echo '<option value="' . $o['id_olt'] . '">' . htmlspecialchars($o['nombre_olt']) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">PON</label>
+                            <select class="form-select form-select-sm" id="edit_pon" name="id_pon" disabled>
+                                <option value="">-- Seleccione OLT --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Tipo de Conexión</label>
+                            <select class="form-select form-select-sm" id="edit_tipo_conexion" name="tipo_conexion">
+                                <option value="">-- Seleccione --</option>
+                                <?php
+                                $jsonTipos = 'data/tipos_instalacion.json';
+                                if (file_exists($jsonTipos)) {
+                                    $tipos = json_decode(file_get_contents($jsonTipos), true);
+                                    foreach ($tipos as $t)
+                                        echo '<option value="' . $t . '">' . $t . '</option>';
+                                } else {
+                                    echo '<option value="FTTH">FTTH</option><option value="RADIO">RADIO</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Caja NAP</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_nap" name="ident_caja_nap">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Puerto NAP</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_puerto_nap"
+                                name="puerto_nap">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Precinto ODN</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_odn"
+                                name="num_presinto_odn">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN: TÉCNICO FTTH/RADIO -->
+                    <div class="section-title bg-light p-2 fw-bold border-start border-secondary border-4 mb-3">
+                        <i class="fa-solid fa-screwdriver-wrench me-2 text-secondary"></i>Datos Técnicos
+                    </div>
+                    <div class="row g-3 mb-4" id="edit_campos_ftth">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">MAC/Serial ONU</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_mac" name="mac_onu"
+                                pattern="[A-Fa-f0-9:.\-]{8,20}" placeholder="FABBCC112233">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">IP ONU</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_ip_onu" name="ip_onu"
+                                pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" placeholder="192.168.1.1">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">NAP TX Power</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_nap_tx" name="nap_tx_power"
+                                pattern="-?[0-9.]+" placeholder="-25.5">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">ONU RX Power</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_onu_rx" name="onu_rx_power"
+                                pattern="-?[0-9.]+" placeholder="-27.5">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Distancia Drop (m)</label>
+                            <input type="number" step="1" class="form-control form-control-sm" id="edit_drop"
+                                name="distancia_drop" placeholder="50">
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-4" id="edit_campos_radio">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Punto de Acceso</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_pa" name="punto_acceso">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Valor Conexión (dBm)</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_dbm"
+                                name="valor_conexion_dbm" pattern="-?[0-9.]+" placeholder="-55.0">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN: FIRMAS -->
+                    <div class="section-title bg-light p-2 fw-bold border-start border-danger border-4 mb-3 mt-4">
+                        <i class="fa-solid fa-signature me-2 text-danger"></i>Firmas Digitales
+                    </div>
+                    <div class="row g-4 mb-2">
+                        <!-- Firma Cliente -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold d-block">Firma del Cliente</label>
+                            <div id="prev_firma_cliente_div" class="mb-2">
+                                <img id="prev_firma_cliente" src="" alt="Firma Cliente" class="signature-prev d-none">
+                                <span id="no_firma_cliente" class="badge bg-secondary d-none">Sin firma</span>
+                            </div>
+
+                            <div id="pad_firma_cliente_div" class="d-none">
+                                <canvas id="edit_sigCliente" class="signature-pad"></canvas>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                                    onclick="clearEditPad('cliente')">
+                                    <i class="fa-solid fa-eraser me-1"></i>Limpiar Pad
+                                </button>
+                                <input type="hidden" name="firma_cliente_data" id="edit_firma_cliente_data">
+                            </div>
+
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-1"
+                                id="btnCambiarFirmaCliente">
+                                <i class="fa-solid fa-pen me-1"></i>Cambiar Firma
+                            </button>
+                        </div>
+
+                        <!-- Firma Técnico -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold d-block">Firma del Técnico</label>
+                            <div id="prev_firma_tecnico_div" class="mb-2">
+                                <img id="prev_firma_tecnico" src="" alt="Firma Técnico" class="signature-prev d-none">
+                                <span id="no_firma_tecnico" class="badge bg-secondary d-none">Sin firma</span>
+                            </div>
+
+                            <div id="pad_firma_tecnico_div" class="d-none">
+                                <canvas id="edit_sigTecnico" class="signature-pad"></canvas>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                                    onclick="clearEditPad('tecnico')">
+                                    <i class="fa-solid fa-eraser me-1"></i>Limpiar Pad
+                                </button>
+                                <input type="hidden" name="firma_tecnico_data" id="edit_firma_tecnico_data">
+                            </div>
+
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-1"
+                                id="btnCambiarFirmaTecnico">
+                                <i class="fa-solid fa-pen me-1"></i>Cambiar Firma
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarContrato" disabled>
+                    <i class="fa-solid fa-floppy-disk me-1"></i>Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ===== FIN MODAL EDITAR CONTRATO ===== -->
 
 
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+
+<script>
+    // === LÓGICA DE FIRMAS PARA EL MODAL DE EDICIÓN ===
+    let padEditCliente, padEditTecnico;
+
+    function resizeEditPad(canvas, pad) {
+        if (!canvas || !pad) return;
+        var ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        pad.clear(); // SignaturePad needs clearing after resize to reset its internal state
+    }
+
+    function initEditSignaturePads() {
+        const canvasCliente = document.getElementById('edit_sigCliente');
+        const canvasTecnico = document.getElementById('edit_sigTecnico');
+
+        if (!canvasCliente || !canvasTecnico) return;
+
+        if (!padEditCliente) padEditCliente = new SignaturePad(canvasCliente);
+        if (!padEditTecnico) padEditTecnico = new SignaturePad(canvasTecnico);
+    }
+
+    function clearEditPad(type) {
+        if (type === 'cliente') padEditCliente.clear();
+        if (type === 'tecnico') padEditTecnico.clear();
+    }
+
+    function resetEditPadsWorkflows() {
+        // Ocultar pads y mostrar previas
+        $('#pad_firma_cliente_div').addClass('d-none');
+        $('#prev_firma_cliente_div').removeClass('d-none');
+        $('#btnCambiarFirmaCliente').removeClass('d-none');
+        $('#edit_firma_cliente_data').val('');
+
+        $('#pad_firma_tecnico_div').addClass('d-none');
+        $('#prev_firma_tecnico_div').removeClass('d-none');
+        $('#btnCambiarFirmaTecnico').removeClass('d-none');
+        $('#edit_firma_tecnico_data').val('');
+
+        if (padEditCliente) padEditCliente.clear();
+        if  (padEditTecnico) padEditTecnico.clear();
+    }
+
+    $(document).ready(function () {
+        // Inicializar al abrir el modal 
+        $('#modalEditarContrato').on('shown.bs.modal', function () {
+            initEditSignaturePads();
+        });
+
+        $('#btnCambiarFirmaCliente').on('click', function () {
+            $('#prev_firma_cliente_div').addClass('d-none');
+            $('#pad_firma_cliente_div').removeClass('d-none');
+            $(this).addClass('d-none');
+            
+            // Forzar resize una vez visible
+            const canvas = document.getElementById('edit_sigCliente');
+            resizeEditPad(canvas, padEditCliente);
+        });
+
+        $('#btnCambiarFirmaTecnico').on('click', function () {
+            $('#prev_firma_tecnico_div').addClass('d-none');
+            $('#pad_firma_tecnico_div').removeClass('d-none');
+            $(this).addClass('d-none');
+            
+            // Forzar resize una vez visible
+            const canvas = document.getElementById('edit_sigTecnico');
+            resizeEditPad(canvas, padEditTecnico);
+        });
+    });
+
+    // Modificar el submit para capturar la data
+    function prepareSignaturesForSubmit() {
+        if (padEditCliente && !padEditCliente.isEmpty() && !$('#pad_firma_cliente_div').hasClass('d-none')) {
+            $('#edit_firma_cliente_data').val(padEditCliente.toDataURL());
+        }
+        if (padEditTecnico && !padEditTecnico.isEmpty() && !$('#pad_firma_tecnico_div').hasClass('d-none')) {
+            $('#edit_firma_tecnico_data').val(padEditTecnico.toDataURL());
+        }
+    }
+</script>
 
 <script>
     // --- EXPORTAR EXCEL ---
@@ -834,7 +1255,7 @@ require_once '../includes/sidebar.php';
         });
 
         try {
-            // 1. Obtener TODOS los datos crudos desde el backend
+            // 1. Obtener TODOS los datos crudosdesde el backend
             const response = await fetch('get_all_contratos_json.php');
             if (!response.ok) throw new Error('Error de red al obtener datos');
             const data = await response.json();
@@ -995,19 +1416,431 @@ require_once '../includes/sidebar.php';
         });
 
         // Modal Logic
-
+        let idEliminar = null;
         window.confirmarEliminar = function (id) {
-            var url = 'elimina.php?id=' + id;
-            var modalEl = document.getElementById('eliminaModal');
-            modalEl.querySelector('.btn-ok').href = url;
-            var modal = new bootstrap.Modal(modalEl);
+            idEliminar = id;
+            $('#delete_password').val(''); // Limpiar anterior
+            var modal = new bootstrap.Modal(document.getElementById('eliminaModal'));
             modal.show();
         };
+
+        $('#btnConfirmarEliminar').on('click', function () {
+            const password = $('#delete_password').val();
+            if (!password) {
+                Swal.fire('Atención', 'Debe ingresar su contraseña para confirmar la eliminación.', 'warning');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Eliminando...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            $.ajax({
+                url: 'elimina.php',
+                type: 'POST',
+                data: { id: idEliminar, clave: password },
+                dataType: 'json',
+                success: function (resp) {
+                    if (resp.success) {
+                        Swal.fire('Eliminado', resp.message, 'success');
+                        $('#eliminaModal').modal('hide');
+                        table.ajax.reload(null, false); // Recargar sin resetear paginación
+                    } else {
+                        Swal.fire('Error', resp.message, 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error', 'Hubo un problema de conexión con el servidor.', 'error');
+                }
+            });
+        });
 
         // Escuchar cambio en filtro de vacios
         $('#filter_empty').on('change', function () {
             table.draw();
         });
+
+        // ========================================================
+        // MODAL EDITAR CONTRATO
+        // ========================================================
+
+        // Helper Location Logic JSON
+        let editUbicacionesData = [];
+        $.get('api_ubicaciones.php', function (data) {
+            editUbicacionesData = data;
+            let options = '<option value="">-- Seleccione Municipio --</option>';
+            editUbicacionesData.forEach(function (m) {
+                options += `<option value="${m.municipio}">${m.municipio}</option>`;
+            });
+            $('#edit_municipio').html(options);
+        });
+
+        // Helper: load parroquias into #edit_parroquia
+        function editLoadParroquias(munName, selectedParName, onDone) {
+            var $par = $('#edit_parroquia');
+            $par.html('<option value="">Cargando...</option>').prop('disabled', true);
+            $('#edit_comunidad').html('<option value="">-- Seleccione parroquia --</option>').prop('disabled', true);
+
+            if (!munName) {
+                $par.html('<option value="">-- Seleccione municipio --</option>');
+                if (onDone) onDone();
+                return;
+            }
+
+            let options = '<option value="">-- Seleccione parroquia --</option>';
+            const munObj = editUbicacionesData.find(m => m.municipio === munName);
+            if (munObj && munObj.parroquias) {
+                munObj.parroquias.forEach(p => {
+                    options += `<option value="${p.nombre}">${p.nombre}</option>`;
+                });
+            }
+            $par.html(options).prop('disabled', false);
+
+            if (selectedParName) {
+                $par.val(selectedParName);
+                editLoadComunidades(selectedParName, null, onDone);
+            } else if (onDone) onDone();
+        }
+
+        // Helper: load comunidades into #edit_comunidad
+        function editLoadComunidades(parName, selectedComName, onDone) {
+            var $com = $('#edit_comunidad');
+            $com.html('<option value="">Cargando...</option>').prop('disabled', true);
+
+            if (!parName) {
+                $com.html('<option value="">-- Seleccione parroquia --</option>');
+                if (onDone) onDone();
+                return;
+            }
+
+            const munName = $('#edit_municipio').val();
+            let options = '<option value="">-- Seleccione comunidad --</option>';
+            const munObj = editUbicacionesData.find(m => m.municipio === munName);
+            if (munObj && munObj.parroquias) {
+                const parObj = munObj.parroquias.find(p => p.nombre === parName);
+                if (parObj && parObj.comunidades) {
+                    parObj.comunidades.forEach(c => {
+                        options += `<option value="${c}">${c}</option>`;
+                    });
+                }
+            }
+            $com.html(options).prop('disabled', false);
+
+            if (selectedComName) $com.val(selectedComName);
+            if (onDone) onDone();
+        }
+
+        // Helper: load PONs into #edit_pon
+        function editLoadPons(oltId, selectedPonId, onDone) {
+            var $pon = $('#edit_pon');
+            $pon.html('<option value="">Cargando...</option>').prop('disabled', true);
+            if (!oltId) { $pon.html('<option value="">-- Seleccione OLT --</option>'); if (onDone) onDone(); return; }
+            $.get('gets_pon_by_olt.php', { id_olt: oltId }, function (resp) {
+                $pon.html('<option value="">-- Seleccione PON --</option>').prop('disabled', false);
+                if (resp.pons) {
+                    $.each(resp.pons, function (i, p) {
+                        $pon.append('<option value="' + p.id_pon + '">' + p.nombre_pon + '</option>');
+                    });
+                }
+                if (selectedPonId) $pon.val(selectedPonId);
+                if (onDone) onDone();
+            }, 'json').fail(function () { $pon.html('<option value="">Error al cargar</option>'); if (onDone) onDone(); });
+        }
+
+        // Cascading selects: Municipio -> Parroquia -> Comunidad
+        $('#edit_municipio').on('change', function () {
+            editLoadParroquias($(this).val(), null, null);
+        });
+        $('#edit_parroquia').on('change', function () {
+            editLoadComunidades($(this).val(), null, null);
+        });
+        $('#edit_olt').on('change', function () {
+            editLoadPons($(this).val(), null, null);
+        });
+
+        // Tipo conexion visibility
+        $('#edit_tipo_conexion').on('change', function () {
+            var t = $(this).val();
+            $('#edit_campos_ftth, #edit_campos_radio').hide();
+            if (t && t.includes('FTTH')) $('#edit_campos_ftth').show();
+            else if (t && t.includes('RADIO')) $('#edit_campos_radio').show();
+        });
+
+        // Open modal and populate with data
+        window.abrirModalEdicion = function (id) {
+            // Reset state
+            $('#editContratoAlert').addClass('d-none').removeClass('alert-danger alert-success').html('');
+            $('#editContratoSpinner').show();
+            $('#formEditarContrato').addClass('d-none');
+            $('#btnGuardarContrato').prop('disabled', true);
+            $('#editContratoId').text(id);
+
+            var modal = new bootstrap.Modal(document.getElementById('modalEditarContrato'));
+            modal.show();
+
+            $.getJSON('get_contrato_detalle.php?id=' + id, function (d) {
+                if (d.error) {
+                    $('#editContratoSpinner').hide();
+                    $('#editContratoAlert').removeClass('d-none').addClass('alert-danger').html('Error: ' + d.error);
+                    return;
+                }
+
+                // Populate simple fields
+                $('#edit_id').val(d.id);
+                $('#edit_cedula').val(d.cedula);
+                $('#edit_nombre').val(d.nombre_completo);
+                $('#edit_telefono').val(d.telefono);
+                $('#edit_telefono2').val(d.telefono_secundario);
+                $('#edit_correo').val(d.correo);
+                $('#edit_correo2').val(d.correo_adicional);
+                $('#edit_fecha').val(d.fecha_instalacion);
+                $('#edit_direccion').val(d.direccion);
+                $('#edit_estado').val(d.estado);
+                $('#edit_obs').val(d.observaciones);
+
+                // --- FIRMAS ---
+                resetEditPadsWorkflows();
+
+                // Cliente
+                if (d.firma_cliente) {
+                    $('#prev_firma_cliente').attr('src', '../../uploads/firmas/' + d.firma_cliente).removeClass('d-none');
+                    $('#no_firma_cliente').addClass('d-none');
+                } else {
+                    $('#prev_firma_cliente').addClass('d-none');
+                    $('#no_firma_cliente').removeClass('d-none');
+                }
+
+                // Técnico
+                if (d.firma_tecnico) {
+                    $('#prev_firma_tecnico').attr('src', '../../uploads/firmas/' + d.firma_tecnico).removeClass('d-none');
+                    $('#no_firma_tecnico').addClass('d-none');
+                } else {
+                    $('#prev_firma_tecnico').addClass('d-none');
+                    $('#no_firma_tecnico').removeClass('d-none');
+                }
+                $('#edit_plan').val(d.id_plan);
+                $('#edit_vendedor').val(d.id_vendedor);
+                $('#edit_nap').val(d.ident_caja_nap);
+                $('#edit_puerto_nap').val(d.puerto_nap);
+                $('#edit_odn').val(d.num_presinto_odn);
+                $('#edit_mac').val(d.mac_onu);
+                $('#edit_ip_onu').val(d.ip_onu);
+                $('#edit_nap_tx').val(d.nap_tx_power);
+                $('#edit_onu_rx').val(d.onu_rx_power);
+                $('#edit_drop').val(d.distancia_drop);
+                $('#edit_pa').val(d.punto_acceso);
+                $('#edit_dbm').val(d.valor_conexion_dbm);
+                $('#edit_obs').val(d.observaciones);
+
+                // Tipo conexion
+                $('#edit_tipo_conexion').val(d.tipo_conexion).trigger('change');
+
+                // Cascading location (Using Text Names from Join)
+                $('#edit_municipio').val(d.nombre_municipio);
+                editLoadParroquias(d.nombre_municipio, d.nombre_parroquia, function () {
+                    if (d.nombre_comunidad) {
+                        editLoadComunidades(d.nombre_parroquia, d.nombre_comunidad, function () {
+                            // Finally OLT
+                            finishLoadingModal();
+                        });
+                    } else {
+                        finishLoadingModal();
+                    }
+                });
+
+                function finishLoadingModal() {
+                    $('#edit_olt').val(d.id_olt);
+                    editLoadPons(d.id_olt, d.id_pon, function () {
+                        $('#editContratoSpinner').hide();
+                        $('#formEditarContrato').removeClass('d-none');
+                        $('#btnGuardarContrato').prop('disabled', false);
+                    });
+                }
+            }).fail(function () {
+                $('#editContratoSpinner').hide();
+                $('#editContratoAlert').removeClass('d-none').addClass('alert-danger').html('Error al cargar los datos del contrato.');
+            });
+        };
+
+        // Double-click on table row to open edit modal
+        $('#mitabla tbody').on('dblclick', 'tr', function () {
+            var rowData = table.row(this).data();
+            if (rowData && rowData[0]) {
+                abrirModalEdicion(rowData[0]);
+            }
+        });
+
+        // ========================================================
+        // VALIDACIÓN DE CAMPOS EN MODAL (RERQUERIMIENTO USUARIO)
+        // ========================================================
+        $('#edit_cedula').on('input', function () {
+            let val = $(this).val().toUpperCase().replace(/[^VJEGP0-9]/g, '');
+            $(this).val(val);
+        });
+
+        $('#edit_ip, #edit_ip_onu').on('input', function () {
+            let val = $(this).val().replace(/[^0-9.]/g, '');
+            $(this).val(val);
+        });
+
+        $('#edit_nombre').on('input', function () {
+            let val = $(this).val().replace(/[^A-Za-zñÑáéíóúÁÉÍÓÚ\s]/g, '');
+            $(this).val(val);
+        });
+
+        $('#edit_telefono, #edit_telefono2').on('input', function () {
+            let val = $(this).val().replace(/[^0-9-+\s]/g, '');
+            $(this).val(val);
+        });
+
+        $('#edit_mac').on('input', function () {
+            let val = $(this).val().toUpperCase().replace(/[^A-F0-9:.-]/g, '');
+            $(this).val(val);
+        });
+
+        $('#edit_nap_tx, #edit_onu_rx, #edit_dbm').on('input', function () {
+            let val = $(this).val().replace(/[^0-9.-]/g, '');
+            // Only allow one '-' at the beginning
+            if (val.indexOf('-') > 0) val = val.substring(0, val.indexOf('-')) + val.substring(val.indexOf('-') + 1);
+            $(this).val(val);
+        });
+
+        // Save via AJAX
+        $('#btnGuardarContrato').on('click', function () {
+            var $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Guardando...');
+            prepareSignaturesForSubmit();
+            const formData = new FormData(document.getElementById('formEditarContrato'));
+
+            $.ajax({
+                url: 'actualizar_contrato_ajax.php',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function (res) {
+                    var $alert = $('#editContratoAlert').removeClass('d-none alert-danger alert-success');
+                    if (res.success) {
+                        $alert.addClass('alert-success').html('<i class="fa-solid fa-check-circle me-1"></i>' + res.message);
+                        table.ajax.reload(null, false); // Reload table without pagination reset
+                        setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('modalEditarContrato')).hide(); }, 1200);
+                    } else {
+                        $alert.addClass('alert-danger').html('<i class="fa-solid fa-circle-exclamation me-1"></i>' + res.message);
+                    }
+                },
+                error: function () {
+                    $('#editContratoAlert').removeClass('d-none').addClass('alert-danger').html('Error de conexión con el servidor.');
+                },
+                complete: function () {
+                    $('#btnGuardarContrato').prop('disabled', false).html('<i class="fa-solid fa-floppy-disk me-1"></i>Guardar Cambios');
+                }
+            });
+        });
+
+        // ========================================================
+        // GESTIÓN DE FIRMA REMOTA
+        // ========================================================
+        window.gestionarFirma = function (id, token, estado) {
+            const baseUrl = window.location.origin + '/sistemas-administrativo-tecnico-wireless/paginas/soporte/firmar_remoto.php';
+
+            if (token && estado === 'PENDIENTE') {
+                const link = `${baseUrl}?token=${token}&type=contrato`;
+
+                Swal.fire({
+                    title: 'Enlace de Firma Pendiente',
+                    html: `
+                    <p>Existe un proceso de firma activo para este contrato.</p>
+                    <div class="input-group mb-3">
+                        <input type="text" id="linkFirma" class="form-control" value="${link}" readonly>
+                        <button class="btn btn-outline-primary" onclick="copiarLinkFirma()">
+                            <i class="fa-solid fa-copy"></i> Copiar
+                        </button>
+                    </div>
+                    <p class="small text-muted">Envía este link al cliente por WhatsApp.</p>
+                `,
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fa-solid fa-rotate"></i> Regenerar Link',
+                    confirmButtonColor: '#ffc107',
+                    cancelButtonText: 'Cerrar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        solicitarNuevoToken(id);
+                    }
+                });
+            } else {
+                const msj = (estado === 'COMPLETADO') ? 'Este contrato ya ha sido firmado.' : 'No existe un link de firma activo para este contrato.';
+
+                Swal.fire({
+                    title: 'Gestión de Firma',
+                    text: msj,
+                    icon: (estado === 'COMPLETADO') ? 'success' : 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fa-solid fa-plus"></i> Generar Nuevo Link',
+                    cancelButtonText: 'Cerrar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        solicitarNuevoToken(id);
+                    }
+                });
+            }
+        };
+
+        window.solicitarNuevoToken = function (id) {
+            Swal.fire({
+                title: 'Generando...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            $.post('generar_token_firma.php', { id: id }, function (resp) {
+                if (resp.success) {
+                    const baseUrl = window.location.origin + '/sistemas-administrativo-tecnico-wireless/paginas/soporte/firmar_remoto.php';
+                    const link = `${baseUrl}?token=${resp.token}&type=contrato`;
+
+                    Swal.fire({
+                        title: '¡Link Generado!',
+                        html: `
+                        <p>Se ha creado un nuevo enlace de firma:</p>
+                        <div class="input-group mb-3">
+                            <input type="text" id="linkFirma" class="form-control" value="${link}" readonly>
+                            <button class="btn btn-outline-primary" onclick="copiarLinkFirma()">
+                                <i class="fa-solid fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                    `,
+                        icon: 'success',
+                        confirmButtonText: 'Listo'
+                    }).then(() => {
+                        // Recargar tabla para que el nuevo token se refleje en el botón
+                        $('#mitabla').DataTable().ajax.reload(null, false);
+                    });
+                } else {
+                    Swal.fire('Error', resp.message, 'error');
+                }
+            }, 'json').fail(function () {
+                Swal.fire('Error', 'Error de comunicación con el servidor', 'error');
+            });
+        };
+
+        window.copiarLinkFirma = function () {
+            const input = document.getElementById('linkFirma');
+            if (!input) return;
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value).then(() => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Copiado al portapapeles',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            });
+        };
+
     });
 </script>
 
@@ -1274,7 +2107,10 @@ require_once '../includes/sidebar.php';
                 <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center ${activeClass}" 
                      onclick="selectMunicipio(${index})" style="cursor: pointer;">
                     <span>${m.municipio}</span>
-                    <button class="btn btn-sm btn-danger py-0 px-2" onclick="deleteMunicipio(event, ${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editMunicipio(event, ${index})" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="btn btn-sm btn-danger py-0 px-2" onclick="deleteMunicipio(event, ${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
+                    </div>
                 </div>
             `;
             list.append(item);
@@ -1306,42 +2142,172 @@ require_once '../includes/sidebar.php';
             const item = `
                 <div class="list-group-item d-flex justify-content-between align-items-center">
                     <span>${p}</span>
-                    <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteParroquia(${pIndex})" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editParroquia(${pIndex})" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteParroquia(${pIndex})" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
                 </div>
             `;
             list.append(item);
         });
     };
 
-    window.deleteMunicipio = function (e, index) {
-        e.stopPropagation(); // Evitar seleccionar al borrar
-        Swal.fire({
-            title: '¿Eliminar Municipio?',
-            text: `Se eliminará "${ubicacionesData[index].municipio}" y todas sus parroquias.`,
+    // Helper: verify password before sensitive action
+    async function verificarClave(nombreElemento) {
+        console.log("Iniciando verificación para:", nombreElemento);
+        const { value: clave, isConfirmed } = await Swal.fire({
+            target: document.getElementById('modalUbicaciones'),
+            title: `Eliminar "${nombreElemento}"`,
+            html: '<p class="text-muted small mb-2">Ingrese su contraseña administrativa para confirmar.</p>'
+                + '<input id="swal-clave" type="password" class="swal2-input" placeholder="Contraseña">',
             icon: 'warning',
             showCancelButton: true,
+            cancelButtonText: 'Cancelar',
             confirmButtonColor: '#d33',
-            confirmButtonText: 'Sí, eliminar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                ubicacionesData.splice(index, 1);
-                if (selectedMunicipioIndex === index) {
-                    selectedMunicipioIndex = -1;
-                    $('#listParroquias').empty();
-                    $('#newParroquia, #btnAddParroquia').prop('disabled', true);
-                } else if (selectedMunicipioIndex > index) {
-                    selectedMunicipioIndex--;
+            confirmButtonText: 'Eliminar',
+            focusConfirm: false,
+            preConfirm: () => {
+                const c = document.getElementById('swal-clave').value;
+                if (!c) {
+                    Swal.showValidationMessage('La contraseña es requerida');
+                    return false;
                 }
-                saveData();
-                renderMunicipios();
+                return c;
             }
         });
+
+        console.log("Swal result:", { isConfirmed, hasClave: !!clave });
+        if (!isConfirmed || !clave) return false;
+
+        try {
+            console.log("Enviando petición a verificar_clave.php...");
+            const resp = await fetch('verificar_clave.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'clave=' + encodeURIComponent(clave)
+            });
+            const data = await resp.json();
+            console.log("Respuesta servidor:", data);
+            if (!data.success) {
+                Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Error', text: data.message, icon: 'error' });
+                return false;
+            }
+            return true;
+        } catch (err) {
+            console.error("Error en verificarClave:", err);
+            Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Error', text: 'Error al verificar la contraseña: ' + err.message, icon: 'error' });
+            return false;
+        }
+    }
+
+    window.deleteMunicipio = async function (e, index) {
+        e.stopPropagation();
+        const nombre = ubicacionesData[index].municipio;
+
+        // 1. Check usage first
+        try {
+            const usageResp = await fetch(`verificar_uso_ubicacion.php?tipo=municipio&nombre=${encodeURIComponent(nombre)}`);
+            const usageData = await usageResp.json();
+            if (usageData.usage > 0) {
+                const { isConfirmed } = await Swal.fire({
+                    target: document.getElementById('modalUbicaciones'),
+                    title: '¿Eliminar Municipio en Uso?',
+                    text: `El municipio "${nombre}" está asignado a ${usageData.usage} contratos. Al eliminarlo de aquí, ya no podrá seleccionarse en nuevos contratos ni ediciones, pero los registros existentes mantendrán su dato actual. ¿Desea continuar?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Continuar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#f89406'
+                });
+                if (!isConfirmed) return;
+            }
+        } catch (err) { console.error("Error validando uso:", err); }
+
+        const ok = await verificarClave(nombre + ' y todas sus parroquias');
+        if (!ok) return;
+
+        ubicacionesData.splice(index, 1);
+        if (selectedMunicipioIndex === index) {
+            selectedMunicipioIndex = -1;
+            $('#listParroquias').empty();
+            $('#newParroquia, #btnAddParroquia').prop('disabled', true);
+        } else if (selectedMunicipioIndex > index) {
+            selectedMunicipioIndex--;
+        }
+        saveData();
+        renderMunicipios();
+        Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Eliminado', icon: 'success', timer: 1200, showConfirmButton: false });
     };
 
-    window.deleteParroquia = function (pIndex) {
+    window.deleteParroquia = async function (pIndex) {
+        const nombre = ubicacionesData[selectedMunicipioIndex].parroquias[pIndex];
+
+        // 1. Check usage first
+        try {
+            const usageResp = await fetch(`verificar_uso_ubicacion.php?tipo=parroquia&nombre=${encodeURIComponent(nombre)}`);
+            const usageData = await usageResp.json();
+            if (usageData.usage > 0) {
+                const { isConfirmed } = await Swal.fire({
+                    target: document.getElementById('modalUbicaciones'),
+                    title: '¿Eliminar Parroquia en Uso?',
+                    text: `La parroquia "${nombre}" está asignada a ${usageData.usage} contratos. ¿Desea continuar con la eliminación de esta opción?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Continuar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#f89406'
+                });
+                if (!isConfirmed) return;
+            }
+        } catch (err) { console.error("Error validando uso:", err); }
+
+        const ok = await verificarClave(nombre);
+        if (!ok) return;
+
         ubicacionesData[selectedMunicipioIndex].parroquias.splice(pIndex, 1);
         saveData();
         renderParroquias();
+        Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Eliminado', icon: 'success', timer: 1200, showConfirmButton: false });
+    };
+
+    window.editMunicipio = async function (e, index) {
+        e.stopPropagation();
+        const { value: nuevoNombre, isConfirmed } = await Swal.fire({
+            target: document.getElementById('modalUbicaciones'),
+            title: 'Editar Municipio',
+            input: 'text',
+            inputLabel: 'Nuevo nombre del municipio',
+            inputValue: ubicacionesData[index].municipio,
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Guardar',
+            inputValidator: (v) => { if (!v || !v.trim()) return 'El nombre no puede estar vacío'; }
+        });
+        if (!isConfirmed || !nuevoNombre) return;
+        ubicacionesData[index].municipio = nuevoNombre.trim();
+        saveData();
+        renderMunicipios();
+        Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Actualizado', icon: 'success', timer: 1000, showConfirmButton: false });
+    };
+
+    window.editParroquia = async function (pIndex) {
+        const nombre = ubicacionesData[selectedMunicipioIndex].parroquias[pIndex];
+        const { value: nuevoNombre, isConfirmed } = await Swal.fire({
+            target: document.getElementById('modalUbicaciones'),
+            title: 'Editar Parroquia',
+            input: 'text',
+            inputLabel: 'Nuevo nombre de la parroquia',
+            inputValue: nombre,
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Guardar',
+            inputValidator: (v) => { if (!v || !v.trim()) return 'El nombre no puede estar vacío'; }
+        });
+        if (!isConfirmed || !nuevoNombre) return;
+        ubicacionesData[selectedMunicipioIndex].parroquias[pIndex] = nuevoNombre.trim();
+        saveData();
+        renderParroquias();
+        Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Actualizado', icon: 'success', timer: 1000, showConfirmButton: false });
     };
 
     function saveData() {

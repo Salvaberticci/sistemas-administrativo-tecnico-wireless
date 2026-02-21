@@ -36,6 +36,35 @@ if ($action === 'delete_plan' && isset($_GET['id'])) {
     exit();
 }
 
+// --- LÓGICA DE CREACIÓN (PROCESAR FORMULARIO POST) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_plan'])) {
+    $nombre = $_POST['nombre_plan'];
+    $monto = $_POST['monto'];
+    $descripcion = $_POST['descripcion'];
+
+    $monto_float = floatval(str_replace(',', '.', $monto));
+
+    if ($monto_float < 0) {
+        $message = "Error: El monto no puede ser negativo.";
+        $message_class = 'error';
+    } else {
+        $stmt = $conn->prepare("INSERT INTO planes (nombre_plan, monto, descripcion) VALUES (?, ?, ?)");
+        $stmt->bind_param("sds", $nombre, $monto_float, $descripcion);
+
+        if ($stmt->execute()) {
+            $message = "¡Nuevo plan registrado con éxito!";
+            $message_class = 'success';
+        } else {
+            $message = "Error al registrar el plan: " . $stmt->error;
+            $message_class = 'error';
+        }
+        if ($stmt)
+            $stmt->close();
+    }
+    echo "<script>window.location.href = 'gestion_planes.php?message=" . urlencode($message) . "&class=" . urlencode($message_class) . "';</script>";
+    exit();
+}
+
 // --- LÓGICA DE MODIFICACIÓN (PROCESAR FORMULARIO POST) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_plan'])) {
     $id = $_POST['id_plan_update'];
@@ -43,27 +72,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_plan'])) {
     $monto = $_POST['monto'];
     $descripcion = $_POST['descripcion'];
 
-    $monto_float = str_replace(',', '.', $monto);
+    $monto_float = floatval(str_replace(',', '.', $monto));
 
-    $stmt = $conn->prepare("UPDATE planes SET nombre_plan = ?, monto = ?, descripcion = ? WHERE id_plan = ?");
-    $stmt->bind_param("sssi", $nombre, $monto_float, $descripcion, $id);
-
-    if ($stmt->execute()) {
-        if ($stmt->affected_rows > 0) {
-            $message = "¡Plan actualizado con éxito!";
-            $message_class = 'success';
-        } else {
-            $message = "ADVERTENCIA: No se realizaron cambios en el Plan.";
-            $message_class = 'warning';
-        }
-    } else {
-        $message = "Error al actualizar el plan: " . $stmt->error;
+    if ($monto_float < 0) {
+        $message = "Error: El monto no puede ser negativo.";
         $message_class = 'error';
+    } else {
+        $stmt = $conn->prepare("UPDATE planes SET nombre_plan = ?, monto = ?, descripcion = ? WHERE id_plan = ?");
+        $stmt->bind_param("sdsi", $nombre, $monto_float, $descripcion, $id);
+
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                $message = "¡Plan actualizado con éxito!";
+                $message_class = 'success';
+            } else {
+                $message = "ADVERTENCIA: No se realizaron cambios en el Plan.";
+                $message_class = 'warning';
+            }
+        } else {
+            $message = "Error al actualizar el plan: " . $stmt->error;
+            $message_class = 'error';
+        }
+        if ($stmt)
+            $stmt->close();
     }
 
-    if ($stmt) {
-        $stmt->close();
-    }
     echo "<script>window.location.href = 'gestion_planes.php?message=" . urlencode($message) . "&class=" . urlencode($message_class) . "';</script>";
     exit();
 }
@@ -112,10 +145,11 @@ if (isset($_GET['message'])) {
                         <p class="text-muted mb-0">Administración de planes de servicio</p>
                     </div>
                     <div>
-                        <a href="registro_planes.php" class="btn btn-primary d-flex align-items-center gap-2">
+                        <button type="button" data-bs-toggle="modal" data-bs-target="#modalNuevoPlan"
+                            class="btn btn-primary d-flex align-items-center gap-2">
                             <i class="fa-solid fa-plus"></i>
                             <span>Nuevo Plan</span>
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -138,21 +172,17 @@ if (isset($_GET['message'])) {
                 <div class="card-body p-0">
                     <!-- Buscador -->
                     <div class="p-4 bg-light border-bottom">
-                        <form action="gestion_planes.php" method="GET" class="row g-3 align-items-center">
+                        <div class="row g-3 align-items-center">
                             <div class="col-md-6">
                                 <div class="input-group">
                                     <span class="input-group-text bg-white border-end-0 text-muted">
                                         <i class="fa-solid fa-magnifying-glass"></i>
                                     </span>
-                                    <input type="text" name="search" class="form-control border-start-0 ps-0"
-                                        placeholder="Buscar por nombre de plan..."
-                                        value="<?php echo htmlspecialchars($search_term); ?>">
+                                    <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
+                                        placeholder="Buscar por nombre de plan...">
                                 </div>
                             </div>
-                            <div class="col-md-2">
-                                <button type="submit" class="btn btn-primary w-100">Buscar</button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
 
                     <!-- Tabla -->
@@ -222,15 +252,16 @@ if (isset($_GET['message'])) {
             </div>
 
             <div class="mt-4 text-center">
-                <a href="../menu.php" class="btn btn-outline-secondary px-4">
+                <a href="menu.php" class="btn btn-outline-secondary px-4">
                     <i class="fa-solid fa-arrow-left me-2"></i>Volver al Menú
                 </a>
             </div>
         </div>
     </div>
 
-    <?php include $path_to_root . 'paginas/includes/layout_foot.php'; ?>
+
 </main>
+
 
 <!-- Modal Modificación -->
 <div class="modal fade" id="modalModificacionPlan" tabindex="-1" aria-hidden="true">
@@ -260,8 +291,8 @@ if (isset($_GET['message'])) {
                             class="form-label fw-semibold text-secondary small text-uppercase">Monto (USD)</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" id="monto_modal" name="monto" step="0.01" class="form-control" required
-                                placeholder="0.00">
+                            <input type="number" id="monto_modal" name="monto" step="0.01" min="0" class="form-control"
+                                required placeholder="0.00">
                         </div>
                     </div>
 
@@ -302,6 +333,57 @@ if (isset($_GET['message'])) {
     </div>
 </div>
 
+<!-- Modal Nuevo Plan -->
+<div class="modal fade" id="modalNuevoPlan" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-plus-circle me-2 opacity-75"></i>Registrar Nuevo Plan
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <form id="form-nuevo-plan" action="gestion_planes.php" method="POST" novalidate>
+                <div class="modal-body p-4">
+                    <input type="hidden" name="create_plan" value="1">
+
+                    <div class="mb-3">
+                        <label for="nombre_plan_nuevo"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Nombre del Plan</label>
+                        <input type="text" id="nombre_plan_nuevo" name="nombre_plan" class="form-control" required
+                            placeholder="Ej: Fibra 100MB">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="monto_nuevo"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Monto (USD)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" id="monto_nuevo" name="monto" step="0.01" min="0" class="form-control"
+                                required placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion_nuevo"
+                            class="form-label fw-semibold text-secondary small text-uppercase">Descripción</label>
+                        <textarea id="descripcion_nuevo" name="descripcion" class="form-control" rows="3"
+                            placeholder="Detalles del servicio..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top-0 py-3">
+                    <button type="button" class="btn btn-outline-secondary px-4"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btn-guardar-plan" class="btn btn-success px-4">Registrar Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
     // Lógica para pasar la URL de eliminación al modal
     let eliminaModal = document.getElementById('eliminaModal')
@@ -335,12 +417,17 @@ if (isset($_GET['message'])) {
         });
     }
 
-    // Validación y envío del formulario
+    // Validación y envío del formulario de actualización
     const btnActualizarPlan = document.getElementById('btn-actualizar-plan');
     const formModificacionPlan = document.getElementById('form-modificacion-plan');
 
     if (btnActualizarPlan && formModificacionPlan) {
         btnActualizarPlan.addEventListener('click', function (event) {
+            const monto = document.getElementById('monto_modal').value;
+            if (parseFloat(monto) < 0) {
+                Swal.fire('Error', 'El monto no puede ser negativo', 'error');
+                return;
+            }
             if (formModificacionPlan.checkValidity()) {
                 formModificacionPlan.submit();
             } else {
@@ -348,4 +435,41 @@ if (isset($_GET['message'])) {
             }
         });
     }
+
+    // Validación y envío del formulario de creación
+    const btnGuardarPlan = document.getElementById('btn-guardar-plan');
+    const formNuevoPlan = document.getElementById('form-nuevo-plan');
+
+    if (btnGuardarPlan && formNuevoPlan) {
+        btnGuardarPlan.addEventListener('click', function (event) {
+            const monto = document.getElementById('monto_nuevo').value;
+            if (parseFloat(monto) < 0) {
+                Swal.fire('Error', 'El monto no puede ser negativo', 'error');
+                return;
+            }
+            if (formNuevoPlan.checkValidity()) {
+                formNuevoPlan.submit();
+            } else {
+                formNuevoPlan.classList.add('was-validated');
+            }
+        });
+    }
+
+    // --- LÓGICA DE BÚSQUEDA EN TIEMPO REAL ---
+    document.getElementById('searchInput').addEventListener('input', function () {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('table tbody tr');
+
+        rows.forEach(row => {
+            // Buscamos en todas las celdas (Nombre, ID, Descripción)
+            const text = row.innerText.toLowerCase();
+            if (text.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
 </script>
+
+<?php include $path_to_root . 'paginas/includes/layout_foot.php'; ?>

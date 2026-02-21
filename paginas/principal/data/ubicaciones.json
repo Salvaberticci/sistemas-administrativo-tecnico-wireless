@@ -1,28 +1,57 @@
 [
     {
+        "municipio": "Escuque",
+        "parroquias": [
+            {
+                "nombre": "El Alto",
+                "comunidades": [
+                    "prueba"
+                ]
+            },
+            {
+                "nombre": "Escuque",
+                "comunidades": []
+            },
+            {
+                "nombre": "Juan Díaz",
+                "comunidades": []
+            },
+            {
+                "nombre": "La Union",
+                "comunidades": []
+            },
+            {
+                "nombre": "Sabana Libre",
+                "comunidades": [
+                    "betijoque"
+                ]
+            },
+            {
+                "nombre": "Santa Rita ",
+                "comunidades": []
+            }
+        ]
+    },
+    {
+        "municipio": "Rafael Rangel",
+        "parroquias": [
+            {
+                "nombre": "Betijoque",
+                "comunidades": []
+            },
+            {
+                "nombre": "Jose Gregorio Hernandez",
+                "comunidades": []
+            }
+        ]
+    },
+    {
         "municipio": "San Fernando",
         "parroquias": [
-            "San Fernando",
-            "El Recreo",
-            "Peñalver",
-            "San Rafael de Atamaica"
-        ]
-    },
-    {
-        "municipio": "Biruaca",
-        "parroquias": [
-            "Biruaca"
-        ]
-    },
-    {
-        "municipio": "Achaguas",
-        "parroquias": [
-            "Achaguas",
-            "Apurito",
-            "El Yagual",
-            "Guachara",
-            "Mucuritas",
-            "Queseras del Medio"
+            {
+                "nombre": "San Fernando",
+                "comunidades": []
+            }
         ]
     }
 ]

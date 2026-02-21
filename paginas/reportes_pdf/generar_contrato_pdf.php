@@ -4,9 +4,9 @@
 // SOLUCIÓN MEMORIA: Aumenta el límite de memoria para evitar fallos de Dompdf
 ini_set('memory_limit', '256M');
 
-// Muestra errores de PHP para depuración
+// Muestra errores de PHP para depuración (DESHABILITADO para evitar corromper PDF)
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 
 // Verifica que el ID del contrato haya sido pasado por GET
 if (!isset($_GET['id_contrato']) || !is_numeric($_GET['id_contrato'])) {
@@ -65,9 +65,9 @@ $sql = "SELECT
             c.firma_cliente,
             c.firma_tecnico
         FROM contratos c
-        INNER JOIN planes pl ON c.id_plan = pl.id_plan
-        INNER JOIN parroquia pa ON c.id_parroquia = pa.id_parroquia
-        INNER JOIN municipio mu ON c.id_municipio = mu.id_municipio
+        LEFT JOIN planes pl ON c.id_plan = pl.id_plan
+        LEFT JOIN parroquia pa ON c.id_parroquia = pa.id_parroquia
+        LEFT JOIN municipio mu ON c.id_municipio = mu.id_municipio
         WHERE c.id = ?";
 
 $stmt = $conn->prepare($sql);
@@ -99,31 +99,31 @@ function format_field($value)
 
 // Array de reemplazo para los marcadores de posición (MODIFICADO)
 $placeholders = [
-    '{ID_CONTRATO}' => htmlspecialchars($contrato_data['id_contrato']),
-    '{FECHA_CONTRATO_DIA}' => date('d', strtotime($contrato_data['fecha_contrato'])),
-    '{FECHA_CONTRATO_MES}' => date('m', strtotime($contrato_data['fecha_contrato'])),
-    '{FECHA_CONTRATO_ANIO}' => date('Y', strtotime($contrato_data['fecha_contrato'])),
-    '{NOMBRE_CLIENTE}' => htmlspecialchars($contrato_data['nombre_cliente']),
-    '{CEDULA_CLIENTE}' => htmlspecialchars($contrato_data['cedula_cliente']),
-    '{TELEFONO_CLIENTE}' => htmlspecialchars($contrato_data['telefono']),
-    '{EMAIL_CLIENTE}' => htmlspecialchars($contrato_data['correo']),
-    '{DIRECCION_CLIENTE}' => htmlspecialchars($contrato_data['direccion_cliente']),
-    '{NOMBRE_PLAN}' => htmlspecialchars($contrato_data['nombre_plan']),
+    '{ID_CONTRATO}' => htmlspecialchars((string) ($contrato_data['id_contrato'] ?? '')),
+    '{FECHA_CONTRATO_DIA}' => date('d', strtotime($contrato_data['fecha_contrato'] ?? 'now')),
+    '{FECHA_CONTRATO_MES}' => date('m', strtotime($contrato_data['fecha_contrato'] ?? 'now')),
+    '{FECHA_CONTRATO_ANIO}' => date('Y', strtotime($contrato_data['fecha_contrato'] ?? 'now')),
+    '{NOMBRE_CLIENTE}' => htmlspecialchars((string) ($contrato_data['nombre_cliente'] ?? '')),
+    '{CEDULA_CLIENTE}' => htmlspecialchars((string) ($contrato_data['cedula_cliente'] ?? '')),
+    '{TELEFONO_CLIENTE}' => htmlspecialchars((string) ($contrato_data['telefono'] ?? '')),
+    '{EMAIL_CLIENTE}' => htmlspecialchars((string) ($contrato_data['correo'] ?? '')),
+    '{DIRECCION_CLIENTE}' => htmlspecialchars((string) ($contrato_data['direccion_cliente'] ?? '')),
+    '{NOMBRE_PLAN}' => htmlspecialchars((string) ($contrato_data['nombre_plan'] ?? 'No especificado')),
     '{COSTO_MENSUAL}' => $costo_mensual_f . ' USD',
-    '{NOMBRE_PARROQUIA}' => htmlspecialchars($contrato_data['nombre_parroquia']),
-    '{NOMBRE_MUNICIPIO}' => htmlspecialchars($contrato_data['nombre_municipio']),
+    '{NOMBRE_PARROQUIA}' => htmlspecialchars((string) ($contrato_data['nombre_parroquia'] ?? 'No especificada')),
+    '{NOMBRE_MUNICIPIO}' => htmlspecialchars((string) ($contrato_data['nombre_municipio'] ?? 'No especificado')),
     '{LUGAR_FIRMA}' => 'Escuque, Sabana Libre ', // ⚠️ CAMBIA ESTO
     '{NOMBRE_EMPRESA}' => 'Wireless Supply, C.A.',
     '{NOMBRE_EMPRESA_REPRESENTANTE}' => 'David Garcia',
     '{CARGO_REPRESENTANTE}' => 'Gerente',
     // Placeholders para formato de campo
-    '{NOMBRE_CLIENTE_F}' => format_field($contrato_data['nombre_cliente']),
-    '{CEDULA_CLIENTE_F}' => format_field($contrato_data['cedula_cliente']),
-    '{DIRECCION_CLIENTE_F}' => format_field($contrato_data['direccion_cliente']),
-    '{NOMBRE_PARROQUIA_F}' => format_field($contrato_data['nombre_parroquia']),
-    '{NOMBRE_MUNICIPIO_F}' => format_field($contrato_data['nombre_municipio']),
-    '{TELEFONO_CLIENTE_F}' => format_field($contrato_data['telefono']),
-    '{EMAIL_CLIENTE_F}' => format_field($contrato_data['correo']),
+    '{NOMBRE_CLIENTE_F}' => format_field((string) ($contrato_data['nombre_cliente'] ?? '')),
+    '{CEDULA_CLIENTE_F}' => format_field((string) ($contrato_data['cedula_cliente'] ?? '')),
+    '{DIRECCION_CLIENTE_F}' => format_field((string) ($contrato_data['direccion_cliente'] ?? '')),
+    '{NOMBRE_PARROQUIA_F}' => format_field((string) ($contrato_data['nombre_parroquia'] ?? 'No especificada')),
+    '{NOMBRE_MUNICIPIO_F}' => format_field((string) ($contrato_data['nombre_municipio'] ?? 'No especificado')),
+    '{TELEFONO_CLIENTE_F}' => format_field((string) ($contrato_data['telefono'] ?? '')),
+    '{EMAIL_CLIENTE_F}' => format_field((string) ($contrato_data['correo'] ?? '')),
 
     // NUEVOS PLACEHOLDERS PARA IMÁGENES (Base64)
     '{IMG_ENCABEZADO_B64}' => $img_encabezado_b64,

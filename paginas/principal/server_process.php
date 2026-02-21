@@ -49,19 +49,20 @@ $aColumnas = [
     'c.distancia_drop',         // 26
     'c.instalador',             // 27
     'c.evidencia_fibra',        // 28
-    'c.ip',                     // 29
-    'c.punto_acceso',           // 30
-    'c.valor_conexion_dbm',     // 31
-    'c.num_presinto_odn',       // 32
-    'c.evidencia_foto',         // 33
-    'c.firma_cliente',          // 34
-    'c.firma_tecnico',          // 35
-    'c.vendedor_texto',         // 36
-    'c.sae_plus',               // 37
-    'pl.nombre_plan',           // 38
-    'ol.nombre_olt',            // 39
-    'pn.nombre_pon',            // 40
-    'c.estado'                  // 41
+    'c.punto_acceso',           // 29 (was 30)
+    'c.valor_conexion_dbm',     // 30 (was 31)
+    'c.num_presinto_odn',       // 31 (was 32)
+    'c.evidencia_foto',         // 32 (was 33)
+    'c.firma_cliente',          // 33 (was 34)
+    'c.firma_tecnico',          // 34 (was 35)
+    'c.vendedor_texto',         // 35 (was 36)
+    'c.sae_plus',               // 36 (was 37)
+    'pl.nombre_plan',           // 37 (was 38)
+    'ol.nombre_olt',            // 38 (was 39)
+    'pn.nombre_pon',            // 39 (was 40)
+    'c.estado',                 // 40 (was 41)
+    'c.token_firma',            // 41 (was 42)
+    'c.estado_firma'            // 42 (was 43)
 ];
 
 $sIndexColumn = "c.id";
@@ -249,13 +250,10 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 27. INSTALADOR
     $row[] = clean($aRow['instalador']);
 
-    // 28. IP SERVICIO
-    $row[] = clean($aRow['ip']);
-
-    // 29. PUNTO ACCESO
+    // 28. PUNTO ACCESO (was 29)
     $row[] = clean($aRow['punto_acceso']);
 
-    // 30. VALOR CONEXION DBM
+    // 29. VALOR CONEXION DBM (was 30)
     $row[] = clean($aRow['valor_conexion_dbm']);
 
     // 31. INSTALADOR (Cierre)
@@ -323,10 +321,13 @@ while ($aRow = $rResult->fetch_assoc()) {
     $row[] = "<span class='badge bg-{$color}'>{$st}</span>";
 
     // ACCIONES
+    $token = clean($aRow['token_firma']);
+    $estado_firma = clean($aRow['estado_firma']);
     $row[] = "
         <div class='d-flex gap-1'>
             <a href='../reportes_pdf/generar_contrato_pdf.php?id_contrato={$id}' target='_blank' class='btn btn-sm btn-outline-danger' title='PDF'><i class='fa-solid fa-file-pdf'></i></a>
-            <a href='modifica.php?id={$id}' class='btn btn-sm btn-outline-primary' title='Editar'><i class='fa-solid fa-pen'></i></a>
+            <button class='btn btn-sm btn-outline-primary' onclick='abrirModalEdicion({$id})' title='Editar'><i class='fa-solid fa-pen'></i></button>
+            <button class='btn btn-sm btn-outline-info' onclick='gestionarFirma({$id}, \"{$token}\", \"{$estado_firma}\")' title='Firma'><i class='fa-solid fa-signature'></i></button>
             <button class='btn btn-sm btn-outline-secondary' onclick='confirmarEliminar({$id})' title='Eliminar'><i class='fa-solid fa-trash'></i></button>
         </div>
     ";

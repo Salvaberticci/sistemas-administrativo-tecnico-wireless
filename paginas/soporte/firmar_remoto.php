@@ -223,7 +223,7 @@ if (empty($token)) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="js/jquery.min.js"></script>
+    <script src="../../js/jquery.min.js"></script>
 
     <?php if ($doc && !$error): ?>
         <script>

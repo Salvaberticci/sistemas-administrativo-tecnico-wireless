@@ -91,15 +91,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         function getParroquiaId($conn, $nombre, $id_municipio)
         {
             $nombre = trim($conn->real_escape_string($nombre));
-            if (empty($nombre))
+            if (empty($nombre) || empty($id_municipio))
                 return 0;
 
-            $sql = "SELECT id_parroquia FROM parroquia WHERE nombre_parroquia = '$nombre' LIMIT 1";
+            $sql = "SELECT id_parroquia FROM parroquia WHERE nombre_parroquia = '$nombre' AND id_municipio = $id_municipio LIMIT 1";
             $res = $conn->query($sql);
             if ($res && $res->num_rows > 0) {
                 return $res->fetch_assoc()['id_parroquia'];
             } else {
-                // Insertar nuevo
                 $sqlIns = "INSERT INTO parroquia (id_municipio, nombre_parroquia) VALUES ($id_municipio, '$nombre')";
                 if ($conn->query($sqlIns)) {
                     return $conn->insert_id;
@@ -108,18 +107,115 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             return 0;
         }
 
+        // Función para obtener/crear ID de Comunidad
+        function getComunidadId($conn, $nombre, $id_parroquia)
+        {
+            $nombre = trim($conn->real_escape_string($nombre));
+            if (empty($nombre) || empty($id_parroquia))
+                return 0;
+
+            $sql = "SELECT id_comunidad FROM comunidad WHERE nombre_comunidad = '$nombre' AND id_parroquia = $id_parroquia LIMIT 1";
+            $res = $conn->query($sql);
+            if ($res && $res->num_rows > 0) {
+                return $res->fetch_assoc()['id_comunidad'];
+            } else {
+                $sqlIns = "INSERT INTO comunidad (id_parroquia, nombre_comunidad) VALUES ($id_parroquia, '$nombre')";
+                if ($conn->query($sqlIns)) {
+                    return $conn->insert_id;
+                }
+            }
+            return 0;
+        }
+        // === VALIDACIÓN DE CAMPOS (REQUERIMIENTO USUARIO) ===
+        $errors = [];
+        $cedula = trim($conn->real_escape_string($_POST['cedula'] ?? ''));
+        $nombre_completo = trim($conn->real_escape_string($_POST['nombre_completo'] ?? ''));
+        $monto_instalacion = isset($_POST['monto_instalacion']) ? floatval($_POST['monto_instalacion']) : 0;
+
+        if (empty($cedula))
+            $errors[] = "La Cédula es obligatoria.";
+        if (empty($nombre_completo))
+            $errors[] = "El nombre es obligatorio.";
+        if ($monto_instalacion <= 0)
+            $errors[] = "El monto de instalación debe ser mayor a 0.";
+
+        // Validar formato de Cédula
+        if (!empty($cedula) && !preg_match('/^[VJEGP]\d+$/i', $cedula)) {
+            $errors[] = "Formato de Cédula inválido (ej: V12345678).";
+        }
+
+        $ip_onu = trim($_POST['ip_onu'] ?? '');
+        if (!empty($ip_onu) && $ip_onu !== '192.168.' && !preg_match('/^(?:\d{1,3}\.){3}\d{1,3}$/', $ip_onu)) {
+            $errors[] = "Formato de IP ONU inválido.";
+        }
+
+        // Validar Teléfonos
+        $telefono = trim($_POST['telefono'] ?? '');
+        $telefono_sec = trim($_POST['telefono_secundario'] ?? '');
+        if (!empty($telefono) && !preg_match('/^[0-9-+\s]{7,15}$/', $telefono)) {
+            $errors[] = "Formato de Teléfono principal inválido.";
+        }
+        if (!empty($telefono_sec) && !preg_match('/^[0-9-+\s]{7,15}$/', $telefono_sec)) {
+            $errors[] = "Formato de Teléfono secundario inválido.";
+        }
+
+        // Validar Correos
+        $correo = trim($_POST['correo'] ?? '');
+        $correo_adicional = trim($_POST['correo_adicional'] ?? '');
+        if (!empty($correo) && !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = "Formato de Correo principal inválido.";
+        }
+        if (!empty($correo_adicional) && !filter_var($correo_adicional, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = "Formato de Correo adicional inválido.";
+        }
+
+        // Validar MAC / Serial
+        $mac_onu = trim($_POST['mac_onu'] ?? '');
+        if (!empty($mac_onu) && !preg_match('/^[A-Za-z0-9:.-]{8,20}$/', $mac_onu)) {
+            $errors[] = "Formato de MAC o Serial ONU inválido.";
+        }
+
+        // Validar Potencias (dBm)
+        $nap_tx = trim($_POST['nap_tx_power'] ?? '');
+        $onu_rx = trim($_POST['onu_rx_power'] ?? '');
+        $dbm_radio = trim($_POST['valor_conexion_dbm'] ?? '');
+        if (!empty($nap_tx) && !preg_match('/^-?\d+(\.\d+)?$/', $nap_tx)) {
+            $errors[] = "El valor NAP TX Power debe ser numérico.";
+        }
+        if (!empty($onu_rx) && !preg_match('/^-?\d+(\.\d+)?$/', $onu_rx)) {
+            $errors[] = "El valor ONU RX Power debe ser numérico.";
+        }
+        if (!empty($dbm_radio) && !preg_match('/^-?\d+(\.\d+)?$/', $dbm_radio)) {
+            $errors[] = "El valor de Conexión (dBm) debe ser numérico.";
+        }
+
+        if (!empty($errors)) {
+            echo json_encode(['status' => 'error', 'msg' => implode('<br>', $errors)]);
+            exit;
+        }
+
+        if (!empty($ip_onu)) {
+            $sql_ip_onu = "SELECT id FROM contratos WHERE ip_onu = '$ip_onu' LIMIT 1";
+            $res_ip_onu = $conn->query($sql_ip_onu);
+            if ($res_ip_onu && $res_ip_onu->num_rows > 0) {
+                echo json_encode(['status' => 'error', 'msg' => "La IP de ONU '$ip_onu' ya está registrada."]);
+                exit;
+            }
+        }
+
         // === DATOS DEL CLIENTE ===
         $cedula = $conn->real_escape_string($_POST['cedula']);
         $nombre_completo = $conn->real_escape_string($_POST['nombre_completo']);
         $direccion = $conn->real_escape_string($_POST['direccion']);
 
-        // Obtener IDs desde los Nombres recibidos del JSON
-        $nombre_municipio = isset($_POST['id_municipio']) ? $_POST['id_municipio'] : ''; // El form envía el nombre en este campo
-        $nombre_parroquia = isset($_POST['id_parroquia']) ? $_POST['id_parroquia'] : ''; // El form envía el nombre en este campo
+        // Resolviendo IDs de Ubicaciones por Nombre
+        $id_municipio = getMunicipioId($conn, $_POST['id_municipio'] ?? '');
+        $id_parroquia = getParroquiaId($conn, $_POST['id_parroquia'] ?? '', $id_municipio);
+        $id_comunidad = getComunidadId($conn, $_POST['id_comunidad'] ?? '', $id_parroquia);
 
-        $id_municipio = getMunicipioId($conn, $nombre_municipio);
-        $id_parroquia = getParroquiaId($conn, $nombre_parroquia, $id_municipio);
-
+        // Validar Plan y Vendedor (estos siguen viniendo como IDs)
+        $id_plan = isset($_POST['id_plan']) ? intval($_POST['id_plan']) : 0;
+        $id_vendedor = isset($_POST['id_vendedor']) ? intval($_POST['id_vendedor']) : 0;
         $telefono = $conn->real_escape_string($_POST['telefono']);
         $telefono_secundario = isset($_POST['telefono_secundario']) ? $conn->real_escape_string($_POST['telefono_secundario']) : '';
         $correo = isset($_POST['correo']) ? $conn->real_escape_string($_POST['correo']) : '';
@@ -142,9 +238,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // === DETALLES TÉCNICOS ===
         $tipo_conexion = isset($_POST['tipo_conexion']) ? $conn->real_escape_string($_POST['tipo_conexion']) : '';
-        $mac_onu = isset($_POST['mac_onu']) ? $conn->real_escape_string($_POST['mac_onu']) : '';
-        $ip_onu = isset($_POST['ip_onu']) ? $conn->real_escape_string($_POST['ip_onu']) : '';
-        $ip = $conn->real_escape_string($_POST['ip']); // IP de servicio (requerido)
+        $mac_onu = strtoupper(trim($_POST['mac_onu'] ?? ''));
+        $mac_onu = $conn->real_escape_string($mac_onu);
+        $ip_onu = trim($_POST['ip_onu'] ?? '');
+        $ip_onu = ($ip_onu !== '192.168.') ? $conn->real_escape_string($ip_onu) : '';
         $ident_caja_nap = isset($_POST['ident_caja_nap']) ? $conn->real_escape_string($_POST['ident_caja_nap']) : '';
         $puerto_nap = isset($_POST['puerto_nap']) ? $conn->real_escape_string($_POST['puerto_nap']) : '';
         $nap_tx_power = isset($_POST['nap_tx_power']) ? $conn->real_escape_string($_POST['nap_tx_power']) : '';
@@ -173,13 +270,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $evidencia_documento = savePhoto($_FILES['evidencia_documento_file']);
         }
 
-        // Valores por defecto para campos requeridos
-        $id_comunidad = 0;
-        $id_plan = 1; // Cambiar según necesidad o agregar campo al formulario
-        $id_vendedor = 2; // Cambiar según necesidad o agregar campo al formulario
-        $id_olt = 1; // Cambiar según necesidad o agregar campo al formulario
-        $id_pon = 0; // Cambiar según necesidad o agregar campo al formulario
-        $estado = 'ACTIVO';
+        // Valores por defecto si no vienen en el POST
+        $id_olt = !empty($_POST['id_olt']) ? intval($_POST['id_olt']) : 1;
+        $id_pon = !empty($_POST['id_pon']) ? intval($_POST['id_pon']) : 0;
+        $estado = !empty($_POST['estado']) ? $conn->real_escape_string($_POST['estado']) : 'ACTIVO';
 
         // === INSERT EN BASE DE DATOS ===
         // === INSERT EN BASE DE DATOS ===
@@ -198,7 +292,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         $sql = "INSERT INTO contratos (
-            ip, cedula, nombre_completo, id_municipio, id_parroquia, id_comunidad, id_plan, id_vendedor,
+            cedula, nombre_completo, id_municipio, id_parroquia, id_comunidad, id_plan, id_vendedor,
             direccion, telefono, telefono_secundario, correo, correo_adicional, fecha_instalacion,
             tipo_instalacion, medio_pago, monto_instalacion, gastos_adicionales, dias_prorrateo, monto_prorrateo_usd,
             monto_pagar, monto_pagado, moneda_pago, observaciones,
@@ -207,7 +301,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             punto_acceso, valor_conexion_dbm, num_presinto_odn, evidencia_foto, evidencia_documento,
             firma_cliente, firma_tecnico, id_olt, id_pon, estado, token_firma, estado_firma
         ) VALUES (
-            '$ip', '$cedula', '$nombre_completo', '$id_municipio', '$id_parroquia', '$id_comunidad', '$id_plan', '$id_vendedor',
+            '$cedula', '$nombre_completo', '$id_municipio', '$id_parroquia', '$id_comunidad', '$id_plan', '$id_vendedor',
             '$direccion', '$telefono', '$telefono_secundario', '$correo', '$correo_adicional', '$fecha_instalacion',
             '$tipo_instalacion', '$medio_pago', '$monto_instalacion', '$gastos_adicionales', '$dias_prorrateo', '$monto_prorrateo_usd',
             '$monto_pagar', '$monto_pagado', '$moneda_pago', '$observaciones',

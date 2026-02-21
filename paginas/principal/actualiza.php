@@ -15,8 +15,8 @@
 require '../conexion.php';
 
 // 1. CAPTURA Y SANEO DE DATOS
-$id = $conn->real_escape_string($_POST['id'] ?? '');
-$ip = $conn->real_escape_string($_POST['ip'] ?? '');
+$id = intval($_POST['id']);
+$ip = trim($conn->real_escape_string($_POST['ip'] ?? ''));
 $cedula = $conn->real_escape_string($_POST['cedula'] ?? '');
 $nombre_completo = $conn->real_escape_string($_POST['nombre_completo'] ?? '');
 $telefono = $conn->real_escape_string($_POST['telefono'] ?? '');
@@ -37,8 +37,8 @@ $id_pon = $conn->real_escape_string($_POST['id_pon'] ?? '');
 
 // NUEVOS CAMPOS TÉCNICOS
 $tipo_conexion = $conn->real_escape_string($_POST['tipo_conexion'] ?? '');
-$mac_onu = $conn->real_escape_string($_POST['mac_onu'] ?? '');
-$ip_onu = $conn->real_escape_string($_POST['ip_onu'] ?? '');
+$mac_onu = strtoupper(trim($conn->real_escape_string($_POST['mac_onu'] ?? '')));
+$ip_onu = trim($conn->real_escape_string($_POST['ip_onu'] ?? ''));
 $nap_tx_power = $conn->real_escape_string($_POST['nap_tx_power'] ?? '');
 $onu_rx_power = $conn->real_escape_string($_POST['onu_rx_power'] ?? '');
 $distancia_drop = $conn->real_escape_string($_POST['distancia_drop'] ?? '');
@@ -48,22 +48,39 @@ $valor_conexion_dbm = $conn->real_escape_string($_POST['valor_conexion_dbm'] ?? 
 $errores = '';
 
 // 2. VALIDACIÓN DE IP DUPLICADA (Excluyendo el ID actual)
-$stmt_ip = $conn->prepare("SELECT * FROM contratos WHERE ip = ? AND id != ? LIMIT 1");
+$ip = trim($ip);
+$ip_onu = trim($ip_onu ?? '');
 
-if ($stmt_ip) {
-	$stmt_ip->bind_param('si', $ip, $id);
-	$stmt_ip->execute();
-	$stmt_ip->store_result();
-
-	if ($stmt_ip->num_rows > 0) {
-		// Si se encuentra una fila, significa que la IP ya existe en OTRO registro
-		$errores .= "La IP '{$ip}' ya está registrada en otro contrato. Por favor, ingrese una IP única.<br>";
+if (!empty($ip)) {
+	$stmt_ip = $conn->prepare("SELECT id FROM contratos WHERE ip = ? AND id != ? LIMIT 1");
+	if ($stmt_ip) {
+		$stmt_ip->bind_param('si', $ip, $id);
+		$stmt_ip->execute();
+		$stmt_ip->store_result();
+		if ($stmt_ip->num_rows > 0) {
+			$errores .= "La IP '{$ip}' ya está registrada en otro contrato. Por favor, ingrese una IP única.<br>";
+		}
+		$stmt_ip->close();
+	} else {
+		$errores .= "Error interno al verificar la IP (Prepare failed).<br>";
 	}
-	$stmt_ip->close();
-} else {
-	// Error al preparar la consulta (esto evita el fatal error)
-	$errores .= "Error interno al verificar la IP (Prepare failed).<br>";
 }
+
+if (!empty($ip_onu)) {
+	$stmt_ip_onu = $conn->prepare("SELECT id FROM contratos WHERE ip_onu = ? AND id != ? LIMIT 1");
+	if ($stmt_ip_onu) {
+		$stmt_ip_onu->bind_param('si', $ip_onu, $id);
+		$stmt_ip_onu->execute();
+		$stmt_ip_onu->store_result();
+		if ($stmt_ip_onu->num_rows > 0) {
+			$errores .= "La IP de ONU '{$ip_onu}' ya está registrada en otro contrato. Por favor, ingrese una IP única.<br>";
+		}
+		$stmt_ip_onu->close();
+	} else {
+		$errores .= "Error interno al verificar la IP de ONU (Prepare failed).<br>";
+	}
+}
+
 
 // CHEQUEO DE CAMPOS OBLIGATORIOS (Prevención de Error 500 por Strict SQL Mode)
 if (empty($id_municipio))

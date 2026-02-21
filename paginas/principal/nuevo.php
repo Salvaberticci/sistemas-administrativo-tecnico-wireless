@@ -83,53 +83,47 @@ require_once '../includes/sidebar.php';
                     <div class="section-title">Datos del Cliente</div>
 
                     <div class="col-md-6">
-                        <label for="ip" class="form-label">IP</label>
-                        <input type="text" class="form-control" id="ip" name="ip" required autofocus>
+                        <label for="cedula" class="form-label">Cédula / RIF <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="cedula" name="cedula" required pattern="V[0-9]+"
+                            value="V" placeholder="V12345678" style="text-transform: uppercase;">
+                        <div class="form-text small">Debe empezar con V seguida de números.</div>
                     </div>
 
                     <div class="col-md-6">
-                        <label for="cedula" class="form-label">Cedula</label>
-                        <input type="text" class="form-control" id="cedula" name="cedula" required>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label for="nombre_completo" class="form-label">Nombre Completo</label>
-                        <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" required>
+                        <label for="nombre_completo" class="form-label">Nombre Completo <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" required
+                            pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+" title="Solo letras y espacios">
                     </div>
 
                     <div class="col-md-6">
                         <label for="telefono" class="form-label">Teléfono</label>
-                        <input type="text" class="form-control" id="telefono" name="telefono">
+                        <input type="text" class="form-control" id="telefono" name="telefono" inputmode="tel"
+                            pattern="[0-9\-+\s]{7,15}" placeholder="0424-1234567">
                     </div>
 
                     <div class="col-md-6">
                         <label for="correo" class="form-label">Correo</label>
-                        <input type="text" class="form-control" id="correo" name="correo">
+                        <input type="email" class="form-control" id="correo" name="correo"
+                            placeholder="ejemplo@correo.com">
                     </div>
 
                     <div class="col-md-6">
                         <label for="telefono_secundario" class="form-label">Teléfono Secundario</label>
-                        <input type="text" class="form-control" id="telefono_secundario" name="telefono_secundario">
+                        <input type="text" class="form-control" id="telefono_secundario" name="telefono_secundario"
+                            inputmode="tel" pattern="[0-9\-+\s]{7,15}" placeholder="0414-7654321">
                     </div>
 
                     <div class="col-md-6">
                         <label for="correo_adicional" class="form-label">Correo Adicional</label>
-                        <input type="text" class="form-control" id="correo_adicional" name="correo_adicional">
+                        <input type="email" class="form-control" id="correo_adicional" name="correo_adicional"
+                            placeholder="otro@correo.com">
                     </div>
 
                     <div class="col-md-6">
                         <label for="municipio" class="form-label">Municipio</label>
                         <select name="id_municipio" id="municipio" class="form-select" required>
-                            <option value="">-- Seleccione un Municipio --</option>
-                            <?php
-                            if ($resultado_municipios->num_rows > 0) {
-                                while ($fila = $resultado_municipios->fetch_assoc()) {
-                                    echo '<option value="' . htmlspecialchars($fila["id_municipio"]) . '">' .
-                                        htmlspecialchars($fila["nombre_municipio"]) .
-                                        '</option>';
-                                }
-                            }
-                            ?>
+                            <option value="">Cargando municipios...</option>
                         </select>
                     </div>
 
@@ -298,9 +292,10 @@ require_once '../includes/sidebar.php';
                     </div>
 
                     <div class="col-md-6">
-                        <label for="monto_instalacion" class="form-label">Monto Instalación ($)</label>
+                        <label for="monto_instalacion" class="form-label">Monto Instalación ($) <span
+                                class="text-danger">*</span></label>
                         <input type="number" step="0.01" class="form-control" id="monto_instalacion"
-                            name="monto_instalacion">
+                            name="monto_instalacion" required value="0">
                     </div>
 
                     <div class="col-md-6">
@@ -381,12 +376,14 @@ require_once '../includes/sidebar.php';
                     <!-- CAMPOS FTTH -->
                     <div class="col-md-6 campo-ftth">
                         <label for="mac_onu" class="form-label">MAC o Serial de la ONU</label>
-                        <input type="text" class="form-control" id="mac_onu" name="mac_onu">
+                        <input type="text" class="form-control" id="mac_onu" name="mac_onu"
+                            pattern="[A-Fa-f0-9:\.\-]{8,20}" placeholder="FABBCC112233">
                     </div>
 
                     <div class="col-md-6 campo-ftth">
                         <label for="ip_onu" class="form-label">Dirección IP Asignada a la ONU</label>
-                        <input type="text" class="form-control" id="ip_onu" name="ip_onu" value="192.168.">
+                        <input type="text" class="form-control" id="ip_onu" name="ip_onu" value="192.168."
+                            pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$">
                     </div>
 
                     <div class="col-md-6 campo-ftth">
@@ -401,23 +398,27 @@ require_once '../includes/sidebar.php';
 
                     <div class="col-md-6 campo-ftth">
                         <label for="nap_tx_power" class="form-label">NAP TX Power (dBm)</label>
-                        <input type="text" class="form-control" id="nap_tx_power" name="nap_tx_power">
+                        <input type="text" class="form-control" id="nap_tx_power" name="nap_tx_power"
+                            pattern="-?[0-9.]+" placeholder="-25.5">
                     </div>
 
                     <div class="col-md-6 campo-ftth">
                         <label for="onu_rx_power" class="form-label">ONU RX Power (dBm)</label>
-                        <input type="text" class="form-control" id="onu_rx_power" name="onu_rx_power">
+                        <input type="text" class="form-control" id="onu_rx_power" name="onu_rx_power"
+                            pattern="-?[0-9.]+" placeholder="-27.5">
                     </div>
 
                     <div class="col-md-6 campo-ftth">
                         <label for="distancia_drop" class="form-label">Distancia Drop (m)</label>
-                        <input type="text" class="form-control" id="distancia_drop" name="distancia_drop">
+                        <input type="number" step="1" class="form-control" id="distancia_drop" name="distancia_drop"
+                            placeholder="50">
                     </div>
 
                     <!-- CAMPOS RADIO -->
                     <div class="col-md-6 campo-radio">
                         <label for="ip" class="form-label">Dirección IP</label>
-                        <input type="text" class="form-control" id="ip" name="ip" value="192.168.">
+                        <input type="text" class="form-control" id="ip" name="ip" placeholder="192.168.x.x"
+                            pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$">
                     </div>
 
                     <div class="col-md-6 campo-radio">
@@ -427,7 +428,8 @@ require_once '../includes/sidebar.php';
 
                     <div class="col-md-6 campo-radio">
                         <label for="valor_conexion_dbm" class="form-label">Valor Conexión (dBm)</label>
-                        <input type="text" class="form-control" id="valor_conexion_dbm" name="valor_conexion_dbm">
+                        <input type="text" class="form-control" id="valor_conexion_dbm" name="valor_conexion_dbm"
+                            pattern="-?[0-9.]+" placeholder="-55.0">
                     </div>
 
                     <!-- Otros campos (Ocultos o generales según necesidad, por ahora fuera de la lógica dinámica estricta o ocultos) -->
@@ -514,9 +516,6 @@ require_once '../includes/sidebar.php';
                     <div class="col-12 d-flex gap-2">
                         <a href="gestion_contratos.php" class="btn btn-secondary">Regresar</a>
                         <button type="submit" class="btn btn-success">Guardar</button>
-                        <button type="button" class="btn btn-outline-primary" id="btnGenerarLink">
-                            <i class="fa-solid fa-link me-2"></i> Registrar y Generar Link
-                        </button>
                     </div>
 
                 </form>
@@ -525,8 +524,133 @@ require_once '../includes/sidebar.php';
     </div>
 </main>
 
+
 <!-- jQuery (Necesario para los scripts de cascada y cálculos) -->
 <script src="../../js/jquery.min.js"></script>
+
+<!-- Modal de Confirmación de Datos -->
+<script>
+    function mostrarConfirmacionRegistro(e) {
+        e.preventDefault();
+        const form = e.target;
+
+        // Extraer datos para el resumen
+        const cedula = $('#cedula').val();
+        const nombre = $('#nombre_completo').val();
+        const plan = $('#id_plan option:selected').text();
+        const montoTotal = $('#monto_pagar').val();
+        const montoPagado = $('#monto_pagado').val();
+        const moneda = $('#moneda_pago').val();
+        const medio = $('#medio_pago').val();
+        const tecnico = $('#instaladores').val();
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const htmlResumen = `
+            <div class="text-start">
+                <table class="table table-sm table-bordered mt-2">
+                    <tbody>
+                        <tr><th class="bg-light">Cédula:</th><td>${cedula}</td></tr>
+                        <tr><th class="bg-light">Titular:</th><td>${nombre}</td></tr>
+                        <tr><th class="bg-light">Plan:</th><td>${plan}</td></tr>
+                        <tr><th class="bg-light">Monto Total:</th><td>$${montoTotal}</td></tr>
+                        <tr><th class="bg-light">Monto Pagado:</th><td>${montoPagado} ${moneda}</td></tr>
+                        <tr><th class="bg-light">Medio de Pago:</th><td>${medio}</td></tr>
+                        <tr><th class="bg-light">Instalador:</th><td>${tecnico || 'No asignado'}</td></tr>
+                    </tbody>
+                </table>
+                <p class="text-center fw-bold text-primary mt-3">¿Desea registrar este contrato con estos datos?</p>
+            </div>
+        `;
+
+        Swal.fire({
+            title: 'Confirmar Registro',
+            html: htmlResumen,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, Registrar',
+            cancelButtonText: 'Cancelar y Verificar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Proceder con el envío AJAX
+                ejecutarGuardado(form);
+            }
+        });
+    }
+
+    function ejecutarGuardado(form) {
+        // Capturar firmas antes de enviar
+        if (window.padCliente && !window.padCliente.isEmpty()) {
+            $('#firma_cliente_data').val(window.padCliente.toDataURL());
+        }
+        if (window.padTecnico && !window.padTecnico.isEmpty()) {
+            $('#firma_tecnico_data').val(window.padTecnico.toDataURL());
+        }
+
+        const formData = new FormData(form);
+
+        // Bloquear UI
+        Swal.fire({
+            title: 'Procesando...',
+            text: 'Guardando registro y generando factura.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        fetch('guarda.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: data.msg || 'Contrato registrado correctamente.',
+                        icon: 'success',
+                        showCancelButton: true,
+                        showDenyButton: true,
+                        confirmButtonColor: '#198754',
+                        denyButtonColor: '#0d6efd',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: '<i class="fa-solid fa-file-pdf"></i> Ver PDF',
+                        denyButtonText: '<i class="fa-solid fa-link"></i> Generar Link',
+                        cancelButtonText: 'Ir a Gestión'
+                    }).then((res) => {
+                        if (res.isConfirmed) {
+                            window.open(data.pdf_url, '_blank');
+                            window.location.href = 'gestion_contratos.php';
+                        } else if (res.isDenied) {
+                            generarLinkDespuesDeGuardar(data.id);
+                        } else {
+                            window.location.href = 'gestion_contratos.php';
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error al Guardar',
+                        html: `<div class="text-danger fw-bold">${data.msg}</div>`,
+                        icon: 'error'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                Swal.fire('Error', 'Error de conexión con el servidor', 'error');
+            });
+    }
+
+    $(document).ready(function () {
+        $('form').on('submit', mostrarConfirmacionRegistro);
+    });
+</script>
 
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -537,85 +661,63 @@ require_once '../includes/sidebar.php';
     $(document).ready(function () {
 
         // ======================================================
-        // LÓGICA DE UBICACIÓN (Municipio -> Parroquia -> Comunidad)
+        // LÓGICA DE UBICACIÓN (Municipio -> Parroquia -> Comunidad) API JSON
         // ======================================================
 
-        // 1. FUNCIÓN para cargar dinámicamente las Comunidades
-        function cargarComunidades(idParroquia) {
-            $('#comunidad').html('<option value="">Cargando comunidades...</option>');
-            $('#comunidad').prop('disabled', true);
+        let ubicacionesData = [];
 
-            if (idParroquia) {
-                $.ajax({
-                    url: 'obtener_comunidades.php',
-                    type: 'POST',
-                    dataType: 'json',
-                    data: {
-                        id_parroquia: idParroquia
-                    },
-                    success: function (comunidades) {
-                        $('#comunidad').html('<option value="">-- Seleccione una Comunidad --</option>');
+        // 1. Cargar JSON completo al inicio
+        $.get('api_ubicaciones.php', function (data) {
+            ubicacionesData = data;
+            let options = '<option value="">-- Seleccione un Municipio --</option>';
 
-                        $.each(comunidades, function (key, value) {
-                            $('#comunidad').append('<option value="' + key + '">' + value + '</option>');
-                        });
-
-                        $('#comunidad').prop('disabled', false);
-                    },
-                    error: function () {
-                        $('#comunidad').html('<option value="">Error al cargar comunidades</option>');
-                    }
-                });
-            } else {
-                $('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>');
-            }
-        }
-
-        // 2. FUNCIÓN para cargar dinámicamente las Parroquias
-        function cargarParroquias(idMunicipio) {
-            $('#parroquia').html('<option value="">Cargando parroquias...</option>');
-            $('#parroquia').prop('disabled', true);
-
-            // Resetear y deshabilitar Comunidad
-            $('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>');
-            $('#comunidad').prop('disabled', true);
-
-            if (idMunicipio) {
-                $.ajax({
-                    url: 'get_parroquias.php',
-                    type: 'POST',
-                    dataType: 'json',
-                    data: {
-                        id: idMunicipio
-                    },
-                    success: function (parroquias) {
-                        $('#parroquia').html('<option value="">-- Seleccione una Parroquia --</option>');
-
-                        $.each(parroquias, function (key, value) {
-                            $('#parroquia').append('<option value="' + key + '">' + value + '</option>');
-                        });
-
-                        $('#parroquia').prop('disabled', false);
-                    },
-                    error: function () {
-                        $('#parroquia').html('<option value="">Error al cargar parroquias</option>');
-                    }
-                });
-            } else {
-                $('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>');
-            }
-        }
-
-        // 3. MANEJAR CAMBIO DE MUNICIPIO
-        $('#municipio').on('change', function () {
-            var idMunicipio = $(this).val();
-            cargarParroquias(idMunicipio);
+            ubicacionesData.forEach(function (item) {
+                options += `<option value="${item.municipio}">${item.municipio}</option>`;
+            });
+            $('#municipio').html(options);
         });
 
-        // 4. MANEJAR CAMBIO DE PARROQUIA
+        // 2. Cargar Parroquias al cambiar Municipio
+        $('#municipio').on('change', function () {
+            const munNombre = $(this).val();
+            let options = '<option value="">-- Seleccione una Parroquia --</option>';
+
+            $('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>');
+
+            if (munNombre) {
+                const munEncontrado = ubicacionesData.find(m => m.municipio === munNombre);
+                if (munEncontrado && munEncontrado.parroquias) {
+                    munEncontrado.parroquias.forEach(function (parroquiaObj) {
+                        options += `<option value="${parroquiaObj.nombre}">${parroquiaObj.nombre}</option>`;
+                    });
+                }
+                $('#parroquia').html(options).prop('disabled', false);
+            } else {
+                $('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>').prop('disabled', true);
+                $('#comunidad').prop('disabled', true);
+            }
+        });
+
+        // 3. Cargar Comunidades al cambiar Parroquia
         $('#parroquia').on('change', function () {
-            var idParroquia = $(this).val();
-            cargarComunidades(idParroquia);
+            const munNombre = $('#municipio').val();
+            const parrNombre = $(this).val();
+            let options = '<option value="">-- Seleccione una Comunidad --</option>';
+
+            if (munNombre && parrNombre) {
+                const munEncontrado = ubicacionesData.find(m => m.municipio === munNombre);
+                if (munEncontrado && munEncontrado.parroquias) {
+                    const parrEncontrada = munEncontrado.parroquias.find(p => p.nombre === parrNombre);
+                    if (parrEncontrada && parrEncontrada.comunidades) {
+                        parrEncontrada.comunidades.forEach(function (comunidadStr) {
+                            options += `<option value="${comunidadStr}">${comunidadStr}</option>`;
+                        });
+                    }
+                }
+                $('#comunidad').html(options).prop('disabled', false);
+            } else {
+                $('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>').prop('disabled', true);
+            }
         });
 
 
@@ -626,15 +728,18 @@ require_once '../includes/sidebar.php';
         // Mostrar/Ocultar campos según Tipo de Conexión
         $('#tipo_conexion').on('change', function () {
             var tipo = $(this).val();
-            // Ocultar todos primero
+            // Ocultar todos primero y quitar required
             $('.campo-ftth, .campo-radio').hide();
-            // Limpiar valores (opcional, para evitar enviar datos basura)
-            //$('.campo-ftth input, .campo-radio input').val('');
+            $('.campo-ftth input, .campo-radio input').prop('required', false);
 
             if (tipo === 'FTTH') {
                 $('.campo-ftth').show();
+                // En admin 'nuevo.php', usualmente no son obligatorios, pero si hubiera alguno lo pondríamos acá
+                // $('#mac_onu, #ip_onu').prop('required', true); 
             } else if (tipo === 'RADIO') {
                 $('.campo-radio').show();
+                // Si la IP de radio debe ser obligatoria cuando se elige RADIO:
+                // $('#ip').prop('required', true);
             }
         });
 
@@ -730,11 +835,124 @@ require_once '../includes/sidebar.php';
             calcularSaldo();
         });
 
+        // ======================================================
+        // VALIDACIÓN Y FORMATEO DE CAMPOS (REQUERIMIENTO USUARIO)
+        // ======================================================
+
+        // 1. Forzar prefijo 'V' en Cédula y permitir solo dígitos después
+        $('#cedula').on('input', function () {
+            let val = $(this).val().toUpperCase();
+
+            // Asegurar que siempre empiece con V
+            if (!val.startsWith('V')) {
+                val = 'V' + val.replace(/[^0-9]/g, '');
+            } else {
+                // Mantener la V inicial y limpiar el resto
+                val = 'V' + val.substring(1).replace(/[^0-9]/g, '');
+            }
+
+            $(this).val(val);
+        });
+
+        // Restringir IP a números y puntos
+        $('#ip, #ip_onu').on('input', function () {
+            let val = $(this).val().replace(/[^0-9.]/g, '');
+            $(this).val(val);
+        });
+
+        // Restringir Teléfono a números, guiones, más y espacios
+        $('#telefono, #telefono_secundario').on('input', function () {
+            let val = $(this).val().replace(/[^0-9-+\s]/g, '');
+            $(this).val(val);
+        });
+
+        // Restringir Nombre a solo letras
+        $('#nombre_completo').on('input', function () {
+            let val = $(this).val().replace(/[^A-Za-zñÑáéíóúÁÉÍÓÚ\s]/g, '');
+            $(this).val(val);
+        });
+
+        // Restringir MAC a caracteres hexadecimales, puntos, guiones y dos puntos
+        $('#mac_onu').on('input', function () {
+            let val = $(this).val().toUpperCase().replace(/[^A-F0-9:.-]/g, '');
+            $(this).val(val);
+        });
+
+        // Restringir valores técnicos (potencia) a números, puntos y un guion inicial
+        $('#nap_tx_power, #onu_rx_power, #valor_conexion_dbm').on('input', function () {
+            let val = $(this).val().replace(/[^0-9.-]/g, '');
+            // Only allow one '-' at the beginning
+            if (val.indexOf('-') > 0) val = val.substring(0, val.indexOf('-')) + val.substring(val.indexOf('-') + 1);
+            $(this).val(val);
+        });
+
+        // LÓGICA DE CONVERSIÓN DE MONEDA Y FILTRADO DE PAGOS
+        let tasaBCV = 0;
+
+        // Obtener tasa al cargar
+        $.get('get_tasa_dolar.php', function (data) {
+            if (data.success) {
+                tasaBCV = data.promedio;
+                console.log("Tasa BCV cargada: " + tasaBCV);
+            }
+        });
+
+        const mPagado = $('#monto_pagado');
+        const mMoneda = $('#moneda_pago');
+        const mMedio = $('#medio_pago');
+
+        // Mapeo de medios por moneda
+        const mediosPorMoneda = {
+            'USD': ['Efectivo', 'Zelle', 'Otro'],
+            'BS': ['Efectivo', 'Transferencia', 'Pago Móvil', 'Otro']
+        };
+
+        function filtrarMedios(moneda) {
+            const actual = mMedio.val();
+            mMedio.empty().append('<option value="">-- Seleccione --</option>');
+            if (mediosPorMoneda[moneda]) {
+                mediosPorMoneda[moneda].forEach(medio => {
+                    mMedio.append(`<option value="${medio}">${medio}</option>`);
+                });
+            }
+            if (mediosPorMoneda[moneda].includes(actual)) {
+                mMedio.val(actual);
+            }
+        }
+
+        mMoneda.on('change', function () {
+            const moneda = $(this).val();
+            const monto = parseFloat(mPagado.val()) || 0;
+
+            if (tasaBCV > 0 && monto > 0) {
+                if (moneda === 'BS') {
+                    // Convertir de USD a BS
+                    mPagado.val((monto * tasaBCV).toFixed(2));
+                } else {
+                    // Convertir de BS a USD
+                    mPagado.val((monto / tasaBCV).toFixed(2));
+                }
+            }
+            filtrarMedios(moneda);
+            calcularSaldo();
+        });
+
+        // Inicializar medios al cargar
+        filtrarMedios(mMoneda.val());
+
         // 13. Función para calcular saldo pendiente
         function calcularSaldo() {
             var total = parseFloat($('#monto_pagar').val()) || 0;
             var pagado = parseFloat($('#monto_pagado').val()) || 0;
-            var saldo = total - pagado;
+            var moneda = $('#moneda_pago').val();
+
+            // Siempre calculamos el saldo en USD para el registro
+            var pagadoUSD = pagado;
+            if (moneda === 'BS' && tasaBCV > 0) {
+                pagadoUSD = pagado / tasaBCV;
+            }
+
+            var saldo = total - pagadoUSD;
 
             if (pagado > 0 && saldo > 0) {
                 $('#saldo_pendiente').val(saldo.toFixed(2));
@@ -833,63 +1051,42 @@ require_once '../includes/sidebar.php';
 </div>
 
 <script>
-    // Lógica para Generar Link
-    document.getElementById('btnGenerarLink').addEventListener('click', function () {
-        // Validar formulario básico
-        const form = document.querySelector('form');
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
+    // Lógica para Generar Link después de guardar
+    function generarLinkDespuesDeGuardar(idContrato) {
+        Swal.fire({
+            title: 'Generando...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
 
-        // Obtener firmas si existen (aunque para link suelen estar vacías, pero por si acaso el admin firmó)
-        // Usamos la logica existente de los pads
-        if (window.padCliente && !window.padCliente.isEmpty()) {
-            $('#firma_cliente_data').val(window.padCliente.toDataURL());
-        }
-        if (window.padTecnico && !window.padTecnico.isEmpty()) {
-            $('#firma_tecnico_data').val(window.padTecnico.toDataURL());
-        }
+        // Usar el endpoint existente 'generar_token_firma.php'
+        $.post('generar_token_firma.php', { id: idContrato }, function (resp) {
+            if (resp.success) {
+                const baseUrl = window.location.origin + '/sistemas-administrativo-tecnico-wireless/paginas/soporte/firmar_remoto.php';
+                const link = `${baseUrl}?token=${resp.token}&type=contrato`;
 
-        const formData = new FormData(form);
-        formData.append('generate_link', '1');
+                document.getElementById('linkInput').value = link;
 
-        const btn = this;
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Generando...';
+                // Configurar WhatsApp
+                const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
+                const mensaje = encodeURIComponent(`Hola, por favor firma tu contrato de servicio en el siguiente enlace: ${link}`);
+                const waLink = `https://wa.me/${telefono}?text=${mensaje}`;
+                document.getElementById('btnWhatsapp').href = waLink;
 
-        fetch('guarda.php', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    document.getElementById('linkInput').value = data.link;
-
-                    // Configurar WhatsApp
-                    const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
-                    // Usamos backticks para template string
-                    const mensaje = encodeURIComponent(`Hola, por favor firma tu contrato de servicio en el siguiente enlace: ${data.link}`);
-                    const waLink = `https://wa.me/${telefono}?text=${mensaje}`;
-                    document.getElementById('btnWhatsapp').href = waLink;
-
-                    const modal = new bootstrap.Modal(document.getElementById('modalLink'));
-                    modal.show();
-                } else {
-                    Swal.fire('Error', data.msg || 'Error al generar el link', 'error');
-                }
-            })
-            .catch(error => {
-                console.error(error);
-                Swal.fire('Error', 'Error de conexión', 'error');
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
+                Swal.close();
+                const modal = new bootstrap.Modal(document.getElementById('modalLink'));
+                modal.show();
+            } else {
+                Swal.fire('Error', resp.message || 'Error al generar el link', 'error').then(() => {
+                    window.location.href = 'gestion_contratos.php';
+                });
+            }
+        }, 'json').fail(function () {
+            Swal.fire('Error', 'Error de comunicación con el servidor', 'error').then(() => {
+                window.location.href = 'gestion_contratos.php';
             });
-    });
+        });
+    }
 
     function copiarLink() {
         const linkInput = document.getElementById("linkInput");

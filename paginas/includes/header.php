@@ -7,6 +7,22 @@ $page_title = isset($page_title) ? $page_title : 'Panel de Control';
 if (!isset($path_fix)) {
     $path_fix = isset($path_to_root) ? $path_to_root : '../';
 }
+
+// --- SEGURIDAD: CONTROL DE ACCESO ---
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['usuario_id'])) {
+    // Si no hay sesión iniciada, redirigir al login
+    header("Location: " . $path_fix . "index.html");
+    exit;
+}
+
+// Obtener datos del usuario desde la sesión
+$user_name = isset($_SESSION['nombre_completo']) ? $_SESSION['nombre_completo'] : 'Usuario';
+$user_role = isset($_SESSION['rol']) ? $_SESSION['rol'] : 'Sin Rol';
+$user_initial = strtoupper(substr($user_name, 0, 1));
 ?>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark top-header py-0 shadow-sm"
@@ -160,10 +176,13 @@ if (!isset($path_fix)) {
                         <div class="text-end me-2 d-none d-md-block">
                             <span class="d-block small text-muted text-uppercase fw-bold"
                                 style="font-size: 0.65rem;">Bienvenido</span>
-                            <span class="d-block fw-semibold" style="font-size: 0.9rem;">Admin</span>
+                            <span class="d-block fw-semibold"
+                                style="font-size: 0.9rem;"><?php echo htmlspecialchars($user_name); ?></span>
+                            <span class="badge bg-primary-light text-primary small"
+                                style="font-size: 0.6rem;"><?php echo htmlspecialchars($user_role); ?></span>
                         </div>
                         <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
-                            style="width: 38px; height: 38px;">A</div>
+                            style="width: 38px; height: 38px;"><?php echo $user_initial; ?></div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 text-small"
                         aria-labelledby="dropdownUser1">

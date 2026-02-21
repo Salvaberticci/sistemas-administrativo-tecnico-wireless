@@ -67,14 +67,15 @@
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label fw-bold">Cédula de Identidad o RIF <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="cedula" required
-                                        placeholder="Ej. V12345678 o J123456789">
+                                    <input type="text" class="form-control" name="cedula" id="cedula" required
+                                        pattern="V[0-9]+" value="V" placeholder="V12345678"
+                                        style="text-transform: uppercase;">
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label fw-bold">Nombre y Apellido Titular <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="nombre_completo" required
-                                        placeholder="Nombre completo">
+                                    <input type="text" class="form-control" name="nombre_completo" id="nombre_completo"
+                                        required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+" placeholder="Nombre completo">
                                 </div>
                             </div>
 
@@ -106,12 +107,13 @@
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label">Teléfono de Contacto 1 <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="telefono" required
-                                        placeholder="0424-1234567">
+                                    <input type="text" class="form-control" name="telefono" id="telefono" required
+                                        inputmode="tel" pattern="[0-9\-+\s]{7,15}" placeholder="0424-1234567">
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label">Teléfono de Contacto 2</label>
                                     <input type="text" class="form-control" name="telefono_secundario"
+                                        id="telefono_secundario" inputmode="tel" pattern="[0-9\-+\s]{7,15}"
                                         placeholder="0414-7654321">
                                 </div>
                             </div>
@@ -187,9 +189,10 @@
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col-md-4 mb-2">
-                                        <label class="form-label">Monto de Instalación ($)</label>
+                                        <label class="form-label">Monto de Instalación ($) <span
+                                                class="text-danger">*</span></label>
                                         <input type="number" step="0.01" class="form-control" name="monto_instalacion"
-                                            id="monto_instalacion" placeholder="0.00">
+                                            id="monto_instalacion" required placeholder="0.00">
                                     </div>
                                     <div class="col-md-4 mb-2">
                                         <label class="form-label">Gasto Adicional ($)</label>
@@ -286,13 +289,13 @@
                                     <div class="row mb-3 campo-ftth">
                                         <div class="col-md-6 mb-2">
                                             <label class="form-label">MAC o Serial de la ONU</label>
-                                            <input type="text" class="form-control" name="mac_onu"
-                                                placeholder="MAC o Serial">
+                                            <input type="text" class="form-control" id="mac_onu" name="mac_onu"
+                                                pattern="[A-Fa-f0-9:\.\-]{8,20}" placeholder="FABBCC112233">
                                         </div>
                                         <div class="col-md-6 mb-2">
                                             <label class="form-label">Dirección IP Asignada a la ONU</label>
-                                            <input type="text" class="form-control" name="ip_onu" value="192.168."
-                                                placeholder="192.168.x.x">
+                                            <input type="text" class="form-control" id="ip_onu" name="ip_onu" value=""
+                                                pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" placeholder="192.168.x.x">
                                         </div>
                                     </div>
 
@@ -312,18 +315,18 @@
                                     <div class="row mb-3 campo-ftth">
                                         <div class="col-md-4 mb-2">
                                             <label class="form-label">NAP TX Power (dBm)</label>
-                                            <input type="text" class="form-control" name="nap_tx_power"
-                                                placeholder="-25">
+                                            <input type="text" class="form-control" id="nap_tx_power"
+                                                name="nap_tx_power" pattern="-?[0-9.]+" placeholder="-25">
                                         </div>
                                         <div class="col-md-4 mb-2">
                                             <label class="form-label">ONU RX Power (dBm)</label>
-                                            <input type="text" class="form-control" name="onu_rx_power"
-                                                placeholder="-27">
+                                            <input type="text" class="form-control" id="onu_rx_power"
+                                                name="onu_rx_power" pattern="-?[0-9.]+" placeholder="-27">
                                         </div>
                                         <div class="col-md-4 mb-2">
                                             <label class="form-label">Distancia de Drop (m)</label>
-                                            <input type="text" class="form-control" name="distancia_drop"
-                                                placeholder="50">
+                                            <input type="number" step="1" class="form-control" id="distancia_drop"
+                                                name="distancia_drop" placeholder="50">
                                         </div>
                                     </div>
 
@@ -332,18 +335,18 @@
                                         <div class="col-md-4 mb-2">
                                             <label class="form-label">Dirección IP <span
                                                     class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" name="ip" value="192.168."
-                                                placeholder="192.168.x.x">
+                                            <input type="text" class="form-control" name="ip" id="ip" value="" required
+                                                pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" placeholder="192.168.x.x">
                                         </div>
                                         <div class="col-md-4 mb-2">
                                             <label class="form-label">Punto de Acceso</label>
-                                            <input type="text" class="form-control" name="punto_acceso"
-                                                placeholder="Nombre AP">
+                                            <input type="text" class="form-control" id="punto_acceso"
+                                                name="punto_acceso" placeholder="Nombre AP">
                                         </div>
                                         <div class="col-md-4 mb-2">
                                             <label class="form-label">Valor de Conexión (dBm)</label>
-                                            <input type="text" class="form-control" name="valor_conexion_dbm"
-                                                placeholder="-55">
+                                            <input type="text" class="form-control" id="valor_conexion_dbm"
+                                                name="valor_conexion_dbm" pattern="-?[0-9.]+" placeholder="-55">
                                         </div>
                                     </div>
 
@@ -494,6 +497,51 @@
         const canvasCliente = document.getElementById('sigCliente');
         const canvasTecnico = document.getElementById('sigTecnico');
 
+        // ======================================================
+        // VALIDACIÓN Y FORMATEO DE CAMPOS (REQUERIMIENTO USUARIO)
+        // ======================================================
+        // 1. Forzar prefijo 'V' en Cédula y permitir solo dígitos después
+        $('#cedula').on('input', function () {
+            let val = $(this).val().toUpperCase();
+
+            // Asegurar que siempre empiece con V
+            if (!val.startsWith('V')) {
+                val = 'V' + val.replace(/[^0-9]/g, '');
+            } else {
+                // Mantener la V inicial y limpiar el resto
+                val = 'V' + val.substring(1).replace(/[^0-9]/g, '');
+            }
+
+            $(this).val(val);
+        });
+
+        $('#ip, #ip_onu').on('input', function () {
+            let val = $(this).val().replace(/[^0-9.]/g, '');
+            $(this).val(val);
+        });
+
+        $('#telefono, #telefono_secundario').on('input', function () {
+            let val = $(this).val().replace(/[^0-9-+\s]/g, '');
+            $(this).val(val);
+        });
+
+        $('#nombre_completo').on('input', function () {
+            let val = $(this).val().replace(/[^A-Za-zñÑáéíóúÁÉÍÓÚ\s]/g, '');
+            $(this).val(val);
+        });
+
+        $('#mac_onu').on('input', function () {
+            let val = $(this).val().toUpperCase().replace(/[^A-F0-9:.-]/g, '');
+            $(this).val(val);
+        });
+
+        $('#nap_tx_power, #onu_rx_power, #valor_conexion_dbm').on('input', function () {
+            let val = $(this).val().replace(/[^0-9.-]/g, '');
+            // Only allow one '-' at the beginning
+            if (val.indexOf('-') > 0) val = val.substring(0, val.indexOf('-')) + val.substring(val.indexOf('-') + 1);
+            $(this).val(val);
+        });
+
         function resizeCanvas(canvas) {
             var ratio = Math.max(window.devicePixelRatio || 1, 1);
             canvas.width = canvas.offsetWidth * ratio;
@@ -551,12 +599,12 @@
                 let options = '<option value="">-- Seleccione --</option>';
 
                 if (munNombre) {
-                    // Buscar el municipio seleccionado en el array
                     const municipioObj = ubicacionesData.find(m => m.municipio === munNombre);
 
                     if (municipioObj && municipioObj.parroquias) {
                         municipioObj.parroquias.forEach(function (p) {
-                            options += `<option value="${p}">${p}</option>`;
+                            // Ahora p es un objeto {nombre: "...", comunidades: []}
+                            options += `<option value="${p.nombre}">${p.nombre}</option>`;
                         });
                         $('#parroquia').html(options).prop('disabled', false);
                     } else {
@@ -564,6 +612,29 @@
                     }
                 } else {
                     $('#parroquia').html('<option value="">-- Primero seleccione municipio --</option>').prop('disabled', true);
+                }
+                $('#comunidad').html('<option value="">-- Primero seleccione parroquia --</option>').prop('disabled', true);
+            });
+
+            // Cargar Comunidades al cambiar Parroquia (Agregado para consistencia)
+            $('#parroquia').on('change', function () {
+                const munNombre = $('#municipio').val();
+                const parrNombre = $(this).val();
+                let options = '<option value="">-- Seleccione --</option>';
+
+                if (munNombre && parrNombre) {
+                    const munObj = ubicacionesData.find(m => m.municipio === munNombre);
+                    if (munObj && munObj.parroquias) {
+                        const parObj = munObj.parroquias.find(p => p.nombre === parrNombre);
+                        if (parObj && parObj.comunidades) {
+                            parObj.comunidades.forEach(function (c) {
+                                options += `<option value="${c}">${c}</option>`;
+                            });
+                        }
+                    }
+                    $('#comunidad').html(options).prop('disabled', false);
+                } else {
+                    $('#comunidad').html('<option value="">-- Primero seleccione parroquia --</option>').prop('disabled', true);
                 }
             });
 
@@ -573,11 +644,14 @@
                 var tipo = $(this).val();
                 // Ocultar todos primero
                 $('.campo-ftth, .campo-radio').hide();
+                // Quitar required de campos que podrian ser obligatorios
+                $('#ip').prop('required', false);
 
                 if (tipo === 'FTTH') {
                     $('.campo-ftth').show();
                 } else if (tipo === 'RADIO') {
                     $('.campo-radio').show();
+                    $('#ip').prop('required', true); // IP es obligatoria para Radio
                 }
             });
 
@@ -717,12 +791,50 @@
         });
 
         function guardarContrato(formData) {
-            // Agregar foto si existe (re-check, aunque formData ya lo toma del input file)
-            /* const fotoFile = document.getElementById('foto_instalacion').files[0];
-            if (fotoFile && !formData.has('evidencia_foto_file')) { // formData toma archivos automaticamente
-                formData.append('evidencia_foto_file', fotoFile);
-            } */
+            // Mostrar Confirmación antes de enviar
+            const cedula = document.getElementById('cedula').value;
+            const nombre = document.getElementById('nombre_completo').value;
+            const tipo = document.querySelector('select[name="tipo_instalacion"]').value;
+            const plan = document.getElementById('id_plan').options[document.getElementById('id_plan').selectedIndex].text;
+            const total = document.getElementById('monto_pagar').value;
+            const pagado = document.getElementById('monto_pagado').value;
+            const moneda = document.querySelector('select[name="moneda_pago"]').value;
+            const medio = document.querySelector('select[name="medio_pago"]').value;
 
+            const htmlResumen = `
+                <div class="text-start">
+                    <table class="table table-sm table-bordered mt-2">
+                        <tbody>
+                            <tr><th class="bg-light">Cédula:</th><td>${cedula}</td></tr>
+                            <tr><th class="bg-light">Titular:</th><td>${nombre}</td></tr>
+                            <tr><th class="bg-light">Tipo:</th><td>${tipo}</td></tr>
+                            <tr><th class="bg-light">Plan:</th><td>${plan}</td></tr>
+                            <tr><th class="bg-light">Monto Total:</th><td>$${total}</td></tr>
+                            <tr><th class="bg-light">Monto Pagado:</th><td>${pagado} ${moneda}</td></tr>
+                            <tr><th class="bg-light">Medio de Pago:</th><td>${medio}</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="text-center fw-bold text-success mt-1">¿Desea registrar este contrato?</p>
+                </div>
+            `;
+
+            Swal.fire({
+                title: 'Confirmar Datos',
+                html: htmlResumen,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, Registrar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    ejecutarGuardado(formData);
+                }
+            });
+        }
+
+        function ejecutarGuardado(formData) {
             document.getElementById('btnGuardar').disabled = true;
             document.getElementById('btnGuardar').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
@@ -769,10 +881,69 @@
         const inputMontoPagado = document.getElementById('monto_pagado');
         const inputMontoDebe = document.getElementById('monto_debe');
 
+        // LÓGICA DE CONVERSIÓN DE MONEDA Y FILTRADO DE PAGOS (BCV)
+        let tasaBCV = 0;
+        $.get('../../paginas/principal/get_tasa_dolar.php', function (data) {
+            if (data.success) {
+                tasaBCV = data.promedio;
+                console.log("Tasa BCV cargada (Instalador): " + tasaBCV);
+            }
+        });
+
+        const selectMoneda = document.querySelector('select[name="moneda_pago"]');
+        const selectMedio = document.querySelector('select[name="medio_pago"]');
+
+        const mediosPorMoneda = {
+            'USD': ['Efectivo', 'Zelle', 'Otro'],
+            'BS': ['Efectivo', 'Transferencia', 'Pago Móvil', 'Otro']
+        };
+
+        function filtrarMedios(moneda) {
+            const actual = selectMedio.value;
+            selectMedio.innerHTML = '<option value="">-- Seleccione --</option>';
+            if (mediosPorMoneda[moneda]) {
+                mediosPorMoneda[moneda].forEach(medio => {
+                    const opt = document.createElement('option');
+                    opt.value = medio;
+                    opt.textContent = medio;
+                    selectMedio.appendChild(opt);
+                });
+            }
+            if (mediosPorMoneda[moneda].includes(actual)) {
+                selectMedio.value = actual;
+            }
+        }
+
+        if (selectMoneda) {
+            selectMoneda.addEventListener('change', function () {
+                const moneda = this.value;
+                const monto = parseFloat(inputMontoPagado.value) || 0;
+
+                if (tasaBCV > 0 && monto > 0) {
+                    if (moneda === 'BS') {
+                        inputMontoPagado.value = (monto * tasaBCV).toFixed(2);
+                    } else {
+                        inputMontoPagado.value = (monto / tasaBCV).toFixed(2);
+                    }
+                }
+                filtrarMedios(moneda);
+                calcularDebe();
+            });
+            // Inicializar
+            filtrarMedios(selectMoneda.value);
+        }
+
         function calcularDebe() {
             const total = parseFloat(inputMontoPagar.value) || 0;
             const pagado = parseFloat(inputMontoPagado.value) || 0;
-            const debe = total - pagado;
+            const moneda = selectMoneda ? selectMoneda.value : 'USD';
+
+            let pagadoUSD = pagado;
+            if (moneda === 'BS' && tasaBCV > 0) {
+                pagadoUSD = pagado / tasaBCV;
+            }
+
+            const debe = total - pagadoUSD;
 
             // Si el debe es negativo (pagó de más), mostramos 0 o negativo según preferencia. 
             // Generalmente "Debe" es >= 0.

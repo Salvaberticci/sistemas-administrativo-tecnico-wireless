@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $metodo_pago = $conn->real_escape_string($_POST['metodo_pago']);
     $id_banco_destino = isset($_POST['id_banco_destino']) ? intval($_POST['id_banco_destino']) : null;
     $referencia = isset($_POST['referencia']) ? $conn->real_escape_string($_POST['referencia']) : '';
+    $monto_bs = isset($_POST['monto_bs']) ? floatval($_POST['monto_bs']) : 0.00;
     $meses = isset($_POST['meses']) ? implode(', ', $_POST['meses']) : '';
     $concepto = isset($_POST['concepto']) ? $conn->real_escape_string($_POST['concepto']) : '';
 
@@ -51,11 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 3. Insertar en la tabla de reportes pendientes
     $sql_insert = "INSERT INTO pagos_reportados 
-        (cedula_titular, nombre_titular, telefono_titular, fecha_pago, metodo_pago, id_banco_destino, referencia, meses_pagados, concepto, capture_path, id_contrato_asociado)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        (cedula_titular, nombre_titular, telefono_titular, fecha_pago, metodo_pago, id_banco_destino, referencia, monto_bs, meses_pagados, concepto, capture_path, id_contrato_asociado)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql_insert);
-    $stmt->bind_param("sssssissssi", $cedula, $nombre, $telefono, $fecha_pago, $metodo_pago, $id_banco_destino, $referencia, $meses, $concepto, $capture_path, $id_contrato_asociado);
+    $stmt->bind_param("sssssisdsssi", $cedula, $nombre, $telefono, $fecha_pago, $metodo_pago, $id_banco_destino, $referencia, $monto_bs, $meses, $concepto, $capture_path, $id_contrato_asociado);
 
     if ($stmt->execute()) {
         $mensaje_exito = "¡Gracias! Tu reporte de pago ha sido enviado correctamente. Será verificado por nuestro equipo administrativo a la brevedad posible.";
