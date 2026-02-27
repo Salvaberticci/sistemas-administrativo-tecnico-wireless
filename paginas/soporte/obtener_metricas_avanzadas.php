@@ -1,10 +1,12 @@
 <?php
+ob_start();
 /**
  * Obtener Métricas Avanzadas
  * Endpoint AJAX para métricas de gestión avanzada de fallas
  */
 
-header('Content-Type: application/json');
+error_reporting(0);
+ini_set('display_errors', 0);
 require_once '../conexion.php';
 
 // Parámetros de filtro
@@ -218,7 +220,7 @@ try {
                       FROM soportes
                       WHERE fecha_reporte BETWEEN '$fecha_desde' AND '$fecha_hasta'
                       GROUP BY prioridad
-                      ORDER BY FIELD(prioridad, 'CRITICA', 'ALTA', 'MEDIA', 'BAJA')";
+                      ORDER BY FIELD(prioridad, 'NIVEL 3', 'NIVEL 2', 'NIVEL 1')";
 
     $result = $conn->query($sql_prioridad);
     $por_prioridad = [];
@@ -228,10 +230,17 @@ try {
     $response['por_prioridad'] = $por_prioridad;
 
 } catch (Exception $e) {
-    $response['por_prioridad'] = [];
+    if (isset($response)) {
+        $response['por_prioridad'] = [];
+        $response['error_general'] = $e->getMessage();
+    }
 }
 
-$conn->close();
+if (isset($conn) && $conn instanceof mysqli)
+    $conn->close();
 
+if (ob_get_length())
+    ob_end_clean();
+header('Content-Type: application/json');
 echo json_encode($response, JSON_PRETTY_PRINT);
 ?>

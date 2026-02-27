@@ -53,6 +53,13 @@ include $path_to_root . 'paginas/includes/header.php';
                 </div>
             <?php endif; ?>
 
+            <!-- Script to remove GET parameters from URL so refresh doesn't show alert again -->
+            <script>
+                if (window.history.replaceState) {
+                    window.history.replaceState(null, null, window.location.pathname);
+                }
+            </script>
+
             <div class="card shadow-sm border-0">
                 <div class="card-body">
                     <form action="guardar_soporte.php" method="POST" id="formSoporteAdmin">
@@ -326,8 +333,9 @@ include $path_to_root . 'paginas/includes/header.php';
 
     // --- Envío del Formulario ---
     document.getElementById('formSoporteAdmin').addEventListener('submit', function (e) {
+        e.preventDefault();
+
         if (!idInput.value) {
-            e.preventDefault();
             Swal.fire('Error', 'Debe seleccionar un cliente obligatorio.', 'warning');
             return;
         }
@@ -336,10 +344,47 @@ include $path_to_root . 'paginas/includes/header.php';
         if (padTech && !padTech.isEmpty()) document.getElementById('firma_tecnico_data').value = padTech.toDataURL();
         if (padCli && !padCli.isEmpty()) document.getElementById('firma_cliente_data').value = padCli.toDataURL();
 
-        // No prevenimos el default aqui, dejamos que haga submit POST normal a guardar_soporte.php
-        // Pero podríamos bloquear el botón
-        document.getElementById('btnGuardar').disabled = true;
-        document.getElementById('btnGuardar').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        const btn = document.getElementById('btnGuardar');
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+        const formData = new FormData(this);
+        formData.append('ajax', '1');
+
+        fetch('guardar_soporte.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        title: '¡Guardado!',
+                        text: 'Soporte registrado correctamente.',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fas fa-file-pdf"></i> Ver PDF',
+                        cancelButtonText: 'Ir al Listado',
+                        confirmButtonColor: '#0dcaf0'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.open('generar_pdf_reporte.php?id=' + data.id_soporte, '_blank');
+                        }
+                        window.location.href = 'historial_soportes.php';
+                    });
+                } else {
+                    Swal.fire('Error', data.msg || 'Error al guardar el reporte.', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                Swal.fire('Error', 'Error de conexión. Intente nuevamente.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            });
     });
 
 </script>

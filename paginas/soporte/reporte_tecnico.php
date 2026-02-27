@@ -528,8 +528,15 @@
                         Swal.fire({
                             title: '¡Guardado!',
                             text: 'Reporte registrado con éxito.',
-                            icon: 'success'
-                        }).then(() => {
+                            icon: 'success',
+                            showCancelButton: true,
+                            confirmButtonText: '<i class="fas fa-file-pdf"></i> Ver PDF',
+                            cancelButtonText: 'Cerrar',
+                            confirmButtonColor: '#0dcaf0'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.open('generar_pdf_reporte.php?id=' + data.id_soporte, '_blank');
+                            }
                             window.location.reload();
                         });
                     } else {

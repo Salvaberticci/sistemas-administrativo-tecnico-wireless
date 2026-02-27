@@ -14,6 +14,7 @@ if (!isset($_GET['maintenance_done'])) {
 // Lógica de mensajes
 $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : '';
 $message_class = isset($_GET['class']) ? htmlspecialchars($_GET['class']) : '';
+$hoy = date('Y-m-d');
 
 // Obtener Bancos para Modal
 $bancos = $conn->query("SELECT id_banco, nombre_banco FROM bancos ORDER BY nombre_banco ASC");
@@ -107,18 +108,6 @@ require_once '../includes/sidebar.php';
                     data-bs-target="#modalGenerarCobro">
                     <i class="fas fa-plus-circle me-1"></i> Generar Cobro
                 </button>
-                <div class="btn-group shadow-sm">
-                    <button class="btn btn-primary" onclick="exportarExcel('filtrado')"
-                        title="Exportar con filtros actuales">
-                        <i class="fa-solid fa-filter me-1"></i> Exp. Filtrado
-                    </button>
-                    <button class="btn btn-primary dropdown-toggle dropdown-toggle-split"
-                        data-bs-toggle="dropdown"></button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="exportarExcel('todos')"><i
-                                    class="fa-solid fa-globe text-success me-2"></i> Exportar Global</a></li>
-                    </ul>
-                </div>
             </div>
         </div>
 
@@ -134,15 +123,15 @@ require_once '../includes/sidebar.php';
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body p-3">
                 <div class="row g-2 align-items-end">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Desde</label>
                         <input type="date" class="form-control form-control-sm" id="fecha_inicio"
-                            value="<?php echo date('Y-m-01'); ?>">
+                            value="<?php echo date('Y-m-01'); ?>" max="<?php echo $hoy; ?>">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Hasta</label>
                         <input type="date" class="form-control form-control-sm" id="fecha_fin"
-                            value="<?php echo date('Y-m-t'); ?>">
+                            value="<?php echo $hoy; ?>" max="<?php echo $hoy; ?>">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-bold text-muted mb-1">Cuenta/Banco</label>
@@ -158,8 +147,20 @@ require_once '../includes/sidebar.php';
                             <option value="CARGADO">Cargado</option>
                         </select>
                     </div>
-                    <div class="col-md-1 text-end">
-                        <p class="text-muted small mb-0"><i class="fas fa-info-circle me-1"></i></p>
+                    <div class="col-md-2">
+                        <div class="btn-group w-100 shadow-sm">
+                            <button class="btn btn-primary btn-sm" onclick="exportarExcel('filtrado')"
+                                title="Exportar con filtros actuales">
+                                <i class="fa-solid fa-filter me-1"></i> Exportar
+                            </button>
+                            <button class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split"
+                                data-bs-toggle="dropdown"></button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <li><a class="dropdown-item small" href="javascript:void(0)"
+                                        onclick="exportarExcel('todos')"><i
+                                            class="fa-solid fa-globe text-success me-2"></i> Global</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -207,18 +208,23 @@ require_once '../includes/sidebar.php';
                 <form id="formAgregarBanco" class="mb-4">
                     <label class="form-label fw-bold small text-muted">Agregar Nueva Cuenta</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" name="nombre_banco" placeholder="Nombre Banco / Titular"
-                            required>
+                        <input type="text" class="form-control" name="nombre_banco" placeholder="Nombre Banco" required>
                         <button class="btn btn-success" type="submit"><i class="fas fa-plus"></i></button>
                     </div>
                     <div class="row g-2 mt-1">
-                        <div class="col-6">
+                        <div class="col-12">
                             <input type="text" class="form-control form-control-sm" name="numero_cuenta"
-                                placeholder="Nro Cuenta (Opcional)">
+                                placeholder="Nro Cuenta">
                         </div>
+                    </div>
+                    <div class="row g-2 mt-1">
                         <div class="col-6">
                             <input type="text" class="form-control form-control-sm" name="titular_cuenta"
-                                placeholder="Titular (Opcional)">
+                                placeholder="Titular">
+                        </div>
+                        <div class="col-6">
+                            <input type="text" class="form-control form-control-sm" name="cedula_propietario"
+                                placeholder="Cédula Titular" id="cedula_propietario_banco">
                         </div>
                     </div>
                 </form>
@@ -267,7 +273,7 @@ require_once '../includes/sidebar.php';
 
                     <div class="mb-2">
                         <label class="form-label fw-semibold text-secondary small">Monto a Pagar</label>
-                        <input type="number" step="0.01" class="form-control form-control-lg" id="input_monto_pagar"
+                        <input type="number" step="0.01" min="0" class="form-control form-control-lg" id="input_monto_pagar"
                             required>
                         <input type="hidden" name="monto_pagado" id="monto_pagado_hidden"> <!-- Valor final en USD -->
                         <div id="equiv_pagar" class="form-text text-end fw-bold text-primary mt-1"></div>
@@ -353,7 +359,7 @@ require_once '../includes/sidebar.php';
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold text-secondary small">¿Cuánto paga hoy? ($)</label>
-                                <input type="number" step="0.01" class="form-control fw-bold text-success"
+                                <input type="number" step="0.01" min="0" class="form-control fw-bold text-success"
                                     name="monto_pagado_hoy" id="monto_pagado_hoy">
                                 <div id="equiv_pago_hoy" class="form-text small fw-bold text-primary mt-1"></div>
                             </div>
@@ -378,7 +384,13 @@ require_once '../includes/sidebar.php';
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-secondary small">Autorizado por</label>
-                        <input type="text" class="form-control" name="autorizado_por" required>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="autorizado_por" id="input_autorizado_por" required placeholder="Escriba un nombre...">
+                            <button class="btn btn-outline-primary" type="button" 
+                                onclick="document.getElementById('input_autorizado_por').value = '<?php echo addslashes($user_name); ?>'">
+                                <i class="fas fa-user-check me-1"></i> Usar mi usuario
+                            </button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-secondary small">Justificación</label>
@@ -434,6 +446,8 @@ require_once '../includes/sidebar.php';
 <!-- Scripts JS -->
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(function () {
         // === TASA DE CAMBIO ===
@@ -450,6 +464,83 @@ require_once '../includes/sidebar.php';
                     $('#tasa_display').html(`<span class="text-danger">Error Tasa</span>`);
                 }
             });
+
+        // === VALIDACIÓN DE FECHAS ===
+        const inputDesde = document.getElementById('fecha_inicio');
+        const inputHasta = document.getElementById('fecha_fin');
+
+        const syncFechas = () => {
+            if (inputDesde && inputHasta) {
+                inputDesde.setAttribute('max', inputHasta.value);
+                inputHasta.setAttribute('min', inputDesde.value);
+            }
+        };
+
+        if (inputDesde && inputHasta) {
+            inputDesde.addEventListener('change', function () {
+                if (this.value > inputHasta.value) {
+                    inputHasta.value = this.value;
+                    $(inputHasta).trigger('change');
+                }
+                syncFechas();
+            });
+
+            inputHasta.addEventListener('change', function () {
+                if (this.value < inputDesde.value) {
+                    inputDesde.value = this.value;
+                    $(inputDesde).trigger('change');
+                }
+                syncFechas();
+            });
+
+            syncFechas(); // Inicializar limites
+        }
+
+        // === VALIDACIÓN DE MONTOS (SOLO NÚMEROS Y POSITIVOS) ===
+        const amountInputs = ['input_monto_pagar', 'input_monto_cobro', 'monto_pagado_hoy'];
+        amountInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                // 1. Bloquear teclas no numéricas al escribir
+                input.addEventListener('keydown', function (e) {
+                    // Permitir: backspace, delete, tab, escape, enter, dot, comma
+                    if ([46, 8, 9, 27, 13, 110, 190, 188].indexOf(e.keyCode) !== -1 ||
+                        // Permitir: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+R
+                        (e.ctrlKey === true && [65, 67, 86, 88, 82].indexOf(e.keyCode) !== -1) ||
+                        // Permitir: home, end, left, right
+                        (e.keyCode >= 35 && e.keyCode <= 39)) {
+                        return;
+                    }
+                    // Bloquear si no es un número
+                    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                        e.preventDefault();
+                    }
+                });
+
+                // 2. Limpiar pegado de texto no numérico
+                input.addEventListener('paste', function (e) {
+                    const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                    if (/[^0-9,.]/.test(pasteData)) {
+                        e.preventDefault();
+                        const cleanedData = pasteData.replace(/[^0-9,.]/g, '');
+                        // Insertar texto limpio manualmente si es necesario o simplemente avisar
+                        document.execCommand('insertText', false, cleanedData);
+                    }
+                });
+
+                // 3. Asegurar positivo al final
+                input.addEventListener('input', function () {
+                    // Por si pasó algún carácter raro (como 'e')
+                    this.value = this.value.replace(/[^0-9.,]/g, '');
+                    
+                    if (parseFloat(this.value) < 0) {
+                        this.value = 0;
+                    }
+                    $(this).trigger('input'); // Disparar cálculos dependientes (conversión Bs/$)
+                });
+            }
+        });
+
 
         // === CONVERSIÓN EN MODAL GENERAR COBRO ===
         const inputMontoCobro = document.getElementById('input_monto_cobro');
@@ -755,7 +846,7 @@ require_once '../includes/sidebar.php';
                     if (lista) {
                         const li = document.createElement('li');
                         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                        li.innerHTML = `<div><strong>${b.nombre_banco}</strong><small class="d-block text-muted" style="font-size:0.75rem">${b.numero_cuenta || ''} ${b.titular_cuenta ? '- ' + b.titular_cuenta : ''}</small></div>
+                        li.innerHTML = `<div><strong>${b.nombre_banco}</strong><small class="d-block text-muted" style="font-size:0.75rem">${b.numero_cuenta || ''} ${b.nombre_propietario ? '- ' + b.nombre_propietario : ''} ${b.cedula_propietario ? '(' + b.cedula_propietario + ')' : ''}</small></div>
                         <button class="btn btn-sm btn-outline-danger" onclick="eliminarBanco('${b.id_banco}')"><i class="fas fa-trash"></i></button>`;
                         lista.appendChild(li);
                     }
@@ -766,23 +857,83 @@ require_once '../includes/sidebar.php';
             });
     }
 
+    async function solicitarClaveAdmin(titulo = 'Confirmar Acción') {
+        // Fix for Bootstrap modal focus trap
+        const focusHandler = (e) => {
+            if (e.target.closest(".swal2-container")) {
+                e.stopImmediatePropagation();
+            }
+        };
+        document.addEventListener('focusin', focusHandler, true);
+
+        const { value: password } = await Swal.fire({
+            title: titulo,
+            input: 'password',
+            inputLabel: 'Ingrese la clave de administrador para proceder',
+            inputPlaceholder: 'Clave de seguridad',
+            inputAttributes: {
+                autocapitalize: 'off',
+                autocorrect: 'off'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Confirmar',
+            cancelButtonText: 'Cancelar',
+            didClose: () => {
+                document.removeEventListener('focusin', focusHandler, true);
+            }
+        });
+
+        if (password) {
+            const resp = await fetch('verificar_clave.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'clave=' + encodeURIComponent(password)
+            });
+            const data = await resp.json();
+            if (data.success) return true;
+            Swal.fire('Error', 'Clave incorrecta', 'error');
+        }
+        return false;
+    }
+
     const formAgregar = document.getElementById('formAgregarBanco');
     if (formAgregar) {
-        formAgregar.addEventListener('submit', function (e) {
+        formAgregar.addEventListener('submit', async function (e) {
             e.preventDefault();
+
+            const proceeds = await solicitarClaveAdmin('Agregar Nuevo Banco');
+            if (!proceeds) return;
+
             fetch('json_bancos_api.php?action=add', { method: 'POST', body: new FormData(this) })
                 .then(r => r.json())
-                .then(res => { if (res.success) { this.reset(); cargarBancos(); } else { alert('Error: ' + res.message); } });
+                .then(res => {
+                    if (res.success) {
+                        this.reset();
+                        cargarBancos();
+                        Swal.fire('Éxito', 'Banco agregado correctamente', 'success');
+                    } else {
+                        alert('Error: ' + res.message);
+                    }
+                });
         });
     }
 
-    window.eliminarBanco = function (id) {
-        if (!confirm('¿Seguro de eliminar esta cuenta?')) return;
+    window.eliminarBanco = async function (id) {
+        const proceeds = await solicitarClaveAdmin('Eliminar Banco');
+        if (!proceeds) return;
+
         const form = new FormData();
         form.append('id', id);
         fetch('json_bancos_api.php?action=delete', { method: 'POST', body: form })
             .then(r => r.json())
-            .then(res => { if (res.success) { cargarBancos(); } else { alert('Error al eliminar'); } });
+            .then(res => {
+                if (res.success) {
+                    cargarBancos();
+                    Swal.fire('Eliminado', 'La cuenta ha sido eliminada', 'success');
+                } else {
+                    alert('Error al eliminar');
+                }
+            });
     };
 </script>
 

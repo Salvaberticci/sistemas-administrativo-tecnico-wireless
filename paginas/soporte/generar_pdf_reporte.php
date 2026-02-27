@@ -5,8 +5,9 @@
  */
 
 ini_set('memory_limit', '256M');
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Ocultamos deprecated y notices para que no corrompan el binario del PDF en PHP 8+
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+ini_set('display_errors', 0);
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("Error: ID de reporte no proporcionado.");
@@ -21,7 +22,7 @@ use Dompdf\Options;
 require_once '../conexion.php';
 
 // Consultar datos completos del reporte
-$sql = "SELECT s.*, c.nombre_completo, c.cedula, c.ip, c.direccion, c.telefono
+$sql = "SELECT s.*, c.nombre_completo, c.cedula, c.ip_onu as ip, c.direccion, c.telefono
         FROM soportes s
         INNER JOIN contratos c ON s.id_contrato = c.id
         WHERE s.id_soporte = $id_soporte";
@@ -225,15 +226,15 @@ $html = '
             </tr>
             <tr>
                 <td class="label">Tipo de Servicio:</td>
-                <td class="value"><span class="badge badge-info">' . htmlspecialchars($r['tipo_servicio']) . '</span></td>
+                <td class="value"><span style="background:#17a2b8;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">' . htmlspecialchars($r['tipo_servicio'] ?? 'N/A') . '</span></td>
             </tr>
             <tr>
                 <td class="label">Tipo de Falla:</td>
-                <td class="value"><span class="badge badge-warning">' . htmlspecialchars($r['tipo_falla']) . '</span></td>
+                <td class="value"><span style="background:#ffc107;color:#333;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">' . htmlspecialchars($r['tipo_falla'] ?? 'N/A') . '</span></td>
             </tr>
             <tr>
                 <td class="label">Solución Completada:</td>
-                <td class="value">' . ($r['solucion_completada'] ? '<span class="badge badge-success">SÍ</span>' : '<span class="badge badge-danger">NO</span>') . '</td>
+                <td class="value">' . ($r['solucion_completada'] ? '<span style="background:#28a745;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">SÍ</span>' : '<span style="background:#dc3545;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">NO</span>') . '</td>
             </tr>
         </table>
     </div>

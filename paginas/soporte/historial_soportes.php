@@ -37,6 +37,13 @@ include $path_to_root . 'paginas/includes/header.php';
                 </div>
             <?php endif; ?>
 
+            <!-- Script to remove GET parameters from URL so refresh doesn't show alert again -->
+            <script>
+                if (window.history.replaceState) {
+                    window.history.replaceState(null, null, window.location.pathname);
+                }
+            </script>
+
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-0">
                     <div class="table-responsive p-4">
@@ -94,32 +101,135 @@ include $path_to_root . 'paginas/includes/header.php';
 
 <!-- Modal Editar -->
 <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form action="actualizar_soporte.php" method="POST" class="modal-content">
+    <div class="modal-dialog modal-lg">
+        <form action="actualizar_soporte.php" method="POST" class="modal-content" id="formEditarSoporte">
             <div class="modal-header">
-                <h5 class="modal-title">Editar Soporte</h5>
+                <h5 class="modal-title">Editar Soporte #<span id="edit_modal_id_display"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" name="id_soporte_edit" id="id_soporte_edit">
 
-                <div class="mb-3">
-                    <label for="fecha_edit" class="form-label">Fecha</label>
-                    <input type="date" class="form-control" name="fecha_edit" id="fecha_edit" required>
+                <!-- 1. Encabezado -->
+                <div class="row mb-3">
+                    <div class="col-md-4 mb-3">
+                        <label for="fecha_edit" class="form-label fw-bold">Fecha</label>
+                        <input type="date" class="form-control" name="fecha_edit" id="fecha_edit" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="tecnico_edit" class="form-label fw-bold">Técnico Asignado</label>
+                        <input type="text" class="form-control" name="tecnico_edit" id="tecnico_edit" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Sector</label>
+                        <input type="text" class="form-control" name="sector" id="sector_edit"
+                            placeholder="Ej. Las Malvinas">
+                    </div>
                 </div>
-                <!-- Nota: El formato de fecha de entrada debe ser YYYY-MM-DD. El DataTables muestra DD/MM/YYYY. Habrá que convertir en JS. -->
 
-                <div class="mb-3">
-                    <label for="tecnico_edit" class="form-label">Técnico</label>
-                    <input type="text" class="form-control" name="tecnico_edit" id="tecnico_edit" required>
+                <!-- 3. Detalles de Servicio -->
+                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Detalles Técnicos</div>
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Tipo Servicio</label>
+                        <select class="form-select" name="tipo_servicio" id="tipo_servicio_edit">
+                            <option value="FTTH">FTTH (Fibra)</option>
+                            <option value="RADIO">Radio/Antena</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">IP Asignada</label>
+                        <input type="text" class="form-control" name="ip" id="ip_edit" placeholder="0.0.0.0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-muted small">Estado ONU</label>
+                        <select class="form-select" name="estado_onu" id="estado_onu_edit">
+                            <option value="">--</option>
+                            <option value="ON">ON</option>
+                            <option value="OFF">OFF</option>
+                            <option value="LOS">LOS</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-muted small">Estado Router</label>
+                        <select class="form-select" name="estado_router" id="estado_router_edit">
+                            <option value="">--</option>
+                            <option value="ON">ON</option>
+                            <option value="OFF">OFF</option>
+                            <option value="RESET">Reset</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="descripcion_edit" class="form-label">Descripción</label>
-                    <textarea class="form-control" name="descripcion_edit" id="descripcion_edit" rows="3"
-                        required></textarea>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label small">Modelo Router</label>
+                        <input type="text" class="form-control" name="modelo_router" id="modelo_router_edit"
+                            placeholder="Ej. TPLink">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Dispositivos</label>
+                        <input type="number" class="form-control" name="num_dispositivos" id="num_dispositivos_edit"
+                            placeholder="Cant.">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-4">
+                                <label class="form-label small">Bajada</label>
+                                <input type="text" class="form-control" name="bw_bajada" id="bw_bajada_edit"
+                                    placeholder="MB">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small">Subida</label>
+                                <input type="text" class="form-control" name="bw_subida" id="bw_subida_edit"
+                                    placeholder="MB">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small">Ping</label>
+                                <input type="text" class="form-control" name="bw_ping" id="bw_ping_edit"
+                                    placeholder="ms">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
+                <div class="row mb-3 bg-light p-2 rounded mx-1">
+                    <div class="col-12"><small class="text-muted fw-bold">Solo Radio / Antena:</small></div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Estado Antena</label>
+                        <input type="text" class="form-control" name="estado_antena" id="estado_antena_edit"
+                            placeholder="Ej. Alineada">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Valores dBm</label>
+                        <input type="text" class="form-control" name="valores_antena" id="valores_antena_edit"
+                            placeholder="Ej. -55">
+                    </div>
+                </div>
+
+                <!-- 4. Observaciones -->
+                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Diagnóstico y Solución</div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="descripcion_edit" class="form-label">Observaciones / Problema</label>
+                        <textarea class="form-control" name="descripcion_edit" id="descripcion_edit" rows="3"
+                            required></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Sugerencias al Cliente</label>
+                        <textarea class="form-control" name="sugerencias" id="sugerencias_edit" rows="3"
+                            placeholder="Recomendaciones..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="solucion_completada_edit"
+                        name="solucion_completada">
+                    <label class="form-check-label fw-bold" for="solucion_completada_edit">¿Falla Solucionada?</label>
+                </div>
+
+                <!-- 5. Costos -->
+                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Costos y Facturación</div>
                 <div class="mb-3">
                     <label for="monto_total_edit" class="form-label fw-bold">Monto Total ($)</label>
                     <input type="number" step="0.01" min="0" class="form-control" name="monto_total_edit"
@@ -127,10 +237,42 @@ include $path_to_root . 'paginas/includes/header.php';
                     <div class="form-text text-muted">Nota: Al modificar el total, la deuda del cliente se recalculará
                         automáticamente.</div>
                 </div>
+
+                <!-- 6. Firmas -->
+                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Actualizar Firmas (Opcional)
+                </div>
+                <div class="row mb-4">
+                    <p class="text-muted small">Deje los lienzos en blanco para conservar las firmas originales.</p>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Firma Técnico</label>
+                        <div class="mb-2 text-center" id="container_firma_tech_edit" style="display:none;">
+                            <span class="badge bg-info mb-1">Firma Actual Guardada</span><br>
+                            <img id="imgFirmaTech_edit" src="" alt="Firma Técnico Actual" style="max-height: 80px; border: 1px dashed #ccc;">
+                        </div>
+                        <canvas id="sigTechEdit"
+                            style="border: 1px solid #ccc; width: 100%; height: 150px; border-radius: 4px; background-color: #fcfcfc;"></canvas>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                            onclick="clearPadEdit('tech')">Limpiar Lienzo</button>
+                        <input type="hidden" name="firma_tecnico_data" id="firma_tecnico_data_edit">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Firma Cliente</label>
+                        <div class="mb-2 text-center" id="container_firma_cli_edit" style="display:none;">
+                            <span class="badge bg-info mb-1">Firma Actual Guardada</span><br>
+                            <img id="imgFirmaCli_edit" src="" alt="Firma Cliente Actual" style="max-height: 80px; border: 1px dashed #ccc;">
+                        </div>
+                        <canvas id="sigCliEdit"
+                            style="border: 1px solid #ccc; width: 100%; height: 150px; border-radius: 4px; background-color: #fcfcfc;"></canvas>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                            onclick="clearPadEdit('cli')">Limpiar Lienzo</button>
+                        <input type="hidden" name="firma_cliente_data" id="firma_cliente_data_edit">
+                    </div>
+                </div>
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                <button type="submit" class="btn btn-primary" id="btnGuardarEdicion">Guardar Cambios</button>
             </div>
         </form>
     </div>
@@ -165,8 +307,63 @@ include $path_to_root . 'paginas/includes/header.php';
 <script src="<?php echo $path_to_root; ?>js/bootstrap.bundle.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
 <script>
+    let padTechEdit, padCliEdit;
+
+    // --- Inicializar SignaturePad cuando se abra el modal ---
+    $('#modalEditar').on('shown.bs.modal', function () {
+        const canvasTech = document.getElementById('sigTechEdit');
+        const canvasCli = document.getElementById('sigCliEdit');
+
+        // Redimensionar para que coincida con el CSS
+        function resizeCanvas(canvas) {
+            var ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+        }
+
+        resizeCanvas(canvasTech);
+        resizeCanvas(canvasCli);
+
+        if (!padTechEdit) padTechEdit = new SignaturePad(canvasTech);
+        if (!padCliEdit) padCliEdit = new SignaturePad(canvasCli);
+
+        padTechEdit.clear();
+        padCliEdit.clear();
+    });
+
+    function clearPadEdit(type) {
+        if (type === 'tech' && padTechEdit) padTechEdit.clear();
+        if (type === 'cli' && padCliEdit) padCliEdit.clear();
+    }
+
+    // --- On form submit, prepare signatures ---
+    document.getElementById('formEditarSoporte').addEventListener('submit', function (e) {
+        // Guardar firmas en hidden inputs si no están vacías
+        if (padTechEdit && !padTechEdit.isEmpty()) {
+            document.getElementById('firma_tecnico_data_edit').value = padTechEdit.toDataURL();
+        } else {
+            document.getElementById('firma_tecnico_data_edit').value = '';
+        }
+
+        if (padCliEdit && !padCliEdit.isEmpty()) {
+            document.getElementById('firma_cliente_data_edit').value = padCliEdit.toDataURL();
+        } else {
+            document.getElementById('firma_cliente_data_edit').value = '';
+        }
+
+        const btn = document.getElementById('btnGuardarEdicion');
+        btn.disabled = true;
+        btn.innerHTML = 'Guardando...';
+        
+        // Debug
+        const formData = new FormData(this);
+        console.log("FormData to be submitted:", Object.fromEntries(formData.entries()));
+    });
+
+
     $(document).ready(function () {
         $('#tablaSoportes').DataTable({
             "order": [[0, "desc"]],
@@ -217,15 +414,15 @@ include $path_to_root . 'paginas/includes/header.php';
                     "bSortable": false,
                     "mRender": function (data, type, row) {
                         var id = row[0];
-                        var fecha = row[1]; // DD/MM/YYYY
-                        var descripcion = row[3];
-                        var tecnico = row[4];
                         var total = parseFloat(row[5]);
                         var pagado = parseFloat(row[6]);
                         var deuda = total - pagado;
 
+                        var btnPdf = `<a href="generar_pdf_reporte.php?id=${id}" target="_blank" class="btn btn-sm btn-info me-1" title="Ver PDF">
+                        <i class="fas fa-file-pdf"></i></a>`;
+
                         var btnEdit = `<button type="button" class="btn btn-sm btn-warning me-1" title="Editar"
-                        onclick="abrirEditar('${id}', '${fecha}', '${descripcion}', '${tecnico}', '${total}')">
+                        onclick="abrirEditar('${id}')">
                         <i class="fas fa-edit"></i></button>`;
 
                         var btnPay = '';
@@ -239,7 +436,7 @@ include $path_to_root . 'paginas/includes/header.php';
                         onclick="abrirEliminar('${id}')">
                         <i class="fas fa-trash-alt"></i></button>`;
 
-                        return '<div class="d-flex justify-content-center">' + btnEdit + btnPay + btnDel + '</div>';
+                        return '<div class="d-flex justify-content-center">' + btnPdf + btnEdit + btnPay + btnDel + '</div>';
                     }
                 }
             ]
@@ -255,22 +452,64 @@ include $path_to_root . 'paginas/includes/header.php';
         modal.show();
     }
 
-    function abrirEditar(id, fecha, descripcion, tecnico, total) {
-        // Convertir fecha de DD/MM/YYYY a YYYY-MM-DD para el input date
-        var parts = fecha.split('/');
-        var fechaISO = '';
-        if (parts.length === 3) {
-            fechaISO = parts[2] + '-' + parts[1] + '-' + parts[0];
-        }
+    function abrirEditar(id) {
+        // Fetch full data using AJAX with cache-busting parameter
+        var timestamp = new Date().getTime();
+        fetch('get_soporte_detalle.php?id=' + id + '&_t=' + timestamp, { cache: 'no-store' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
 
-        $('#id_soporte_edit').val(id);
-        $('#fecha_edit').val(fechaISO);
-        $('#tecnico_edit').val(tecnico);
-        $('#descripcion_edit').val(descripcion);
-        $('#monto_total_edit').val(total); // Asignar el total actual
+                $('#edit_modal_id_display').text(id);
+                $('#id_soporte_edit').val(id);
 
-        var modal = new bootstrap.Modal(document.getElementById('modalEditar'));
-        modal.show();
+                $('#fecha_edit').val(data.fecha_soporte_form);
+                $('#tecnico_edit').val(data.tecnico_asignado);
+                $('#sector_edit').val(data.sector);
+                $('#tipo_servicio_edit').val(data.tipo_servicio);
+                $('#ip_edit').val(data.ip_address);
+                $('#estado_onu_edit').val(data.estado_onu);
+                $('#estado_router_edit').val(data.estado_router);
+                $('#modelo_router_edit').val(data.modelo_router);
+                $('#num_dispositivos_edit').val(data.num_dispositivos);
+                $('#bw_bajada_edit').val(data.bw_bajada);
+                $('#bw_subida_edit').val(data.bw_subida);
+                $('#bw_ping_edit').val(data.bw_ping);
+                $('#estado_antena_edit').val(data.estado_antena);
+                $('#valores_antena_edit').val(data.valores_antena);
+
+                $('#descripcion_edit').val(data.descripcion);
+                $('#sugerencias_edit').val(data.sugerencias);
+                $('#monto_total_edit').val(data.monto_total);
+
+                // Form checkbox
+                $('#solucion_completada_edit').prop('checked', data.solucion_completada == 1);
+
+                // Mostrar firmas existentes si las hay
+                if (data.firma_tecnico) {
+                    $('#imgFirmaTech_edit').attr('src', '../../uploads/firmas/' + data.firma_tecnico);
+                    $('#container_firma_tech_edit').show();
+                } else {
+                    $('#container_firma_tech_edit').hide();
+                }
+
+                if (data.firma_cliente) {
+                    $('#imgFirmaCli_edit').attr('src', '../../uploads/firmas/' + data.firma_cliente);
+                    $('#container_firma_cli_edit').show();
+                } else {
+                    $('#container_firma_cli_edit').hide();
+                }
+
+                var modal = new bootstrap.Modal(document.getElementById('modalEditar'));
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Error fetching support details:', error);
+                alert("Error cargando los detalles del soporte.");
+            });
     }
 
     function abrirEliminar(id) {

@@ -112,9 +112,27 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
                                 href="<?php echo $path_fix; ?>paginas/principal/conciliacion.php"><i
                                     class="fa-solid fa-scale-balanced w-20 me-2 text-primary"></i> Conciliación
                                 (OCR)</a></li>
+                    </ul>
+                </li>
+
+                <!-- Enlaces Externos Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="dropEnlaces" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-link me-1 text-info"></i> Enlaces
+                    </a>
+                    <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="dropEnlaces">
                         <li><a class="dropdown-item" href="<?php echo $path_fix; ?>reportar_pago.php" target="_blank"><i
-                                    class="fa-solid fa-external-link-alt w-20 me-2 text-info"></i> Link Reporte de
+                                    class="fa-solid fa-external-link-alt w-20 me-2 text-success"></i> Reportar
                                 Pago</a></li>
+                        <li><a class="dropdown-item"
+                                href="<?php echo $path_fix; ?>paginas/soporte/registro_contrato_instalador.php"
+                                target="_blank"><i class="fa-solid fa-file-signature w-20 me-2 text-primary"></i>
+                                Registro
+                                Instalador</a></li>
+                        <li><a class="dropdown-item" href="<?php echo $path_fix; ?>paginas/soporte/reporte_tecnico.php"
+                                target="_blank"><i class="fa-solid fa-pen-to-square w-20 me-2 text-danger"></i> Nuevo
+                                Reporte Técnico</a></li>
                     </ul>
                 </li>
 
@@ -138,14 +156,6 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
                         <li><a class="dropdown-item"
                                 href="<?php echo $path_fix; ?>paginas/soporte/historial_soportes.php"><i
                                     class="fa-solid fa-list-check w-20 me-2 text-muted"></i> Historial</a></li>
-                        <li><a class="dropdown-item"
-                                href="<?php echo $path_fix; ?>paginas/soporte/registro_contrato_instalador.php"
-                                target="_blank"><i class="fa-solid fa-file-signature w-20 me-2 text-muted"></i> Registro
-                                Contrato
-                                Instalador</a></li>
-                        <li><a class="dropdown-item" href="<?php echo $path_fix; ?>paginas/soporte/reporte_tecnico.php"
-                                target="_blank"><i class="fa-solid fa-pen-to-square w-20 me-2 text-muted"></i> Nuevo
-                                Reporte</a></li>
                     </ul>
                 </li>
 

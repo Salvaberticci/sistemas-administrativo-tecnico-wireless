@@ -11,7 +11,7 @@ $search_query = isset($_GET['q']) ? $conn->real_escape_string($_GET['q']) : '';
 
 if (strlen($search_query) >= 3) {
     // Buscamos contratos activos (o según su lógica de contratos)
-    $sql = "SELECT id, nombre_completo, cedula 
+    $sql = "SELECT id, nombre_completo, cedula, direccion, ip_onu as ip 
             FROM contratos 
             WHERE nombre_completo LIKE '%" . $search_query . "%' 
                OR id LIKE '%" . $search_query . "%'

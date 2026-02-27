@@ -68,6 +68,21 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
         max-width: 100%;
         max-height: 140px;
     }
+
+    .badge-nivel1 {
+        background-color: #ffff00;
+        color: #000;
+    }
+
+    .badge-nivel2 {
+        background-color: #fd7e14;
+        color: white;
+    }
+
+    .badge-nivel3 {
+        background-color: #dc3545;
+        color: white;
+    }
 </style>
 
 <main class="main-content">
@@ -170,11 +185,19 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-4 detail-label">Tipo de Falla:</div>
+                            <div class="col-4 detail-label">Nivel de Prioridad:</div>
                             <div class="col-8 detail-value">
-                                <span class="badge bg-warning text-dark">
-                                    <?php echo htmlspecialchars($reporte['tipo_falla']); ?>
-                                </span>
+                                <?php
+                                $p = strtoupper($reporte['prioridad'] ?? 'NIVEL 1');
+                                if ($p === 'NIVEL 1')
+                                    echo '<span class="badge badge-nivel1"><i class="fa-brands fa-whatsapp me-1"></i>NIVEL 1</span>';
+                                else if ($p === 'NIVEL 2')
+                                    echo '<span class="badge badge-nivel2"><i class="fa-solid fa-house-chimney-user me-1"></i>NIVEL 2</span>';
+                                else if ($p === 'NIVEL 3')
+                                    echo '<span class="badge badge-nivel3"><i class="fa-solid fa-network-wired me-1"></i>NIVEL 3</span>';
+                                else
+                                    echo '<span class="badge bg-secondary">' . $p . '</span>';
+                                ?>
                             </div>
                         </div>
                     </div>

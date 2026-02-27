@@ -169,7 +169,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Si es petición AJAX normal (no form submit tradicional), devolver JSON
             // El formulario actual usa submit tradicional, pero lo cambiaremos a AJAX para el Modal
             if (isset($_POST['ajax']) && $_POST['ajax'] === '1') {
-                echo json_encode(['status' => 'success', 'msg' => 'Soporte registrado correctamente']);
+                echo json_encode(['status' => 'success', 'msg' => 'Soporte registrado correctamente', 'id_soporte' => $id_soporte]);
                 exit();
             }
 

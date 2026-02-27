@@ -14,39 +14,38 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
 <style>
     .priority-badge {
         display: inline-block;
-        padding: 8px 16px;
-        border-radius: 6px;
+        padding: 10px 20px;
+        border-radius: 8px;
         font-weight: bold;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s ease;
         border: 2px solid transparent;
+        opacity: 0.6;
     }
 
     .priority-badge:hover {
-        transform: scale(1.05);
+        transform: translateY(-2px);
+        opacity: 1;
     }
 
     .priority-badge.active {
         border-color: #000;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        transform: scale(1.1);
+        opacity: 1;
     }
 
-    .priority-baja {
-        background-color: #d1ecf1;
-        color: #0c5460;
+    .priority-nivel1 {
+        background-color: #ffff00;
+        color: #000;
     }
 
-    .priority-media {
-        background-color: #fff3cd;
-        color: #856404;
+    .priority-nivel2 {
+        background-color: #fd7e14;
+        color: white;
     }
 
-    .priority-alta {
-        background-color: #f8d7da;
-        color: #721c24;
-    }
-
-    .priority-critica {
+    .priority-nivel3 {
         background-color: #dc3545;
         color: white;
     }
@@ -125,20 +124,17 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                     <div class="col-12">
                         <label class="form-label">Prioridad <span class="text-danger">*</span></label>
                         <div class="d-flex gap-2 flex-wrap">
-                            <span class="priority-badge priority-baja" data-priority="BAJA">
-                                <i class="fa-solid fa-circle-info me-1"></i>BAJA
+                            <span class="priority-badge priority-nivel1 active" data-priority="NIVEL 1">
+                                <i class="fa-brands fa-whatsapp me-1"></i>NIVEL 1 (WhatsApp)
                             </span>
-                            <span class="priority-badge priority-media active" data-priority="MEDIA">
-                                <i class="fa-solid fa-exclamation me-1"></i>MEDIA
+                            <span class="priority-badge priority-nivel2" data-priority="NIVEL 2">
+                                <i class="fa-solid fa-house-chimney-user me-1"></i>NIVEL 2 (Visita Técnico)
                             </span>
-                            <span class="priority-badge priority-alta" data-priority="ALTA">
-                                <i class="fa-solid fa-triangle-exclamation me-1"></i>ALTA
-                            </span>
-                            <span class="priority-badge priority-critica" data-priority="CRITICA">
-                                <i class="fa-solid fa-fire me-1"></i>CRÍTICA
+                            <span class="priority-badge priority-nivel3" data-priority="NIVEL 3">
+                                <i class="fa-solid fa-network-wired me-1"></i>NIVEL 3 (Red Afectada)
                             </span>
                         </div>
-                        <input type="hidden" id="prioridad" name="prioridad" value="MEDIA" required>
+                        <input type="hidden" id="prioridad" name="prioridad" value="NIVEL 1" required>
                     </div>
                 </div>
 
@@ -206,7 +202,7 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                     </div>
                     <div class="col-12">
                         <label class="form-label">Dirección</label>
-                        <input type="text" class="form-control" id="direccion" name="direccion" readonly>
+                        <input type="text" class="form-control" id="direccion" name="direccion">
                     </div>
                 </div>
             </div>
@@ -433,8 +429,8 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                 $('#clientes_afectados').attr('required', true);
                 $('#clientes_afectados').val(2);
 
-                // Auto-seleccionar prioridad CRÍTICA
-                $('.priority-badge[data-priority="CRITICA"]').click();
+                // Auto-seleccionar prioridad NIVEL 3
+                $('.priority-badge[data-priority="NIVEL 3"]').click();
             } else {
                 $('#clientesAfectadosContainer').hide();
                 $('#criticalAlert').hide();
@@ -508,11 +504,13 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                         });
                     }
                 },
-                error: function () {
+                error: function (xhr, status, error) {
+                    console.error('Error Detalles:', { xhr, status, error });
                     Swal.fire({
                         icon: 'error',
                         title: 'Error de Conexión',
-                        text: 'No se pudo conectar con el servidor'
+                        html: `<p>No se pudo conectar con el servidor.</p>
+                               <small class="text-muted">Estado: ${xhr.status} ${status}<br>Error: ${error}</small>`
                     });
                 }
             });

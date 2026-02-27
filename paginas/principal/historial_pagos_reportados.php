@@ -12,8 +12,18 @@ require_once '../includes/sidebar.php';
 
 // Filtros
 $estado_filtro = isset($_GET['estado']) ? $conn->real_escape_string($_GET['estado']) : '';
+$hoy = date('Y-m-d');
 $fecha_inicio = isset($_GET['fecha_inicio']) ? $conn->real_escape_string($_GET['fecha_inicio']) : date('Y-m-01');
-$fecha_fin = isset($_GET['fecha_fin']) ? $conn->real_escape_string($_GET['fecha_fin']) : date('Y-m-t');
+$fecha_fin = isset($_GET['fecha_fin']) ? $conn->real_escape_string($_GET['fecha_fin']) : date('Y-m-d');
+
+// Validaciones PHP: No exceder hoy
+if ($fecha_inicio > $hoy)
+    $fecha_inicio = $hoy;
+if ($fecha_fin > $hoy)
+    $fecha_fin = $hoy;
+// Asegurar Desde <= Hasta
+if ($fecha_inicio > $fecha_fin)
+    $fecha_inicio = $fecha_fin;
 
 // Construcción de la consulta
 $where = "pr.estado != 'PENDIENTE'";
@@ -64,13 +74,13 @@ $resultado = $conn->query($sql);
                 <form method="GET" class="row g-3 align-items-end">
                     <div class="col-md-3">
                         <label class="form-label small fw-bold">Desde</label>
-                        <input type="date" name="fecha_inicio" class="form-control form-control-sm"
-                            value="<?php echo $fecha_inicio; ?>">
+                        <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control form-control-sm"
+                            value="<?php echo $fecha_inicio; ?>" max="<?php echo $hoy; ?>">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-bold">Hasta</label>
-                        <input type="date" name="fecha_fin" class="form-control form-control-sm"
-                            value="<?php echo $fecha_fin; ?>">
+                        <input type="date" name="fecha_fin" id="fecha_fin" class="form-control form-control-sm"
+                            value="<?php echo $fecha_fin; ?>" max="<?php echo $hoy; ?>">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-bold">Estado</label>
@@ -181,5 +191,32 @@ $resultado = $conn->query($sql);
         </div>
     </div>
 </main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputDesde = document.getElementById('fecha_inicio');
+        const inputHasta = document.getElementById('fecha_fin');
+
+        // Sincronizar límites al cargar
+        inputDesde.setAttribute('max', inputHasta.value);
+        inputHasta.setAttribute('min', inputDesde.value);
+
+        // Al cambiar "Desde", actualizar el "min" de "Hasta"
+        inputDesde.addEventListener('change', function () {
+            inputHasta.setAttribute('min', this.value);
+            if (inputHasta.value < this.value) {
+                inputHasta.value = this.value;
+            }
+        });
+
+        // Al cambiar "Hasta", actualizar el "max" de "Desde"
+        inputHasta.addEventListener('change', function () {
+            inputDesde.setAttribute('max', this.value);
+            if (inputDesde.value > this.value) {
+                inputDesde.value = this.value;
+            }
+        });
+    });
+</script>
 
 <?php require_once '../includes/layout_foot.php'; ?>

@@ -138,7 +138,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
             $conn->commit();
-            echo json_encode(['status' => 'success', 'msg' => 'Reporte guardado correctamente. ID: ' . $id_soporte]);
+            echo json_encode(['status' => 'success', 'msg' => 'Reporte guardado correctamente.', 'id_soporte' => $id_soporte]);
 
         } catch (Exception $e) {
             $conn->rollback();

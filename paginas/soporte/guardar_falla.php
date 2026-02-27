@@ -52,9 +52,9 @@ if ($es_caida_critica && $clientes_afectados < 2) {
 }
 
 // Validar prioridad
-$prioridades_validas = ['BAJA', 'MEDIA', 'ALTA', 'CRITICA'];
+$prioridades_validas = ['NIVEL 1', 'NIVEL 2', 'NIVEL 3'];
 if (!in_array($prioridad, $prioridades_validas)) {
-    $prioridad = 'MEDIA';
+    $prioridad = 'NIVEL 1';
 }
 
 if (!empty($errores)) {
@@ -63,7 +63,7 @@ if (!empty($errores)) {
 }
 
 // Obtener datos del cliente
-$sql_cliente = "SELECT nombre_completo, cedula, ip, direccion FROM contratos WHERE id = $id_contrato";
+$sql_cliente = "SELECT nombre_completo, cedula, ip_onu as ip, direccion FROM contratos WHERE id = $id_contrato";
 $result_cliente = $conn->query($sql_cliente);
 
 if ($result_cliente->num_rows == 0) {
@@ -103,7 +103,7 @@ $sql = "INSERT INTO soportes (
     id_contrato,
     fecha_soporte,
     fecha_reporte,
-    descripcion_corta,
+    descripcion,
     tipo_falla,
     prioridad,
     es_caida_critica,

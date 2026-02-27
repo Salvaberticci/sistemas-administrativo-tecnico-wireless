@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $conn->prepare("UPDATE cuentas_por_cobrar SET estado = ?, fecha_pago = ?, referencia_pago = ?, id_banco = ? WHERE id_cobro = ?");
 
     if ($stmt === false) {
-        header("Location: gestion_cobros.php?message=Error al preparar la consulta de pago.&class=danger");
+        header("Location: gestion_mensualidades.php?maintenance_done=1&message=Error al preparar la consulta de pago.&class=danger");
         exit();
     }
 
@@ -25,9 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 3. Ejecutar la consulta
     if ($stmt->execute()) {
-        header("Location: gestion_cobros.php?pago_exitoso=" . $id_cobro);
+        header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode("Pago registrado con éxito.") . "&class=success");
     } else {
-        header("Location: gestion_cobros.php?message=Error al registrar el pago: " . urlencode($stmt->error) . "&class=danger");
+        header("Location: gestion_mensualidades.php?maintenance_done=1&message=Error al registrar el pago: " . urlencode($stmt->error) . "&class=danger");
     }
 
     $stmt->close();

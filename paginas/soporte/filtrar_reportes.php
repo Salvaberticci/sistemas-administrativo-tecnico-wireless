@@ -1,12 +1,25 @@
 <?php
+ob_start();
 /**
  * Filtrar Reportes - Endpoint para DataTables con Server-Side Processing
  * Soporta filtrado por fecha, tipo de falla, técnico y estado de pago
  */
+error_reporting(0);
+ini_set('display_errors', 0);
+
 require_once '../conexion.php';
 
-// Parámetros de DataTables
-$aColumns = array('s.id_soporte', 'fecha_soporte', 'c.nombre_completo', 'tipo_falla', 'tecnico_asignado', 'monto_total', 'monto_pagado', 'estado_pago');
+// Parámetros de DataTables (deben coincidir con el orden de las columnas en el HTML)
+$aColumns = array(
+    's.id_soporte',
+    's.fecha_soporte',
+    'c.nombre_completo',
+    's.tipo_falla',
+    's.tecnico_asignado',
+    's.prioridad',
+    's.monto_pagado',
+    'saldo_pendiente'
+);
 
 $sIndexColumn = "s.id_soporte";
 $sTable = "soportes s INNER JOIN contratos c ON s.id_contrato = c.id";
@@ -19,12 +32,13 @@ if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
 
 // Ordenamiento
 $sOrder = "";
-if (isset($_GET['iSortCol_0'])) {
+if (isset($_GET['iSortCol_0']) && isset($_GET['iSortingCols'])) {
     $sOrder = "ORDER BY  ";
     for ($i = 0; $i < intval($_GET['iSortingCols']); $i++) {
-        if ($_GET['bSortable_' . intval($_GET['iSortCol_' . $i])] == "true") {
-            $sOrder .= $aColumns[intval($_GET['iSortCol_' . $i])] . " " .
-                ($_GET['sSortDir_' . $i] === 'asc' ? 'asc' : 'desc') . ", ";
+        $sortIdx = isset($_GET['iSortCol_' . $i]) ? intval($_GET['iSortCol_' . $i]) : 0;
+        if (isset($aColumns[$sortIdx]) && isset($_GET['bSortable_' . $sortIdx]) && $_GET['bSortable_' . $sortIdx] == "true") {
+            $dir = (isset($_GET['sSortDir_' . $i]) && $_GET['sSortDir_' . $i] === 'desc') ? 'desc' : 'asc';
+            $sOrder .= $aColumns[$sortIdx] . " " . $dir . ", ";
         }
     }
     $sOrder = substr_replace($sOrder, "", -2);
@@ -96,7 +110,8 @@ $sQuery = "
         COALESCE(s.tecnico_asignado, 'Sin asignar') as tecnico,
         s.monto_total,
         s.monto_pagado,
-        (s.monto_total - s.monto_pagado) as saldo_pendiente
+        (s.monto_total - s.monto_pagado) as saldo_pendiente,
+        s.prioridad
     FROM $sTable
     $sWhere
     $sOrder
@@ -119,7 +134,7 @@ $iTotal = $aResultTotal[0];
 
 // Construir salida JSON
 $output = array(
-    "sEcho" => intval($_GET['sEcho']),
+    "sEcho" => isset($_GET['sEcho']) ? intval($_GET['sEcho']) : 0,
     "iTotalRecords" => $iTotal,
     "iTotalDisplayRecords" => $iFilteredTotal,
     "aaData" => array()
@@ -135,10 +150,15 @@ while ($aRow = $rResult->fetch_assoc()) {
     $row[] = $aRow['monto_total'];
     $row[] = $aRow['monto_pagado'];
     $row[] = $aRow['saldo_pendiente']; // Para el badge de estado
+    $row[] = $aRow['prioridad']; // Nuevo: prioridad para el badge de nivel
 
     $output['aaData'][] = $row;
 }
 
-echo json_encode($output);
 $conn->close();
+
+if (ob_get_length())
+    ob_end_clean();
+header('Content-Type: application/json');
+echo json_encode($output);
 ?>

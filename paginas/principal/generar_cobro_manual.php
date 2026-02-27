@@ -19,6 +19,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($id_contrato > 0 && $monto_total > 0 && !empty($autorizado_por) && !empty($justificacion)) {
 
+        // Nueva validación de monto positivo para pago hoy si aplica
+        if ($pago_inmediato) {
+            $monto_hoy = isset($_POST['monto_pagado_hoy']) ? floatval($_POST['monto_pagado_hoy']) : 0;
+            if ($monto_hoy < 0) {
+                header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode("Error: El monto pagado no puede ser negativo.") . "&class=danger");
+                exit();
+            }
+        }
+
         $conn->begin_transaction();
 
         try {

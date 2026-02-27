@@ -9,14 +9,17 @@ header('Content-Type: application/json; charset=utf-8');
 $file_path = 'bancos.json';
 
 // Cargar Datos
-function loadPartidas($path) {
-    if (!file_exists($path)) return [];
+function loadPartidas($path)
+{
+    if (!file_exists($path))
+        return [];
     $content = file_get_contents($path);
     return json_decode($content, true) ?: [];
 }
 
 // Guardar Datos
-function savePartidas($path, $data) {
+function savePartidas($path, $data)
+{
     return file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 }
 
@@ -36,11 +39,11 @@ if ($action === 'add') {
     // Pero para ser compatible con lo anterior, quizás quiera todos los datos?
     // User request: "quiero que las cuentas que aparecen se guarden en un json y que se puedan editar"
     // "modal para poder agregar o liminar cuientas bancarias"
-    
+
     // Vamos a aceptar todos los campos posibles para ser flexibles
     $numero = isset($_POST['numero_cuenta']) ? trim($_POST['numero_cuenta']) : '';
     $titular = isset($_POST['titular_cuenta']) ? trim($_POST['titular_cuenta']) : '';
-    $cedula = isset($_POST['cedula']) ? trim($_POST['cedula']) : '';
+    $cedula = isset($_POST['cedula_propietario']) ? trim($_POST['cedula_propietario']) : '';
 
     if (empty($nombre)) {
         echo json_encode(['success' => false, 'message' => 'Nombre requerido']);
@@ -57,13 +60,11 @@ if ($action === 'add') {
     $newId = $maxId + 1;
 
     $nuevo = [
-        'id_banco' => (string)$newId, // Mantener string si venía de DB
+        'id_banco' => (string) $newId,
         'nombre_banco' => $nombre,
         'numero_cuenta' => $numero,
-        'titular_cuenta' => $titular,
-        'cedula_titular' => $cedula // Ajustar si el campo era diferente en DB, el error anterior era cedula_titular vs cedula
-        // Al hacer select * en migrate, los nombres de campos en JSON son los de la DB.
-        // Asumiremos que el JS enviará los nombres correctos.
+        'cedula_propietario' => $cedula,
+        'nombre_propietario' => $titular
     ];
 
     $bancos[] = $nuevo;
@@ -74,16 +75,16 @@ if ($action === 'add') {
 
 if ($action === 'delete') {
     $id = isset($_POST['id']) ? $_POST['id'] : '';
-    
+
     if (empty($id)) {
         echo json_encode(['success' => false, 'message' => 'ID requerido']);
         exit;
     }
 
-    $bancos = array_filter($bancos, function($b) use ($id) {
+    $bancos = array_filter($bancos, function ($b) use ($id) {
         return $b['id_banco'] != $id;
     });
-    
+
     savePartidas($file_path, array_values($bancos)); // Re-index array
     echo json_encode(['success' => true]);
     exit;

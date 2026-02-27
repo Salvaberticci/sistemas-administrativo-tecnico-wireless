@@ -177,7 +177,7 @@ $resultado = $conn->query($sql);
 
     <!-- Modal Aprobar Pago -->
     <div class="modal fade" id="modalConfirmarAprobacion" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title fw-bold">Confirmar Aprobación de Pago</h5>
@@ -188,65 +188,107 @@ $resultado = $conn->query($sql);
                         <input type="hidden" name="id_reporte" id="ap_id_reporte">
                         <input type="hidden" name="accion" value="APROBAR">
 
-                        <div class="alert alert-info py-2 small d-flex justify-content-between align-items-center">
-                            <span>Al aprobar, se creará un registro en el historial de mensualidades como
-                                <strong>PAGADO</strong>.</span>
-                            <div class="text-end">
-                                <div class="fw-bold text-dark">Monto ingresado por Cliente: <span id="val_monto_usuario"
-                                        class="badge bg-primary">0,00 Bs.</span></div>
-                                <div class="fw-bold text-dark">Monto detectado en Capture: <span id="val_monto_ocr"
-                                        class="badge bg-secondary">Esperando...</span></div>
-                            </div>
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Contrato Asociado</label>
-                                <select name="id_contrato" id="ap_id_contrato" class="form-select" required>
-                                    <option value="">Seleccione contrato...</option>
-                                    <!-- Se llenará con AJAX o JS si ya se detectó -->
-                                </select>
-                                <div class="small text-muted mt-1">Si la Cédula no coincide, busque el contrato
-                                    correcto.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Monto a Registrar ($)</label>
-                                <input type="number" step="0.01" name="monto_total" id="ap_monto_total"
-                                    class="form-control fw-bold" required placeholder="Detectando...">
-                                <div id="ocrStatus" class="small mt-1">
-                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                                    <span class="text-primary ms-1" id="ocrText">Analizando capture con OCR...</span>
+                        <div class="row g-4">
+                            <!-- Columna Izquierda: Capture -->
+                            <div class="col-md-6 border-end">
+                                <h6 class="fw-bold mb-3"><i class="fas fa-image me-1"></i> Comprobante de Pago</h6>
+                                <div class="bg-light rounded p-2 text-center"
+                                    style="min-height: 400px; display: flex; align-items: center; justify-content: center;">
+                                    <img id="ap_img_capture" src="" class="img-fluid rounded shadow-sm"
+                                        style="max-height: 600px; cursor: pointer;"
+                                        onclick="window.open(this.src, '_blank')">
+                                </div>
+                                <div class="mt-3 small text-muted text-center">
+                                    Haga clic en la imagen para verla en tamaño completo.
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Fecha Pago</label>
-                                <input type="date" name="fecha_pago" id="ap_fecha_pago" class="form-control" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Referencia</label>
-                                <input type="text" name="referencia" id="ap_referencia" class="form-control">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Banco Receptor</label>
-                                <select name="id_banco" id="ap_id_banco" class="form-select" required>
-                                    <?php
-                                    // Recargar bancos para el modal
-                                    $res_banks = $conn->query("SELECT id_banco, nombre_banco FROM bancos");
-                                    while ($b = $res_banks->fetch_assoc()) {
-                                        echo "<option value='" . $b['id_banco'] . "'>" . htmlspecialchars($b['nombre_banco']) . "</option>";
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label fw-bold">Notas del Reporte</label>
-                                <div id="ap_meses_notas" class="alert alert-light border small"></div>
+
+                            <!-- Columna Derecha: Formulario -->
+                            <div class="col-md-6">
+                                <div class="alert alert-info py-2 small mb-3">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <div class="fw-bold">Reportado por: <span id="val_cliente_reporta"
+                                                    class="text-dark">---</span></div>
+                                            <div class="small">Tel: <span id="val_tel_reporta">---</span></div>
+                                        </div>
+                                        <div class="col-auto text-end border-start ps-3">
+                                            <div class="fw-bold text-dark">Monto Cliente: <span id="val_monto_usuario"
+                                                    class="badge bg-primary">0,00 Bs.</span></div>
+                                            <div class="fw-bold text-dark">Monto OCR: <span id="val_monto_ocr"
+                                                    class="badge bg-secondary">Esperando...</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Buscar Contratante (Manual)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                            <input type="text" id="busqueda_manual_contrato" class="form-control"
+                                                placeholder="Nombre, Cédula o ID...">
+                                            <button type="button" class="btn btn-primary"
+                                                onclick="buscarContratoManual()">Buscar</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Contrato Asociado</label>
+                                        <select name="id_contrato" id="ap_id_contrato" class="form-select" required>
+                                            <option value="">Seleccione contrato...</option>
+                                        </select>
+                                        <div class="small text-muted mt-1">Si no aparece el cliente correcto, use el
+                                            buscador de arriba.</div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Monto a Registrar ($)</label>
+                                        <input type="number" step="0.01" name="monto_total" id="ap_monto_total"
+                                            class="form-control fw-bold" required placeholder="Detectando...">
+                                        <div id="ocrStatus" class="small mt-1">
+                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            </div>
+                                            <span class="text-primary ms-1" id="ocrText">Analizando capture con
+                                                OCR...</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Fecha Pago</label>
+                                        <input type="date" name="fecha_pago" id="ap_fecha_pago" class="form-control"
+                                            required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Referencia</label>
+                                        <input type="text" name="referencia" id="ap_referencia" class="form-control">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Banco Receptor</label>
+                                        <select name="id_banco" id="ap_id_banco" class="form-select" required>
+                                            <?php
+                                            // Recargar bancos para el modal
+                                            $res_banks = $conn->query("SELECT id_banco, nombre_banco FROM bancos");
+                                            while ($b = $res_banks->fetch_assoc()) {
+                                                echo "<option value='" . $b['id_banco'] . "'>" . htmlspecialchars($b['nombre_banco']) . "</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Resumen del Reporte</label>
+                                        <div id="ap_meses_notas" class="alert alert-light border small mb-0"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="submit" class="btn btn-success fw-bold px-4">APROBAR Y REGISTRAR</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-success fw-bold px-4">APROBAR Y REGISTRAR PAGO</button>
                     </div>
                 </form>
             </div>
@@ -337,6 +379,14 @@ $resultado = $conn->query($sql);
                     .catch(err => console.error("Error en auto-refresh:", err));
             }
         }, 5000);
+
+        // Permitir buscar al presionar Enter
+        $('#busqueda_manual_contrato').on('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                buscarContratoManual();
+            }
+        });
     });
 
     window.prepararAprobacion = function (data) {
@@ -346,6 +396,14 @@ $resultado = $conn->query($sql);
         document.getElementById('ap_referencia').value = data.referencia;
         document.getElementById('ap_id_banco').value = data.id_banco_destino || '';
         document.getElementById('ap_monto_total').value = ''; // Limpiar previo
+
+        // NUEVO: Mostrar imagen
+        document.getElementById('ap_img_capture').src = '../../' + data.capture_path;
+
+        // NUEVO: Mostrar info cliente reportada
+        document.getElementById('val_cliente_reporta').innerText = data.nombre_titular;
+        document.getElementById('val_tel_reporta').innerText = data.telefono_titular;
+        document.getElementById('busqueda_manual_contrato').value = ''; // Limpiar búsqueda previa
 
         // Mostrar monto reportado por el usuario
         const montoBs = parseFloat(data.monto_bs || 0);
@@ -399,6 +457,47 @@ $resultado = $conn->query($sql);
         const modalEliminar = new bootstrap.Modal(document.getElementById('modalEliminarReporte'));
         document.getElementById('el_id_reporte').value = id;
         modalEliminar.show();
+    }
+
+    // NUEVO: Búsqueda manual de contrato
+    window.buscarContratoManual = function () {
+        const query = document.getElementById('busqueda_manual_contrato').value;
+        if (query.trim().length < 3) {
+            alert("Ingrese al menos 3 caracteres para buscar (Nombre, Cédula o ID)");
+            return;
+        }
+
+        const select = document.getElementById('ap_id_contrato');
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        btn.disabled = true;
+
+        fetch(`buscar_contratos.php?q=${encodeURIComponent(query)}&limit=20`)
+            .then(r => r.json())
+            .then(contratos => {
+                select.innerHTML = '<option value="">Seleccione contrato...</option>';
+                if (contratos.length === 0) {
+                    select.innerHTML += '<option disabled>No se encontraron resultados</option>';
+                    alert("No se encontraron contratos con ese criterio.");
+                } else {
+                    contratos.forEach(c => {
+                        select.innerHTML += `<option value="${c.id}">#${c.id} - ${c.nombre_completo} (${c.cedula})</option>`;
+                    });
+                    if (contratos.length === 1) {
+                        select.value = contratos[0].id;
+                    }
+                }
+            })
+            .catch(err => {
+                console.error("Error buscando contrato:", err);
+                alert("Error al buscar contrato.");
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
     }
 
     // --- LÓGICA OCR (Auto-ejecuta al abrir modal) ---
@@ -498,6 +597,36 @@ $resultado = $conn->query($sql);
             statusText.innerHTML = '<span class="text-muted"><i class="fas fa-times"></i> OCR no disponible</span>';
         }
     }
+    // === VALIDACIÓN DE MONTOS (SOLO NÚMEROS Y POSITIVOS) ===
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputMonto = document.getElementById('ap_monto_total');
+        if (inputMonto) {
+            inputMonto.addEventListener('keydown', function (e) {
+                if ([46, 8, 9, 27, 13, 110, 190, 188].indexOf(e.keyCode) !== -1 ||
+                    (e.ctrlKey === true && [65, 67, 86, 88, 82].indexOf(e.keyCode) !== -1) ||
+                    (e.keyCode >= 35 && e.keyCode <= 39)) {
+                    return;
+                }
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                    e.preventDefault();
+                }
+            });
+
+            inputMonto.addEventListener('paste', function (e) {
+                const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                if (/[^0-9,.]/.test(pasteData)) {
+                    e.preventDefault();
+                    const cleanedData = pasteData.replace(/[^0-9,.]/g, '');
+                    document.execCommand('insertText', false, cleanedData);
+                }
+            });
+
+            inputMonto.addEventListener('input', function () {
+                this.value = this.value.replace(/[^0-9.,]/g, '');
+                if (parseFloat(this.value) < 0) this.value = 0;
+            });
+        }
+    });
 </script>
 
 <?php require_once '../includes/layout_foot.php'; ?>
