@@ -38,8 +38,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $sector = isset($_POST['sector']) ? $conn->real_escape_string($_POST['sector']) : '';
     $descripcion = isset($_POST['descripcion_edit']) ? $conn->real_escape_string($_POST['descripcion_edit']) : '';
     $sugerencias = isset($_POST['sugerencias']) ? $conn->real_escape_string($_POST['sugerencias']) : '';
+    $notas_internas = isset($_POST['notas_internas_edit']) ? $conn->real_escape_string($_POST['notas_internas_edit']) : '';
+    $prioridad = isset($_POST['prioridad_edit']) ? $conn->real_escape_string($_POST['prioridad_edit']) : 'NIVEL 1';
+    $tipo_falla = isset($_POST['tipo_falla_edit']) ? $conn->real_escape_string($_POST['tipo_falla_edit']) : '';
+    $es_caida_critica = isset($_POST['es_caida_critica_edit']) ? 1 : 0;
     $nuevo_total = isset($_POST['monto_total_edit']) ? floatval($_POST['monto_total_edit']) : -1;
     $solucion_completada = isset($_POST['solucion_completada']) ? 1 : 0;
+    $origen = isset($_POST['origen']) ? $conn->real_escape_string($_POST['origen']) : 'historial_soportes';
 
     // Campos técnicos
     $tipo_servicio = isset($_POST['tipo_servicio']) ? $conn->real_escape_string($_POST['tipo_servicio']) : '';
@@ -106,6 +111,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                            valores_antena = '$valores_antena',
                            descripcion = '$descripcion', 
                            sugerencias = '$sugerencias',
+                           notas_internas = '$notas_internas',
+                           prioridad = '$prioridad',
+                           tipo_falla = '$tipo_falla',
+                           es_caida_critica = '$es_caida_critica',
                            solucion_completada = '$solucion_completada',
                            monto_total = '$nuevo_total' 
                            $update_firmas
@@ -158,7 +167,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
             $conn->commit();
-            header("Location: historial_soportes.php?status=success&msg=Soporte actualizado correctamente.");
+            $redirect_page = ($origen === 'gestion_fallas') ? 'gestion_fallas.php' : 'historial_soportes.php';
+            header("Location: {$redirect_page}?status=success&msg=Soporte actualizado correctamente.");
             exit();
 
         } catch (Exception $e) {

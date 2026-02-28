@@ -109,21 +109,49 @@ include $path_to_root . 'paginas/includes/header.php';
             </div>
             <div class="modal-body">
                 <input type="hidden" name="id_soporte_edit" id="id_soporte_edit">
+                <input type="hidden" name="origen" value="historial_soportes">
+
+                <!-- Tipo de Falla -->
+                <div class="p-2 mb-2 bg-light border-start border-danger border-4 fw-bold">Información de Falla</div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Tipo de Falla</label>
+                        <select class="form-select" name="tipo_falla_edit" id="tipo_falla_edit_hist">
+                            <option value="">-- Seleccionar --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="es_caida_critica_edit"
+                                id="es_caida_critica_edit_hist" value="1">
+                            <label class="form-check-label text-danger fw-bold" for="es_caida_critica_edit_hist">¿Caída
+                                Crítica?</label>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- 1. Encabezado -->
                 <div class="row mb-3">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <label for="fecha_edit" class="form-label fw-bold">Fecha</label>
                         <input type="date" class="form-control" name="fecha_edit" id="fecha_edit" required>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <label for="tecnico_edit" class="form-label fw-bold">Técnico Asignado</label>
                         <input type="text" class="form-control" name="tecnico_edit" id="tecnico_edit" required>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <label class="form-label fw-bold">Sector</label>
                         <input type="text" class="form-control" name="sector" id="sector_edit"
                             placeholder="Ej. Las Malvinas">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Prioridad</label>
+                        <select class="form-select" name="prioridad_edit" id="prioridad_edit">
+                            <option value="NIVEL 1">NIVEL 1 (WhatsApp)</option>
+                            <option value="NIVEL 2">NIVEL 2 (Visita)</option>
+                            <option value="NIVEL 3">NIVEL 3 (Red)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -221,6 +249,11 @@ include $path_to_root . 'paginas/includes/header.php';
                             placeholder="Recomendaciones..."></textarea>
                     </div>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label">Notas Internas (Solo Admin)</label>
+                    <textarea class="form-control" name="notas_internas_edit" id="notas_internas_edit"
+                        rows="2"></textarea>
+                </div>
 
                 <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" id="solucion_completada_edit"
@@ -247,7 +280,8 @@ include $path_to_root . 'paginas/includes/header.php';
                         <label class="form-label small fw-bold">Firma Técnico</label>
                         <div class="mb-2 text-center" id="container_firma_tech_edit" style="display:none;">
                             <span class="badge bg-info mb-1">Firma Actual Guardada</span><br>
-                            <img id="imgFirmaTech_edit" src="" alt="Firma Técnico Actual" style="max-height: 80px; border: 1px dashed #ccc;">
+                            <img id="imgFirmaTech_edit" src="" alt="Firma Técnico Actual"
+                                style="max-height: 80px; border: 1px dashed #ccc;">
                         </div>
                         <canvas id="sigTechEdit"
                             style="border: 1px solid #ccc; width: 100%; height: 150px; border-radius: 4px; background-color: #fcfcfc;"></canvas>
@@ -259,7 +293,8 @@ include $path_to_root . 'paginas/includes/header.php';
                         <label class="form-label small fw-bold">Firma Cliente</label>
                         <div class="mb-2 text-center" id="container_firma_cli_edit" style="display:none;">
                             <span class="badge bg-info mb-1">Firma Actual Guardada</span><br>
-                            <img id="imgFirmaCli_edit" src="" alt="Firma Cliente Actual" style="max-height: 80px; border: 1px dashed #ccc;">
+                            <img id="imgFirmaCli_edit" src="" alt="Firma Cliente Actual"
+                                style="max-height: 80px; border: 1px dashed #ccc;">
                         </div>
                         <canvas id="sigCliEdit"
                             style="border: 1px solid #ccc; width: 100%; height: 150px; border-radius: 4px; background-color: #fcfcfc;"></canvas>
@@ -309,7 +344,76 @@ include $path_to_root . 'paginas/includes/header.php';
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
 <script>
-    let padTechEdit, padCliEdit;
+    let padTechEdit = null, padCliEdit = null;
+
+    function cargarOpcionesFallaEditHist(callback) {
+        fetch('admin_opciones.php?accion=listar&tipo=tipos_falla')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('tipo_falla_edit_hist');
+                if (!sel) { if (callback) callback(); return; }
+                const current = sel.value;
+                sel.innerHTML = '<option value="">-- Seleccionar --</option>';
+                (data.tipos_falla || []).forEach(op => {
+                    const o = document.createElement('option');
+                    o.value = op; o.textContent = op;
+                    sel.appendChild(o);
+                });
+                if (current) sel.value = current;
+                if (callback) callback();
+            })
+            .catch(() => { if (callback) callback(); });
+    }
+
+    function abrirEditar(id) {
+        document.getElementById('id_soporte_edit').value = id;
+        document.getElementById('edit_modal_id_display').textContent = id;
+        document.getElementById('container_firma_tech_edit').style.display = 'none';
+        document.getElementById('container_firma_cli_edit').style.display = 'none';
+
+        cargarOpcionesFallaEditHist(() => {
+            fetch('get_soporte_detalle.php?id=' + id)
+                .then(r => r.json())
+                .then(d => {
+                    if (d.error) { alert('Error: ' + d.error); return; }
+                    document.getElementById('fecha_edit').value = d.fecha_soporte_form || '';
+                    document.getElementById('tecnico_edit').value = d.tecnico_asignado || '';
+                    document.getElementById('sector_edit').value = d.sector || '';
+                    document.getElementById('prioridad_edit').value = d.prioridad || 'NIVEL 1';
+                    document.getElementById('tipo_falla_edit_hist').value = d.tipo_falla || '';
+                    document.getElementById('es_caida_critica_edit_hist').checked = d.es_caida_critica == 1;
+                    document.getElementById('tipo_servicio_edit').value = d.tipo_servicio || 'FTTH';
+                    document.getElementById('ip_edit').value = d.ip_address || '';
+                    document.getElementById('estado_onu_edit').value = d.estado_onu || '';
+                    document.getElementById('estado_router_edit').value = d.estado_router || '';
+                    document.getElementById('modelo_router_edit').value = d.modelo_router || '';
+                    document.getElementById('num_dispositivos_edit').value = d.num_dispositivos || '';
+                    document.getElementById('bw_bajada_edit').value = d.bw_bajada || '';
+                    document.getElementById('bw_subida_edit').value = d.bw_subida || '';
+                    document.getElementById('bw_ping_edit').value = d.bw_ping || '';
+                    document.getElementById('estado_antena_edit').value = d.estado_antena || '';
+                    document.getElementById('valores_antena_edit').value = d.valores_antena || '';
+                    document.getElementById('descripcion_edit').value = d.observaciones || '';
+                    document.getElementById('sugerencias_edit').value = d.sugerencias || '';
+                    document.getElementById('notas_internas_edit').value = d.notas_internas || '';
+                    document.getElementById('solucion_completada_edit').checked = d.solucion_completada == 1;
+                    document.getElementById('monto_total_edit').value = parseFloat(d.monto_total || 0).toFixed(2);
+
+                    const pathRoot = '../../';
+                    if (d.firma_tecnico) {
+                        document.getElementById('imgFirmaTech_edit').src = pathRoot + 'uploads/firmas/' + d.firma_tecnico;
+                        document.getElementById('container_firma_tech_edit').style.display = 'block';
+                    }
+                    if (d.firma_cliente) {
+                        document.getElementById('imgFirmaCli_edit').src = pathRoot + 'uploads/firmas/' + d.firma_cliente;
+                        document.getElementById('container_firma_cli_edit').style.display = 'block';
+                    }
+
+                    new bootstrap.Modal(document.getElementById('modalEditar')).show();
+                })
+                .catch(() => alert('Error al cargar datos.'));
+        });
+    }
 
     // --- Inicializar SignaturePad cuando se abra el modal ---
     $('#modalEditar').on('shown.bs.modal', function () {
@@ -357,7 +461,7 @@ include $path_to_root . 'paginas/includes/header.php';
         const btn = document.getElementById('btnGuardarEdicion');
         btn.disabled = true;
         btn.innerHTML = 'Guardando...';
-        
+
         // Debug
         const formData = new FormData(this);
         console.log("FormData to be submitted:", Object.fromEntries(formData.entries()));
@@ -483,6 +587,8 @@ include $path_to_root . 'paginas/includes/header.php';
 
                 $('#descripcion_edit').val(data.descripcion);
                 $('#sugerencias_edit').val(data.sugerencias);
+                $('#notas_internas_edit').val(data.notas_internas);
+                $('#prioridad_edit').val(data.prioridad);
                 $('#monto_total_edit').val(data.monto_total);
 
                 // Form checkbox

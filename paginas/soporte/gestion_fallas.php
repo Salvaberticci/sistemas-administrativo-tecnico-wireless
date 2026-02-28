@@ -303,6 +303,70 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
 
         </div>
 
+        <!-- ☠️ Caídas Críticas Activas -->
+        <?php
+        $sql_criticas = "SELECT s.id_soporte, DATE_FORMAT(s.fecha_soporte, '%d/%m/%Y') as fecha, c.nombre_completo, s.tipo_falla, s.tecnico_asignado, s.clientes_afectados, s.zona_afectada, s.solucion_completada
+            FROM soportes s
+            INNER JOIN contratos c ON s.id_contrato = c.id
+            WHERE s.es_caida_critica = 1
+            ORDER BY s.id_soporte DESC LIMIT 20";
+        $res_criticas = $conn->query($sql_criticas);
+        $num_criticas = $res_criticas ? $res_criticas->num_rows : 0;
+        ?>
+        <?php if ($num_criticas > 0): ?>
+            <div class="card border-danger border-2 shadow mb-4">
+                <div class="card-header bg-danger text-white d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-fire fa-shake"></i>
+                    <span class="fw-bold">⚠️ Caídas Críticas (<?php echo $num_criticas; ?>)</span>
+                    <span class="ms-auto small">Fallas que afectan múltiples clientes o infraestructura crítica</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0">
+                        <thead class="table-danger">
+                            <tr>
+                                <th>#</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Tipo Falla</th>
+                                <th>Técnico</th>
+                                <th>Clientes Afectados</th>
+                                <th>Zona</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($cr = $res_criticas->fetch_assoc()): ?>
+                                <tr class="<?php echo $cr['solucion_completada'] ? '' : 'table-warning'; ?>"
+                                    style="cursor:pointer;" ondblclick="verDetalles(<?php echo $cr['id_soporte']; ?>)">
+                                    <td><span class="badge bg-danger">#<?php echo $cr['id_soporte']; ?></span></td>
+                                    <td><?php echo htmlspecialchars($cr['fecha']); ?></td>
+                                    <td><?php echo htmlspecialchars($cr['nombre_completo']); ?></td>
+                                    <td><?php echo htmlspecialchars($cr['tipo_falla'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($cr['tecnico_asignado'] ?? 'Sin asignar'); ?></td>
+                                    <td class="text-center fw-bold text-danger"><?php echo intval($cr['clientes_afectados']); ?>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($cr['zona_afectada'] ?? '—'); ?></td>
+                                    <td><?php echo $cr['solucion_completada'] ? '<span class="badge bg-success">Solucionada</span>' : '<span class="badge bg-warning text-dark">Activa</span>'; ?>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary"
+                                            onclick="verDetalles(<?php echo $cr['id_soporte']; ?>)" title="Ver Detalles">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-warning"
+                                            onclick="abrirEditar(<?php echo $cr['id_soporte']; ?>)" title="Editar">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+        <?php endif; ?>
+
         <!-- Tabla de Reportes -->
         <div class="card border-0 shadow-sm">
             <div
@@ -329,7 +393,6 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                                     <th>Técnico</th>
                                     <th>Nivel</th>
                                     <th>Pagado</th>
-                                    <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -348,23 +411,24 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                                         $sWhere .= " AND (s.monto_total - s.monto_pagado) > 0.01";
                                 }
 
-                                $sql = "SELECT s.id_soporte, DATE_FORMAT(s.fecha_soporte, '%d/%m/%Y') as fecha_formateada, 
-                                           c.nombre_completo, COALESCE(s.tipo_falla, 'No especificado') as tipo_falla, 
-                                           COALESCE(s.tecnico_asignado, 'Sin asignar') as tecnico, s.prioridad, 
-                                           s.monto_total, s.monto_pagado, (s.monto_total - s.monto_pagado) as saldo_pendiente 
-                                    FROM soportes s 
-                                    INNER JOIN contratos c ON s.id_contrato = c.id 
-                                    WHERE $sWhere 
+                                $sql = "SELECT s.id_soporte, DATE_FORMAT(s.fecha_soporte, '%d/%m/%Y') as fecha_formateada,
+                                           c.nombre_completo, COALESCE(s.tipo_falla, 'No especificado') as tipo_falla,
+                                           COALESCE(s.tecnico_asignado, 'Sin asignar') as tecnico, s.prioridad,
+                                           s.monto_total, s.monto_pagado, (s.monto_total - s.monto_pagado) as saldo_pendiente,
+                                           s.solucion_completada, s.es_caida_critica
+                                    FROM soportes s
+                                    INNER JOIN contratos c ON s.id_contrato = c.id
+                                    WHERE $sWhere
                                     ORDER BY s.id_soporte DESC LIMIT 500";
                                 $result = $conn->query($sql);
 
                                 if ($result && $result->num_rows > 0) {
-                                    // Helper local para arreglar bytes corruptos (latin1) antes de imprimir en la tabla HTML
                                     if (!function_exists('fix_utf8')) {
-                                        function fix_utf8($str) {
-                                            if (empty($str)) return '';
+                                        function fix_utf8($str)
+                                        {
+                                            if (empty($str))
+                                                return '';
                                             if (!mb_check_encoding($str, 'UTF-8')) {
-                                                // Convertir bytes latin1 corruptos a UTF-8 real
                                                 $str = mb_convert_encoding($str, 'UTF-8', 'ISO-8859-1');
                                             }
                                             return htmlspecialchars($str, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -373,26 +437,31 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
 
                                     while ($row = $result->fetch_assoc()) {
                                         $id = $row['id_soporte'];
-
-                                        // Prioridad badge
                                         $prioridad = $row['prioridad'];
+
+                                        // Nivel badge
                                         $badgePrioridad = '<span class="badge bg-secondary">Normal</span>';
                                         if ($prioridad == 'NIVEL 1')
                                             $badgePrioridad = '<span class="badge" style="background-color: #ffff00; color: #000;">Nivel 1</span>';
-                                        else if ($prioridad == 'NIVEL 2')
+                                        elseif ($prioridad == 'NIVEL 2')
                                             $badgePrioridad = '<span class="badge bg-warning text-dark">Nivel 2</span>';
-                                        else if ($prioridad == 'NIVEL 3')
-                                            $badgePrioridad = '<span class="badge bg-danger">Nivel 3</span>';
+                                        elseif ($prioridad == 'NIVEL 3')
+                                            $badgePrioridad = '<span class="badge bg-danger">Nivel 3 🔴</span>';
 
-                                        // Estado Pago badge
+                                        // Pago badge
                                         $saldo = floatval($row['saldo_pendiente']);
-                                        $badgePago = $saldo <= 0.01 ? '<span class="badge bg-success">Pagado</span>' : '<span class="badge bg-warning text-dark">Pendiente</span>';
+                                        $badgePago = $saldo <= 0.01
+                                            ? '<span class="badge bg-success">Pagado</span>'
+                                            : '<span class="badge bg-warning text-dark">Pendiente</span>';
 
-                                        // Estado General badge (Resolucion no mostrada en sql corto, asumir Cerrado si hay técnico, o consultar)
-                                        // Simplificación para la tabla nativa como estaba antes en DataTables (estado_resolucion no venía en json origin)
-                                        $badgeEstado = '<span class="badge bg-info">Registrado</span>';
+                                        // Fila roja si es NIVEL 3 o caída crítica
+                                        $rowClass = '';
+                                        if ($prioridad == 'NIVEL 3')
+                                            $rowClass = 'table-danger';
+                                        elseif ($row['es_caida_critica'])
+                                            $rowClass = 'table-warning';
 
-                                        echo "<tr>";
+                                        echo "<tr class='{$rowClass}' style='cursor:pointer;' ondblclick='verDetalles({$id})'" . ">";
                                         echo "<td>{$id}</td>";
                                         echo "<td>{$row['fecha_formateada']}</td>";
                                         echo "<td>" . fix_utf8($row['nombre_completo']) . "</td>";
@@ -400,16 +469,21 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                                         echo "<td>" . fix_utf8($row['tecnico']) . "</td>";
                                         echo "<td>{$badgePrioridad}</td>";
                                         echo "<td>{$badgePago}</td>";
-                                        echo "<td>{$badgeEstado}</td>";
-                                        echo "<td>
-                                            <a href='ver_soporte.php?id={$id}' class='btn btn-sm btn-info' title='Ver Detalles'>
+                                        echo "<td class='text-nowrap'>
+                                            <button class='btn btn-sm btn-outline-info me-1' onclick='verDetalles({$id})' title='Ver Detalles'>
                                                 <i class='fa-solid fa-eye'></i>
+                                            </button>
+                                            <button class='btn btn-sm btn-warning me-1' onclick='abrirEditar({$id})' title='Editar'>
+                                                <i class='fa-solid fa-pen'></i>
+                                            </button>
+                                            <a href='generar_pdf_reporte.php?id={$id}' target='_blank' class='btn btn-sm btn-danger' title='PDF'>
+                                                <i class='fa-solid fa-file-pdf'></i>
                                             </a>
                                           </td>";
                                         echo "</tr>";
                                     }
                                 } else {
-                                    echo "<tr><td colspan='9' class='text-center'>No se encontraron reportes con los filtros actuales.</td></tr>";
+                                    echo "<tr><td colspan='8' class='text-center'>No se encontraron reportes con los filtros actuales.</td></tr>";
                                 }
                                 ?>
                             </tbody>
@@ -430,11 +504,405 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
 
 </main>
 
+<!-- =============== MODAL: VER DETALLES =============== -->
+<div class="modal fade" id="modalVerDetalles" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-eye me-2"></i>Detalles del Reporte <span id="ver_modal_id"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="verDetallesBody">
+                <div class="text-center py-5"><span class="spinner-border text-info"></span></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a id="btnVerPDF" href="#" target="_blank" class="btn btn-danger"><i class="fa-solid fa-file-pdf me-1"></i>Ver PDF</a>
+                <button id="btnVerEditar" onclick="" class="btn btn-warning"><i class="fa-solid fa-pen me-1"></i>Editar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =============== MODAL: EDITAR SOPORTE =============== -->
+<div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <form action="actualizar_soporte.php" method="POST" class="modal-content" id="formEditarSoporte">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen me-2"></i>Editar Soporte #<span id="edit_modal_id_display"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="id_soporte_edit" id="id_soporte_edit">
+                <input type="hidden" name="origen" value="gestion_fallas">
+
+                <!-- Encabezado -->
+                <div class="row mb-3">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Fecha</label>
+                        <input type="date" class="form-control" name="fecha_edit" id="fecha_edit" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Técnico Asignado</label>
+                        <input type="text" class="form-control" name="tecnico_edit" id="tecnico_edit" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Sector</label>
+                        <input type="text" class="form-control" name="sector" id="sector_edit">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Prioridad</label>
+                        <select class="form-select" name="prioridad_edit" id="prioridad_edit">
+                            <option value="NIVEL 1">NIVEL 1 (WhatsApp)</option>
+                            <option value="NIVEL 2">NIVEL 2 (Visita)</option>
+                            <option value="NIVEL 3">NIVEL 3 (Red)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Falla -->
+                <div class="p-2 mb-2 bg-light border-start border-danger border-4 fw-bold">Información de Falla</div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Tipo de Falla</label>
+                        <select class="form-select" name="tipo_falla_edit" id="tipo_falla_edit">
+                            <option value="">-- Seleccionar --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Tipo Servicio</label>
+                        <select class="form-select" name="tipo_servicio" id="tipo_servicio_edit">
+                            <option value="FTTH">FTTH (Fibra)</option>
+                            <option value="RADIO">Radio/Antena</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="es_caida_critica_edit" id="es_caida_critica_edit" value="1">
+                            <label class="form-check-label text-danger fw-bold" for="es_caida_critica_edit">¿Caída Crítica?</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalles Técnicos -->
+                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Detalles Técnicos</div>
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label text-muted small">IP</label>
+                        <input type="text" class="form-control" name="ip" id="ip_edit" placeholder="0.0.0.0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-muted small">Estado ONU</label>
+                        <select class="form-select" name="estado_onu" id="estado_onu_edit">
+                            <option value="">--</option>
+                            <option value="ON">ON</option>
+                            <option value="OFF">OFF</option>
+                            <option value="LOS">LOS</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-muted small">Estado Router</label>
+                        <select class="form-select" name="estado_router" id="estado_router_edit">
+                            <option value="">--</option>
+                            <option value="ON">ON</option>
+                            <option value="OFF">OFF</option>
+                            <option value="RESET">Reset</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-muted small">Modelo Router</label>
+                        <input type="text" class="form-control" name="modelo_router" id="modelo_router_edit">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-2">
+                        <label class="form-label small">Dispositivos</label>
+                        <input type="number" class="form-control" name="num_dispositivos" id="num_dispositivos_edit">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Bajada</label>
+                        <input type="text" class="form-control" name="bw_bajada" id="bw_bajada_edit" placeholder="MB">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Subida</label>
+                        <input type="text" class="form-control" name="bw_subida" id="bw_subida_edit" placeholder="MB">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Ping</label>
+                        <input type="text" class="form-control" name="bw_ping" id="bw_ping_edit" placeholder="ms">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Antena Estado</label>
+                        <input type="text" class="form-control" name="estado_antena" id="estado_antena_edit">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Valores dBm</label>
+                        <input type="text" class="form-control" name="valores_antena" id="valores_antena_edit">
+                    </div>
+                </div>
+
+                <!-- Diagnóstico y Solución -->
+                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Diagnóstico y Solución</div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Observaciones / Problema</label>
+                        <textarea class="form-control" name="descripcion_edit" id="descripcion_edit" rows="3" required></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Sugerencias al Cliente</label>
+                        <textarea class="form-control" name="sugerencias" id="sugerencias_edit" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Notas Internas</label>
+                    <textarea class="form-control" name="notas_internas_edit" id="notas_internas_edit" rows="2"></textarea>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="solucion_completada_edit" name="solucion_completada">
+                    <label class="form-check-label fw-bold" for="solucion_completada_edit">¿Falla Solucionada?</label>
+                </div>
+
+                <!-- Costos -->
+                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Costos y Facturación</div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Monto Total ($)</label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="monto_total_edit" id="monto_total_edit" required>
+                </div>
+
+                <!-- Firmas -->
+                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Actualizar Firmas (Opcional)</div>
+                <p class="text-muted small">Deje los lienzos en blanco para conservar las firmas originales.</p>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Firma Técnico</label>
+                        <div class="mb-1 text-center d-none" id="container_firma_tech_edit">
+                            <span class="badge bg-info mb-1">Firma Actual</span><br>
+                            <img id="imgFirmaTech_edit" src="" style="max-height: 80px; border: 1px dashed #ccc;">
+                        </div>
+                        <canvas id="sigTechEdit" style="border:1px solid #ccc;width:100%;height:120px;border-radius:4px;background:#fcfcfc;"></canvas>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="clearPadEdit('tech')">Limpiar</button>
+                        <input type="hidden" name="firma_tecnico_data" id="firma_tecnico_data_edit">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Firma Cliente</label>
+                        <div class="mb-1 text-center d-none" id="container_firma_cli_edit">
+                            <span class="badge bg-info mb-1">Firma Actual</span><br>
+                            <img id="imgFirmaCli_edit" src="" style="max-height: 80px; border: 1px dashed #ccc;">
+                        </div>
+                        <canvas id="sigCliEdit" style="border:1px solid #ccc;width:100%;height:120px;border-radius:4px;background:#fcfcfc;"></canvas>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="clearPadEdit('cli')">Limpiar</button>
+                        <input type="hidden" name="firma_cliente_data" id="firma_cliente_data_edit">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-warning fw-bold" id="btnGuardarEdicion"><i class="fa-solid fa-save me-1"></i>Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
 
 <script>
     let charts = {};
+    let padTechEdit = null, padCliEdit = null;
+    let _currentEditId = null;
+
+    // ---- Ver Detalles (Modal AJAX) ----
+    function verDetalles(id) {
+        _currentEditId = id;
+        $('#ver_modal_id').text('#' + id);
+        $('#verDetallesBody').html('<div class="text-center py-5"><span class="spinner-border text-info"></span></div>');
+        $('#btnVerPDF').attr('href', 'generar_pdf_reporte.php?id=' + id);
+        $('#btnVerEditar').attr('onclick', 'verAEditar(' + id + ')');
+        new bootstrap.Modal(document.getElementById('modalVerDetalles')).show();
+
+        fetch('get_soporte_detalle.php?id=' + id)
+            .then(r => r.json())
+            .then(d => {
+                if (d.error) { $('#verDetallesBody').html('<div class="alert alert-danger">' + d.error + '</div>'); return; }
+                const f = (v) => v ? v : '—';
+                const badge = (p) => {
+                    if (p === 'NIVEL 1') return '<span class="badge" style="background:#ffff00;color:#000">NIVEL 1</span>';
+                    if (p === 'NIVEL 2') return '<span class="badge bg-warning text-dark">NIVEL 2</span>';
+                    if (p === 'NIVEL 3') return '<span class="badge bg-danger">NIVEL 3</span>';
+                    return '<span class="badge bg-secondary">' + f(p) + '</span>';
+                };
+                const path_root = '../../';
+                let html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-header bg-primary text-white"><i class="fa-solid fa-user me-2"></i>Cliente</div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Nombre:</strong> ${f(d.nombre_completo)}</p>
+                                <p class="mb-1"><strong>Cédula:</strong> ${f(d.cedula)}</p>
+                                <p class="mb-1"><strong>IP:</strong> <code>${f(d.ip_address)}</code></p>
+                                <p class="mb-0"><strong>Teléfono:</strong> ${f(d.telefono)}</p>
+                            </div>
+                        </div>
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-header bg-info text-white"><i class="fa-solid fa-calendar-check me-2"></i>Visita</div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Fecha:</strong> ${f(d.fecha_soporte_form)}</p>
+                                <p class="mb-1"><strong>Técnico:</strong> ${f(d.tecnico_asignado)}</p>
+                                <p class="mb-1"><strong>Sector:</strong> ${f(d.sector)}</p>
+                                <p class="mb-1"><strong>Tipo Falla:</strong> ${f(d.tipo_falla)}</p>
+                                <p class="mb-1"><strong>Prioridad:</strong> ${badge(d.prioridad)}</p>
+                                <p class="mb-0"><strong>Caída Crítica:</strong> ${d.es_caida_critica == 1 ? '<span class=\"badge bg-danger\">Sí ('+f(d.clientes_afectados)+' clientes)</span>' : 'No'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-header bg-warning"><i class="fa-solid fa-tools me-2"></i>Diagnóstico</div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong>ONU:</strong> ${f(d.estado_onu)} | <strong>Router:</strong> ${f(d.estado_router)}</p>
+                                <p class="mb-1"><strong>Modelo:</strong> ${f(d.modelo_router)}</p>
+                                <p class="mb-1"><strong>BW:</strong> ↓${f(d.bw_bajada)} / ↑${f(d.bw_subida)} / Ping:${f(d.bw_ping)}</p>
+                                <p class="mb-1"><strong>Observaciones:</strong> ${f(d.observaciones)}</p>
+                                <p class="mb-0"><strong>Solucionada:</strong> ${d.solucion_completada == 1 ? '<span class=\"badge bg-success\">Sí</span>' : '<span class=\"badge bg-warning text-dark\">No</span>'}</p>
+                            </div>
+                        </div>
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-header bg-success text-white"><i class="fa-solid fa-dollar-sign me-2"></i>Financiero</div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Total:</strong> $${parseFloat(d.monto_total||0).toFixed(2)}</p>
+                                <p class="mb-1"><strong>Pagado:</strong> $${parseFloat(d.monto_pagado||0).toFixed(2)}</p>
+                                <p class="mb-0"><strong>Saldo:</strong> <span class="${(d.monto_total-d.monto_pagado)>0.01?'text-danger fw-bold':'text-success fw-bold'}">$${(parseFloat(d.monto_total||0)-parseFloat(d.monto_pagado||0)).toFixed(2)}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+                // Firmas
+                if (d.firma_tecnico || d.firma_cliente) {
+                    html += '<div class="row mt-2">';
+                    if (d.firma_tecnico) html += `<div class="col-6 text-center"><small class="text-muted">Firma Técnico</small><br><img src="${path_root}uploads/firmas/${d.firma_tecnico}" class="img-fluid border" style="max-height:100px;"></div>`;
+                    if (d.firma_cliente) html += `<div class="col-6 text-center"><small class="text-muted">Firma Cliente</small><br><img src="${path_root}uploads/firmas/${d.firma_cliente}" class="img-fluid border" style="max-height:100px;"></div>`;
+                    html += '</div>';
+                }
+                $('#verDetallesBody').html(html);
+            })
+            .catch(() => $('#verDetallesBody').html('<div class="alert alert-danger">Error al cargar datos.</div>'));
+    }
+
+    function verAEditar(id) {
+        bootstrap.Modal.getInstance(document.getElementById('modalVerDetalles'))?.hide();
+        setTimeout(() => abrirEditar(id), 300);
+    }
+
+    // ---- Abrir Editar Modal ----
+    function abrirEditar(id) {
+        _currentEditId = id;
+        $('#edit_modal_id_display').text(id);
+        $('#id_soporte_edit').val(id);
+        // Reset firmas
+        $('#container_firma_tech_edit, #container_firma_cli_edit').addClass('d-none');
+
+        // Cargar opciones de falla antes de mostrar
+        cargarOpcionesFallaEdit(() => {
+            fetch('get_soporte_detalle.php?id=' + id)
+                .then(r => r.json())
+                .then(d => {
+                    if (d.error) { alert('Error: ' + d.error); return; }
+                    $('#fecha_edit').val(d.fecha_soporte_form);
+                    $('#tecnico_edit').val(d.tecnico_asignado || '');
+                    $('#sector_edit').val(d.sector || '');
+                    $('#prioridad_edit').val(d.prioridad || 'NIVEL 1');
+                    $('#tipo_falla_edit').val(d.tipo_falla || '');
+                    $('#tipo_servicio_edit').val(d.tipo_servicio || 'FTTH');
+                    $('#es_caida_critica_edit').prop('checked', d.es_caida_critica == 1);
+                    $('#ip_edit').val(d.ip_address || '');
+                    $('#estado_onu_edit').val(d.estado_onu || '');
+                    $('#estado_router_edit').val(d.estado_router || '');
+                    $('#modelo_router_edit').val(d.modelo_router || '');
+                    $('#num_dispositivos_edit').val(d.num_dispositivos || '');
+                    $('#bw_bajada_edit').val(d.bw_bajada || '');
+                    $('#bw_subida_edit').val(d.bw_subida || '');
+                    $('#bw_ping_edit').val(d.bw_ping || '');
+                    $('#estado_antena_edit').val(d.estado_antena || '');
+                    $('#valores_antena_edit').val(d.valores_antena || '');
+                    $('#descripcion_edit').val(d.observaciones || '');
+                    $('#sugerencias_edit').val(d.sugerencias || '');
+                    $('#notas_internas_edit').val(d.notas_internas || '');
+                    $('#solucion_completada_edit').prop('checked', d.solucion_completada == 1);
+                    $('#monto_total_edit').val(parseFloat(d.monto_total || 0).toFixed(2));
+
+                    // Firmas actuales
+                    const pathRoot = '../../';
+                    if (d.firma_tecnico) {
+                        $('#imgFirmaTech_edit').attr('src', pathRoot + 'uploads/firmas/' + d.firma_tecnico);
+                        $('#container_firma_tech_edit').removeClass('d-none');
+                    }
+                    if (d.firma_cliente) {
+                        $('#imgFirmaCli_edit').attr('src', pathRoot + 'uploads/firmas/' + d.firma_cliente);
+                        $('#container_firma_cli_edit').removeClass('d-none');
+                    }
+
+                    new bootstrap.Modal(document.getElementById('modalEditar')).show();
+                })
+                .catch(() => alert('Error al cargar datos del soporte.'));
+        });
+    }
+
+    // ---- Cargar opciones de falla ----
+    function cargarOpcionesFallaEdit(callback) {
+        fetch('admin_opciones.php?accion=listar&tipo=tipos_falla')
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('tipo_falla_edit');
+                const current = sel.value;
+                sel.innerHTML = '<option value="">-- Seleccionar --</option>';
+                (data.tipos_falla || []).forEach(op => {
+                    const o = document.createElement('option');
+                    o.value = op; o.textContent = op;
+                    sel.appendChild(o);
+                });
+                if (current) sel.value = current;
+                if (callback) callback();
+            })
+            .catch(() => { if (callback) callback(); });
+    }
+
+    // ---- SignaturePad para modal de edición ----
+    $('#modalEditar').on('shown.bs.modal', function () {
+        const canvasTech = document.getElementById('sigTechEdit');
+        const canvasCli = document.getElementById('sigCliEdit');
+        function resizeCanvas(canvas) {
+            var ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+        }
+        resizeCanvas(canvasTech);
+        resizeCanvas(canvasCli);
+        if (!padTechEdit) padTechEdit = new SignaturePad(canvasTech);
+        else padTechEdit.clear();
+        if (!padCliEdit) padCliEdit = new SignaturePad(canvasCli);
+        else padCliEdit.clear();
+    });
+
+    function clearPadEdit(type) {
+        if (type === 'tech' && padTechEdit) padTechEdit.clear();
+        if (type === 'cli' && padCliEdit) padCliEdit.clear();
+    }
+
+    // ---- On Edit Form Submit ----
+    document.getElementById('formEditarSoporte').addEventListener('submit', function (e) {
+        if (padTechEdit && !padTechEdit.isEmpty()) {
+            document.getElementById('firma_tecnico_data_edit').value = padTechEdit.toDataURL();
+        }
+        if (padCliEdit && !padCliEdit.isEmpty()) {
+            document.getElementById('firma_cliente_data_edit').value = padCliEdit.toDataURL();
+        }
+        const btn = document.getElementById('btnGuardarEdicion');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Guardando...';
+    });
 
     $(document).ready(function () {
         cargarEstadisticas();
@@ -652,7 +1120,7 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                 plugins: {
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 let label = context.label || '';
                                 if (label) {
                                     label += ': ';
