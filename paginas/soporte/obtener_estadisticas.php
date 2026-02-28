@@ -33,6 +33,22 @@ try {
     // Parámetros de filtro (opcional)
     $fecha_desde = isset($_GET['fecha_desde']) ? $_GET['fecha_desde'] : date('Y-m-d', strtotime('-6 months'));
     $fecha_hasta = isset($_GET['fecha_hasta']) ? $_GET['fecha_hasta'] : date('Y-m-d');
+    $tipo_falla_filt = isset($_GET['tipo_falla']) ? $conn->real_escape_string($_GET['tipo_falla']) : '';
+    $tecnico_filt = isset($_GET['tecnico']) ? $conn->real_escape_string($_GET['tecnico']) : '';
+    $estado_pago_filt = isset($_GET['estado_pago']) ? $_GET['estado_pago'] : '';
+
+    $where_filtros = " AND fecha_soporte BETWEEN '$fecha_desde' AND '$fecha_hasta'";
+    if ($tipo_falla_filt != '') {
+        $where_filtros .= " AND tipo_falla = '$tipo_falla_filt'";
+    }
+    if ($tecnico_filt != '') {
+        $where_filtros .= " AND tecnico_asignado LIKE '%$tecnico_filt%'";
+    }
+    if ($estado_pago_filt == 'PAGADO') {
+        $where_filtros .= " AND (monto_total - monto_pagado) <= 0.01";
+    } elseif ($estado_pago_filt == 'PENDIENTE') {
+        $where_filtros .= " AND (monto_total - monto_pagado) > 0.01";
+    }
 
     // 1. Estadísticas generales
     $sql_general = "SELECT 
@@ -42,7 +58,7 @@ try {
                         SUM(CASE WHEN (monto_total - monto_pagado) > 0.01 THEN 1 ELSE 0 END) as reportes_pendientes,
                         SUM(CASE WHEN (monto_total - monto_pagado) <= 0.01 THEN 1 ELSE 0 END) as reportes_pagados
                     FROM soportes
-                    WHERE fecha_soporte BETWEEN '$fecha_desde' AND '$fecha_hasta'";
+                    WHERE 1=1 $where_filtros";
 
     $result = $conn->query($sql_general);
     $stats_general = ($result && $result->num_rows > 0) ? $result->fetch_assoc() : [
@@ -58,7 +74,7 @@ try {
                  FROM soportes
                  WHERE tipo_falla IS NOT NULL 
                  AND tipo_falla != ''
-                 AND fecha_soporte BETWEEN '$fecha_desde' AND '$fecha_hasta'
+                 AND 1=1 $where_filtros
                  GROUP BY tipo_falla
                  ORDER BY cantidad DESC";
 
@@ -70,13 +86,13 @@ try {
         }
     }
 
-    // 3. Reportes por mes (últimos 6 meses)
+    // 3. Reportes por mes
     $sql_mes = "SELECT 
                     DATE_FORMAT(fecha_soporte, '%Y-%m') as mes,
-                    DATE_FORMAT(fecha_soporte, '%b %Y') as mes_nombre,
+                    DATE_FORMAT(fecha_soporte, '%b %Y', 'es_ES') as mes_nombre,
                     COUNT(*) as cantidad
                 FROM soportes
-                WHERE fecha_soporte >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                WHERE 1=1 $where_filtros
                 GROUP BY mes, mes_nombre
                 ORDER BY mes ASC";
 
@@ -98,7 +114,7 @@ try {
                     FROM soportes
                     WHERE tecnico_asignado IS NOT NULL 
                     AND tecnico_asignado != ''
-                    AND fecha_soporte BETWEEN '$fecha_desde' AND '$fecha_hasta'
+                    AND 1=1 $where_filtros
                     GROUP BY tecnico_asignado
                     ORDER BY cantidad DESC
                     LIMIT 10";
@@ -114,14 +130,14 @@ try {
         }
     }
 
-    // 5. Ingresos por mes (últimos 6 meses)
+    // 5. Ingresos por mes
     $sql_ingresos = "SELECT 
                         DATE_FORMAT(fecha_soporte, '%Y-%m') as mes,
-                        DATE_FORMAT(fecha_soporte, '%b %Y') as mes_nombre,
+                        DATE_FORMAT(fecha_soporte, '%b %Y', 'es_ES') as mes_nombre,
                         SUM(monto_total) as total,
                         SUM(monto_pagado) as pagado
                     FROM soportes
-                    WHERE fecha_soporte >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                    WHERE 1=1 $where_filtros
                     GROUP BY mes, mes_nombre
                     ORDER BY mes ASC";
 
@@ -136,13 +152,14 @@ try {
         }
     }
 
-    // 6. Fallas por Nivel de Prioridad
+    // 6. Fallas por Nivel de Prioridad (Excluir MEDIA)
     $sql_nivel = "SELECT prioridad, COUNT(*) as cantidad
                   FROM soportes
                   WHERE prioridad IS NOT NULL
-                  AND fecha_soporte BETWEEN '$fecha_desde' AND '$fecha_hasta'
+                  AND prioridad != 'MEDIA'
+                  AND 1=1 $where_filtros
                   GROUP BY prioridad
-                  ORDER BY cantidad DESC";
+                  ORDER BY FIELD(prioridad, 'NIVEL 3', 'NIVEL 2', 'NIVEL 1')";
     $result_nivel = $conn->query($sql_nivel);
     $fallas_por_nivel = [];
     if ($result_nivel) {
@@ -178,7 +195,7 @@ try {
     $conn->close();
 
     ob_end_clean();
-    header('Content-Type: application/json');
+    header('Content-Type: application/json; charset=utf-8');
     // Sanitizar todos los strings antes de codificar para eliminar bytes UTF-8 inválidos
     $response = sanitize_utf8($response);
     $json = json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);

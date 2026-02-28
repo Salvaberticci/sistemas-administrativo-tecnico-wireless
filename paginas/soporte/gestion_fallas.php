@@ -361,10 +361,10 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         <?php endif; ?>
 
         <!-- Tabla de Reportes -->
@@ -509,7 +509,8 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
-                <h5 class="modal-title"><i class="fa-solid fa-eye me-2"></i>Detalles del Reporte <span id="ver_modal_id"></span></h5>
+                <h5 class="modal-title"><i class="fa-solid fa-eye me-2"></i>Detalles del Reporte <span
+                        id="ver_modal_id"></span></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="verDetallesBody">
@@ -517,8 +518,10 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <a id="btnVerPDF" href="#" target="_blank" class="btn btn-danger"><i class="fa-solid fa-file-pdf me-1"></i>Ver PDF</a>
-                <button id="btnVerEditar" onclick="" class="btn btn-warning"><i class="fa-solid fa-pen me-1"></i>Editar</button>
+                <a id="btnVerPDF" href="#" target="_blank" class="btn btn-danger"><i
+                        class="fa-solid fa-file-pdf me-1"></i>Ver PDF</a>
+                <button id="btnVerEditar" onclick="" class="btn btn-warning"><i
+                        class="fa-solid fa-pen me-1"></i>Editar</button>
             </div>
         </div>
     </div>
@@ -529,7 +532,8 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <form action="actualizar_soporte.php" method="POST" class="modal-content" id="formEditarSoporte">
             <div class="modal-header bg-warning">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen me-2"></i>Editar Soporte #<span id="edit_modal_id_display"></span></h5>
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen me-2"></i>Editar Soporte #<span
+                        id="edit_modal_id_display"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -578,8 +582,10 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="es_caida_critica_edit" id="es_caida_critica_edit" value="1">
-                            <label class="form-check-label text-danger fw-bold" for="es_caida_critica_edit">¿Caída Crítica?</label>
+                            <input class="form-check-input" type="checkbox" name="es_caida_critica_edit"
+                                id="es_caida_critica_edit" value="1">
+                            <label class="form-check-label text-danger fw-bold" for="es_caida_critica_edit">¿Caída
+                                Crítica?</label>
                         </div>
                     </div>
                 </div>
@@ -646,7 +652,8 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Observaciones / Problema</label>
-                        <textarea class="form-control" name="descripcion_edit" id="descripcion_edit" rows="3" required></textarea>
+                        <textarea class="form-control" name="descripcion_edit" id="descripcion_edit" rows="3"
+                            required></textarea>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Sugerencias al Cliente</label>
@@ -655,10 +662,12 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Notas Internas</label>
-                    <textarea class="form-control" name="notas_internas_edit" id="notas_internas_edit" rows="2"></textarea>
+                    <textarea class="form-control" name="notas_internas_edit" id="notas_internas_edit"
+                        rows="2"></textarea>
                 </div>
                 <div class="form-check form-switch mb-3">
-                    <input class="form-check-input" type="checkbox" id="solucion_completada_edit" name="solucion_completada">
+                    <input class="form-check-input" type="checkbox" id="solucion_completada_edit"
+                        name="solucion_completada">
                     <label class="form-check-label fw-bold" for="solucion_completada_edit">¿Falla Solucionada?</label>
                 </div>
 
@@ -666,11 +675,13 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                 <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Costos y Facturación</div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">Monto Total ($)</label>
-                    <input type="number" step="0.01" min="0" class="form-control" name="monto_total_edit" id="monto_total_edit" required>
+                    <input type="number" step="0.01" min="0" class="form-control" name="monto_total_edit"
+                        id="monto_total_edit" required>
                 </div>
 
                 <!-- Firmas -->
-                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Actualizar Firmas (Opcional)</div>
+                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Actualizar Firmas (Opcional)
+                </div>
                 <p class="text-muted small">Deje los lienzos en blanco para conservar las firmas originales.</p>
                 <div class="row mb-3">
                     <div class="col-md-6">
@@ -679,8 +690,10 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                             <span class="badge bg-info mb-1">Firma Actual</span><br>
                             <img id="imgFirmaTech_edit" src="" style="max-height: 80px; border: 1px dashed #ccc;">
                         </div>
-                        <canvas id="sigTechEdit" style="border:1px solid #ccc;width:100%;height:120px;border-radius:4px;background:#fcfcfc;"></canvas>
-                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="clearPadEdit('tech')">Limpiar</button>
+                        <canvas id="sigTechEdit"
+                            style="border:1px solid #ccc;width:100%;height:120px;border-radius:4px;background:#fcfcfc;"></canvas>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                            onclick="clearPadEdit('tech')">Limpiar</button>
                         <input type="hidden" name="firma_tecnico_data" id="firma_tecnico_data_edit">
                     </div>
                     <div class="col-md-6">
@@ -689,15 +702,18 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                             <span class="badge bg-info mb-1">Firma Actual</span><br>
                             <img id="imgFirmaCli_edit" src="" style="max-height: 80px; border: 1px dashed #ccc;">
                         </div>
-                        <canvas id="sigCliEdit" style="border:1px solid #ccc;width:100%;height:120px;border-radius:4px;background:#fcfcfc;"></canvas>
-                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="clearPadEdit('cli')">Limpiar</button>
+                        <canvas id="sigCliEdit"
+                            style="border:1px solid #ccc;width:100%;height:120px;border-radius:4px;background:#fcfcfc;"></canvas>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                            onclick="clearPadEdit('cli')">Limpiar</button>
                         <input type="hidden" name="firma_cliente_data" id="firma_cliente_data_edit">
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-warning fw-bold" id="btnGuardarEdicion"><i class="fa-solid fa-save me-1"></i>Guardar Cambios</button>
+                <button type="submit" class="btn btn-warning fw-bold" id="btnGuardarEdicion"><i
+                        class="fa-solid fa-save me-1"></i>Guardar Cambios</button>
             </div>
         </form>
     </div>
@@ -753,7 +769,7 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                                 <p class="mb-1"><strong>Sector:</strong> ${f(d.sector)}</p>
                                 <p class="mb-1"><strong>Tipo Falla:</strong> ${f(d.tipo_falla)}</p>
                                 <p class="mb-1"><strong>Prioridad:</strong> ${badge(d.prioridad)}</p>
-                                <p class="mb-0"><strong>Caída Crítica:</strong> ${d.es_caida_critica == 1 ? '<span class=\"badge bg-danger\">Sí ('+f(d.clientes_afectados)+' clientes)</span>' : 'No'}</p>
+                                <p class="mb-0"><strong>Caída Crítica:</strong> ${d.es_caida_critica == 1 ? '<span class=\"badge bg-danger\">Sí (' + f(d.clientes_afectados) + ' clientes)</span>' : 'No'}</p>
                             </div>
                         </div>
                     </div>
@@ -771,9 +787,9 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                         <div class="card mb-3 border-0 shadow-sm">
                             <div class="card-header bg-success text-white"><i class="fa-solid fa-dollar-sign me-2"></i>Financiero</div>
                             <div class="card-body">
-                                <p class="mb-1"><strong>Total:</strong> $${parseFloat(d.monto_total||0).toFixed(2)}</p>
-                                <p class="mb-1"><strong>Pagado:</strong> $${parseFloat(d.monto_pagado||0).toFixed(2)}</p>
-                                <p class="mb-0"><strong>Saldo:</strong> <span class="${(d.monto_total-d.monto_pagado)>0.01?'text-danger fw-bold':'text-success fw-bold'}">$${(parseFloat(d.monto_total||0)-parseFloat(d.monto_pagado||0)).toFixed(2)}</span></p>
+                                <p class="mb-1"><strong>Total:</strong> $${parseFloat(d.monto_total || 0).toFixed(2)}</p>
+                                <p class="mb-1"><strong>Pagado:</strong> $${parseFloat(d.monto_pagado || 0).toFixed(2)}</p>
+                                <p class="mb-0"><strong>Saldo:</strong> <span class="${(d.monto_total - d.monto_pagado) > 0.01 ? 'text-danger fw-bold' : 'text-success fw-bold'}">$${(parseFloat(d.monto_total || 0) - parseFloat(d.monto_pagado || 0)).toFixed(2)}</span></p>
                             </div>
                         </div>
                     </div>
@@ -1106,12 +1122,12 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                 labels: nivelesLabels,
                 datasets: [{
                     data: nivelesData,
-                    backgroundColor: [
-                        'rgba(220, 53, 69, 0.8)',   // Rojo para Nivel 3
-                        'rgba(253, 126, 20, 0.8)',  // Naranja para Nivel 2
-                        'rgba(255, 193, 7, 0.8)',   // Amarillo para Nivel 1
-                        'rgba(108, 117, 125, 0.8)'  // Gris para Otros/No Asignado
-                    ]
+                    backgroundColor: nivelesLabels.map(l => {
+                        if (l === 'NIVEL 3') return 'rgba(220, 53, 69, 0.8)';   // Rojo
+                        if (l === 'NIVEL 2') return 'rgba(253, 126, 20, 0.8)';  // Naranja
+                        if (l === 'NIVEL 1') return 'rgba(255, 193, 7, 0.8)';   // Amarillo
+                        return 'rgba(108, 117, 125, 0.8)';                      // Gris
+                    })
                 }]
             },
             options: {
@@ -1136,6 +1152,15 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
             }
         });
     }
+
+    // Interceptar el formulario de filtros para actualizar estadísticas vía AJAX
+    document.getElementById('formFiltros').addEventListener('submit', function (e) {
+        // Permitimos el submit normal para recargar la tabla (Datatables Server Side)
+        // Pero también llamamos a cargarEstadisticas() si es necesario.
+        // Como la tabla usa GET y recarga la página, cargarEstadisticas se llamará en el document.ready.
+        // Si el usuario quiere que sea puramente AJAX sin recarga, usaríamos e.preventDefault().
+        // Dado el estado actual, el document.ready ya maneja la carga inicial con los params de la URL.
+    });
 
     function exportarPDF() {
         const params = new URLSearchParams({

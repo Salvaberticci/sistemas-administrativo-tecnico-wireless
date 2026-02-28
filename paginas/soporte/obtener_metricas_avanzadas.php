@@ -12,9 +12,25 @@ require_once '../conexion.php';
 // Parámetros de filtro
 $fecha_desde = isset($_GET['fecha_desde']) ? $_GET['fecha_desde'] : date('Y-m-d', strtotime('-1 month'));
 $fecha_hasta = isset($_GET['fecha_hasta']) ? $_GET['fecha_hasta'] : date('Y-m-d');
+$tipo_falla_filt = isset($_GET['tipo_falla']) ? $conn->real_escape_string($_GET['tipo_falla']) : '';
+$tecnico_filt = isset($_GET['tecnico']) ? $conn->real_escape_string($_GET['tecnico']) : '';
+$estado_pago_filt = isset($_GET['estado_pago']) ? $_GET['estado_pago'] : '';
 
 $fecha_desde = $conn->real_escape_string($fecha_desde);
 $fecha_hasta = $conn->real_escape_string($fecha_hasta);
+
+$where_filtros = " AND fecha_reporte BETWEEN '$fecha_desde' AND '$fecha_hasta'";
+if ($tipo_falla_filt != '') {
+    $where_filtros .= " AND tipo_falla = '$tipo_falla_filt'";
+}
+if ($tecnico_filt != '') {
+    $where_filtros .= " AND tecnico_asignado LIKE '%$tecnico_filt%'";
+}
+if ($estado_pago_filt == 'PAGADO') {
+    $where_filtros .= " AND (monto_total - monto_pagado) <= 0.01";
+} elseif ($estado_pago_filt == 'PENDIENTE') {
+    $where_filtros .= " AND (monto_total - monto_pagado) > 0.01";
+}
 
 $response = [
     'success' => true,
@@ -35,7 +51,7 @@ try {
                    FROM soportes
                    WHERE fecha_atencion IS NOT NULL
                    AND fecha_resolucion IS NOT NULL
-                   AND fecha_reporte BETWEEN '$fecha_desde' AND '$fecha_hasta'";
+                   AND 1=1 $where_filtros";
 
     $result = $conn->query($sql_tiempo);
     if ($result && $row = $result->fetch_assoc()) {
@@ -44,19 +60,19 @@ try {
         $response['tiempo_respuesta']['promedio_total'] = round($row['promedio_total_horas'] ?? 0, 1);
     }
 
-    // Tiempo por mes (últimos 6 meses)
+    // Tiempo por mes (dentro del rango seleccionado)
     $sql_tiempo_mes = "SELECT 
                         DATE_FORMAT(fecha_reporte, '%Y-%m') as mes,
                         AVG(TIMESTAMPDIFF(HOUR, fecha_reporte, fecha_atencion)) as promedio_horas
                        FROM soportes
                        WHERE fecha_atencion IS NOT NULL
-                       AND fecha_reporte >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+                       AND 1=1 $where_filtros
                        GROUP BY mes
                        ORDER BY mes ASC";
 
     $result = $conn->query($sql_tiempo_mes);
     $por_mes = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($result && $row = $result->fetch_assoc()) {
         $por_mes[$row['mes']] = round($row['promedio_horas'], 1);
     }
     $response['tiempo_respuesta']['por_mes'] = $por_mes;
@@ -67,11 +83,12 @@ try {
 
 // 2. FALLAS CRÍTICAS
 try {
-    // Activas (no resueltas)
+    // Activas (no resueltas) dentro del periodo
     $sql_criticas_activas = "SELECT COUNT(*) as total
                              FROM soportes
                              WHERE es_caida_critica = 1
-                             AND (fecha_resolucion IS NULL OR solucion_completada = 0)";
+                             AND (fecha_resolucion IS NULL OR solucion_completada = 0)
+                             AND 1=1 $where_filtros";
 
     $result = $conn->query($sql_criticas_activas);
     $row = $result->fetch_assoc();
@@ -87,21 +104,21 @@ try {
     $row = $result->fetch_assoc();
     $response['fallas_criticas']['resueltas_hoy'] = intval($row['total']);
 
-    // Total del mes
-    $sql_criticas_mes = "SELECT COUNT(*) as total
-                         FROM soportes
-                         WHERE es_caida_critica = 1
-                         AND fecha_reporte >= DATE_FORMAT(NOW(), '%Y-%m-01')";
+    // Total del mes seleccionado (si aplica) o segun filtros
+    $sql_criticas_filt = "SELECT COUNT(*) as total
+                          FROM soportes
+                          WHERE es_caida_critica = 1
+                          AND 1=1 $where_filtros";
 
-    $result = $conn->query($sql_criticas_mes);
+    $result = $conn->query($sql_criticas_filt);
     $row = $result->fetch_assoc();
-    $response['fallas_criticas']['total_mes'] = intval($row['total']);
+    $response['fallas_criticas']['total_periodo'] = intval($row['total']);
 
 } catch (Exception $e) {
     $response['fallas_criticas']['error'] = $e->getMessage();
 }
 
-// 3. CLIENTES RECURRENTES (más de 3 fallas en 30 días)
+// 3. CLIENTES RECURRENTES (dentro del rango seleccionado)
 try {
     $sql_recurrentes = "SELECT 
                             c.id,
@@ -114,15 +131,15 @@ try {
                             GROUP_CONCAT(DISTINCT s.tipo_falla SEPARATOR ', ') as tipos_falla
                         FROM contratos c
                         INNER JOIN soportes s ON c.id = s.id_contrato
-                        WHERE s.fecha_reporte >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                        WHERE 1=1 $where_filtros
                         GROUP BY c.id, c.nombre_completo, c.cedula, c.ip, c.telefono
-                        HAVING total_fallas > 3
+                        HAVING total_fallas >= 2
                         ORDER BY total_fallas DESC
                         LIMIT 20";
 
     $result = $conn->query($sql_recurrentes);
     $recurrentes = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($result && $row = $result->fetch_assoc()) {
         $recurrentes[] = [
             'id_cliente' => $row['id'],
             'nombre' => $row['nombre_completo'],
@@ -150,14 +167,14 @@ try {
                   FROM soportes
                   WHERE zona_afectada IS NOT NULL
                   AND zona_afectada != ''
-                  AND fecha_reporte BETWEEN '$fecha_desde' AND '$fecha_hasta'
+                  AND 1=1 $where_filtros
                   GROUP BY zona_afectada
                   ORDER BY total_fallas DESC
                   LIMIT 10";
 
     $result = $conn->query($sql_zonas);
     $zonas = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($result && $row = $result->fetch_assoc()) {
         $zonas[$row['zona_afectada']] = [
             'total' => intval($row['total_fallas']),
             'criticas' => intval($row['fallas_criticas'])
@@ -170,7 +187,7 @@ try {
     $response['error_zonas'] = $e->getMessage();
 }
 
-// 5. CAÍDAS CRÍTICAS RECIENTES (últimas 24 horas)
+// 5. CAÍDAS CRÍTICAS RECIENTES (dentro del rango seleccionado)
 try {
     $sql_caidas = "SELECT 
                     s.id_soporte,
@@ -184,15 +201,15 @@ try {
                     c.nombre_completo,
                     TIMESTAMPDIFF(HOUR, s.fecha_reporte, COALESCE(s.fecha_resolucion, NOW())) as horas_caida
                    FROM soportes s
-                   INNER JOIN contratos c ON s.id_contrato = c.id
+                   LEFT JOIN contratos c ON s.id_contrato = c.id
                    WHERE s.es_caida_critica = 1
-                   AND s.fecha_reporte >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                   AND 1=1 $where_filtros
                    ORDER BY s.fecha_reporte DESC
-                   LIMIT 10";
+                   LIMIT 20";
 
     $result = $conn->query($sql_caidas);
     $caidas = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($result && $row = $result->fetch_assoc()) {
         $caidas[] = [
             'id' => $row['id_soporte'],
             'tipo' => $row['tipo_falla'],
@@ -201,7 +218,7 @@ try {
             'fecha_reporte' => $row['fecha_reporte'],
             'fecha_resolucion' => $row['fecha_resolucion'],
             'horas_caida' => round($row['horas_caida'], 1),
-            'estado' => $row['fecha_resolucion'] ? 'Resuelta' : 'Activa',
+            'estado' => ($row['fecha_resolucion'] || (isset($row['solucion_completada']) && $row['solucion_completada'] == 1)) ? 'Resuelta' : 'Activa',
             'prioridad' => $row['prioridad']
         ];
     }
@@ -212,19 +229,20 @@ try {
     $response['error_caidas'] = $e->getMessage();
 }
 
-// 6. DISTRIBUCIÓN POR PRIORIDAD
+// 6. DISTRIBUCIÓN POR PRIORIDAD (Excluir MEDIA)
 try {
     $sql_prioridad = "SELECT 
                         prioridad,
                         COUNT(*) as total
                       FROM soportes
-                      WHERE fecha_reporte BETWEEN '$fecha_desde' AND '$fecha_hasta'
+                      WHERE 1=1 $where_filtros
+                      AND prioridad != 'MEDIA'
                       GROUP BY prioridad
                       ORDER BY FIELD(prioridad, 'NIVEL 3', 'NIVEL 2', 'NIVEL 1')";
 
     $result = $conn->query($sql_prioridad);
     $por_prioridad = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($result && $row = $result->fetch_assoc()) {
         $por_prioridad[$row['prioridad']] = intval($row['total']);
     }
     $response['por_prioridad'] = $por_prioridad;
@@ -236,11 +254,30 @@ try {
     }
 }
 
+// Helper: limpia bytes UTF-8 inválidos de cualquier string o array anidado.
+function sanitize_utf8_adv($value)
+{
+    if (is_array($value)) {
+        return array_map('sanitize_utf8_adv', $value);
+    }
+    if (is_string($value)) {
+        // Detectar si ya es UTF-8 o si viene con ISO-8859-1 (común en servidores antiguos con Ñ)
+        $enc = mb_detect_encoding($value, ['UTF-8', 'ISO-8859-1'], true);
+        if ($enc === 'ISO-8859-1') {
+            return mb_convert_encoding($value, 'UTF-8', 'ISO-8859-1');
+        }
+        return mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+    }
+    return $value;
+}
+
 if (isset($conn) && $conn instanceof mysqli)
     $conn->close();
 
 if (ob_get_length())
     ob_end_clean();
-header('Content-Type: application/json');
-echo json_encode($response, JSON_PRETTY_PRINT);
+
+header('Content-Type: application/json; charset=utf-8');
+$response = sanitize_utf8_adv($response);
+echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
 ?>
