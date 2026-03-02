@@ -492,6 +492,60 @@
                                 idInput.value = item.id;
                                 selectedDiv.textContent = 'Cliente Seleccionado: ' + item.nombre_completo;
                                 resultsDiv.style.display = 'none';
+
+                                // --- AUTOMATIC DATA POPULATION ---
+                                // Fetch full details to get community, IP, etc.
+                                fetch(`../principal/get_contrato_detalle.php?id=${item.id}`)
+                                    .then(r => r.json())
+                                    .then(details => {
+                                        if (details.error) return;
+
+                                        // 1. Sector (優先: Comunidad, secundario: Dirección corta/Parroquia)
+                                        const sectorInput = document.querySelector('input[name="sector"]');
+                                        if (sectorInput) {
+                                            sectorInput.value = details.nombre_comunidad || details.nombre_parroquia || "";
+                                        }
+
+                                        // 2. IP Asignada
+                                        const ipInput = document.getElementById('rt_ip');
+                                        if (ipInput) {
+                                            ipInput.value = details.ip_onu || "";
+                                        }
+
+                                        // 3. Tipo Servicio (Mapeo de 'FTTH'/'RADIO' o similares)
+                                        const serviceSelect = document.querySelector('select[name="tipo_servicio"]');
+                                        if (serviceSelect && details.tipo_conexion) {
+                                            const type = details.tipo_conexion.toUpperCase();
+                                            if (type.includes('FIBRA') || type.includes('FTTH')) {
+                                                serviceSelect.value = 'FTTH';
+                                            } else if (type.includes('RADIO') || type.includes('ANTENA') || type.includes('INALAMBRICO')) {
+                                                serviceSelect.value = 'RADIO';
+                                            }
+                                        }
+
+                                        // 4. Modelo Router (Si existe en contrato)
+                                        const routerInput = document.querySelector('input[name="modelo_router"]');
+                                        if (routerInput && details.modelo_router) {
+                                            routerInput.value = details.modelo_router;
+                                        }
+
+                                        // 5. Valores Antena (Si es Radio y existe valor)
+                                        const antenaInput = document.getElementById('valores_antena');
+                                        if (antenaInput && details.valor_conexion_dbm) {
+                                            antenaInput.value = details.valor_conexion_dbm;
+                                        }
+
+                                        Swal.fire({
+                                            title: 'Datos Importados',
+                                            text: 'Se han cargado los datos del contrato automáticamente.',
+                                            icon: 'info',
+                                            timer: 2000,
+                                            showConfirmButton: false,
+                                            toast: true,
+                                            position: 'top-end'
+                                        });
+                                    })
+                                    .catch(err => console.error('Error fetching contract details:', err));
                             };
                             resultsDiv.appendChild(a);
                         });
