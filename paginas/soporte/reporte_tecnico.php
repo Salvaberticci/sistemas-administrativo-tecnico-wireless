@@ -175,7 +175,7 @@
                                     placeholder="Recomendaciones..."></textarea>
                             </div>
 
-                            <div class="form-check form-switch mb-3 p-3 bg-light rounded">
+                            <div class="form-check form-switch mb-3 ms-3 p-3 bg-light rounded">
                                 <input class="form-check-input" type="checkbox" id="solucion_completada"
                                     name="solucion_completada" checked>
                                 <label class="form-check-label fw-bold" for="solucion_completada">¿Solución de Falla
