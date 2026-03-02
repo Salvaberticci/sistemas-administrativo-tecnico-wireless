@@ -56,7 +56,7 @@
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label fw-bold">Sector</label>
                                     <input type="text" class="form-control" name="sector"
-                                        placeholder="Ej. Las Malvinas">
+                                        placeholder="Ej. Las Malvinas" readonly style="background-color: #e9ecef;">
                                 </div>
                             </div>
 
@@ -80,7 +80,7 @@
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <label class="form-label fw-bold">Tipo Servicio</label>
-                                    <select class="form-select" name="tipo_servicio">
+                                    <select class="form-select" name="tipo_servicio" style="pointer-events: none; background-color: #e9ecef;">
                                         <option value="FTTH">FTTH (Fibra)</option>
                                         <option value="RADIO">Radio/Antena</option>
                                     </select>
@@ -88,7 +88,7 @@
                                 <div class="col-6">
                                     <label class="form-label fw-bold">IP Asignada</label>
                                     <input type="text" class="form-control" id="rt_ip" name="ip" placeholder="0.0.0.0"
-                                        pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$">
+                                        pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" readonly style="background-color: #e9ecef;">
                                 </div>
                             </div>
 
