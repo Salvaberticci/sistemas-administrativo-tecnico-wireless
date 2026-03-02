@@ -54,6 +54,7 @@
             background-color: #dc3545;
             color: white;
         }
+
         body {
             background-color: #f8f9fa;
         }
@@ -99,8 +100,8 @@
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label fw-bold">Sector</label>
-                                    <input type="text" class="form-control" name="sector"
-                                        placeholder="Ej. Las Malvinas" readonly style="background-color: #e9ecef;">
+                                    <input type="text" class="form-control" name="sector" placeholder="Ej. Las Malvinas"
+                                        readonly style="background-color: #e9ecef;">
                                 </div>
                             </div>
 
@@ -124,7 +125,8 @@
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <label class="form-label fw-bold">Tipo Servicio</label>
-                                    <select class="form-select" name="tipo_servicio" style="pointer-events: none; background-color: #e9ecef;">
+                                    <select class="form-select" name="tipo_servicio"
+                                        style="pointer-events: none; background-color: #e9ecef;">
                                         <option value="FTTH">FTTH (Fibra)</option>
                                         <option value="RADIO">Radio/Antena</option>
                                     </select>
@@ -132,7 +134,8 @@
                                 <div class="col-6">
                                     <label class="form-label fw-bold">IP Asignada</label>
                                     <input type="text" class="form-control" id="rt_ip" name="ip" placeholder="0.0.0.0"
-                                        pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" readonly style="background-color: #e9ecef;">
+                                        pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" readonly
+                                        style="background-color: #e9ecef;">
                                 </div>
                             </div>
 
@@ -202,18 +205,18 @@
 
                             <!-- 6. Observaciones -->
                             <div class="section-title">Diagnóstico y Solución</div>
-                            
+
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Prioridad / Clasificación</label>
                                 <div class="d-flex gap-2 flex-wrap mb-2">
                                     <span class="priority-badge priority-nivel1 active" data-priority="NIVEL 1">
-                                        <i class="fa-brands fa-whatsapp me-1"></i>NIVEL 1
+                                        <i class="fa-brands fa-whatsapp me-1"></i>NIVEL 1 (WhatsApp)
                                     </span>
                                     <span class="priority-badge priority-nivel2" data-priority="NIVEL 2">
-                                        <i class="fa-solid fa-house-chimney-user me-1"></i>NIVEL 2
+                                        <i class="fa-solid fa-house-chimney-user me-1"></i>NIVEL 2 (Visita Técnico)
                                     </span>
                                     <span class="priority-badge priority-nivel3" data-priority="NIVEL 3">
-                                        <i class="fa-solid fa-network-wired me-1"></i>NIVEL 3
+                                        <i class="fa-solid fa-network-wired me-1"></i>NIVEL 3 (Red Afectada)
                                     </span>
                                 </div>
                                 <input type="hidden" id="prioridad" name="prioridad" value="NIVEL 1">
@@ -264,7 +267,8 @@
                             <div id="payment_warning" class="alert alert-warning d-none" role="alert">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
                                 <strong>Atención:</strong> El cliente quedará registrado en la lista de deudores con un
-                                saldo pendiente de $<span id="warning_amount">0.00</span> (<span id="warning_amount_bs">0.00</span> Bs.).
+                                saldo pendiente de $<span id="warning_amount">0.00</span> (<span
+                                    id="warning_amount_bs">0.00</span> Bs.).
                             </div>
 
                             <!-- 7. Firmas -->
@@ -429,7 +433,7 @@
             // Show/hide warning
             if (saldo > 0) {
                 warningAmount.textContent = saldo.toFixed(2);
-                
+
                 // Conversión a Bs.
                 if (tasaDolar > 0) {
                     const saldoBs = saldo * tasaDolar;
