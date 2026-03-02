@@ -203,7 +203,7 @@
                             <div id="payment_warning" class="alert alert-warning d-none" role="alert">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
                                 <strong>Atención:</strong> El cliente quedará registrado en la lista de deudores con un
-                                saldo pendiente de $<span id="warning_amount">0.00</span>.
+                                saldo pendiente de $<span id="warning_amount">0.00</span> (<span id="warning_amount_bs">0.00</span> Bs.).
                             </div>
 
                             <!-- 7. Firmas -->
@@ -336,6 +336,21 @@
         const saldoPendienteInput = document.getElementById('saldo_pendiente');
         const paymentWarning = document.getElementById('payment_warning');
         const warningAmount = document.getElementById('warning_amount');
+        const warningAmountBs = document.getElementById('warning_amount_bs');
+
+        let tasaDolar = 0;
+
+        // Fetch exchange rate on load
+        fetch('../principal/get_tasa_dolar.php')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    tasaDolar = data.promedio;
+                    console.log('Tasa Dólar cargada:', tasaDolar);
+                    calcularSaldo(); // Recalcular con la tasa cargada
+                }
+            })
+            .catch(err => console.error('Error al obtener tasa:', err));
 
         function calcularSaldo() {
             const total = parseFloat(montoTotalInput.value) || 0;
@@ -353,6 +368,15 @@
             // Show/hide warning
             if (saldo > 0) {
                 warningAmount.textContent = saldo.toFixed(2);
+                
+                // Conversión a Bs.
+                if (tasaDolar > 0) {
+                    const saldoBs = saldo * tasaDolar;
+                    warningAmountBs.textContent = saldoBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                } else {
+                    warningAmountBs.textContent = "---";
+                }
+
                 paymentWarning.classList.remove('d-none');
             } else {
                 paymentWarning.classList.add('d-none');
