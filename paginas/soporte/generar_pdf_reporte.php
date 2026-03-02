@@ -15,11 +15,11 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 
 $id_soporte = intval($_GET['id']);
 
-require '../../dompdf/autoload.inc.php';
+require_once __DIR__ . '/../../dompdf/autoload.inc.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-require_once '../conexion.php';
+require_once __DIR__ . '/../conexion.php';
 
 // Consultar datos completos del reporte
 $sql = "SELECT s.*, c.nombre_completo, c.cedula, c.ip_onu as ip, c.direccion, c.telefono
@@ -33,8 +33,29 @@ if ($result->num_rows == 0) {
 }
 
 $r = $result->fetch_assoc();
-$saldo = $r['monto_total'] - $r['monto_pagado'];
+$saldo = floatval($r['monto_total']) - floatval($r['monto_pagado']);
 $conn->close();
+
+// --- OBTENER TASA DEL DÓLAR PARA CONVERSIÓN ---
+$tasa_dolar = 1.0;
+try {
+    $url_tasa = "https://ve.dolarapi.com/v1/dolares/oficial";
+    $ch = curl_init($url_tasa);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+    $resp_tasa = curl_exec($ch);
+    curl_close($ch);
+
+    $data_tasa = json_decode($resp_tasa, true);
+    if ($data_tasa && isset($data_tasa['promedio'])) {
+        $tasa_dolar = floatval($data_tasa['promedio']);
+    }
+} catch (Exception $e) {
+    // Fallback silencioso
+}
+
+$saldo_bs = $saldo * $tasa_dolar;
 
 // Preparar variables
 $fecha = date('d/m/Y', strtotime($r['fecha_soporte']));
@@ -305,8 +326,12 @@ $html .= '
                 <span style="color: #198754;">$' . number_format($r['monto_pagado'], 2) . '</span>
             </div>
             <div class="financial-row">
-                <span>Saldo Pendiente:</span>
+                <span>Saldo Pendiente (USD):</span>
                 <span style="color: ' . ($saldo > 0.01 ? '#dc3545' : '#198754') . ';">$' . number_format($saldo, 2) . '</span>
+            </div>
+            <div class="financial-row">
+                <span>Saldo Pendiente (VES):</span>
+                <span style="color: ' . ($saldo > 0.01 ? '#dc3545' : '#198754') . ';">' . number_format($saldo_bs, 2, ',', '.') . ' Bs.</span>
             </div>
         </div>
         <p style="text-align: center; margin-top: 10px;">
