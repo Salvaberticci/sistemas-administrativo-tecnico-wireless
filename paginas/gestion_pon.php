@@ -43,35 +43,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_pon'])) {
     $nombre = $_POST['nombre_pon'];
     $olt_id = $_POST['olt_id'];
     $descripcion = $_POST['descripcion'];
-    // El manejo de comunidades ha sido eliminado.
 
     $message = '';
     $message_class = '';
 
+    // Iniciar transacción para asegurar consistencia si actualizamos clientes
+    $conn->begin_transaction();
+
     try {
+        // 0. Obtener el OLT actual del PON ANTES de actualizar
+        $stmt_get_old_olt = $conn->prepare("SELECT id_olt FROM pon WHERE id_pon = ?");
+        $stmt_get_old_olt->bind_param("i", $id);
+        $stmt_get_old_olt->execute();
+        $result_old_olt = $stmt_get_old_olt->get_result();
+        $old_olt_id = null;
+        if ($row = $result_old_olt->fetch_assoc()) {
+            $old_olt_id = $row['id_olt'];
+        }
+        $stmt_get_old_olt->close();
+
         // 1. Actualizar la tabla principal (pon)
-        // Ya no se requiere transacción
         $stmt_update_pon = $conn->prepare("UPDATE pon SET nombre_pon = ?, id_olt = ?, descripcion = ? WHERE id_pon = ?");
-        // "sisi" = string (nombre), integer (olt_id), string (descripcion), integer (id)
         $stmt_update_pon->bind_param("sisi", $nombre, $olt_id, $descripcion, $id);
 
         if (!$stmt_update_pon->execute()) {
-            throw new Exception("Error al actualizar el registro PON: " . $stmt_update_pon->error);
+            if ($conn->errno === 1062) {
+                throw new Exception("El nombre de PON ya existe en esta OLT.");
+            } else {
+                throw new Exception("Error al actualizar el registro PON: " . $stmt_update_pon->error);
+            }
         }
 
-        if ($stmt_update_pon->affected_rows > 0) {
-            $message = "¡PON actualizado con éxito!";
+        $cambios_pon = $stmt_update_pon->affected_rows;
+        $stmt_update_pon->close();
+
+        // 2. Si el OLT cambió, actualizar la OLT de los clientes asociados a este PON
+        $clientes_actualizados = 0;
+        // Asumiendo que contratos tiene un campo id_pon y id_olt. 
+        // Si no tiene id_pon, este paso requerirá revisión de la estructura de la tabla contratos.
+        // Asumo que el cliente está ligado al PON.
+        if ($old_olt_id !== null && $old_olt_id != $olt_id) {
+            // Verificar si la tabla contratos tiene referencia directa al PON.
+            // Si la tiene, actualizamos el OLT de esos contratos.
+            $stmt_update_clientes = $conn->prepare("UPDATE contratos SET id_olt = ? WHERE id_pon = ?");
+            if ($stmt_update_clientes) {
+                $stmt_update_clientes->bind_param("ii", $olt_id, $id);
+                $stmt_update_clientes->execute();
+                $clientes_actualizados = $stmt_update_clientes->affected_rows;
+                $stmt_update_clientes->close();
+            }
+        }
+
+        $conn->commit();
+
+        if ($cambios_pon > 0 || $clientes_actualizados > 0) {
+            $msg_extra = ($clientes_actualizados > 0) ? " (Y se actualizó la OLT de $clientes_actualizados clientes asociados)." : "";
+            $message = "¡PON actualizado con éxito!" . $msg_extra;
             $message_class = 'success';
         } else {
             $message = "ADVERTENCIA: No se realizaron cambios en el PON.";
             $message_class = 'warning';
         }
-        $stmt_update_pon->close();
-
-        // La lógica de eliminación e inserción de pon_comunidad ha sido eliminada.
 
     } catch (Exception $e) {
-        $message = "Error al actualizar el PON: " . $e->getMessage();
+        $conn->rollback();
+        $message = "Error: " . $e->getMessage();
         $message_class = 'error';
     }
 
@@ -86,9 +122,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_pon'])) {
 if ($action === 'delete_pon' && isset($_GET['id'])) {
     $id_to_delete = $_GET['id'];
 
-    // Eliminamos la transacción ya que solo se toca la tabla 'pon'
     try {
-        // La eliminación de pon_comunidad ha sido eliminada
+        // 1. Verificar si el PON tiene clientes asociados en la tabla contratos
+        $stmt_check = $conn->prepare("SELECT COUNT(*) AS total_clientes FROM contratos WHERE id_pon = ?");
+        if ($stmt_check) {
+            $stmt_check->bind_param("i", $id_to_delete);
+            $stmt_check->execute();
+            $result_check = $stmt_check->get_result();
+            if ($row = $result_check->fetch_assoc()) {
+                if ($row['total_clientes'] > 0) {
+                    throw new Exception("No se puede eliminar el PON porque tiene " . $row['total_clientes'] . " clientes asociados. Migre los clientes a otro PON primero.");
+                }
+            }
+            $stmt_check->close();
+        }
 
         // 2. Eliminar de la tabla principal (pon)
         $stmt = $conn->prepare("DELETE FROM pon WHERE id_pon = ?");
@@ -102,7 +149,7 @@ if ($action === 'delete_pon' && isset($_GET['id'])) {
         $message_class = 'success';
 
     } catch (Exception $e) {
-        $message = "Error al eliminar el PON: " . $e->getMessage();
+        $message = $e->getMessage();
         $message_class = 'error';
     }
     // Redirigir para limpiar la URL

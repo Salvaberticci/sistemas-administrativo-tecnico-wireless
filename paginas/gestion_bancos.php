@@ -58,9 +58,20 @@ require_once 'includes/sidebar.php';
                     </table>
                 </div>
             </div>
+            <div class="card-footer bg-white border-top-0 py-3">
+                <div id="pagination-container" class="d-flex justify-content-between align-items-center px-3">
+                    <small class="text-muted" id="pagination-info">Mostrando 0 de 0 bancos</small>
+                    <nav aria-label="Navegación de bancos">
+                        <ul class="pagination pagination-sm mb-0" id="pagination-list">
+                            <!-- Pagination items will be injected here -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
         </div>
     </div>
 </main>
+
 
 <!-- Modal Registro/Nuevo -->
 <div class="modal fade" id="modalRegistroBanco" tabindex="-1" aria-hidden="true">
@@ -103,26 +114,98 @@ require_once 'includes/sidebar.php';
     </div>
 </div>
 
+<!-- Modal Edición -->
+<div class="modal fade" id="modalEditBanco" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold text-primary">Editar Banco</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-edit-banco">
+                <input type="hidden" name="id_banco" id="edit_id_banco">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-bold text-uppercase">Nombre del Banco</label>
+                        <input type="text" name="nombre_banco" id="edit_nombre_banco" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-bold text-uppercase">Número de Cuenta</label>
+                        <input type="text" name="numero_cuenta" id="edit_numero_cuenta"
+                            class="form-control font-monospace" placeholder="0000-0000-00-0000000000" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-5 mb-3">
+                            <label class="form-label small text-muted fw-bold text-uppercase">Cédula</label>
+                            <input type="text" name="cedula_propietario" id="edit_cedula_propietario"
+                                class="form-control" placeholder="V-12345678" required>
+                        </div>
+                        <div class="col-md-7 mb-3">
+                            <label class="form-label small text-muted fw-bold text-uppercase">Titular</label>
+                            <input type="text" name="titular_cuenta" id="edit_titular_cuenta" class="form-control"
+                                placeholder="Nombre completo" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4">Actualizar Banco</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="../js/jquery.min.js"></script>
 
 <script>
     const API_URL = 'principal/json_bancos_api.php';
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
     $(document).ready(function () {
-        cargarBancos();
+        cargarBancos(currentPage);
+
+        $('#form-edit-banco').on('submit', async function (e) {
+            e.preventDefault();
+            const proceeds = await solicitarClaveAdmin('Actualizar Banco');
+            if (!proceeds) return;
+
+            const formData = new FormData(this);
+            try {
+                const resp = await fetch(API_URL + '?action=update', {
+                    method: 'POST',
+                    body: formData
+                });
+                const res = await resp.json();
+                if (res.success) {
+                    Swal.fire('¡Éxito!', 'Banco actualizado correctamente.', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('modalEditBanco')).hide();
+                    cargarBancos(currentPage);
+                } else {
+                    Swal.fire('Error', res.message || 'Error al actualizar', 'error');
+                }
+            } catch (e) {
+                Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+            }
+        });
     });
 
-    async function cargarBancos() {
+    async function cargarBancos(page = 1) {
+        currentPage = page;
         try {
-            const resp = await fetch(API_URL + '?action=get');
-            const data = await resp.json();
+            const resp = await fetch(`${API_URL}?action=get&page=${page}&limit=${itemsPerPage}`);
+            const result = await resp.json();
+            const data = result.data;
             const tbody = document.getElementById('lista_bancos_api');
             tbody.innerHTML = '';
 
             if (data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-muted">No hay bancos registrados.</td></tr>';
+                renderPagination(result);
                 return;
             }
 
@@ -137,21 +220,70 @@ require_once 'includes/sidebar.php';
                         <small class="text-muted">${b.cedula_propietario || ''}</small>
                     </td>
                     <td class="text-end pe-4">
-                        <button class="btn btn-light btn-sm text-danger" onclick="eliminarBanco('${b.id_banco}')" title="Eliminar">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-light text-primary" onclick='prepareEdit(${JSON.stringify(b)})' title="Editar">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn btn-light text-danger" onclick="eliminarBanco('${b.id_banco}')" title="Eliminar">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+
+            renderPagination(result);
         } catch (e) {
             console.error(e);
             document.getElementById('lista_bancos_api').innerHTML = '<tr><td colspan="5" class="text-center text-danger p-4">Error al cargar datos.</td></tr>';
         }
     }
 
+    function renderPagination(info) {
+        const infoText = document.getElementById('pagination-info');
+        const start = (info.page - 1) * info.limit + 1;
+        const end = Math.min(info.page * info.limit, info.total);
+        infoText.innerText = `Mostrando ${info.total > 0 ? start : 0} a ${end} de ${info.total} bancos`;
+
+        const list = document.getElementById('pagination-list');
+        list.innerHTML = '';
+
+        if (info.pages <= 1) return;
+
+        // Previous
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${info.page === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); cargarBancos(${info.page - 1})"><i class="fas fa-chevron-left"></i></a>`;
+        list.appendChild(prevLi);
+
+        // Pages
+        for (let i = 1; i <= info.pages; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${info.page === i ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); cargarBancos(${i})">${i}</a>`;
+            list.appendChild(li);
+        }
+
+        // Next
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${info.page === info.pages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); cargarBancos(${info.page + 1})"><i class="fas fa-chevron-right"></i></a>`;
+        list.appendChild(nextLi);
+    }
+
+    window.prepareEdit = function (banco) {
+        document.getElementById('edit_id_banco').value = banco.id_banco;
+        document.getElementById('edit_nombre_banco').value = banco.nombre_banco;
+        document.getElementById('edit_numero_cuenta').value = banco.numero_cuenta || '';
+        document.getElementById('edit_cedula_propietario').value = banco.cedula_propietario || '';
+        document.getElementById('edit_titular_cuenta').value = banco.nombre_propietario || '';
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditBanco'));
+        modal.show();
+    }
+
     async function solicitarClaveAdmin(titulo = 'Confirmar Acción') {
-        // Fix for Bootstrap modal focus trap
         const focusHandler = (e) => {
             if (e.target.closest(".swal2-container")) {
                 e.stopImmediatePropagation();
@@ -202,7 +334,7 @@ require_once 'includes/sidebar.php';
                 Swal.fire('¡Éxito!', 'Banco registrado correctamente.', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('modalRegistroBanco')).hide();
                 this.reset();
-                cargarBancos();
+                cargarBancos(1);
             } else {
                 Swal.fire('Error', res.message || 'Error al guardar', 'error');
             }
@@ -225,7 +357,7 @@ require_once 'includes/sidebar.php';
             const res = await resp.json();
             if (res.success) {
                 Swal.fire('Eliminado', 'El banco ha sido eliminado con éxito.', 'success');
-                cargarBancos();
+                cargarBancos(currentPage);
             } else {
                 Swal.fire('Error', res.message || 'Error al eliminar', 'error');
             }
@@ -233,6 +365,7 @@ require_once 'includes/sidebar.php';
             Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
         }
     };
+
 </script>
 
 <?php require_once 'includes/layout_foot.php'; ?>

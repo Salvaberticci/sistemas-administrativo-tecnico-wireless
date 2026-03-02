@@ -34,7 +34,7 @@ $sql = "SELECT
             c.distancia_drop,
             c.instalador AS id_instalador, 
             c.evidencia_fibra AS evidencia_foto_fibra,
-            c.ip AS ip_servicio,
+            c.ip_onu AS ip_servicio,
             c.punto_acceso,
             c.valor_conexion_dbm AS valor_conexion,
             c.num_presinto_odn AS precinto_odn,

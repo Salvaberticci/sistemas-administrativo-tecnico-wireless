@@ -15,10 +15,5 @@
         "Mantenimiento Preventivo",
         "Cambio de Equipo",
         "Otro"
-    ],
-    "tipos_servicio": [
-        "Fibra Óptica",
-        "Radio Enlace",
-        "Mixto"
     ]
 }

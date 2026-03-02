@@ -40,7 +40,7 @@ $sql = "
         cxc.monto_total, 
         cxc.estado,
         co.nombre_completo AS cliente,
-        co.ip,
+        co.ip_onu,
         DATEDIFF(CURRENT_DATE(), cxc.fecha_vencimiento) AS dias_vencido
     FROM contratos cxc_main
     RIGHT JOIN cuentas_por_cobrar cxc ON cxc.id_contrato = cxc_main.id 
@@ -59,7 +59,7 @@ $sql = "
         cxc.monto_total, 
         cxc.estado,
         co.nombre_completo AS cliente,
-        co.ip,
+        co.ip_onu,
         DATEDIFF(CURRENT_DATE(), cxc.fecha_vencimiento) AS dias_vencido
     FROM cuentas_por_cobrar cxc
     JOIN contratos co ON cxc.id_contrato = co.id

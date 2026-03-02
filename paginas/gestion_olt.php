@@ -61,16 +61,31 @@ if ($result_assignments && $result_assignments->num_rows > 0) {
 // --- LÓGICA DE GESTIÓN (ELIMINAR) ---
 if ($action === 'delete_olt' && isset($_GET['id'])) {
     $id_to_delete = $_GET['id'];
-    $stmt = $conn->prepare("DELETE FROM olt WHERE id_olt = ?");
-    $stmt->bind_param("i", $id_to_delete);
-    if ($stmt->execute()) {
-        $message = "OLT eliminada con éxito.";
-        $message_class = 'success';
-    } else {
-        $message = "Error al eliminar la OLT: " . $stmt->error;
+
+    // Check if the OLT has any associated PONs
+    $stmt_check_pons = $conn->prepare("SELECT COUNT(*) AS total_pons FROM pon WHERE id_olt = ?");
+    $stmt_check_pons->bind_param("i", $id_to_delete);
+    $stmt_check_pons->execute();
+    $result_check = $stmt_check_pons->get_result();
+    $row_check = $result_check->fetch_assoc();
+    $stmt_check_pons->close();
+
+    if ($row_check['total_pons'] > 0) {
+        $message = "No se puede eliminar la OLT porque tiene " . $row_check['total_pons'] . " PONs asociados. Por favor, elimine o reasigne los PONs primero.";
         $message_class = 'error';
+    } else {
+        $stmt = $conn->prepare("DELETE FROM olt WHERE id_olt = ?");
+        $stmt->bind_param("i", $id_to_delete);
+        if ($stmt->execute()) {
+            $message = "OLT eliminada con éxito.";
+            $message_class = 'success';
+        } else {
+            $message = "Error al eliminar la OLT: " . $stmt->error;
+            $message_class = 'error';
+        }
+        $stmt->close();
     }
-    $stmt->close();
+
     echo "<script>window.location.href = 'gestion_olt.php?message=" . urlencode($message) . "&class=" . $message_class . "';</script>";
     exit;
 }
@@ -92,7 +107,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_olt'])) {
         $stmt_update_olt = $conn->prepare("UPDATE olt SET nombre_olt = ?, marca = ?, modelo = ?, descripcion = ? WHERE id_olt = ?");
         $stmt_update_olt->bind_param("ssssi", $nombre, $marca, $modelo, $descripcion, $id);
         if (!$stmt_update_olt->execute()) {
-            throw new Exception("Error al actualizar OLT: " . $stmt_update_olt->error);
+            if ($conn->errno === 1062) {
+                throw new Exception("El nombre de la OLT ya está en uso. Por favor, elija otro.");
+            } else {
+                throw new Exception("Error al actualizar OLT: " . $stmt_update_olt->error);
+            }
         }
         $stmt_update_olt->close();
 

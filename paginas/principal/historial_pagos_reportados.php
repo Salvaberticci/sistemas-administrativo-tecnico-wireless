@@ -92,10 +92,13 @@ $resultado = $conn->query($sql);
                                 Rechazados</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
                             <i class="fas fa-filter me-1"></i> Filtrar
                         </button>
+                        <a href="historial_pagos_reportados.php" class="btn btn-outline-secondary btn-sm flex-grow-1">
+                            <i class="fas fa-eraser me-1"></i> Limpiar
+                        </a>
                     </div>
                 </form>
             </div>

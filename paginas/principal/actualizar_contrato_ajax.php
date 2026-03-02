@@ -17,7 +17,6 @@ $telefono_sec = $conn->real_escape_string($_POST['telefono_secundario'] ?? '');
 $correo_adicional = $conn->real_escape_string($_POST['correo_adicional'] ?? '');
 $id_municipio = intval($_POST['id_municipio'] ?? 0) ?: 'NULL';
 $id_parroquia = intval($_POST['id_parroquia'] ?? 0) ?: 'NULL';
-$id_comunidad = intval($_POST['id_comunidad'] ?? 0) ?: 'NULL';
 $id_plan = intval($_POST['id_plan'] ?? 0) ?: 'NULL';
 $id_vendedor = intval($_POST['id_vendedor'] ?? 0) ?: 'NULL';
 $id_olt = intval($_POST['id_olt'] ?? 0) ?: 'NULL';
@@ -189,19 +188,7 @@ function getParroquiaId($conn, $nombre, $id_municipio)
     return null;
 }
 
-function getComunidadId($conn, $nombre, $id_parroquia)
-{
-    $nombre = trim($conn->real_escape_string($nombre));
-    if (empty($nombre) || empty($id_parroquia))
-        return null;
-    $sql = "SELECT id_comunidad FROM comunidad WHERE nombre_comunidad = '$nombre' LIMIT 1";
-    $res = $conn->query($sql);
-    if ($res && $res->num_rows > 0)
-        return $res->fetch_assoc()['id_comunidad'];
-    if ($conn->query("INSERT INTO comunidad (nombre_comunidad, id_parroquia) VALUES ('$nombre', $id_parroquia)"))
-        return $conn->insert_id;
-    return null;
-}
+
 
 // --- FIRMAS (New) ---
 $firma_cliente_data = $_POST['firma_cliente_data'] ?? '';
@@ -237,14 +224,11 @@ if (!empty($firma_tecnico_data)) {
     }
 }
 
-$resolved_mun = getMunicipioId($conn, $id_municipio);
 $resolved_par = getParroquiaId($conn, $id_parroquia, $resolved_mun);
-$resolved_com = getComunidadId($conn, $id_comunidad, $resolved_par);
 
 // Build nullable FK values
 $mun = ($resolved_mun === null || $resolved_mun === 'NULL') ? 'NULL' : $resolved_mun;
 $par = ($resolved_par === null || $resolved_par === 'NULL') ? 'NULL' : $resolved_par;
-$com = ($resolved_com === null || $resolved_com === 'NULL') ? 'NULL' : $resolved_com;
 $pln = ($id_plan === 'NULL') ? 'NULL' : $id_plan;
 $vnd = ($id_vendedor === 'NULL') ? 'NULL' : $id_vendedor;
 $olt = ($id_olt === 'NULL') ? 'NULL' : $id_olt;
@@ -254,7 +238,7 @@ $sql = "UPDATE contratos SET
     cedula='$cedula', nombre_completo='$nombre_completo',
     telefono='$telefono', correo='$correo',
     telefono_secundario='$telefono_sec', correo_adicional='$correo_adicional',
-    id_municipio=$mun, id_parroquia=$par, id_comunidad=$com,
+    id_municipio=$mun, id_parroquia=$par,
     id_plan=$pln, id_vendedor=$vnd,
     direccion='$direccion', fecha_instalacion='$fecha_inst', estado='$estado',
     ident_caja_nap='$ident_caja_nap', puerto_nap='$puerto_nap', num_presinto_odn='$num_presinto_odn',

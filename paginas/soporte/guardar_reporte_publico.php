@@ -79,13 +79,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 sector, tipo_servicio, ip_address, estado_onu, estado_router, modelo_router,
                 bw_bajada, bw_subida, bw_ping, num_dispositivos,
                 estado_antena, valores_antena, sugerencias, solucion_completada,
-                firma_tecnico, firma_cliente
+                firma_tecnico, firma_cliente, prioridad
             ) VALUES (
                 '$id_contrato', '$descripcion_corta', '$monto_total', '$monto_pagado', '$fecha', '$tecnico_nombre', '$observaciones', '$tipo_falla',
                 '$sector', '$tipo_servicio', '$ip', '$estado_onu', '$estado_router', '$modelo_router',
                 '$bw_bajada', '$bw_subida', '$bw_ping', '$num_dispositivos',
                 '$estado_antena', '$valores_antena', '$sugerencias', '$solucion_completada',
-                '$path_firma_tecnico', '$path_firma_cliente'
+                '$path_firma_tecnico', '$path_firma_cliente', 'NIVEL 2'
             )";
 
             if (!$conn->query($sql)) {

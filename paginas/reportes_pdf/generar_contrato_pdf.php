@@ -63,7 +63,8 @@ $sql = "SELECT
             pa.nombre_parroquia AS nombre_parroquia,
             mu.nombre_municipio AS nombre_municipio,
             c.firma_cliente,
-            c.firma_tecnico
+            c.firma_tecnico,
+            c.vendedor_texto
         FROM contratos c
         LEFT JOIN planes pl ON c.id_plan = pl.id_plan
         LEFT JOIN parroquia pa ON c.id_parroquia = pa.id_parroquia
@@ -124,6 +125,7 @@ $placeholders = [
     '{NOMBRE_MUNICIPIO_F}' => format_field((string) ($contrato_data['nombre_municipio'] ?? 'No especificado')),
     '{TELEFONO_CLIENTE_F}' => format_field((string) ($contrato_data['telefono'] ?? '')),
     '{EMAIL_CLIENTE_F}' => format_field((string) ($contrato_data['correo'] ?? '')),
+    '{VENDEDOR_TEXTO_F}' => format_field((string) ($contrato_data['vendedor_texto'] ?? 'No especificado')),
 
     // NUEVOS PLACEHOLDERS PARA IMÁGENES (Base64)
     '{IMG_ENCABEZADO_B64}' => $img_encabezado_b64,
@@ -142,14 +144,16 @@ $img_firma_cliente = ''; // O una imagen transparente
 $img_firma_tecnico = '';
 
 if (!empty($contrato_data['firma_cliente']) && file_exists($firma_cliente_path)) {
-    $img_firma_cliente = '<img src="' . encode_image_to_base64($firma_cliente_path, 'image/png') . '" style="max-height: 80px; max-width: 150px;">';
+    // Reducimos max-height y max-width para evitar solapamientos
+    $img_firma_cliente = '<img src="' . encode_image_to_base64($firma_cliente_path, 'image/png') . '" style="max-height: 50px; max-width: 120px; object-fit: contain;">';
 } else {
     $img_firma_cliente = '<br><br><br>'; // Espacio para firma manual si falla digital
 }
 
 // Firma Empresa (Firma del técnico o representante)
 if (!empty($contrato_data['firma_tecnico']) && file_exists($firma_tecnico_path)) {
-    $img_firma_tecnico = '<img src="' . encode_image_to_base64($firma_tecnico_path, 'image/png') . '" style="max-height: 80px; max-width: 150px;">';
+    // Reducimos max-height y max-width
+    $img_firma_tecnico = '<img src="' . encode_image_to_base64($firma_tecnico_path, 'image/png') . '" style="max-height: 50px; max-width: 120px; object-fit: contain;">';
 } else {
     // Si no hay firma digital del técnico, usar firma genérica de la empresa si existe imagen, o dejar espacio
     $img_firma_tecnico = '<br><br><br>';
@@ -220,13 +224,14 @@ $html_contrato_plantilla = '
         <span style="margin-left: 20px;"><span class="field-label">Municipio:</span> {NOMBRE_MUNICIPIO_F}</span></p>
         <p><span class="field-label">Teléfono:</span> {TELEFONO_CLIENTE_F}
         <span style="float: right;"><span class="field-label">e-mail:</span> {EMAIL_CLIENTE_F}</span></p>
+        <p><span class="field-label">Vendedor:</span> {VENDEDOR_TEXTO_F}</p>
 
         <div class="signature-area">
             <table style="width: 100%; border: none; margin-top: 50px;">
                 <tr>
-                    <td style="width: 45%; border: none; text-align: center; vertical-align: bottom;">
+                    <td style="width: 45%; border: none; text-align: center; vertical-align: bottom; height: 100px;">
                         <div class="signature-box" style="width: 100%;">
-                            <div style="margin-bottom: 5px;">{FIRMA_CLIENTE_IMG}</div>
+                            <div style="margin-bottom: 5px; min-height: 60px; display: flex; align-items: flex-end; justify-content: center;">{FIRMA_CLIENTE_IMG}</div>
                             <div class="signature-line">
                                 {NOMBRE_CLIENTE}<br>
                             </div>
@@ -237,9 +242,9 @@ $html_contrato_plantilla = '
                         </div>
                     </td>
                     <td style="width: 10%; border: none;"></td>
-                    <td style="width: 45%; border: none; text-align: center; vertical-align: bottom;">
+                    <td style="width: 45%; border: none; text-align: center; vertical-align: bottom; height: 100px;">
                         <div class="signature-box" style="width: 100%;">
-                             <div style="margin-bottom: 5px;">{FIRMA_EMPRESA_IMG}</div>
+                             <div style="margin-bottom: 5px; min-height: 60px; display: flex; align-items: flex-end; justify-content: center;">{FIRMA_EMPRESA_IMG}</div>
                             <div class="signature-line">
                                 {NOMBRE_EMPRESA_REPRESENTANTE}<br>
                             </div>

@@ -211,7 +211,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 9. Acciones
     $acciones = '';
     // Modificar
-    $acciones .= '<a href="modifica_cobro1.php?id=' . $id_cobro . '" class="btn btn-sm btn-warning me-1" title="Modificar"><i class="fas fa-edit"></i></a>';
+    $acciones .= '<a href="javascript:void(0)" onclick="confirmarEdicionCobro(' . $id_cobro . ')" class="btn btn-sm btn-warning me-1" title="Modificar"><i class="fas fa-edit"></i></a>';
     // Eliminar
     if ($estado != 'PAGADO') {
         $acciones .= '<button type="button" class="btn btn-sm btn-danger me-1" 

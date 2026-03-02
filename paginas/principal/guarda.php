@@ -47,8 +47,6 @@ $correo = trim($conn->real_escape_string($_POST['correo'] ?? ''));
 // Para claves foráneas, si vienen vacías deben ser NULL, no string vacío ''
 $id_municipio = !empty($_POST['id_municipio']) ? $conn->real_escape_string($_POST['id_municipio']) : null;
 $id_parroquia = !empty($_POST['id_parroquia']) ? $conn->real_escape_string($_POST['id_parroquia']) : null;
-// ⚠️ NUEVO CAMPO: Captura de id_comunidad
-$id_comunidad = !empty($_POST['id_comunidad']) ? $conn->real_escape_string($_POST['id_comunidad']) : null;
 $id_plan = !empty($_POST['id_plan']) ? $conn->real_escape_string($_POST['id_plan']) : null;
 $id_vendedor = !empty($_POST['id_vendedor']) ? $conn->real_escape_string($_POST['id_vendedor']) : null;
 $direccion = $conn->real_escape_string($_POST['direccion'] ?? '');
@@ -73,9 +71,20 @@ $monto_pagado = floatval($_POST['monto_pagado'] ?? 0);
 
 $medio_pago = $conn->real_escape_string($_POST['medio_pago'] ?? '');
 $moneda_pago = $conn->real_escape_string($_POST['moneda_pago'] ?? 'USD');
-$dias_prorrateo = intval($_POST['dias_prorrateo'] ?? 0);
-// Calculamos monto prorrateo si fuera necesario, por ahora lo dejamos en 0 o se podría calcular
-$monto_prorrateo_usd = floatval($_POST['monto_prorrateo_usd'] ?? 0);
+
+// PRORRATEO LOGIC
+$incluye_prorrateo = isset($_POST['incluye_prorrateo']) && $_POST['incluye_prorrateo'] === 'SI';
+
+if ($incluye_prorrateo) {
+    $plan_prorrateo = floatval($_POST['plan_prorrateo'] ?? 0);
+    $dias_prorrateo = intval($_POST['dias_prorrateo'] ?? 0);
+    // Recalcular backend prorrateo just in case or trust frontend mapping
+    $monto_prorrateo_usd = floatval($_POST['monto_prorrateo_usd'] ?? 0);
+} else {
+    // Force to 0 if switch is off
+    $dias_prorrateo = 0;
+    $monto_prorrateo_usd = 0;
+}
 
 // DATOS TÉCNICOS ESPECÍFICOS
 $tipo_conexion = $conn->real_escape_string($_POST['tipo_conexion'] ?? '');
@@ -162,8 +171,6 @@ $resultado = false; // Inicializamos a falso por si hay errores de validación
 // 1.2 VALIDACIÓN DE CAMPOS OBLIGATORIOS (Backend Enforcement)
 // =========================================================================
 // La IP solo es obligatoria para conexiones de tipo RADIO. Para FTTH se usa ip_onu o se asigna despues.
-if ($tipo_conexion === 'RADIO' && empty($ip))
-    $error_mensaje = "La dirección IP es obligatoria para conexiones de Radio.";
 if (empty($cedula))
     $error_mensaje = "La Cédula / RIF es obligatoria.";
 if (empty($nombre_completo))
@@ -177,10 +184,6 @@ if (!empty($cedula) && !preg_match('/^[VJEGP]\d+$/i', $cedula)) {
 }
 
 // Validar formato de IP
-if (!empty($ip) && !preg_match('/^(?:\d{1,3}\.){3}\d{1,3}$/', $ip)) {
-    $error_mensaje = "Formato de IP de servicio inválido.";
-}
-
 if (!empty($ip_onu) && $ip_onu !== '192.168.' && !preg_match('/^(?:\d{1,3}\.){3}\d{1,3}$/', $ip_onu)) {
     $error_mensaje = "Formato de IP ONU inválido.";
 }
@@ -264,25 +267,12 @@ if ($error_mensaje) {
         return null;
     }
 
-    function getComunidadId($conn, $nombre, $id_parroquia)
-    {
-        $nombre = trim($conn->real_escape_string($nombre));
-        if (empty($nombre) || empty($id_parroquia))
-            return null;
-        $sql = "SELECT id_comunidad FROM comunidad WHERE nombre_comunidad = '$nombre' LIMIT 1";
-        $res = $conn->query($sql);
-        if ($res && $res->num_rows > 0)
-            return $res->fetch_assoc()['id_comunidad'];
-        if ($conn->query("INSERT INTO comunidad (nombre_comunidad, id_parroquia) VALUES ('$nombre', $id_parroquia)"))
-            return $conn->insert_id;
-        return null;
-    }
+
 
     // Resolviendo IDs de Ubicaciones por Nombre
     // (Ahora $_POST['id_...'] recibe Nombres de texto desde el frontend)
     $id_municipio = getMunicipioId($conn, $_POST['id_municipio'] ?? '');
     $id_parroquia = getParroquiaId($conn, $_POST['id_parroquia'] ?? '', $id_municipio);
-    $id_comunidad = getComunidadId($conn, $_POST['id_comunidad'] ?? '', $id_parroquia);
 
     // Validar Vendedor
     $id_vendedor = validarFK($conn, 'vendedores', 'id_vendedor', $id_vendedor);
@@ -297,20 +287,6 @@ if ($error_mensaje) {
     // =========================================================================
 // 2. <<<< VALIDACIÓN AGREGADA >>>>: Verificar si la IP ya existe 
 // =========================================================================
-    // Solo validamos si la IP no esta vacía para evitar falsos positivos con FTTH
-    if (!empty($ip)) {
-        $sql_check_ip = "SELECT id FROM contratos WHERE ip = ? LIMIT 1";
-        $stmt_check_ip = $conn->prepare($sql_check_ip);
-        $stmt_check_ip->bind_param("s", $ip);
-        $stmt_check_ip->execute();
-        $stmt_check_ip->store_result();
-
-        if ($stmt_check_ip->num_rows > 0) {
-            $error_mensaje = "Error de Validación: La dirección IP <strong>'{$ip}'</strong> ya se encuentra registrada en otro contrato.";
-        }
-        $stmt_check_ip->close();
-    }
-
     // También validamos ip_onu si no esta vacía
     if (!$error_mensaje && !empty($ip_onu)) {
         $sql_check_ip_onu = "SELECT id FROM contratos WHERE ip_onu = ? LIMIT 1";
@@ -337,7 +313,7 @@ if ($error_mensaje) {
         // 3. INSERCIÓN EN LA TABLA DE CONTRATOS
         $sql = "INSERT INTO contratos (
         cedula, nombre_completo, telefono, correo, 
-        id_municipio, id_parroquia, id_comunidad, id_plan, id_vendedor, 
+        id_municipio, id_parroquia, id_plan, id_vendedor, 
         direccion, fecha_instalacion, estado, ident_caja_nap, puerto_nap, 
         num_presinto_odn, id_olt, id_pon, tipo_instalacion, monto_instalacion, 
         gastos_adicionales, monto_pagar, monto_pagado, instaladores,
@@ -348,7 +324,7 @@ if ($error_mensaje) {
         token_firma, estado_firma
     ) VALUES (
         ?, ?, ?, ?, 
-        ?, ?, ?, ?, ?, 
+        ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, 
         ?, ?, ?, ?,
@@ -363,7 +339,7 @@ if ($error_mensaje) {
 
         // Total string: sssssiiiiissssssiisdddds (24) + ssssids (7) + sssssssssss (11) + ss (2) + ss (2) = 45
         // Recalculated types string carefully to match new columns
-        $types = "ssssiiiiissssssiisdddds" . "ssssidsssssssssssss" . "ss";
+        $types = "ssssiiiissssssiisdddds" . "ssssidsssssssssssss" . "ss";
 
         $stmt->bind_param(
             $types,
@@ -373,7 +349,6 @@ if ($error_mensaje) {
             $correo,
             $id_municipio,
             $id_parroquia,
-            $id_comunidad,
             $id_plan,
             $id_vendedor,
             $direccion,

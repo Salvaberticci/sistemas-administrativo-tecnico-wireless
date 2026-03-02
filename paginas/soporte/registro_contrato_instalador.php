@@ -201,41 +201,61 @@
                                     </div>
                                 </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label">Plan para Prorrateo</label>
-                                        <select class="form-select" id="plan_prorrateo" name="plan_prorrateo">
-                                            <option value="">-- Seleccione --</option>
-                                            <?php
-                                            // ⚠️ CARGA JSON PRORRATEO
-                                            $jsonProrrateo = '../../paginas/principal/data/planes_prorrateo.json';
-                                            if (file_exists($jsonProrrateo)) {
-                                                $pPlans = json_decode(file_get_contents($jsonProrrateo), true) ?: [];
-                                                foreach ($pPlans as $p) {
-                                                    // Value = price, Text = Name - $Price
-                                                    echo '<option value="' . htmlspecialchars($p['precio']) . '">' .
-                                                        htmlspecialchars($p['nombre']) . ' - $' . htmlspecialchars($p['precio']) .
-                                                        '</option>';
+                                <!-- Switch de Prorrateo -->
+                                <div class="col-12 mt-3 mb-2">
+                                    <div
+                                        class="form-check form-switch bg-light border rounded p-3 d-flex align-items-center gap-3">
+                                        <input class="form-check-input ms-0 mt-0" type="checkbox" role="switch"
+                                            id="incluye_prorrateo" name="incluye_prorrateo" value="SI"
+                                            style="width: 3em; height: 1.5em; cursor: pointer;">
+                                        <label class="form-check-label mb-0 fw-bold text-primary"
+                                            for="incluye_prorrateo" style="cursor: pointer;">¿Aplica días de
+                                            prorrateo?</label>
+                                    </div>
+                                </div>
+
+                                <!-- Contenedor Oculto Prorrateo -->
+                                <div class="col-12" id="contenedor_prorrateo" style="display: none;">
+                                    <div class="row p-3 border rounded bg-white mt-1 shadow-sm">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-semibold text-secondary">Plan para
+                                                Prorrateo</label>
+                                            <select class="form-select" id="plan_prorrateo" name="plan_prorrateo">
+                                                <option value="">-- Seleccione --</option>
+                                                <?php
+                                                // ⚠️ CARGA JSON PRORRATEO
+                                                $jsonProrrateo = '../../paginas/principal/data/planes_prorrateo.json';
+                                                if (file_exists($jsonProrrateo)) {
+                                                    $pPlans = json_decode(file_get_contents($jsonProrrateo), true) ?: [];
+                                                    foreach ($pPlans as $p) {
+                                                        // Value = price, Text = Name - $Price
+                                                        echo '<option value="' . htmlspecialchars($p['precio']) . '">' .
+                                                            htmlspecialchars($p['nombre']) . ' - $' . htmlspecialchars($p['precio']) .
+                                                            '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="17.50">100 Mbps - $17.50</option>
+                                                          <option value="23.20">250 Mbps - $23.20</option>
+                                                          <option value="25.00">650 Mbps - $25.00</option>
+                                                          <option value="38.00">850 Mbps - $38.00</option>
+                                                          <option value="48.00">1 Gb - $48.00</option>';
                                                 }
-                                            } else {
-                                                echo '<option value="17.50">100 Mbps - $17.50</option>
-                                                      <option value="23.20">250 Mbps - $23.20</option>
-                                                      <option value="25.00">650 Mbps - $25.00</option>
-                                                      <option value="38.00">850 Mbps - $38.00</option>
-                                                      <option value="48.00">1 Gb - $48.00</option>';
-                                            }
-                                            ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label">Días de Prorrateo</label>
-                                        <input type="number" class="form-control" name="dias_prorrateo"
-                                            id="dias_prorrateo" value="0" placeholder="0">
-                                    </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label">Monto Prorrateo ($)</label>
-                                        <input type="number" step="0.01" class="form-control" name="monto_prorrateo_usd"
-                                            id="monto_prorrateo_usd" readonly placeholder="0.00">
+                                                ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-semibold text-secondary">Días de
+                                                Prorrateo</label>
+                                            <input type="number" class="form-control" name="dias_prorrateo"
+                                                id="dias_prorrateo" value="0" placeholder="0">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-semibold text-secondary">Monto Prorrateo
+                                                ($)</label>
+                                            <input type="number" step="0.01" class="form-control fw-bold bg-light"
+                                                name="monto_prorrateo_usd" id="monto_prorrateo_usd" readonly
+                                                placeholder="0.00">
+                                        </div>
                                     </div>
                                 </div>
 
@@ -388,6 +408,34 @@
                                                     // así que fallback simple o requerir conexión.
                                                     // Como es vista "publica/soporte", mejor confiar en el JSON o input texto fallback
                                                     echo '<option value="">Error cargando lista</option>';
+                                                }
+                                                ?>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Campo Vendedor -->
+                                    <div class="row mb-3">
+                                        <div class="col-md-12 mb-2">
+                                            <label class="form-label fw-bold">Vendido Por</label>
+                                            <?php
+                                            $jsonVendedores = '../../paginas/principal/data/vendedores.json';
+                                            $vendedoresList = [];
+                                            if (file_exists($jsonVendedores)) {
+                                                $vendedoresList = json_decode(file_get_contents($jsonVendedores), true) ?: [];
+                                                if (isset($vendedoresList['vendedores'])) {
+                                                    $vendedoresList = $vendedoresList['vendedores'];
+                                                }
+                                            }
+                                            ?>
+                                            <select name="vendedor_texto" id="vendedor_texto" class="form-select">
+                                                <option value="">-- Seleccione un Vendedor --</option>
+                                                <?php
+                                                if (!empty($vendedoresList)) {
+                                                    foreach ($vendedoresList as $vend) {
+                                                        $nombre = is_array($vend) ? ($vend['nombre'] ?? $vend['name'] ?? $vend) : $vend;
+                                                        echo '<option value="' . htmlspecialchars($nombre) . '">' . htmlspecialchars($nombre) . '</option>';
+                                                    }
                                                 }
                                                 ?>
                                             </select>
@@ -659,6 +707,21 @@
             $('#tipo_conexion').trigger('change');
 
             // LÓGICA DE CÁLCULOS DE PAGO
+
+            // Lógica del Switch de Prorrateo
+            $('#incluye_prorrateo').on('change', function () {
+                if ($(this).is(':checked')) {
+                    $('#contenedor_prorrateo').slideDown();
+                } else {
+                    $('#contenedor_prorrateo').slideUp();
+                    // Reset prorrateo fields
+                    $('#plan_prorrateo').val('');
+                    $('#dias_prorrateo').val('0');
+                    $('#monto_prorrateo_usd').val('0.00');
+                    calcularTotal();
+                }
+            });
+
             // Calcular prorrateo cuando cambia el plan manual o los días
             $('#plan_prorrateo, #dias_prorrateo').on('change input', function () {
                 calcularProrrateo();

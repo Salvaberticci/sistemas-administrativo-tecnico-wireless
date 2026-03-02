@@ -1,5 +1,6 @@
 <?php
 // Incluye el archivo de conexión.
+session_start();
 require_once 'conexion.php';
 
 $message = '';
@@ -7,187 +8,193 @@ $message_class = '';
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 $stmt = null; // Inicializamos la variable stmt para evitar errores
 
-// Variables para la búsqueda
-$search_term = isset($_GET['search']) ? $_GET['search'] : '';
-$sql = "SELECT m.id_municipio, m.nombre_municipio, p.id_parroquia, p.nombre_parroquia 
-        FROM `municipio` m
-        LEFT JOIN `parroquia` p ON m.id_municipio = p.id_municipio";
-
 // --- LÓGICA DE GESTIÓN (ELIMINAR) ---
 if ($action === 'delete_municipio' && isset($_GET['id'])) {
     $id_to_delete = $_GET['id'];
-    // Se asume eliminación en cascada en la BD o que se maneja la eliminación de dependencias
     try {
         $stmt = $conn->prepare("DELETE FROM `municipio` WHERE `id_municipio` = ?");
         $stmt->bind_param("i", $id_to_delete);
         if ($stmt->execute()) {
-            $message = "Municipio, parroquias y comunidades eliminados con éxito.";
-            $message_class = 'success';
+            $_SESSION['flash_message'] = "Municipio eliminado con éxito.";
+            $_SESSION['flash_class'] = 'success';
         } else {
             throw new Exception($stmt->error);
         }
     } catch (mysqli_sql_exception $e) {
         if ($e->getCode() == 1451) {
-            $message = "No se puede eliminar este Municipio porque tiene registros asociados (Parroquias, Comunidades o Contratos). Debe eliminar primero los registros dependientes.";
+            $_SESSION['flash_message'] = "No se puede eliminar este Municipio porque tiene registros asociados (Parroquias o Contratos).";
         } else {
-            $message = "Error al eliminar el municipio: " . $e->getMessage();
+            $_SESSION['flash_message'] = "Error al eliminar el municipio: " . $e->getMessage();
         }
-        $message_class = 'danger';
+        $_SESSION['flash_class'] = 'danger';
     } catch (Exception $e) {
-        $message = "Error al eliminar el municipio: " . $e->getMessage();
-        $message_class = 'danger';
+        $_SESSION['flash_message'] = "Error al eliminar el municipio: " . $e->getMessage();
+        $_SESSION['flash_class'] = 'danger';
     }
+    header("Location: gestion_municipios.php");
+    exit();
 } elseif ($action === 'delete_parroquia' && isset($_GET['id'])) {
     $id_to_delete = $_GET['id'];
     try {
         $stmt = $conn->prepare("DELETE FROM `parroquia` WHERE `id_parroquia` = ?");
         $stmt->bind_param("i", $id_to_delete);
         if ($stmt->execute()) {
-            $message = "Parroquia y sus comunidades eliminadas con éxito.";
-            $message_class = 'success';
+            $_SESSION['flash_message'] = "Parroquia eliminada con éxito.";
+            $_SESSION['flash_class'] = 'success';
         } else {
             throw new Exception($stmt->error);
         }
     } catch (mysqli_sql_exception $e) {
         if ($e->getCode() == 1451) {
-            $message = "No se puede eliminar esta Parroquia porque tiene registros asociados (Comunidades o Contratos).";
+            $_SESSION['flash_message'] = "No se puede eliminar esta Parroquia porque tiene Contratos asociados.";
         } else {
-            $message = "Error al eliminar la parroquia: " . $e->getMessage();
+            $_SESSION['flash_message'] = "Error al eliminar la parroquia: " . $e->getMessage();
         }
-        $message_class = 'danger';
+        $_SESSION['flash_class'] = 'danger';
     } catch (Exception $e) {
-        $message = "Error al eliminar la parroquia: " . $e->getMessage();
-        $message_class = 'danger';
+        $_SESSION['flash_message'] = "Error al eliminar la parroquia: " . $e->getMessage();
+        $_SESSION['flash_class'] = 'danger';
     }
-} elseif ($action === 'delete_comunidad' && isset($_GET['id'])) {
-    $id_to_delete = $_GET['id'];
-    try {
-        $stmt = $conn->prepare("DELETE FROM `comunidad` WHERE `id_comunidad` = ?");
-        $stmt->bind_param("i", $id_to_delete);
-        if ($stmt->execute()) {
-            $message = "Comunidad eliminada con éxito.";
-            $message_class = 'success';
-        } else {
-            throw new Exception($stmt->error);
-        }
-    } catch (mysqli_sql_exception $e) {
-        if ($e->getCode() == 1451) {
-            $message = "No se puede eliminar esta Comunidad porque tiene Contratos asociados.";
-        } else {
-            $message = "Error al eliminar la comunidad: " . $e->getMessage();
-        }
-        $message_class = 'danger';
-    } catch (Exception $e) {
-        $message = "Error al eliminar la comunidad: " . $e->getMessage();
-        $message_class = 'danger';
-    }
+    header("Location: gestion_municipios.php");
+    exit();
 }
 
 // --- LÓGICA DE MODIFICACIÓN (PROCESAR FORMULARIO POST) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_type'])) {
     $update_type = $_POST['update_type'];
-    $stmt = null; // Reiniciar $stmt
+    $stmt = null;
     $message_suffix = '';
     $id_principal = null;
 
     if ($update_type === 'municipio') {
-        // BUSCA EL NUEVO NOMBRE ÚNICO: id_municipio_update
         $id_principal = isset($_POST['id_municipio_update']) ? $_POST['id_municipio_update'] : null;
         $nombre = isset($_POST['nombre_municipio']) ? $_POST['nombre_municipio'] : '';
         $stmt = $conn->prepare("UPDATE `municipio` SET `nombre_municipio` = ? WHERE `id_municipio` = ?");
         $stmt->bind_param("si", $nombre, $id_principal);
         $message_suffix = 'Municipio';
     } elseif ($update_type === 'parroquia') {
-        // BUSCA EL NUEVO NOMBRE ÚNICO: id_parroquia_update
         $id_principal = isset($_POST['id_parroquia_update']) ? $_POST['id_parroquia_update'] : null;
         $nombre = isset($_POST['nombre_parroquia']) ? $_POST['nombre_parroquia'] : '';
         $id_municipio = isset($_POST['id_municipio']) ? $_POST['id_municipio'] : null;
         $stmt = $conn->prepare("UPDATE `parroquia` SET `nombre_parroquia` = ?, `id_municipio` = ? WHERE `id_parroquia` = ?");
         $stmt->bind_param("sii", $nombre, $id_municipio, $id_principal);
         $message_suffix = 'Parroquia';
-    } elseif ($update_type === 'comunidad') {
-        // BUSCA EL NUEVO NOMBRE ÚNICO: id_comunidad_update
-        $id_principal = isset($_POST['id_comunidad_update']) ? $_POST['id_comunidad_update'] : null;
-        $nombre = isset($_POST['nombre_comunidad']) ? $_POST['nombre_comunidad'] : '';
-        $id_parroquia = isset($_POST['id_parroquia_comunidad']) ? $_POST['id_parroquia_comunidad'] : null;
-        $stmt = $conn->prepare("UPDATE `comunidad` SET `nombre_comunidad` = ?, `id_parroquia` = ? WHERE `id_comunidad` = ?");
-        $stmt->bind_param("sii", $nombre, $id_parroquia, $id_principal);
-        $message_suffix = 'Comunidad';
     }
 
     if (isset($stmt)) {
         if (empty($id_principal)) {
-            $message = "ERROR Crítico: La ID de la {$message_suffix} a modificar no se pudo obtener. Actualización fallida.";
-            $message_class = 'error';
+            $_SESSION['flash_message'] = "ERROR: La ID de la {$message_suffix} a modificar no se pudo obtener.";
+            $_SESSION['flash_class'] = 'danger';
         } elseif ($stmt->execute()) {
-            // VERIFICACIÓN DE FILAS AFECTADAS (CLAVE PARA SABER SI HUBO CAMBIOS)
             if ($stmt->affected_rows > 0) {
-                $message = "¡" . $message_suffix . " actualizada(o) con éxito!";
-                $message_class = 'success';
+                $_SESSION['flash_message'] = "¡" . $message_suffix . " actualizado/a con éxito!";
+                $_SESSION['flash_class'] = 'success';
             } else {
-                $message = "ADVERTENCIA: No se realizaron cambios en el registro de " . $message_suffix . ". Los datos ingresados son idénticos a los existentes, o la ID no existe. ID: {$id_principal}";
-                $message_class = 'warning';
+                $_SESSION['flash_message'] = "Sin cambios: los datos ingresados son idénticos a los existentes.";
+                $_SESSION['flash_class'] = 'warning';
             }
+            $stmt->close();
         } else {
-            $message = "ERROR Crítico al actualizar " . $message_suffix . ": " . $stmt->error;
-            $message_class = 'error';
-        }
-        if ($stmt) {
+            $_SESSION['flash_message'] = "Error al actualizar " . $message_suffix . ": " . $stmt->error;
+            $_SESSION['flash_class'] = 'danger';
             $stmt->close();
         }
     } else {
-        $message = "ERROR: Tipo de actualización desconocido.";
-        $message_class = 'error';
+        $_SESSION['flash_message'] = "Tipo de actualización desconocido.";
+        $_SESSION['flash_class'] = 'danger';
     }
-
-    // Redirigimos para mostrar el mensaje
-    header("Location: gestion_municipios.php?message=" . urlencode($message) . "&class=" . urlencode($message_class));
+    // PRG: redirect to prevent form resubmission
+    header("Location: gestion_municipios.php");
     exit();
 }
 
-
-// --- CONSULTA PARA MOSTRAR LOS DATOS ---
-if (!empty($search_term)) {
-    $sql .= " WHERE m.nombre_municipio LIKE ? OR p.nombre_parroquia LIKE ?";
-    $search_param = "%" . $search_term . "%";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $search_param, $search_param);
-    $stmt->execute();
-    $result = $stmt->get_result();
-} else {
-    $sql .= " ORDER BY m.nombre_municipio ASC, p.nombre_parroquia ASC";
-    $result = $conn->query($sql);
+// Leer y limpiar el mensaje flash de la sesión (se muestra una sola vez)
+if (isset($_SESSION['flash_message'])) {
+    $message = $_SESSION['flash_message'];
+    $message_class = $_SESSION['flash_class'];
+    unset($_SESSION['flash_message'], $_SESSION['flash_class']);
 }
 
-$data = [];
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
+// Variables para la búsqueda
+$search_municipio = isset($_GET['search_municipio']) ? $_GET['search_municipio'] : '';
+$search_parroquia = isset($_GET['search_parroquia']) ? $_GET['search_parroquia'] : '';
+$filter_municipio = isset($_GET['filter_municipio']) ? $_GET['filter_municipio'] : '';
+
+// --- CONSULTA PARA MUNICIPIOS ---
+$sql_municipios = "SELECT id_municipio, nombre_municipio FROM `municipio`";
+$params_municipios = [];
+$types_municipios = "";
+
+if (!empty($search_municipio)) {
+    $sql_municipios .= " WHERE nombre_municipio LIKE ?";
+    $params_municipios[] = "%" . $search_municipio . "%";
+    $types_municipios .= "s";
+}
+$sql_municipios .= " ORDER BY nombre_municipio ASC";
+
+$stmt_mun = $conn->prepare($sql_municipios);
+if (!empty($params_municipios)) {
+    $stmt_mun->bind_param($types_municipios, ...$params_municipios);
+}
+$stmt_mun->execute();
+$result_municipios = $stmt_mun->get_result();
+
+$data_municipios = [];
+if ($result_municipios && $result_municipios->num_rows > 0) {
+    while ($row = $result_municipios->fetch_assoc()) {
+        $data_municipios[] = $row;
     }
 }
+$stmt_mun->close();
+
+// --- CONSULTA PARA PARROQUIAS ---
+$sql_parroquias = "SELECT p.id_parroquia, p.nombre_parroquia, m.id_municipio, m.nombre_municipio 
+                   FROM `parroquia` p 
+                   INNER JOIN `municipio` m ON p.id_municipio = m.id_municipio 
+                   WHERE 1=1";
+$params_parroquias = [];
+$types_parroquias = "";
+
+if (!empty($search_parroquia)) {
+    $sql_parroquias .= " AND p.nombre_parroquia LIKE ?";
+    $params_parroquias[] = "%" . $search_parroquia . "%";
+    $types_parroquias .= "s";
+}
+if (!empty($filter_municipio)) {
+    $sql_parroquias .= " AND p.id_municipio = ?";
+    $params_parroquias[] = $filter_municipio;
+    $types_parroquias .= "i";
+}
+$sql_parroquias .= " ORDER BY m.nombre_municipio ASC, p.nombre_parroquia ASC";
+
+$stmt_parr = $conn->prepare($sql_parroquias);
+if (!empty($params_parroquias)) {
+    $stmt_parr->bind_param($types_parroquias, ...$params_parroquias);
+}
+$stmt_parr->execute();
+$result_parroquias = $stmt_parr->get_result();
+
+$data_parroquias = [];
+if ($result_parroquias && $result_parroquias->num_rows > 0) {
+    while ($row = $result_parroquias->fetch_assoc()) {
+        $data_parroquias[] = $row;
+    }
+}
+$stmt_parr->close();
 
 // Obtener TODAS las ubicaciones para el modal (datos CLAVE para el JS)
 $comunidades = $conn->query("SELECT id_comunidad, nombre_comunidad, id_parroquia FROM `comunidad` ORDER BY id_parroquia, nombre_comunidad ASC")->fetch_all(MYSQLI_ASSOC);
 $municipios_all = $conn->query("SELECT id_municipio, nombre_municipio FROM `municipio` ORDER BY nombre_municipio ASC")->fetch_all(MYSQLI_ASSOC);
 $parroquias_all = $conn->query("SELECT id_parroquia, nombre_parroquia, id_municipio FROM `parroquia` ORDER BY nombre_parroquia ASC")->fetch_all(MYSQLI_ASSOC);
 
-// Manejo del mensaje de redirección
-if (isset($_GET['message'])) {
-    $message = $_GET['message'];
-    $message_class = $_GET['class'];
-}
-
-// Cerramos la conexión a la base de datos al final
-if ($stmt) {
-    $stmt->close();
-}
 $conn->close();
 
+$path_to_root = "../";
 $page_title = "Gestión de Ubicaciones";
 $breadcrumb = ["Técnica"];
 $back_url = "menu.php";
 require_once 'includes/layout_head.php';
-// require_once 'includes/sidebar.php'; // Sidebar is deprecated
+require_once 'includes/sidebar.php';
 ?>
 
 <main class="main-content">
@@ -196,118 +203,164 @@ require_once 'includes/layout_head.php';
     <div class="page-content">
 
         <?php if ($message): ?>
-            <div class="alert alert-<?php echo $message_class == 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show"
-                role="alert">
+            <?php
+                $alert_type = 'danger';
+                if ($message_class === 'success') $alert_type = 'success';
+                elseif ($message_class === 'warning') $alert_type = 'warning';
+            ?>
+            <div class="alert alert-<?php echo $alert_type; ?> alert-dismissible fade show" role="alert">
                 <?php echo htmlspecialchars($message); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
 
-        <div class="card">
-            <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-center">
-                <h5 class="mb-3 mb-md-0">Municipios y Parroquias</h5>
-                <div class="d-flex gap-2 w-100 w-md-auto">
-                    <form action="gestion_municipios.php" method="GET" class="d-flex gap-2 flex-grow-1 header-search">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Buscar..."
-                            value="<?php echo htmlspecialchars($search_term); ?>">
-                        <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-search"></i></button>
-                    </form>
-                    <a href="registro_municipios.php" class="btn btn-primary btn-sm text-nowrap">
-                        <i class="fa-solid fa-plus"></i> Nuevo
-                    </a>
+
+        <div class="row g-4">
+            <!-- TABLA DE MUNICIPIOS -->
+            <div class="col-xl-5 col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                        <h5 class="mb-0 fw-bold">Municipios</h5>
+                        <div class="d-flex w-100 w-md-auto gap-2">
+                            <form action="gestion_municipios.php" method="GET" class="d-flex flex-grow-1">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" name="search_municipio" class="form-control" placeholder="Buscar municipio..." value="<?php echo htmlspecialchars($search_municipio); ?>">
+                                    <?php if (!empty($search_parroquia)): ?>
+                                        <input type="hidden" name="search_parroquia" value="<?php echo htmlspecialchars($search_parroquia); ?>">
+                                    <?php endif; ?>
+                                    <?php if (!empty($filter_municipio)): ?>
+                                        <input type="hidden" name="filter_municipio" value="<?php echo htmlspecialchars($filter_municipio); ?>">
+                                    <?php endif; ?>
+                                    <button class="btn btn-outline-secondary" type="submit"><i class="fa-solid fa-search"></i></button>
+                                </div>
+                            </form>
+                            <a href="registro_municipios.php" class="btn btn-primary btn-sm text-nowrap">
+                                <i class="fa-solid fa-plus"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-4">ID</th>
+                                        <th>Municipio</th>
+                                        <th class="text-end pe-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($data_municipios)): ?>
+                                        <?php foreach ($data_municipios as $row): ?>
+                                            <tr>
+                                                <td class="ps-4 text-muted">#<?php echo htmlspecialchars($row['id_municipio']); ?></td>
+                                                <td class="fw-bold"><?php echo htmlspecialchars($row['nombre_municipio']); ?></td>
+                                                <td class="text-end pe-4">
+                                                    <div class="btn-group">
+                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalModificacion"
+                                                            data-id="<?php echo urlencode($row['id_municipio']); ?>"
+                                                            data-nombre="<?php echo htmlspecialchars($row['nombre_municipio']); ?>"
+                                                            data-type="municipio" class="btn btn-light btn-sm text-primary"
+                                                            title="Modificar Municipio">
+                                                            <i class="fa-solid fa-pen"></i>
+                                                        </a>
+                                                        <a href="#"
+                                                            data-bs-href="gestion_municipios.php?action=delete_municipio&id=<?php echo urlencode($row['id_municipio']); ?>"
+                                                            data-bs-toggle="modal" data-bs-target="#eliminaModal"
+                                                            class="btn btn-light btn-sm text-danger" title="Eliminar Municipio">
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="3" class="text-center p-4 text-muted">No se encontraron municipios.</td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4">ID Mun.</th>
-                                <th>Municipio</th>
-                                <th>ID Parr.</th>
-                                <th>Parroquia</th>
-                                <th class="text-center">Comunidades</th>
-                                <th class="text-end pe-4">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            $current_municipio_id = null;
-                            if (!empty($data)): ?>
-                                <?php foreach ($data as $row): ?>
-                                    <?php if ($current_municipio_id !== $row['id_municipio']): ?>
-                                        <tr class="table-secondary fw-bold">
-                                            <td class="ps-4"><?php echo htmlspecialchars($row['id_municipio']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['nombre_municipio']); ?></td>
-                                            <td>-</td>
-                                            <td>-</td>
-                                            <td class="text-center">-</td>
-                                            <td class="text-end pe-4">
-                                                <div class="btn-group">
-                                                    <a href="#" data-bs-toggle="modal" data-bs-target="#modalModificacion"
-                                                        data-id="<?php echo urlencode($row['id_municipio']); ?>"
-                                                        data-nombre="<?php echo htmlspecialchars($row['nombre_municipio']); ?>"
-                                                        data-type="municipio" class="btn btn-light btn-sm text-primary"
-                                                        title="Modificar Municipio">
-                                                        <i class="fa-solid fa-pen"></i>
-                                                    </a>
-                                                    <a href="#"
-                                                        data-bs-href="gestion_municipios.php?action=delete_municipio&id=<?php echo urlencode($row['id_municipio']); ?>"
-                                                        data-bs-toggle="modal" data-bs-target="#eliminaModal"
-                                                        class="btn btn-light btn-sm text-danger" title="Eliminar Municipio">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <?php $current_municipio_id = $row['id_municipio']; ?>
-                                    <?php endif; ?>
-                                    <?php if ($row['id_parroquia']): ?>
+            <!-- TABLA DE PARROQUIAS -->
+            <div class="col-xl-7 col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                        <h5 class="mb-0 fw-bold">Parroquias</h5>
+                        <div class="d-flex w-100 w-md-auto gap-2 flex-wrap">
+                            <form action="gestion_municipios.php" method="GET" class="d-flex flex-grow-1 flex-wrap gap-2">
+                                <?php if (!empty($search_municipio)): ?>
+                                    <input type="hidden" name="search_municipio" value="<?php echo htmlspecialchars($search_municipio); ?>">
+                                <?php endif; ?>
+                                <select name="filter_municipio" class="form-select form-select-sm" style="max-width:160px;">
+                                    <option value="">Todos los Municipios</option>
+                                    <?php foreach ($municipios_all as $mun): ?>
+                                        <option value="<?php echo htmlspecialchars($mun['id_municipio']); ?>" <?php echo $filter_municipio == $mun['id_municipio'] ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($mun['nombre_municipio']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="input-group input-group-sm" style="flex:1;min-width:150px;">
+                                    <input type="text" name="search_parroquia" class="form-control" placeholder="Buscar parroquia..." value="<?php echo htmlspecialchars($search_parroquia); ?>">
+                                    <button class="btn btn-outline-secondary" type="submit"><i class="fa-solid fa-filter"></i></button>
+                                </div>
+                            </form>
+                            <a href="registro_municipios.php" class="btn btn-primary btn-sm text-nowrap">
+                                <i class="fa-solid fa-plus"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-4">ID</th>
+                                        <th>Parroquia</th>
+                                        <th>Municipio</th>
+                                        <th class="text-end pe-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($data_parroquias)): ?>
+                                        <?php foreach ($data_parroquias as $row): ?>
+                                            <tr>
+                                                <td class="ps-4 text-muted">#<?php echo htmlspecialchars($row['id_parroquia']); ?></td>
+                                                <td class="fw-bold"><?php echo htmlspecialchars($row['nombre_parroquia']); ?></td>
+                                                <td><span class="badge bg-light text-dark border"><i class="fa-solid fa-map-pin me-1 text-primary"></i><?php echo htmlspecialchars($row['nombre_municipio']); ?></span></td>
+                                                <td class="text-end pe-4">
+                                                    <div class="btn-group">
+                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalModificacion"
+                                                            data-id="<?php echo urlencode($row['id_parroquia']); ?>"
+                                                            data-nombre="<?php echo htmlspecialchars($row['nombre_parroquia']); ?>"
+                                                            data-municipio-id="<?php echo urlencode($row['id_municipio']); ?>"
+                                                            data-type="parroquia" class="btn btn-light btn-sm text-primary"
+                                                            title="Modificar Parroquia">
+                                                            <i class="fa-solid fa-pen"></i>
+                                                        </a>
+                                                        <a href="#"
+                                                            data-bs-href="gestion_municipios.php?action=delete_parroquia&id=<?php echo urlencode($row['id_parroquia']); ?>"
+                                                            data-bs-toggle="modal" data-bs-target="#eliminaModal"
+                                                            class="btn btn-light btn-sm text-danger" title="Eliminar Parroquia">
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
                                         <tr>
-                                            <td class="ps-4 text-muted border-0"></td>
-                                            <td class="border-0"></td>
-                                            <td class="text-muted small">#<?php echo htmlspecialchars($row['id_parroquia']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['nombre_parroquia']); ?></td>
-
-                                            <td class="text-center">
-                                                <a href="#" data-bs-toggle="modal" data-bs-target="#modalComunidades"
-                                                    data-parroquia-id="<?php echo urlencode($row['id_parroquia']); ?>"
-                                                    data-parroquia-nombre="<?php echo htmlspecialchars($row['nombre_parroquia']); ?>"
-                                                    class="btn btn-sm btn-outline-info btn-comunidades px-3 rounded-pill"
-                                                    title="Ver Comunidades">
-                                                    <i class="fa-solid fa-eye me-1"></i> Ver
-                                                </a>
-                                            </td>
-
-                                            <td class="text-end pe-4">
-                                                <div class="btn-group">
-                                                    <a href="#" data-bs-toggle="modal" data-bs-target="#modalModificacion"
-                                                        data-id="<?php echo urlencode($row['id_parroquia']); ?>"
-                                                        data-nombre="<?php echo htmlspecialchars($row['nombre_parroquia']); ?>"
-                                                        data-municipio-id="<?php echo urlencode($row['id_municipio']); ?>"
-                                                        data-type="parroquia" class="btn btn-light btn-sm text-primary"
-                                                        title="Modificar Parroquia">
-                                                        <i class="fa-solid fa-pen"></i>
-                                                    </a>
-                                                    <a href="#"
-                                                        data-bs-href="gestion_municipios.php?action=delete_parroquia&id=<?php echo urlencode($row['id_parroquia']); ?>"
-                                                        data-bs-toggle="modal" data-bs-target="#eliminaModal"
-                                                        class="btn btn-light btn-sm text-danger" title="Eliminar Parroquia">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
+                                            <td colspan="4" class="text-center p-4 text-muted">No se encontraron parroquias.</td>
                                         </tr>
                                     <?php endif; ?>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="6" class="text-center p-4 text-muted">No se encontraron registros.</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

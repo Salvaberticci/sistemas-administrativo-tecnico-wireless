@@ -1,6 +1,6 @@
 <?php
 /**
- * Backend para gestionar opciones de soporte (Fallas y Servicios)
+ * Backend para gestionar opciones de soporte (Solo Fallas)
  * CRUD sobre archivo JSON
  */
 
@@ -17,8 +17,7 @@ if (!file_exists($json_file)) {
     }
     // Crear archivo por defecto si no existe
     $defaults = [
-        'tipos_falla' => ['Sin Señal', 'Internet Lento', 'Otro'],
-        'tipos_servicio' => ['Fibra Óptica', 'Radio Enlace']
+        'tipos_falla' => ['Sin Señal', 'Internet Lento', 'Otro']
     ];
     file_put_contents($json_file, json_encode($defaults, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 }
@@ -28,7 +27,7 @@ $json_content = file_get_contents($json_file);
 $data = json_decode($json_content, true);
 
 if (!$data) {
-    $data = ['tipos_falla' => [], 'tipos_servicio' => []];
+    $data = ['tipos_falla' => []];
 }
 
 // Acción solicitada
@@ -41,12 +40,9 @@ try {
             break;
 
         case 'add':
-            $type = $_POST['type'] ?? ''; // 'tipos_falla' o 'tipos_servicio'
+            $type = 'tipos_falla';
             $value = trim($_POST['value'] ?? '');
 
-            if (!in_array($type, ['tipos_falla', 'tipos_servicio'])) {
-                throw new Exception("Tipo de opción inválido");
-            }
             if (empty($value)) {
                 throw new Exception("El valor no puede estar vacío");
             }
@@ -60,12 +56,8 @@ try {
             break;
 
         case 'delete':
-            $type = $_POST['type'] ?? '';
+            $type = 'tipos_falla';
             $value = $_POST['value'] ?? '';
-
-            if (!in_array($type, ['tipos_falla', 'tipos_servicio'])) {
-                throw new Exception("Tipo de opción inválido");
-            }
 
             $key = array_search($value, $data[$type]);
             if ($key !== false) {

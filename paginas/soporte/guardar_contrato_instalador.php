@@ -107,25 +107,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             return 0;
         }
 
-        // Función para obtener/crear ID de Comunidad
-        function getComunidadId($conn, $nombre, $id_parroquia)
-        {
-            $nombre = trim($conn->real_escape_string($nombre));
-            if (empty($nombre) || empty($id_parroquia))
-                return 0;
 
-            $sql = "SELECT id_comunidad FROM comunidad WHERE nombre_comunidad = '$nombre' AND id_parroquia = $id_parroquia LIMIT 1";
-            $res = $conn->query($sql);
-            if ($res && $res->num_rows > 0) {
-                return $res->fetch_assoc()['id_comunidad'];
-            } else {
-                $sqlIns = "INSERT INTO comunidad (id_parroquia, nombre_comunidad) VALUES ($id_parroquia, '$nombre')";
-                if ($conn->query($sqlIns)) {
-                    return $conn->insert_id;
-                }
-            }
-            return 0;
-        }
         // === VALIDACIÓN DE CAMPOS (REQUERIMIENTO USUARIO) ===
         $errors = [];
         $cedula = trim($conn->real_escape_string($_POST['cedula'] ?? ''));
@@ -211,11 +193,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Resolviendo IDs de Ubicaciones por Nombre
         $id_municipio = getMunicipioId($conn, $_POST['id_municipio'] ?? '');
         $id_parroquia = getParroquiaId($conn, $_POST['id_parroquia'] ?? '', $id_municipio);
-        $id_comunidad = getComunidadId($conn, $_POST['id_comunidad'] ?? '', $id_parroquia);
 
         // Validar Plan y Vendedor (estos siguen viniendo como IDs)
         $id_plan = isset($_POST['id_plan']) ? intval($_POST['id_plan']) : 0;
         $id_vendedor = isset($_POST['id_vendedor']) ? intval($_POST['id_vendedor']) : 0;
+        $vendedor_texto = isset($_POST['vendedor_texto']) ? trim($conn->real_escape_string($_POST['vendedor_texto'])) : '';
         $telefono = $conn->real_escape_string($_POST['telefono']);
         $telefono_secundario = isset($_POST['telefono_secundario']) ? $conn->real_escape_string($_POST['telefono_secundario']) : '';
         $correo = isset($_POST['correo']) ? $conn->real_escape_string($_POST['correo']) : '';
@@ -227,14 +209,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $medio_pago = isset($_POST['medio_pago']) ? $conn->real_escape_string($_POST['medio_pago']) : '';
         $monto_instalacion = isset($_POST['monto_instalacion']) ? floatval($_POST['monto_instalacion']) : 0;
         $gastos_adicionales = isset($_POST['gastos_adicionales']) ? floatval($_POST['gastos_adicionales']) : 0;
-        $dias_prorrateo = isset($_POST['dias_prorrateo']) ? intval($_POST['dias_prorrateo']) : 0;
+
+        // --- LÓGICA DE PRORRATEO ---
+        $incluye_prorrateo = isset($_POST['incluye_prorrateo']) && $_POST['incluye_prorrateo'] === 'SI';
+        if ($incluye_prorrateo) {
+            $dias_prorrateo = isset($_POST['dias_prorrateo']) ? intval($_POST['dias_prorrateo']) : 0;
+            // Podríamos validar con $plan_prorrateo = $_POST['plan_prorrateo'];
+            $monto_prorrateo_usd = isset($_POST['monto_prorrateo_usd']) ? floatval($_POST['monto_prorrateo_usd']) : 0;
+        } else {
+            // Forzar a ceros si el switch estaba apagado
+            $dias_prorrateo = 0;
+            $monto_prorrateo_usd = 0;
+        }
+
         $monto_pagar = isset($_POST['monto_pagar']) ? floatval($_POST['monto_pagar']) : 0;
         $monto_pagado = isset($_POST['monto_pagado']) ? floatval($_POST['monto_pagado']) : 0;
         $moneda_pago = isset($_POST['moneda_pago']) ? $conn->real_escape_string($_POST['moneda_pago']) : 'USD';
         $observaciones = isset($_POST['observaciones']) ? $conn->real_escape_string($_POST['observaciones']) : '';
-
-        // Calcular monto de prorrateo (simplificado, se puede mejorar)
-        $monto_prorrateo_usd = 0;
 
         // === DETALLES TÉCNICOS ===
         $tipo_conexion = isset($_POST['tipo_conexion']) ? $conn->real_escape_string($_POST['tipo_conexion']) : '';
@@ -292,7 +283,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         $sql = "INSERT INTO contratos (
-            cedula, nombre_completo, id_municipio, id_parroquia, id_comunidad, id_plan, id_vendedor,
+            cedula, nombre_completo, id_municipio, id_parroquia, id_plan, id_vendedor, vendedor_texto,
             direccion, telefono, telefono_secundario, correo, correo_adicional, fecha_instalacion,
             tipo_instalacion, medio_pago, monto_instalacion, gastos_adicionales, dias_prorrateo, monto_prorrateo_usd,
             monto_pagar, monto_pagado, moneda_pago, observaciones,
@@ -301,7 +292,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             punto_acceso, valor_conexion_dbm, num_presinto_odn, evidencia_foto, evidencia_documento,
             firma_cliente, firma_tecnico, id_olt, id_pon, estado, token_firma, estado_firma
         ) VALUES (
-            '$cedula', '$nombre_completo', '$id_municipio', '$id_parroquia', '$id_comunidad', '$id_plan', '$id_vendedor',
+            '$cedula', '$nombre_completo', '$id_municipio', '$id_parroquia', '$id_plan', '$id_vendedor', '$vendedor_texto',
             '$direccion', '$telefono', '$telefono_secundario', '$correo', '$correo_adicional', '$fecha_instalacion',
             '$tipo_instalacion', '$medio_pago', '$monto_instalacion', '$gastos_adicionales', '$dias_prorrateo', '$monto_prorrateo_usd',
             '$monto_pagar', '$monto_pagado', '$moneda_pago', '$observaciones',

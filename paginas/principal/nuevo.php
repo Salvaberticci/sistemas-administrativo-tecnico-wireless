@@ -134,12 +134,7 @@ require_once '../includes/sidebar.php';
                         </select>
                     </div>
 
-                    <div class="col-md-6">
-                        <label for="comunidad" class="form-label">Comunidad</label>
-                        <select name="id_comunidad" id="comunidad" class="form-select" disabled>
-                            <option value="">-- Primero seleccione una parroquia --</option>
-                        </select>
-                    </div>
+
                     <div class="col-md-6">
                         <?php
                         // ⚠️ RE-USANDO LA CONEXIÓN ABIERTA - Incluye monto para cálculo de prorrateo
@@ -304,28 +299,47 @@ require_once '../includes/sidebar.php';
                             name="gastos_adicionales" value="0">
                     </div>
 
-                    <div class="col-md-6">
-                        <label for="plan_prorrateo" class="form-label">Plan para Prorrateo</label>
-                        <select class="form-select" id="plan_prorrateo" name="plan_prorrateo">
-                            <option value="">-- Seleccione --</option>
-                            <option value="17.50">100 Mbps - $17.50</option>
-                            <option value="23.20">250 Mbps - $23.20</option>
-                            <option value="25.00">650 Mbps - $25.00</option>
-                            <option value="38.00">850 Mbps - $38.00</option>
-                            <option value="48.00">1 Gb - $48.00</option>
-                        </select>
+                    <!-- Switch de Prorrateo -->
+                    <div class="col-12 mt-3 mb-2">
+                        <div class="form-check form-switch bg-light border rounded p-3 d-flex align-items-center gap-3">
+                            <input class="form-check-input ms-0 mt-0" type="checkbox" role="switch"
+                                id="incluye_prorrateo" name="incluye_prorrateo" value="SI"
+                                style="width: 3em; height: 1.5em; cursor: pointer;">
+                            <label class="form-check-label mb-0 fw-bold text-primary" for="incluye_prorrateo"
+                                style="cursor: pointer;">¿Aplica días de prorrateo?</label>
+                        </div>
                     </div>
 
-                    <div class="col-md-6">
-                        <label for="dias_prorrateo" class="form-label">Días de Prorrateo</label>
-                        <input type="number" class="form-control" id="dias_prorrateo" name="dias_prorrateo" value="0"
-                            placeholder="0">
-                    </div>
+                    <!-- Contenedor Oculto Prorrateo -->
+                    <div class="col-12" id="contenedor_prorrateo" style="display: none;">
+                        <div class="row p-3 border rounded bg-white mt-1 shadow-sm">
+                            <div class="col-md-4 mb-3">
+                                <label for="plan_prorrateo" class="form-label fw-semibold text-secondary">Plan para
+                                    Prorrateo</label>
+                                <select class="form-select" id="plan_prorrateo" name="plan_prorrateo">
+                                    <option value="">-- Seleccione --</option>
+                                    <option value="17.50">100 Mbps - $17.50</option>
+                                    <option value="23.20">250 Mbps - $23.20</option>
+                                    <option value="25.00">650 Mbps - $25.00</option>
+                                    <option value="38.00">850 Mbps - $38.00</option>
+                                    <option value="48.00">1 Gb - $48.00</option>
+                                </select>
+                            </div>
 
-                    <div class="col-md-6">
-                        <label for="monto_prorrateo_usd" class="form-label">Monto Prorrateo ($)</label>
-                        <input type="number" step="0.01" class="form-control" id="monto_prorrateo_usd"
-                            name="monto_prorrateo_usd" readonly>
+                            <div class="col-md-4 mb-3">
+                                <label for="dias_prorrateo" class="form-label fw-semibold text-secondary">Días de
+                                    Prorrateo</label>
+                                <input type="number" class="form-control" id="dias_prorrateo" name="dias_prorrateo"
+                                    value="0" placeholder="0">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="monto_prorrateo_usd" class="form-label fw-semibold text-secondary">Monto
+                                    Prorrateo ($)</label>
+                                <input type="number" step="0.01" class="form-control fw-bold bg-light"
+                                    id="monto_prorrateo_usd" name="monto_prorrateo_usd" readonly placeholder="0.00">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="col-md-6">
@@ -677,49 +691,7 @@ require_once '../includes/sidebar.php';
             $('#municipio').html(options);
         });
 
-        // 2. Cargar Parroquias al cambiar Municipio
-        $('#municipio').on('change', function () {
-            const munNombre = $(this).val();
-            let options = '<option value="">-- Seleccione una Parroquia --</option>';
-
-            $('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>');
-
-            if (munNombre) {
-                const munEncontrado = ubicacionesData.find(m => m.municipio === munNombre);
-                if (munEncontrado && munEncontrado.parroquias) {
-                    munEncontrado.parroquias.forEach(function (parroquiaObj) {
-                        options += `<option value="${parroquiaObj.nombre}">${parroquiaObj.nombre}</option>`;
-                    });
-                }
-                $('#parroquia').html(options).prop('disabled', false);
-            } else {
-                $('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>').prop('disabled', true);
-                $('#comunidad').prop('disabled', true);
-            }
-        });
-
-        // 3. Cargar Comunidades al cambiar Parroquia
-        $('#parroquia').on('change', function () {
-            const munNombre = $('#municipio').val();
-            const parrNombre = $(this).val();
-            let options = '<option value="">-- Seleccione una Comunidad --</option>';
-
-            if (munNombre && parrNombre) {
-                const munEncontrado = ubicacionesData.find(m => m.municipio === munNombre);
-                if (munEncontrado && munEncontrado.parroquias) {
-                    const parrEncontrada = munEncontrado.parroquias.find(p => p.nombre === parrNombre);
-                    if (parrEncontrada && parrEncontrada.comunidades) {
-                        parrEncontrada.comunidades.forEach(function (comunidadStr) {
-                            options += `<option value="${comunidadStr}">${comunidadStr}</option>`;
-                        });
-                    }
-                }
-                $('#comunidad').html(options).prop('disabled', false);
-            } else {
-                $('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>').prop('disabled', true);
-            }
-        });
-
+        // 2. Cargar Parroquias al cambiar Municipio (Añadir lógica si aplica, por ahora se espera confirmación del backend)
 
         // ======================================================
         // LÓGICA DE CAMPOS TÉCNICOS DINÁMICOS
@@ -800,6 +772,20 @@ require_once '../includes/sidebar.php';
         // ======================================================
         // LÓGICA DE INSTALACIÓN Y COSTOS
         // ======================================================
+
+        // 7. Lógica del Switch de Prorrateo
+        $('#incluye_prorrateo').on('change', function () {
+            if ($(this).is(':checked')) {
+                $('#contenedor_prorrateo').slideDown();
+            } else {
+                $('#contenedor_prorrateo').slideUp();
+                // Reset prorrateo fields
+                $('#plan_prorrateo').val('');
+                $('#dias_prorrateo').val('0');
+                $('#monto_prorrateo_usd').val('0.00');
+                calcularTotal();
+            }
+        });
 
         // 8. Calcular prorrateo cuando cambia el plan manual o los días
         $('#plan_prorrateo, #dias_prorrateo').on('change input', function () {

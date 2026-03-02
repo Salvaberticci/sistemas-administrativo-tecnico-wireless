@@ -90,10 +90,6 @@ require_once '../includes/sidebar.php';
                 <div class="bg-white p-2 rounded shadow-sm border me-2">
                     <span id="tasa_display" class="text-secondary small">Cargando tasa...</span>
                 </div>
-                <button type="button" class="btn btn-secondary shadow-sm" data-bs-toggle="modal"
-                    data-bs-target="#modalGestionBancos" title="Gestionar Cuentas Bancarias">
-                    <i class="fa-solid fa-university me-1"></i> Ctas.
-                </button>
                 <?php
                 // Contar reportes pendientes
                 $res_pend = $conn->query("SELECT COUNT(*) FROM pagos_reportados WHERE estado = 'PENDIENTE'");
@@ -195,49 +191,6 @@ require_once '../includes/sidebar.php';
 
 <!-- ================= MODALES (Migrados de gestión de cobros) ================= -->
 
-<!-- Modal Gestionar Bancos (NUEVO) -->
-<div class="modal fade" id="modalGestionBancos" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-secondary text-white">
-                <h5 class="modal-title fw-bold">Gestionar Cuentas Bancarias</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <!-- Form Agregar -->
-                <form id="formAgregarBanco" class="mb-4">
-                    <label class="form-label fw-bold small text-muted">Agregar Nueva Cuenta</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" name="nombre_banco" placeholder="Nombre Banco" required>
-                        <button class="btn btn-success" type="submit"><i class="fas fa-plus"></i></button>
-                    </div>
-                    <div class="row g-2 mt-1">
-                        <div class="col-12">
-                            <input type="text" class="form-control form-control-sm" name="numero_cuenta"
-                                placeholder="Nro Cuenta">
-                        </div>
-                    </div>
-                    <div class="row g-2 mt-1">
-                        <div class="col-6">
-                            <input type="text" class="form-control form-control-sm" name="titular_cuenta"
-                                placeholder="Titular">
-                        </div>
-                        <div class="col-6">
-                            <input type="text" class="form-control form-control-sm" name="cedula_propietario"
-                                placeholder="Cédula Titular" id="cedula_propietario_banco">
-                        </div>
-                    </div>
-                </form>
-
-                <!-- Lista Bancos -->
-                <h6 class="fw-bold small text-muted mb-2">Cuentas Existentes</h6>
-                <ul class="list-group" id="lista_bancos_gestion">
-                    <!-- Items por JS -->
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Modal Pagar -->
 <div class="modal fade" id="modalPagar" tabindex="-1" aria-hidden="true">
@@ -273,8 +226,8 @@ require_once '../includes/sidebar.php';
 
                     <div class="mb-2">
                         <label class="form-label fw-semibold text-secondary small">Monto a Pagar</label>
-                        <input type="number" step="0.01" min="0" class="form-control form-control-lg" id="input_monto_pagar"
-                            required>
+                        <input type="number" step="0.01" min="0" class="form-control form-control-lg"
+                            id="input_monto_pagar" required>
                         <input type="hidden" name="monto_pagado" id="monto_pagado_hidden"> <!-- Valor final en USD -->
                         <div id="equiv_pagar" class="form-text text-end fw-bold text-primary mt-1"></div>
                     </div>
@@ -385,8 +338,9 @@ require_once '../includes/sidebar.php';
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-secondary small">Autorizado por</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" name="autorizado_por" id="input_autorizado_por" required placeholder="Escriba un nombre...">
-                            <button class="btn btn-outline-primary" type="button" 
+                            <input type="text" class="form-control" name="autorizado_por" id="input_autorizado_por"
+                                required placeholder="Escriba un nombre...">
+                            <button class="btn btn-outline-primary" type="button"
                                 onclick="document.getElementById('input_autorizado_por').value = '<?php echo addslashes($user_name); ?>'">
                                 <i class="fas fa-user-check me-1"></i> Usar mi usuario
                             </button>
@@ -413,10 +367,17 @@ require_once '../includes/sidebar.php';
             <div class="modal-body p-4 text-center">
                 <div class="mb-3 text-danger"><i class="fas fa-exclamation-triangle fa-3x"></i></div>
                 <h5 class="fw-bold">¿Eliminar Cobro?</h5>
-                <form id="formEliminar" method="GET" action="elimina_cobro.php">
+                <form id="formEliminar" method="POST" action="elimina_cobro.php">
                     <input type="hidden" name="id" id="id_cobro_eliminar">
-                    <p class="text-muted small mb-4">Se eliminará el cobro #<strong id="id_display_eliminar"></strong>
+                    <p class="text-muted small mb-2">Se eliminará el cobro #<strong id="id_display_eliminar"></strong>
                         de <strong id="cliente_nombre_eliminar"></strong></p>
+
+                    <div class="mb-3 text-start">
+                        <label for="delete_password" class="form-label small fw-bold">Confirme su Contraseña</label>
+                        <input type="password" name="clave" class="form-control form-control-sm" id="delete_password"
+                            placeholder="Ingrese su clave" required>
+                    </div>
+
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-danger fw-medium">Sí, Eliminar</button>
                         <button type="button" class="btn btn-light text-secondary fw-medium"
@@ -532,7 +493,7 @@ require_once '../includes/sidebar.php';
                 input.addEventListener('input', function () {
                     // Por si pasó algún carácter raro (como 'e')
                     this.value = this.value.replace(/[^0-9.,]/g, '');
-                    
+
                     if (parseFloat(this.value) < 0) {
                         this.value = 0;
                     }
@@ -730,6 +691,7 @@ require_once '../includes/sidebar.php';
             modal.find('#id_cobro_eliminar').val(button.data('id'));
             modal.find('#id_display_eliminar').text(button.data('id'));
             modal.find('#cliente_nombre_eliminar').text(button.data('nombre'));
+            $('#delete_password').val(''); // Limpiar contraseña al abrir
         });
 
         // === BUSCADOR AUTOCOMPLETE CONTRATOS ===
@@ -828,7 +790,6 @@ require_once '../includes/sidebar.php';
                 const filtro = document.getElementById('filtro_cuenta');
                 const modalSelect = document.getElementById('select_banco_modal');
                 const cobroSelect = document.getElementById('select_banco_cobro');
-                const lista = document.getElementById('lista_bancos_gestion');
 
                 const valFiltro = filtro ? filtro.value : '';
                 const valModal = modalSelect ? modalSelect.value : '';
@@ -837,19 +798,11 @@ require_once '../includes/sidebar.php';
                 if (filtro) filtro.innerHTML = '<option value="">Todas las Cuentas</option>';
                 if (modalSelect) modalSelect.innerHTML = '<option value="">Seleccione...</option>';
                 if (cobroSelect) cobroSelect.innerHTML = '<option value="">Seleccione...</option>';
-                if (lista) lista.innerHTML = '';
 
                 data.forEach(b => {
                     if (filtro) filtro.add(new Option(b.nombre_banco, b.id_banco));
                     if (modalSelect) modalSelect.add(new Option(b.nombre_banco, b.id_banco));
                     if (cobroSelect) cobroSelect.add(new Option(b.nombre_banco, b.id_banco));
-                    if (lista) {
-                        const li = document.createElement('li');
-                        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                        li.innerHTML = `<div><strong>${b.nombre_banco}</strong><small class="d-block text-muted" style="font-size:0.75rem">${b.numero_cuenta || ''} ${b.nombre_propietario ? '- ' + b.nombre_propietario : ''} ${b.cedula_propietario ? '(' + b.cedula_propietario + ')' : ''}</small></div>
-                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarBanco('${b.id_banco}')"><i class="fas fa-trash"></i></button>`;
-                        lista.appendChild(li);
-                    }
                 });
                 if (valFiltro && filtro) filtro.value = valFiltro;
                 if (valModal && modalSelect) modalSelect.value = valModal;
@@ -896,44 +849,12 @@ require_once '../includes/sidebar.php';
         return false;
     }
 
-    const formAgregar = document.getElementById('formAgregarBanco');
-    if (formAgregar) {
-        formAgregar.addEventListener('submit', async function (e) {
-            e.preventDefault();
 
-            const proceeds = await solicitarClaveAdmin('Agregar Nuevo Banco');
-            if (!proceeds) return;
-
-            fetch('json_bancos_api.php?action=add', { method: 'POST', body: new FormData(this) })
-                .then(r => r.json())
-                .then(res => {
-                    if (res.success) {
-                        this.reset();
-                        cargarBancos();
-                        Swal.fire('Éxito', 'Banco agregado correctamente', 'success');
-                    } else {
-                        alert('Error: ' + res.message);
-                    }
-                });
-        });
-    }
-
-    window.eliminarBanco = async function (id) {
-        const proceeds = await solicitarClaveAdmin('Eliminar Banco');
-        if (!proceeds) return;
-
-        const form = new FormData();
-        form.append('id', id);
-        fetch('json_bancos_api.php?action=delete', { method: 'POST', body: form })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    cargarBancos();
-                    Swal.fire('Eliminado', 'La cuenta ha sido eliminada', 'success');
-                } else {
-                    alert('Error al eliminar');
-                }
-            });
+    window.confirmarEdicionCobro = async function (id) {
+        const proceeds = await solicitarClaveAdmin('Modificar Cobro');
+        if (proceeds) {
+            window.location.href = 'modifica_cobro1.php?id=' + id;
+        }
     };
 </script>
 

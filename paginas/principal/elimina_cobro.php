@@ -1,22 +1,43 @@
 <?php
-// ¡AÑADE ESTO PARA DEBUGGING!
+// elimina_cobro.php - Elimina una cuenta por cobrar después de verificar la clave
 ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+session_start();
 require '../conexion.php';
 
-// Asegúrate de que el ID esté presente y sea un número
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    $error_message = "Error: ID de cobro no válido.";
-    header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=Método no permitido&class=danger");
     exit();
 }
 
-$id_cobro = (int) $_GET['id'];
-$success_message = "";
+$id_cobro = isset($_POST['id']) ? intval($_POST['id']) : 0;
+$clave = isset($_POST['clave']) ? $_POST['clave'] : '';
 
-// 1. Obtener el estado del cobro antes de eliminar (para validación)
+if ($id_cobro <= 0) {
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=ID de cobro no válido&class=danger");
+    exit();
+}
+
+// 1. Verificar sesión y clave
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=Sesión no iniciada&class=danger");
+    exit();
+}
+
+$usuario_id = $_SESSION['usuario_id'];
+$stmt_user = $conn->prepare("SELECT clave FROM usuarios WHERE id_usuario = ?");
+$stmt_user->bind_param("i", $usuario_id);
+$stmt_user->execute();
+$res_user = $stmt_user->get_result();
+$user = $res_user->fetch_assoc();
+
+if (!$user || !password_verify($clave, $user['clave'])) {
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=Contraseña administrativa incorrecta&class=danger");
+    exit();
+}
+
+// 2. Obtener el estado del cobro antes de eliminar (para validación)
 $stmt_check = $conn->prepare("SELECT estado FROM cuentas_por_cobrar WHERE id_cobro = ?");
 $stmt_check->bind_param("i", $id_cobro);
 $stmt_check->execute();
@@ -25,42 +46,35 @@ $cobro = $result_check->fetch_assoc();
 $stmt_check->close();
 
 if (!$cobro) {
-    $error_message = "Error: El cobro #{$id_cobro} no existe.";
-    header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=El cobro no existe&class=danger");
     exit();
 }
 
 if ($cobro['estado'] == 'PAGADO') {
-    $error_message = "Error: No se puede eliminar un cobro que ya está PAGADO.";
-    header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=No se puede eliminar un cobro PAGADO&class=danger");
     exit();
 }
 
-// ***************************************************************
-// PASO 1: ELIMINAR REGISTROS DE LA TABLA HIJA (cobros_manuales_historial)
-// ***************************************************************
-$stmt_historial = $conn->prepare("DELETE FROM cobros_manuales_historial WHERE id_cobro_cxc = ?");
-$stmt_historial->bind_param("i", $id_cobro);
-$stmt_historial->execute();
-$stmt_historial->close();
-// Si esta ejecución falla, no se detiene el script, pero deberías considerarlo para manejo de errores avanzado.
+// 3. Eliminar registros
+$conn->begin_transaction();
+try {
+    // Eliminar historial
+    $stmt_hist = $conn->prepare("DELETE FROM cobros_manuales_historial WHERE id_cobro_cxc = ?");
+    $stmt_hist->bind_param("i", $id_cobro);
+    $stmt_hist->execute();
 
-// ***************************************************************
-// PASO 2: ELIMINAR EL REGISTRO DE LA TABLA PADRE (cuentas_por_cobrar)
-// ***************************************************************
-$stmt = $conn->prepare("DELETE FROM cuentas_por_cobrar WHERE id_cobro = ?");
-$stmt->bind_param("i", $id_cobro);
+    // Eliminar CxC
+    $stmt_del = $conn->prepare("DELETE FROM cuentas_por_cobrar WHERE id_cobro = ?");
+    $stmt_del->bind_param("i", $id_cobro);
+    $stmt_del->execute();
 
-if ($stmt->execute()) {
-    $success_message = "Éxito: La cuenta por cobrar #{$id_cobro} ha sido eliminada correctamente.";
-    header("Location: gestion_cobros.php?maintenance_done=1&eliminacion_exitosa=" . $id_cobro);
-} else {
-    $error_message = "Error al eliminar la cuenta por cobrar #{$id_cobro}: " . $stmt->error;
-    header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode($error_message) . "&class=danger");
+    $conn->commit();
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=Cobro eliminado correctamente&class=success");
+} catch (Exception $e) {
+    $conn->rollback();
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=Error al eliminar: " . urlencode($e->getMessage()) . "&class=danger");
 }
 
-$stmt->close();
 $conn->close();
 exit();
-
 ?>

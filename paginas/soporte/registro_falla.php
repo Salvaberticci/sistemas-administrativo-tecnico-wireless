@@ -65,6 +65,38 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
         border-radius: 8px;
         margin-bottom: 20px;
     }
+
+    .signature-pad {
+        border: 2px dashed #ccc;
+        border-radius: 5px;
+        width: 100%;
+        height: 150px;
+        background-color: #f8f9fa;
+        touch-action: none;
+    }
+
+    .section-title {
+        background-color: #f1f3f5;
+        padding: 10px;
+        font-weight: bold;
+        border-left: 4px solid #0d6efd;
+        margin-top: 20px;
+        margin-bottom: 15px;
+        border-radius: 0 4px 4px 0;
+    }
+
+    .btn-cancel-custom {
+        background-color: #adb5bd !important;
+        color: #212529 !important;
+        border: 1px solid #999 !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .btn-cancel-custom:hover {
+        background-color: #6c757d !important;
+        color: white !important;
+        border-color: #5a6268 !important;
+    }
 </style>
 
 <main class="main-content">
@@ -149,9 +181,8 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
 
                     <div class="col-md-6">
                         <label class="form-label">Tipo de Servicio</label>
-                        <select class="form-select" id="tipo_servicio" name="tipo_servicio">
-                            <option value="">Cargando opciones...</option>
-                        </select>
+                        <input type="text" class="form-control" id="tipo_servicio" name="tipo_servicio" readonly
+                            placeholder="Se llena automáticamente">
                     </div>
                 </div>
 
@@ -277,11 +308,122 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                 </div>
             </div>
 
+            <!-- Sección 7: Detalles Técnicos Avanzados -->
+            <div class="form-section">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-microchip me-2"></i>Parámetros Técnicos</h5>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">IP Asignada</label>
+                        <input type="text" class="form-control" name="ip" placeholder="0.0.0.0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Estado ONU</label>
+                        <select class="form-select" name="estado_onu">
+                            <option value="ON">ON</option>
+                            <option value="OFF">OFF</option>
+                            <option value="LOS">LOS</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Estado Router</label>
+                        <select class="form-select" name="estado_router">
+                            <option value="ON">ON</option>
+                            <option value="OFF">OFF</option>
+                            <option value="RESET">Reset</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Modelo Router</label>
+                        <input type="text" class="form-control" name="modelo_router" placeholder="Ej. TPLink">
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-2">
+                        <label class="form-label">Dispositivos</label>
+                        <input type="number" class="form-control" name="num_dispositivos" placeholder="Cant.">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Bajada (MB)</label>
+                        <input type="text" class="form-control" name="bw_bajada" placeholder="MB">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Subida (MB)</label>
+                        <input type="text" class="form-control" name="bw_subida" placeholder="MB">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Ping (ms)</label>
+                        <input type="text" class="form-control" name="bw_ping" placeholder="ms">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Solucionada?</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="solucion_completada"
+                                id="solucion_completada">
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mt-2 bg-light p-2 rounded">
+                    <div class="col-md-6">
+                        <label class="form-label">Estado Antena</label>
+                        <input type="text" class="form-control" name="estado_antena" placeholder="Solo Radio">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Valores dBm</label>
+                        <input type="text" class="form-control" name="valores_antena" placeholder="Ej. -55">
+                    </div>
+                </div>
+                <div class="col-12 mt-3">
+                    <label class="form-label">Sugerencias al Cliente</label>
+                    <textarea class="form-control" name="sugerencias" rows="2"
+                        placeholder="Recomendaciones..."></textarea>
+                </div>
+            </div>
+
+            <!-- Sección 8: Costos y Firmas -->
+            <div class="form-section">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-money-bill-wave me-2"></i>Costos y Firmas</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Costo Total ($)</label>
+                        <input type="number" step="0.01" class="form-control" name="monto_total" id="monto_total"
+                            value="0.00" oninput="calcularDeuda()">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Monto Pagado ($)</label>
+                        <input type="number" step="0.01" class="form-control" name="monto_pagado" id="monto_pagado"
+                            value="0.00" oninput="calcularDeuda()">
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="alert alert-info py-2 mb-0">
+                            <small>Saldo:</small><br>
+                            <span class="fs-4 fw-bold" id="deuda_pendiente">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Firma Técnico</label>
+                        <canvas id="sigTech" class="signature-pad"></canvas>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                            onclick="clearPad('tech')">Limpiar</button>
+                        <input type="hidden" name="firma_tecnico_data" id="firma_tecnico_data">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Firma Cliente</label>
+                        <canvas id="sigCli" class="signature-pad"></canvas>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                            onclick="clearPad('cli')">Limpiar</button>
+                        <input type="hidden" name="firma_cliente_data" id="firma_cliente_data">
+                    </div>
+                </div>
+            </div>
+
             <!-- Botones -->
             <div class="row">
                 <div class="col-12">
                     <div class="d-flex gap-2 justify-content-end">
-                        <a href="gestion_fallas.php" class="btn btn-outline-secondary">
+                        <a href="gestion_fallas.php" class="btn btn-cancel-custom">
                             <i class="fa-solid fa-times me-1"></i>Cancelar
                         </a>
                         <button type="submit" class="btn btn-danger btn-lg">
@@ -296,17 +438,17 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
 
 <!-- Modal Configuración de Opciones -->
 <div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-md">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-cog me-2"></i>Gestión de Fallas y Servicios</h5>
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-cog me-2"></i>Gestión de Tipos de Falla</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
                     <!-- Columna Tipos de Falla -->
-                    <div class="col-md-6 border-end">
-                        <h6 class="fw-bold text-danger mb-3">Tipos de Falla</h6>
+                    <div class="col-12">
+                        <h6 class="fw-bold text-danger mb-3">Listado de Fallas</h6>
                         <div class="input-group mb-3">
                             <input type="text" class="form-control" id="nuevoTipoFalla"
                                 placeholder="Nuevo tipo de falla...">
@@ -314,22 +456,7 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                                 <i class="fa-solid fa-plus"></i>
                             </button>
                         </div>
-                        <ul class="list-group" id="listaFallas" style="max-height: 300px; overflow-y: auto;">
-                            <!-- Items cargados dinámicamente -->
-                        </ul>
-                    </div>
-
-                    <!-- Columna Tipos de Servicio -->
-                    <div class="col-md-6">
-                        <h6 class="fw-bold text-primary mb-3">Tipos de Servicio</h6>
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="nuevoTipoServicio"
-                                placeholder="Nuevo tipo de servicio...">
-                            <button class="btn btn-primary" type="button" onclick="agregarOpcion('tipos_servicio')">
-                                <i class="fa-solid fa-plus"></i>
-                            </button>
-                        </div>
-                        <ul class="list-group" id="listaServicios" style="max-height: 300px; overflow-y: auto;">
+                        <ul class="list-group" id="listaFallas" style="max-height: 400px; overflow-y: auto;">
                             <!-- Items cargados dinámicamente -->
                         </ul>
                     </div>
@@ -341,6 +468,8 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
         </div>
     </div>
 </div>
+
+
 
 
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
@@ -391,6 +520,24 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                                 clienteData = item;
                                 $('#direccion').val(item.direccion || '');
                                 $('#sector').val(item.sector || '');
+
+                                // Mapear y auto-seleccionar tipo de servicio
+                                if (item.tipo_servicio) {
+                                    let tipoSelect = '';
+                                    const tipoDb = item.tipo_servicio.toUpperCase();
+
+                                    if (tipoDb === 'FTTH' || tipoDb.includes('FIBRA')) {
+                                        tipoSelect = 'Fibra Óptica';
+                                    } else if (tipoDb === 'RADIO MICROONDAS' || tipoDb.includes('RADIO') || tipoDb.includes('ANTENA')) {
+                                        tipoSelect = 'Radio Enlace';
+                                    }
+
+                                    if (tipoSelect) {
+                                        $('#tipo_servicio').val(tipoSelect);
+                                    } else {
+                                        $('#tipo_servicio').val(item.tipo_servicio);
+                                    }
+                                }
                             };
                             resultsDiv.appendChild(a);
                         });
@@ -470,7 +617,25 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                 equipos_afectados: equiposAfectados.join(', '),
                 tecnico_asignado: $('#tecnico_asignado').val(),
                 notas_internas: $('#notas_internas').val(),
-                fecha_reporte: $('#fecha_reporte').val()
+                fecha_reporte: $('#fecha_reporte').val(),
+
+                // Nuevos campos
+                ip: $('input[name="ip"]').val(),
+                estado_onu: $('select[name="estado_onu"]').val(),
+                estado_router: $('select[name="estado_router"]').val(),
+                modelo_router: $('input[name="modelo_router"]').val(),
+                num_dispositivos: $('input[name="num_dispositivos"]').val(),
+                bw_bajada: $('input[name="bw_bajada"]').val(),
+                bw_subida: $('input[name="bw_subida"]').val(),
+                bw_ping: $('input[name="bw_ping"]').val(),
+                estado_antena: $('input[name="estado_antena"]').val(),
+                valores_antena: $('input[name="valores_antena"]').val(),
+                sugerencias: $('textarea[name="sugerencias"]').val(),
+                solucion_completada: $('#solucion_completada').is(':checked') ? 1 : 0,
+                monto_total: $('#monto_total').val(),
+                monto_pagado: $('#monto_pagado').val(),
+                firma_tecnico_data: padTech.isEmpty() ? '' : padTech.toDataURL(),
+                firma_cliente_data: padCli.isEmpty() ? '' : padCli.toDataURL()
             };
 
             // Enviar datos
@@ -517,6 +682,47 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
         });
     });
 
+    // --- Lógica de Firmas y Costos ---
+    let padTech, padCli;
+
+    $(document).ready(function () {
+        // Inicializar SignaturePad
+        const canvasTech = document.getElementById('sigTech');
+        const canvasCli = document.getElementById('sigCli');
+
+        if (canvasTech && canvasCli) {
+            padTech = new SignaturePad(canvasTech);
+            padCli = new SignaturePad(canvasCli);
+
+            // Ajustar tamaño del canvas
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                [canvasTech, canvasCli].forEach(canvas => {
+                    canvas.width = canvas.offsetWidth * ratio;
+                    canvas.height = canvas.offsetHeight * ratio;
+                    canvas.getContext("2d").scale(ratio, ratio);
+                });
+                padTech.clear();
+                padCli.clear();
+            }
+
+            window.addEventListener("resize", resizeCanvas);
+            resizeCanvas();
+        }
+    });
+
+    function clearPad(type) {
+        if (type === 'tech') padTech.clear();
+        if (type === 'cli') padCli.clear();
+    }
+
+    function calcularDeuda() {
+        const total = parseFloat($('#monto_total').val()) || 0;
+        const pagado = parseFloat($('#monto_pagado').val()) || 0;
+        const deuda = total - pagado;
+        $('#deuda_pendiente').text('$' + deuda.toFixed(2));
+    }
+
     // --- Funciones para Gestión de Opciones JSON ---
 
     function cargarOpciones() {
@@ -529,12 +735,10 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                     const data = response.data;
 
                     // Llenar Selects en Formulario Principal
-                    actualizarSelect('#tipo_falla', data.tipos_falla);
-                    actualizarSelect('#tipo_servicio', data.tipos_servicio);
-
-                    // Llenar Listas en Modal
-                    actualizarListaModal('#listaFallas', 'tipos_falla', data.tipos_falla);
-                    actualizarListaModal('#listaServicios', 'tipos_servicio', data.tipos_servicio);
+                    if (data.tipos_falla) {
+                        actualizarSelect('#tipo_falla', data.tipos_falla);
+                        actualizarListaModal('#listaFallas', 'tipos_falla', data.tipos_falla);
+                    }
                 }
             }
         });
@@ -569,7 +773,7 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
     }
 
     function agregarOpcion(tipo) {
-        const inputId = tipo === 'tipos_falla' ? '#nuevoTipoFalla' : '#nuevoTipoServicio';
+        const inputId = '#nuevoTipoFalla';
         const valor = $(inputId).val().trim();
 
         if (!valor) return;
@@ -622,6 +826,9 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
             }
         });
     }
+
+
 </script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
 
 <?php require_once $path_to_root . 'paginas/includes/layout_foot.php'; ?>

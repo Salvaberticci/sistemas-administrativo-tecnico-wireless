@@ -18,9 +18,9 @@ if ($id_soporte == 0) {
 }
 
 // Consultar datos completos del reporte
-$sql = "SELECT s.*, c.nombre_completo, c.cedula, c.ip, c.direccion, c.telefono
-        FROM soportes s
-        INNER JOIN contratos c ON s.id_contrato = c.id
+$sql = "SELECT s.*, c.nombre_completo, c.cedula, c.ip_onu as ip, c.direccion, c.telefono
+        FROM soporte_tecnico s 
+        LEFT JOIN contratos c ON s.id_contrato = c.id 
         WHERE s.id_soporte = $id_soporte";
 
 $result = $conn->query($sql);

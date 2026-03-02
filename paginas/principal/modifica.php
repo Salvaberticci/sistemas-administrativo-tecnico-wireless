@@ -80,7 +80,7 @@ require_once '../includes/sidebar.php';
 
 					// 2. CONSULTA PARA OBTENER DATOS ACTUALES (INCLUYENDO MUNICIPIO, PARROQUIA y COMUNIDAD)
 					// 🔑 MODIFICADO: Se agrega id_comunidad a la selección
-					$sql_contrato = "SELECT id_municipio, id_parroquia, id_comunidad 
+					$sql_contrato = "SELECT id_municipio, id_parroquia 
 									 FROM contratos 
 									 WHERE id = $idContrato";
 					$resultado_contrato = $conn->query($sql_contrato);
@@ -92,7 +92,6 @@ require_once '../includes/sidebar.php';
 					$datos_actuales = $resultado_contrato->fetch_assoc();
 					$municipio_seleccionado = $datos_actuales['id_municipio']; // ID guardado
 					$parroquia_seleccionada = $datos_actuales['id_parroquia']; // ID guardado
-					$comunidad_seleccionada = $datos_actuales['id_comunidad']; // 🔑 NUEVO: ID guardado
 					
 					// 3. CONSULTA PARA OBTENER TODOS LOS MUNICIPIOS, PLANES Y VENDEDORES (para llenar la lista)
 					$sql_municipios = "SELECT id_municipio, nombre_municipio FROM municipio ORDER BY nombre_municipio ASC";
@@ -198,20 +197,7 @@ require_once '../includes/sidebar.php';
 						</select>
 					</div>
 
-					<div class="col-md-6">
-						<label for="comunidad" class="form-label">Comunidad</label>
-						<select name="id_comunidad" id="comunidad" class="form-select" required>
-							<option value="<?php echo $comunidad_seleccionada; ?>">
-								<?php
-								// Consulta rápida para mostrar el nombre de la comunidad actual
-								$sql_nombre = "SELECT nombre_comunidad FROM comunidad WHERE id_comunidad = $comunidad_seleccionada";
-								$res_nombre = $conn->query($sql_nombre);
-								$nombre_comunidad_actual = $res_nombre->num_rows > 0 ? $res_nombre->fetch_assoc()['nombre_comunidad'] : 'Cargando...';
-								echo htmlspecialchars($nombre_comunidad_actual);
-								?> (Actual)
-							</option>
-						</select>
-					</div>
+
 
 
 					<div class="col-md-6">
@@ -467,7 +453,6 @@ require_once '../includes/sidebar.php';
 		// 🔑 OBTENER LOS VALORES INICIALES DE PHP (UBICACIÓN)
 		var parroquiaSeleccionadaId = "<?php echo $parroquia_seleccionada; ?>";
 		var municipioInicialId = "<?php echo $municipio_seleccionado; ?>";
-		var comunidadSeleccionadaId = "<?php echo $comunidad_seleccionada; ?>";
 
 		// 🔑 NUEVOS: OBTENER LOS VALORES INICIALES DE PHP (RED)
 		var oltInicialId = "<?php echo $olt_seleccionado; ?>";
@@ -477,36 +462,7 @@ require_once '../includes/sidebar.php';
 		// 2. FUNCIONES DE CARGA EN CASCADA
 		// =========================================================================
 
-		// Función para cargar comunidades 
-		function cargarComunidadesIniciales(parroquiaID, comunidadIDaSeleccionar) {
 
-			$('#comunidad').html('<option value="">Cargando comunidades...</option>');
-			$('#comunidad').prop('disabled', true);
-
-			if (parroquiaID) {
-				$.ajax({
-					url: 'obtener_comunidades.php',
-					type: 'POST',
-					data: { id_parroquia: parroquiaID },
-					dataType: 'json',
-					success: function (comunidades) {
-						$('#comunidad').html('<option value="">-- Seleccione una Comunidad --</option>');
-
-						$.each(comunidades, function (key, value) {
-							var selectedAttr = (key == comunidadIDaSeleccionar) ? 'selected' : '';
-							$('#comunidad').append('<option value="' + key + '" ' + selectedAttr + '>' + value + '</option>');
-						});
-
-						$('#comunidad').prop('disabled', false);
-					},
-					error: function () {
-						$('#comunidad').html('<option value="">Error al cargar comunidades</option>');
-					}
-				});
-			} else {
-				$('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>');
-			}
-		}
 
 
 		// Función para cargar parroquias (MODIFICADA: Llama a cargarComunidades)
@@ -514,10 +470,6 @@ require_once '../includes/sidebar.php';
 
 			$('#parroquia').html('<option value="">Cargando parroquias...</option>');
 			$('#parroquia').prop('disabled', true);
-
-			// Resetear Comunidad
-			$('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>');
-			$('#comunidad').prop('disabled', true);
 
 
 			if (municipioID) {
@@ -544,9 +496,9 @@ require_once '../includes/sidebar.php';
 
 						// Si hay una parroquia pre-seleccionada, cargar sus comunidades
 						if (parroquiaSeleccionadaPostCarga) {
-							cargarComunidadesIniciales(parroquiaSeleccionadaPostCarga, comunidadIDaSeleccionar);
+							// cargarComunidadesIniciales(parroquiaSeleccionadaPostCarga, comunidadIDaSeleccionar);
 						} else {
-							cargarComunidadesIniciales(null, null); // Deshabilita la comunidad
+							// cargarComunidadesIniciales(null, null); // Deshabilita la comunidad
 						}
 					},
 					error: function () {
@@ -606,7 +558,7 @@ require_once '../includes/sidebar.php';
 
 		// Al cargar la página, iniciar la carga de ubicación pre-seleccionada
 		if (municipioInicialId) {
-			cargarParroquiasIniciales(municipioInicialId, parroquiaSeleccionadaId, comunidadSeleccionadaId);
+			cargarParroquiasIniciales(municipioInicialId, parroquiaSeleccionadaId, null);
 		}
 
 		// 🔑 NUEVA: Al cargar la página, iniciar la carga de PONs pre-seleccionados
@@ -623,16 +575,10 @@ require_once '../includes/sidebar.php';
 				cargarParroquiasIniciales(nuevoMunicipioID, null, null);
 			} else {
 				$('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>').prop('disabled', true);
-				$('#comunidad').html('<option value="">-- Primero seleccione una parroquia --</option>').prop('disabled', true);
 			}
 		});
 
-		// Manejar cambio de Parroquia
-		$('#parroquia').on('change', function () {
-			var idParroquia = $(this).val();
-			// Al cambiar parroquia, cargamos comunidades
-			cargarComunidadesIniciales(idParroquia, null);
-		});
+
 
 		// 🔑 NUEVO: Manejar cambio de OLT
 		$('#id_olt').on('change', function () {

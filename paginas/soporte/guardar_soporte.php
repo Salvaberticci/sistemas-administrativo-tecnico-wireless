@@ -45,6 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Financiero
     $monto_total = isset($_POST['monto_total']) ? floatval($_POST['monto_total']) : 0.0;
     $monto_pagado = isset($_POST['monto_pagado']) ? floatval($_POST['monto_pagado']) : 0.0;
+    $prioridad = isset($_POST['prioridad']) ? $conn->real_escape_string($_POST['prioridad']) : 'NIVEL 1';
 
     // 2. Sanitización de datos TÉCNICOS (Nuevos campos)
     $sector = isset($_POST['sector']) ? $conn->real_escape_string($_POST['sector']) : '';
@@ -100,13 +101,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 sector, tipo_servicio, ip_address, estado_onu, estado_router, modelo_router,
                 bw_bajada, bw_subida, bw_ping, num_dispositivos,
                 estado_antena, valores_antena, sugerencias, solucion_completada,
-                firma_tecnico, firma_cliente, token_firma, estado_firma
+                firma_tecnico, firma_cliente, token_firma, estado_firma, prioridad
             ) VALUES (
                 '$id_contrato', '$descripcion_problema', '$monto_total', '$monto_pagado', '$fecha_soporte', '$tecnico', '$descripcion_problema',
                 '$sector', '$tipo_servicio', '$ip', '$estado_onu', '$estado_router', '$modelo_router',
                 '$bw_bajada', '$bw_subida', '$bw_ping', '$num_dispositivos',
                 '$estado_antena', '$valores_antena', '$sugerencias', '$solucion_completada',
-                '$path_firma_tech', '$path_firma_cli', " . ($token_firma ? "'$token_firma'" : "NULL") . ", '$estado_firma'
+                '$path_firma_tech', '$path_firma_cli', " . ($token_firma ? "'$token_firma'" : "NULL") . ", '$estado_firma', '$prioridad'
             )";
 
             if (!$conn->query($sql_soporte)) {

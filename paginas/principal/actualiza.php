@@ -16,14 +16,12 @@ require '../conexion.php';
 
 // 1. CAPTURA Y SANEO DE DATOS
 $id = intval($_POST['id']);
-$ip = trim($conn->real_escape_string($_POST['ip'] ?? ''));
 $cedula = $conn->real_escape_string($_POST['cedula'] ?? '');
 $nombre_completo = $conn->real_escape_string($_POST['nombre_completo'] ?? '');
 $telefono = $conn->real_escape_string($_POST['telefono'] ?? '');
 $correo = $conn->real_escape_string($_POST['correo'] ?? '');
 $id_municipio = $conn->real_escape_string($_POST['id_municipio'] ?? '');
 $id_parroquia = $conn->real_escape_string($_POST['id_parroquia'] ?? '');
-$id_comunidad = $conn->real_escape_string($_POST['id_comunidad'] ?? ''); // 🔑 NUEVO: Captura de id_comunidad
 $id_plan = $conn->real_escape_string($_POST['id_plan'] ?? '');
 $id_vendedor = $conn->real_escape_string($_POST['id_vendedor'] ?? '');
 $direccion = $conn->real_escape_string($_POST['direccion'] ?? '');
@@ -48,23 +46,9 @@ $valor_conexion_dbm = $conn->real_escape_string($_POST['valor_conexion_dbm'] ?? 
 $errores = '';
 
 // 2. VALIDACIÓN DE IP DUPLICADA (Excluyendo el ID actual)
-$ip = trim($ip);
 $ip_onu = trim($ip_onu ?? '');
 
-if (!empty($ip)) {
-	$stmt_ip = $conn->prepare("SELECT id FROM contratos WHERE ip = ? AND id != ? LIMIT 1");
-	if ($stmt_ip) {
-		$stmt_ip->bind_param('si', $ip, $id);
-		$stmt_ip->execute();
-		$stmt_ip->store_result();
-		if ($stmt_ip->num_rows > 0) {
-			$errores .= "La IP '{$ip}' ya está registrada en otro contrato. Por favor, ingrese una IP única.<br>";
-		}
-		$stmt_ip->close();
-	} else {
-		$errores .= "Error interno al verificar la IP (Prepare failed).<br>";
-	}
-}
+
 
 if (!empty($ip_onu)) {
 	$stmt_ip_onu = $conn->prepare("SELECT id FROM contratos WHERE ip_onu = ? AND id != ? LIMIT 1");
@@ -87,8 +71,7 @@ if (empty($id_municipio))
 	$errores .= "El campo Municipio es obligatorio.<br>";
 if (empty($id_parroquia))
 	$errores .= "El campo Parroquia es obligatorio.<br>";
-if (empty($id_comunidad))
-	$errores .= "El campo Comunidad es obligatorio.<br>";
+
 if (empty($id_plan))
 	$errores .= "El campo Plan es obligatorio.<br>";
 if (empty($id_vendedor))
@@ -107,8 +90,8 @@ if (empty($estado))
 // 3. EJECUCIÓN DE LA ACTUALIZACIÓN SOLO SI NO HAY ERRORES
 if (empty($errores)) {
 	// 🔑 MODIFICADO: Se agrega el campo id_comunidad
-	$sql = "UPDATE contratos SET ip='$ip', cedula='$cedula', nombre_completo='$nombre_completo', telefono='$telefono', correo='$correo',
-	 id_municipio='$id_municipio', id_parroquia='$id_parroquia', id_comunidad='$id_comunidad', id_plan='$id_plan', id_vendedor='$id_vendedor', direccion='$direccion',
+	$sql = "UPDATE contratos SET cedula='$cedula', nombre_completo='$nombre_completo', telefono='$telefono', correo='$correo',
+	 id_municipio='$id_municipio', id_parroquia='$id_parroquia', id_plan='$id_plan', id_vendedor='$id_vendedor', direccion='$direccion',
 	  fecha_instalacion='$fecha_instalacion', estado='$estado', ident_caja_nap='$ident_caja_nap', puerto_nap='$puerto_nap',
 	   num_presinto_odn='$num_presinto_odn', id_olt='$id_olt', id_pon='$id_pon',
 	   tipo_conexion='$tipo_conexion', mac_onu='$mac_onu', ip_onu='$ip_onu', nap_tx_power='$nap_tx_power', onu_rx_power='$onu_rx_power',

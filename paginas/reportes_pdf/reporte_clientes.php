@@ -56,7 +56,7 @@ $join_clause = "
 
 // 🔍 NUEVO: Filtro de Búsqueda General
 if (!empty($busqueda_filtro)) {
-    $where_clause .= " AND (c.nombre_completo LIKE ? OR c.cedula LIKE ? OR c.ip LIKE ? OR c.telefono LIKE ?) ";
+    $where_clause .= " AND (c.nombre_completo LIKE ? OR c.cedula LIKE ? OR c.ip_onu LIKE ? OR c.telefono LIKE ?) ";
     $busqueda_param = "%" . $busqueda_filtro . "%";
     $params[] = $busqueda_param;
     $params[] = $busqueda_param;
@@ -110,7 +110,7 @@ if ($cobros_estado_filtro !== 'TODOS') {
 // 3. CONSULTA SQL FINAL
 $sql = "
     SELECT 
-        c.id, c.nombre_completo, c.cedula, c.telefono, c.estado AS estado_contrato, c.ip,
+        c.id, c.nombre_completo, c.cedula, c.telefono, c.estado AS estado_contrato, c.ip_onu,
         m.nombre_municipio AS municipio, pa.nombre_parroquia AS parroquia, 
         pl.nombre_plan AS plan, v.nombre_vendedor AS vendedor,
         ol.nombre_olt AS olt_nombre, p.nombre_pon AS pon_nombre 
@@ -347,7 +347,7 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                                             <div class="fw-bold text-dark">
                                                 <?php echo htmlspecialchars($fila['nombre_completo']); ?>
                                             </div>
-                                            <div class="small text-muted"><?php echo htmlspecialchars($fila['ip']); ?></div>
+                                            <div class="small text-muted"><?php echo htmlspecialchars($fila['ip_onu']); ?></div>
                                         </td>
                                         <td class="text-nowrap"><?php echo htmlspecialchars($fila['cedula']); ?></td>
                                         <td class="text-nowrap"><?php echo htmlspecialchars($fila['telefono']); ?></td>

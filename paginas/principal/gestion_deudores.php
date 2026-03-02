@@ -46,7 +46,7 @@ require_once '../includes/sidebar.php';
                         </thead>
                         <tbody>
                             <?php
-                            $sql = "SELECT d.*, c.nombre_completo, c.cedula, c.ip 
+                            $sql = "SELECT d.*, c.nombre_completo, c.cedula, c.ip_onu
                                     FROM clientes_deudores d
                                     INNER JOIN contratos c ON d.id_contrato = c.id
                                     WHERE d.estado = 'PENDIENTE'
@@ -60,7 +60,7 @@ require_once '../includes/sidebar.php';
                                     <td>{$row['id']}</td>
                                     <td class='fw-bold'>{$row['nombre_completo']}</td>
                                     <td>{$row['cedula']}</td>
-                                    <td><code>{$row['ip']}</code></td>
+                                    <td><code>{$row['ip_onu']}</code></td>
                                     <td class='text-end'>\${$row['monto_total']}</td>
                                     <td class='text-end'>\${$row['monto_pagado']}</td>
                                     <td class='text-end text-danger fw-bold'>\${$row['saldo_pendiente']}</td>

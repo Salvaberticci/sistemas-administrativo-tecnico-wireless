@@ -29,7 +29,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt_pon->bind_param("sis", $nombre_pon_post, $id_olt_post, $descripcion_post); 
         
         if (!$stmt_pon->execute()) {
-            throw new Exception("Error al insertar el PON: " . $stmt_pon->error);
+            // Check for duplicate entry error (error code 1062)
+            if ($conn->errno === 1062) {
+                throw new Exception("Este nombre de PON ya está registrado para la OLT seleccionada.");
+            } else {
+                throw new Exception("Error al insertar el PON: " . $stmt_pon->error);
+            }
         }
         
         $id_referencia = $conn->insert_id; 
@@ -41,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nombre_pon_post = $id_olt_post = $descripcion_post = '';
 
     } catch (Exception $e) {
-        $message = 'Error al registrar el PON: ' . $e->getMessage();
+        $message = $e->getMessage();
         $message_class = 'error';
     }
 }

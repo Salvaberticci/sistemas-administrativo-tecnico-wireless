@@ -1,5 +1,7 @@
 <?php
-// Incluye el archivo de conexión.
+/**
+ * Gestión de Planes - Migración a AJAX con Seguridad
+ */
 require_once 'conexion.php';
 
 $path_to_root = "../";
@@ -10,150 +12,14 @@ include $path_to_root . 'paginas/includes/layout_head.php';
 include $path_to_root . 'paginas/includes/sidebar.php';
 include $path_to_root . 'paginas/includes/header.php';
 
-$message = '';
-$message_class = '';
-$action = isset($_GET['action']) ? $_GET['action'] : '';
-$stmt = null;
-
-// Variables para la búsqueda
-$search_term = isset($_GET['search']) ? $_GET['search'] : '';
-$sql = "SELECT * FROM planes";
-
-// --- LÓGICA DE GESTIÓN (ELIMINAR) ---
-if ($action === 'delete_plan' && isset($_GET['id'])) {
-    $id_to_delete = $_GET['id'];
-    $stmt = $conn->prepare("DELETE FROM planes WHERE id_plan = ?");
-    $stmt->bind_param("i", $id_to_delete);
-    if ($stmt->execute()) {
-        $message = "Plan eliminado con éxito.";
-        $message_class = 'success';
-    } else {
-        $message = "Error al eliminar el plan: " . $stmt->error;
-        $message_class = 'error';
-    }
-    // Redirigimos para limpiar la URL
-    echo "<script>window.location.href = 'gestion_planes.php?message=" . urlencode($message) . "&class=" . urlencode($message_class) . "';</script>";
-    exit();
-}
-
-// --- LÓGICA DE CREACIÓN (PROCESAR FORMULARIO POST) ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_plan'])) {
-    $nombre = $_POST['nombre_plan'];
-    $monto = $_POST['monto'];
-    $descripcion = $_POST['descripcion'];
-
-    $monto_float = floatval(str_replace(',', '.', $monto));
-
-    if ($monto_float < 0) {
-        $message = "Error: El monto no puede ser negativo.";
-        $message_class = 'error';
-    } else {
-        $stmt = $conn->prepare("INSERT INTO planes (nombre_plan, monto, descripcion) VALUES (?, ?, ?)");
-        $stmt->bind_param("sds", $nombre, $monto_float, $descripcion);
-
-        if ($stmt->execute()) {
-            $message = "¡Nuevo plan registrado con éxito!";
-            $message_class = 'success';
-        } else {
-            $message = "Error al registrar el plan: " . $stmt->error;
-            $message_class = 'error';
-        }
-        if ($stmt)
-            $stmt->close();
-    }
-    echo "<script>window.location.href = 'gestion_planes.php?message=" . urlencode($message) . "&class=" . urlencode($message_class) . "';</script>";
-    exit();
-}
-
-// --- LÓGICA DE MODIFICACIÓN (PROCESAR FORMULARIO POST) ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_plan'])) {
-    $id = $_POST['id_plan_update'];
-    $nombre = $_POST['nombre_plan'];
-    $monto = $_POST['monto'];
-    $descripcion = $_POST['descripcion'];
-
-    $monto_float = floatval(str_replace(',', '.', $monto));
-
-    if ($monto_float < 0) {
-        $message = "Error: El monto no puede ser negativo.";
-        $message_class = 'error';
-    } else {
-        $stmt = $conn->prepare("UPDATE planes SET nombre_plan = ?, monto = ?, descripcion = ? WHERE id_plan = ?");
-        $stmt->bind_param("sdsi", $nombre, $monto_float, $descripcion, $id);
-
-        if ($stmt->execute()) {
-            if ($stmt->affected_rows > 0) {
-                $message = "¡Plan actualizado con éxito!";
-                $message_class = 'success';
-            } else {
-                $message = "ADVERTENCIA: No se realizaron cambios en el Plan.";
-                $message_class = 'warning';
-            }
-        } else {
-            $message = "Error al actualizar el plan: " . $stmt->error;
-            $message_class = 'error';
-        }
-        if ($stmt)
-            $stmt->close();
-    }
-
-    echo "<script>window.location.href = 'gestion_planes.php?message=" . urlencode($message) . "&class=" . urlencode($message_class) . "';</script>";
-    exit();
-}
-
-// --- CONSULTA PARA MOSTRAR LOS DATOS ---
-if (!empty($search_term)) {
-    $sql .= " WHERE nombre_plan LIKE ?";
-    $search_param = "%" . $search_term . "%";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $search_param);
-    $stmt->execute();
-    $result = $stmt->get_result();
-} else {
-    $sql .= " ORDER BY nombre_plan ASC";
-    $result = $conn->query($sql);
-}
-
-$data = [];
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
-    }
-}
-
-// Cierre de la conexión
-if ($stmt) {
-    $stmt->close();
-}
-$conn->close();
-
-// Manejo del mensaje de redirección
-if (isset($_GET['message'])) {
-    $message = $_GET['message'];
-    $message_class = $_GET['class'];
-}
+$message = isset($_GET['message']) ? $_GET['message'] : '';
+$message_class = isset($_GET['class']) ? $_GET['class'] : '';
 ?>
+
 
 <main class="main-content">
     <div class="page-content">
         <div class="container-fluid">
-            <!-- Header de la página -->
-            <div class="row mb-4">
-                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <div>
-                        <h2 class="h4 fw-bold mb-1 text-primary">Gestión de Planes</h2>
-                        <p class="text-muted mb-0">Administración de planes de servicio</p>
-                    </div>
-                    <div>
-                        <button type="button" data-bs-toggle="modal" data-bs-target="#modalNuevoPlan"
-                            class="btn btn-primary d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-plus"></i>
-                            <span>Nuevo Plan</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
             <!-- Alertas -->
             <?php if ($message): ?>
                 <div class="alert alert-<?php echo $message_class === 'success' ? 'success' : ($message_class === 'warning' ? 'warning' : 'danger'); ?> alert-dismissible fade show shadow-sm"
@@ -169,6 +35,14 @@ if (isset($_GET['message'])) {
 
             <!-- Contenedor Principal -->
             <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">Listado de Planes</h5>
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#modalNuevoPlan"
+                        class="btn btn-primary btn-sm d-flex align-items-center gap-2 shadow-sm px-3">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Nuevo Plan</span>
+                    </button>
+                </div>
                 <div class="card-body p-0">
                     <!-- Buscador -->
                     <div class="p-4 bg-light border-bottom">
@@ -194,59 +68,26 @@ if (isset($_GET['message'])) {
                                     <th>Nombre</th>
                                     <th>Monto (USD)</th>
                                     <th>Descripción</th>
+                                    <th class="text-center">Clientes</th>
                                     <th class="text-end pe-4">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <?php if (!empty($data)): ?>
-                                    <?php foreach ($data as $row): ?>
-                                        <tr>
-                                            <td class="ps-4 fw-medium text-secondary">
-                                                #<?php echo htmlspecialchars($row['id_plan']); ?></td>
-                                            <td class="fw-bold text-dark"><?php echo htmlspecialchars($row['nombre_plan']); ?>
-                                            </td>
-                                            <td>
-                                                <span
-                                                    class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">
-                                                    $<?php echo htmlspecialchars($row['monto']); ?>
-                                                </span>
-                                            </td>
-                                            <td class="text-muted small text-truncate" style="max-width: 300px;">
-                                                <?php echo htmlspecialchars($row['descripcion']); ?>
-                                            </td>
-                                            <td class="text-end pe-4">
-                                                <div class="btn-group gap-2">
-                                                    <button type="button" data-bs-toggle="modal"
-                                                        data-bs-target="#modalModificacionPlan"
-                                                        data-id="<?php echo htmlspecialchars($row['id_plan']); ?>"
-                                                        data-nombre="<?php echo htmlspecialchars($row['nombre_plan']); ?>"
-                                                        data-monto="<?php echo htmlspecialchars($row['monto']); ?>"
-                                                        data-descripcion="<?php echo htmlspecialchars($row['descripcion']); ?>"
-                                                        class="btn btn-sm btn-outline-primary rounded-2" title="Modificar">
-                                                        <i class="fa-solid fa-pen-to-square"></i>
-                                                    </button>
-                                                    <button type="button"
-                                                        data-bs-href="gestion_planes.php?action=delete_plan&id=<?php echo urlencode($row['id_plan']); ?>"
-                                                        data-bs-toggle="modal" data-bs-target="#eliminaModal"
-                                                        class="btn btn-sm btn-outline-danger rounded-2" title="Eliminar">
-                                                        <i class="fa-solid fa-trash-can"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="5" class="text-center py-5 text-muted">
-                                            <div class="d-flex flex-column align-items-center gap-2">
-                                                <i class="fa-solid fa-inbox fa-2x opacity-25"></i>
-                                                <p class="mb-0">No se encontraron planes registrados</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endif; ?>
+                            <tbody id="lista_planes_api">
+                                <tr>
+                                    <td colspan="6" class="text-center py-5 text-muted">
+                                        <i class="fas fa-spinner fa-spin me-2"></i> Cargando planes...
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0 py-3">
+                    <div id="pagination-container" class="d-flex justify-content-between align-items-center px-3">
+                        <small class="text-muted" id="pagination-info">Mostrando 0 de 0 planes</small>
+                        <nav aria-label="Navegación de planes">
+                            <ul class="pagination pagination-sm mb-0" id="pagination-list"></ul>
+                        </nav>
                     </div>
                 </div>
             </div>
@@ -274,10 +115,9 @@ if (isset($_GET['message'])) {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                     aria-label="Close"></button>
             </div>
-            <form id="form-modificacion-plan" action="gestion_planes.php" method="POST" novalidate>
+            <form id="form-modificacion-plan" novalidate>
                 <div class="modal-body p-4">
-                    <input type="hidden" name="update_plan" value="1">
-                    <input type="hidden" name="id_plan_update" id="id_plan_modal" value="">
+                    <input type="hidden" name="id_plan" id="id_plan_modal" value="">
 
                     <div class="mb-3">
                         <label for="nombre_plan_modal"
@@ -306,12 +146,53 @@ if (isset($_GET['message'])) {
                 <div class="modal-footer bg-light border-top-0 py-3">
                     <button type="button" class="btn btn-outline-secondary px-4"
                         data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" id="btn-actualizar-plan" class="btn btn-primary px-4">Actualizar</button>
+                    <button type="submit" class="btn btn-primary px-4">Actualizar</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Modal Migración -->
+<div class="modal fade" id="modalMigrarClientes" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-shuffle me-2"></i>Migrar Clientes
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-migrar-clientes">
+                <input type="hidden" name="id_old" id="migrate_id_old">
+                <div class="modal-body p-4">
+                    <div class="alert alert-warning small mb-4">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                        Este plan tiene <strong id="migrate_client_count">0</strong> clientes. Para eliminarlo, primero
+                        debes migrarlos a otro plan.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Seleccionar Plan de
+                            Destino</label>
+                        <select name="id_new" id="migrate_id_new" class="form-select" required>
+                            <option value="">Cargando planes...</option>
+                        </select>
+                    </div>
+                    <p class="text-muted small">
+                        Nota: Los contratos de estos clientes se actualizarán automáticamente con el nuevo plan y su
+                        respectivo monto mensual.
+                    </p>
+                </div>
+                <div class="modal-footer bg-light border-top-0 py-3">
+                    <button type="button" class="btn btn-outline-secondary px-4"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning px-4 fw-bold">Migrar y Continuar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 <!-- Modal Eliminación -->
 <div class="modal fade" id="eliminaModal" tabindex="-1" aria-hidden="true">
@@ -323,8 +204,9 @@ if (isset($_GET['message'])) {
                 </div>
                 <h5 class="mb-2 fw-bold text-dark">¿Eliminar registro?</h5>
                 <p class="text-muted small mb-4">Esta acción no se puede deshacer.</p>
+                <input type="hidden" id="id_to_delete">
                 <div class="d-grid gap-2">
-                    <a class="btn btn-danger btn-ok fw-medium">Eliminar</a>
+                    <button type="button" onclick="confirmDelete()" class="btn btn-danger fw-medium">Eliminar</button>
                     <button type="button" class="btn btn-light text-secondary fw-medium"
                         data-bs-dismiss="modal">Cancelar</button>
                 </div>
@@ -332,6 +214,7 @@ if (isset($_GET['message'])) {
         </div>
     </div>
 </div>
+
 
 <!-- Modal Nuevo Plan -->
 <div class="modal fade" id="modalNuevoPlan" tabindex="-1" aria-hidden="true">
@@ -344,10 +227,8 @@ if (isset($_GET['message'])) {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                     aria-label="Close"></button>
             </div>
-            <form id="form-nuevo-plan" action="gestion_planes.php" method="POST" novalidate>
+            <form id="form-nuevo-plan" novalidate>
                 <div class="modal-body p-4">
-                    <input type="hidden" name="create_plan" value="1">
-
                     <div class="mb-3">
                         <label for="nombre_plan_nuevo"
                             class="form-label fw-semibold text-secondary small text-uppercase">Nombre del Plan</label>
@@ -375,101 +256,278 @@ if (isset($_GET['message'])) {
                 <div class="modal-footer bg-light border-top-0 py-3">
                     <button type="button" class="btn btn-outline-secondary px-4"
                         data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" id="btn-guardar-plan" class="btn btn-success px-4">Registrar Plan</button>
+                    <button type="submit" class="btn btn-success px-4">Registrar Plan</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+
+<!-- Scripts Dependencies -->
+<script src="../js/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // Lógica para pasar la URL de eliminación al modal
-    let eliminaModal = document.getElementById('eliminaModal')
-    if (eliminaModal) {
-        eliminaModal.addEventListener('shown.bs.modal', event => {
-            let button = event.relatedTarget
-            let url = button.getAttribute('data-bs-href')
-            eliminaModal.querySelector('.btn-ok').href = url
-        })
-    }
+    const API_URL = 'principal/api_planes.php';
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
-    // --- LÓGICA DEL MODAL DE MODIFICACIÓN DE PLANES ---
-    const modalModificacionPlan = document.getElementById('modalModificacionPlan');
+    $(document).ready(function () {
+        cargarPlanes(currentPage);
 
-    if (modalModificacionPlan) {
-        modalModificacionPlan.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-
-            const id = button.getAttribute('data-id');
-            const nombre = button.getAttribute('data-nombre');
-            const monto = button.getAttribute('data-monto');
-            const descripcion = button.getAttribute('data-descripcion');
-
-            document.getElementById('modalModificacionPlanLabel').innerHTML = `<i class="fa-solid fa-pen-to-square me-2 opacity-75"></i>Modificar Plan: ${nombre}`;
-            document.getElementById('id_plan_modal').value = id;
-            document.getElementById('nombre_plan_modal').value = nombre;
-            document.getElementById('monto_modal').value = parseFloat(monto).toFixed(2);
-            document.getElementById('descripcion_modal').value = descripcion;
-
-            document.getElementById('form-modificacion-plan').classList.remove('was-validated');
+        // Búsqueda con delay (debounce)
+        let searchTimer;
+        $('#searchInput').on('input', function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                cargarPlanes(1);
+            }, 500);
         });
-    }
 
-    // Validación y envío del formulario de actualización
-    const btnActualizarPlan = document.getElementById('btn-actualizar-plan');
-    const formModificacionPlan = document.getElementById('form-modificacion-plan');
+        // Registro de Plan
+        $('#form-nuevo-plan').on('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            try {
+                const resp = await fetch(API_URL + '?action=add', { method: 'POST', body: formData });
+                const res = await resp.json();
+                if (res.success) {
+                    Swal.fire('¡Éxito!', 'Plan registrado correctamente.', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('modalNuevoPlan')).hide();
+                    this.reset();
+                    cargarPlanes(1);
+                } else {
+                    Swal.fire('Error', res.message || 'Error al guardar', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+            }
+        });
 
-    if (btnActualizarPlan && formModificacionPlan) {
-        btnActualizarPlan.addEventListener('click', function (event) {
-            const monto = document.getElementById('monto_modal').value;
-            if (parseFloat(monto) < 0) {
-                Swal.fire('Error', 'El monto no puede ser negativo', 'error');
+        // Edición de Plan
+        $('#form-modificacion-plan').on('submit', async function (e) {
+            e.preventDefault();
+            const monto = $('#monto_modal').val();
+
+            const result = await Swal.fire({
+                title: '¿Confirmar cambios?',
+                text: "Si cambias el precio, se actualizará el monto mensual de TODOS los clientes vinculados a este plan.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, actualizar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!result.isConfirmed) return;
+
+            const formData = new FormData(this);
+            try {
+                const resp = await fetch(API_URL + '?action=update', { method: 'POST', body: formData });
+                const res = await resp.json();
+                if (res.success) {
+                    Swal.fire('¡Éxito!', 'Plan y contratos actualizados correctamente.', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('modalModificacionPlan')).hide();
+                    cargarPlanes(currentPage);
+                } else {
+                    Swal.fire('Error', res.message || 'Error al actualizar', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+            }
+        });
+
+        // Migración de Clientes
+        $('#form-migrar-clientes').on('submit', async function (e) {
+            e.preventDefault();
+            const id_new = $('#migrate_id_new').val();
+            if (!id_new) {
+                Swal.fire('Atención', 'Selecciona un plan de destino', 'warning');
                 return;
             }
-            if (formModificacionPlan.checkValidity()) {
-                formModificacionPlan.submit();
-            } else {
-                formModificacionPlan.classList.add('was-validated');
-            }
-        });
-    }
 
-    // Validación y envío del formulario de creación
-    const btnGuardarPlan = document.getElementById('btn-guardar-plan');
-    const formNuevoPlan = document.getElementById('form-nuevo-plan');
-
-    if (btnGuardarPlan && formNuevoPlan) {
-        btnGuardarPlan.addEventListener('click', function (event) {
-            const monto = document.getElementById('monto_nuevo').value;
-            if (parseFloat(monto) < 0) {
-                Swal.fire('Error', 'El monto no puede ser negativo', 'error');
-                return;
-            }
-            if (formNuevoPlan.checkValidity()) {
-                formNuevoPlan.submit();
-            } else {
-                formNuevoPlan.classList.add('was-validated');
-            }
-        });
-    }
-
-    // --- LÓGICA DE BÚSQUEDA EN TIEMPO REAL ---
-    document.getElementById('searchInput').addEventListener('input', function () {
-        const searchTerm = this.value.toLowerCase();
-        const rows = document.querySelectorAll('table tbody tr');
-
-        rows.forEach(row => {
-            // Buscamos en todas las celdas (Nombre, ID, Descripción)
-            const text = row.innerText.toLowerCase();
-            if (text.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
+            const formData = new FormData(this);
+            try {
+                const resp = await fetch(API_URL + '?action=migrate', { method: 'POST', body: formData });
+                const res = await resp.json();
+                if (res.success) {
+                    Swal.fire('¡Éxito!', `Se han migrado ${res.migrated} clientes correctamente. Ahora puedes eliminar el plan.`, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('modalMigrarClientes')).hide();
+                    cargarPlanes(currentPage);
+                } else {
+                    Swal.fire('Error', res.message || 'Error en la migración', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
             }
         });
     });
+
+    async function cargarPlanes(page = 1) {
+        currentPage = page;
+        const search = $('#searchInput').val();
+        try {
+            const resp = await fetch(`${API_URL}?action=get&page=${page}&limit=${itemsPerPage}&search=${encodeURIComponent(search)}`);
+            const result = await resp.json();
+            const data = result.data;
+            const tbody = document.getElementById('lista_planes_api');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No se encontraron planes.</td></tr>';
+                renderPagination(result);
+                return;
+            }
+
+            data.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="ps-4 fw-medium text-secondary">#${p.id_plan}</td>
+                    <td class="fw-bold text-dark">${p.nombre_plan}</td>
+                    <td>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">
+                            $${parseFloat(p.monto).toFixed(2)}
+                        </span>
+                    </td>
+                    <td class="text-muted small text-truncate" style="max-width: 300px;">
+                        ${p.descripcion || ''}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge ${p.clientes_activos > 0 ? 'bg-primary' : 'bg-light text-muted'} rounded-pill">
+                            ${p.clientes_activos}
+                        </span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="btn-group gap-2">
+                            <button class="btn btn-sm btn-outline-primary rounded-2" onclick='prepareEdit(${JSON.stringify(p)})' title="Modificar">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger rounded-2" onclick="openDeleteModal(${p.id_plan}, ${p.clientes_activos})" title="Eliminar">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            renderPagination(result);
+        } catch (e) {
+            console.error(e);
+            document.getElementById('lista_planes_api').innerHTML = '<tr><td colspan="6" class="text-center text-danger py-5">Error al cargar datos.</td></tr>';
+        }
+    }
+
+    function renderPagination(info) {
+        const infoText = document.getElementById('pagination-info');
+        const start = info.total > 0 ? (info.page - 1) * info.limit + 1 : 0;
+        const end = Math.min(info.page * info.limit, info.total);
+        infoText.innerText = `Mostrando ${start} a ${end} de ${info.total} planes`;
+
+        const list = document.getElementById('pagination-list');
+        list.innerHTML = '';
+
+        if (info.pages <= 1) return;
+
+        // Previous
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${info.page === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); cargarPlanes(${info.page - 1})"><i class="fas fa-chevron-left"></i></a>`;
+        list.appendChild(prevLi);
+
+        // Pages
+        for (let i = 1; i <= info.pages; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${info.page === i ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); cargarPlanes(${i})">${i}</a>`;
+            list.appendChild(li);
+        }
+
+        // Next
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${info.page === info.pages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); cargarPlanes(${info.page + 1})"><i class="fas fa-chevron-right"></i></a>`;
+        list.appendChild(nextLi);
+    }
+
+    window.prepareEdit = function (p) {
+        document.getElementById('id_plan_modal').value = p.id_plan;
+        document.getElementById('nombre_plan_modal').value = p.nombre_plan;
+        document.getElementById('monto_modal').value = parseFloat(p.monto).toFixed(2);
+        document.getElementById('descripcion_modal').value = p.descripcion || '';
+
+        const modal = new bootstrap.Modal(document.getElementById('modalModificacionPlan'));
+        modal.show();
+    }
+
+    window.openDeleteModal = function (id, count) {
+        document.getElementById('id_to_delete').value = id;
+        document.getElementById('id_to_delete').dataset.count = count;
+
+        const modal = new bootstrap.Modal(document.getElementById('eliminaModal'));
+        modal.show();
+    }
+
+    window.confirmDelete = async function () {
+        const id = document.getElementById('id_to_delete').value;
+        const count = parseInt(document.getElementById('id_to_delete').dataset.count);
+
+        if (count > 0) {
+            bootstrap.Modal.getInstance(document.getElementById('eliminaModal')).hide();
+            openMigrationModal(id, count);
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('id_plan', id);
+
+        try {
+            const resp = await fetch(API_URL + '?action=delete', { method: 'POST', body: formData });
+            const res = await resp.json();
+            if (res.success) {
+                Swal.fire('Eliminado', 'El plan ha sido eliminado con éxito.', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('eliminaModal')).hide();
+                cargarPlanes(currentPage);
+            } else {
+                Swal.fire('Error', res.message || 'Error al eliminar', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+        }
+    }
+
+    async function openMigrationModal(id, count) {
+        document.getElementById('migrate_id_old').value = id;
+        document.getElementById('migrate_client_count').innerText = count;
+
+        const select = document.getElementById('migrate_id_new');
+        select.innerHTML = '<option value="">Cargando planes...</option>';
+
+        try {
+            const resp = await fetch(API_URL + '?action=get&limit=100'); // Cargar todos para migración
+            const result = await resp.json();
+            select.innerHTML = '<option value="">Seleccione un plan...</option>';
+            result.data.forEach(p => {
+                if (p.id_plan != id) {
+                    const opt = document.createElement('option');
+                    opt.value = p.id_plan;
+                    opt.innerText = `${p.nombre_plan} ($${parseFloat(p.monto).toFixed(2)})`;
+                    select.appendChild(opt);
+                }
+            });
+
+            const modal = new bootstrap.Modal(document.getElementById('modalMigrarClientes'));
+            modal.show();
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Error', 'No se pudieron cargar los planes para migración', 'error');
+        }
+    }
+
 </script>
 
 <?php include $path_to_root . 'paginas/includes/layout_foot.php'; ?>

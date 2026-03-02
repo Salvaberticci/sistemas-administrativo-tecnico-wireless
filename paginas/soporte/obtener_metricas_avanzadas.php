@@ -121,21 +121,19 @@ try {
 // 3. CLIENTES RECURRENTES (dentro del rango seleccionado)
 try {
     $sql_recurrentes = "SELECT 
-                            c.id,
-                            c.nombre_completo,
+                            c.id, 
+                            c.nombre_completo, 
                             c.cedula,
-                            c.ip,
+                            c.ip_onu,
                             c.telefono,
-                            COUNT(s.id_soporte) as total_fallas,
-                            MAX(s.fecha_reporte) as ultima_falla,
-                            GROUP_CONCAT(DISTINCT s.tipo_falla SEPARATOR ', ') as tipos_falla
-                        FROM contratos c
-                        INNER JOIN soportes s ON c.id = s.id_contrato
-                        WHERE 1=1 $where_filtros
-                        GROUP BY c.id, c.nombre_completo, c.cedula, c.ip, c.telefono
-                        HAVING total_fallas >= 2
-                        ORDER BY total_fallas DESC
-                        LIMIT 20";
+                            SUM(p.monto_pagado) as total_pagado,
+                            MAX(p.fecha_pago) as ultimo_pago
+                        FROM mensualidades_pagos p
+                        JOIN contratos c ON p.id_contrato = c.id
+                        WHERE p.estado = 'VERIFICADO'
+                        GROUP BY c.id, c.nombre_completo, c.cedula, c.ip_onu, c.telefono
+                        ORDER BY total_pagado DESC
+                        LIMIT 5";
 
     $result = $conn->query($sql_recurrentes);
     $recurrentes = [];
@@ -144,11 +142,10 @@ try {
             'id_cliente' => $row['id'],
             'nombre' => $row['nombre_completo'],
             'cedula' => $row['cedula'],
-            'ip' => $row['ip'],
+            'ip' => $row['ip_onu'],
             'telefono' => $row['telefono'],
-            'total_fallas' => intval($row['total_fallas']),
-            'ultima_falla' => $row['ultima_falla'],
-            'tipos_falla' => $row['tipos_falla']
+            'total_pagado' => $row['total_pagado'],
+            'ultimo_pago' => $row['ultimo_pago']
         ];
     }
     $response['clientes_recurrentes'] = $recurrentes;

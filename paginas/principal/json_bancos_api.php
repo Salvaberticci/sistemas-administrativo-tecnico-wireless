@@ -28,19 +28,25 @@ $action = isset($_GET['action']) ? $_GET['action'] : 'get';
 $bancos = loadPartidas($file_path);
 
 if ($action === 'get') {
-    echo json_encode($bancos);
+    $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+    $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+    $offset = ($page - 1) * $limit;
+
+    $total = count($bancos);
+    $pagedData = array_slice($bancos, $offset, $limit);
+
+    echo json_encode([
+        'total' => $total,
+        'page' => $page,
+        'limit' => $limit,
+        'pages' => ceil($total / $limit),
+        'data' => $pagedData
+    ]);
     exit;
 }
 
 if ($action === 'add') {
     $nombre = isset($_POST['nombre_banco']) ? trim($_POST['nombre_banco']) : '';
-    // Podrías agregar más campos si es necesario (titular, cuenta, etc)
-    // Por ahora el usuario solo pidió nombre o "editar", asumimos nombre básico para la lista
-    // Pero para ser compatible con lo anterior, quizás quiera todos los datos?
-    // User request: "quiero que las cuentas que aparecen se guarden en un json y que se puedan editar"
-    // "modal para poder agregar o liminar cuientas bancarias"
-
-    // Vamos a aceptar todos los campos posibles para ser flexibles
     $numero = isset($_POST['numero_cuenta']) ? trim($_POST['numero_cuenta']) : '';
     $titular = isset($_POST['titular_cuenta']) ? trim($_POST['titular_cuenta']) : '';
     $cedula = isset($_POST['cedula_propietario']) ? trim($_POST['cedula_propietario']) : '';
@@ -72,6 +78,40 @@ if ($action === 'add') {
     echo json_encode(['success' => true, 'data' => $nuevo]);
     exit;
 }
+
+if ($action === 'update') {
+    $id = isset($_POST['id_banco']) ? $_POST['id_banco'] : '';
+    $nombre = isset($_POST['nombre_banco']) ? trim($_POST['nombre_banco']) : '';
+    $numero = isset($_POST['numero_cuenta']) ? trim($_POST['numero_cuenta']) : '';
+    $titular = isset($_POST['titular_cuenta']) ? trim($_POST['titular_cuenta']) : '';
+    $cedula = isset($_POST['cedula_propietario']) ? trim($_POST['cedula_propietario']) : '';
+
+    if (empty($id) || empty($nombre)) {
+        echo json_encode(['success' => false, 'message' => 'ID y Nombre requeridos']);
+        exit;
+    }
+
+    $found = false;
+    foreach ($bancos as &$b) {
+        if ($b['id_banco'] == $id) {
+            $b['nombre_banco'] = $nombre;
+            $b['numero_cuenta'] = $numero;
+            $b['cedula_propietario'] = $cedula;
+            $b['nombre_propietario'] = $titular;
+            $found = true;
+            break;
+        }
+    }
+
+    if ($found) {
+        savePartidas($file_path, $bancos);
+        echo json_encode(['success' => true]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Banco no encontrado']);
+    }
+    exit;
+}
+
 
 if ($action === 'delete') {
     $id = isset($_POST['id']) ? $_POST['id'] : '';

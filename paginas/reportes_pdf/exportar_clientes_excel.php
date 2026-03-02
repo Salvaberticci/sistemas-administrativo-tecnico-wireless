@@ -2,7 +2,7 @@
 // Archivo: exportar_clientes_excel.php
 
 // Incluye tu conexión a la base de datos
-require_once '../conexion.php'; 
+require_once '../conexion.php';
 
 // -------------------------------------------------------------------------
 // 1. CAPTURA Y CONSTRUCCIÓN DE LA CLÁUSULA WHERE
@@ -20,7 +20,7 @@ $id_olt_filtro = isset($_GET['olt']) ? $_GET['olt'] : 'TODOS';
 $id_pon_filtro = isset($_GET['pon']) ? $_GET['pon'] : 'TODOS';
 // --------------------------------
 
-$where_clause = " WHERE 1=1 "; 
+$where_clause = " WHERE 1=1 ";
 
 // Cláusula JOIN completa, necesaria para obtener los nombres descriptivos
 $join_clause = "
@@ -76,7 +76,7 @@ $query = "
         c.direccion, 
         c.fecha_instalacion, 
         c.estado,
-        c.ip,
+        c.ip_onu,
         m.nombre_municipio,
         pa.nombre_parroquia,
         pl.nombre_plan,
@@ -113,17 +113,17 @@ $nombre_archivo = "Reporte_Clientes_Filtros_" . $fecha_actual . ".csv";
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $nombre_archivo . '"');
 
-$output = fopen('php://output', 'w'); 
+$output = fopen('php://output', 'w');
 
 // Escribe los encabezados (Añadidos campos descriptivos, OLT y PON)
 fputcsv($output, [
-    'ID', 
-    'CEDULA', 
-    'NOMBRE COMPLETO', 
-    'TELEFONO', 
-    'CORREO', 
-    'DIRECCION', 
-    'FECHA INSTALACION', 
+    'ID',
+    'CEDULA',
+    'NOMBRE COMPLETO',
+    'TELEFONO',
+    'CORREO',
+    'DIRECCION',
+    'FECHA INSTALACION',
     'ESTADO CONTRATO',
     'IP',
     'MUNICIPIO',
@@ -132,7 +132,7 @@ fputcsv($output, [
     'VENDEDOR',
     'OLT',
     'PON'
-], ';'); 
+], ';');
 
 // Escribe los datos de cada fila
 while ($fila = $resultado->fetch_assoc()) {
@@ -145,7 +145,7 @@ while ($fila = $resultado->fetch_assoc()) {
         $fila['direccion'],
         $fila['fecha_instalacion'],
         $fila['estado'],
-        $fila['ip'],
+        $fila['ip_onu'],
         $fila['nombre_municipio'],
         $fila['nombre_parroquia'],
         $fila['nombre_plan'],
@@ -155,6 +155,6 @@ while ($fila = $resultado->fetch_assoc()) {
     ], ';');
 }
 
-fclose($output); 
+fclose($output);
 exit;
 ?>

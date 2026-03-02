@@ -13,15 +13,6 @@ include $path_to_root . 'paginas/includes/header.php';
 ?>
 
 <style>
-    .signature-pad {
-        border: 2px dashed #ccc;
-        border-radius: 5px;
-        width: 100%;
-        height: 150px;
-        background-color: #f8f9fa;
-        touch-action: none;
-    }
-
     .section-title {
         background-color: #f1f3f5;
         padding: 10px;
@@ -30,6 +21,44 @@ include $path_to_root . 'paginas/includes/header.php';
         margin-top: 20px;
         margin-bottom: 15px;
         border-radius: 0 4px 4px 0;
+    }
+
+    .priority-badge {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        opacity: 0.6;
+    }
+
+    .priority-badge:hover {
+        transform: translateY(-2px);
+        opacity: 1;
+    }
+
+    .priority-badge.active {
+        border-color: #000;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        transform: scale(1.1);
+        opacity: 1;
+    }
+
+    .priority-nivel1 {
+        background-color: #ffff00;
+        color: #000;
+    }
+
+    .priority-nivel2 {
+        background-color: #fd7e14;
+        color: white;
+    }
+
+    .priority-nivel3 {
+        background-color: #dc3545;
+        color: white;
     }
 </style>
 
@@ -80,6 +109,24 @@ include $path_to_root . 'paginas/includes/header.php';
                                 <label class="form-label fw-bold">Sector</label>
                                 <input type="text" class="form-control" name="sector" placeholder="Ej. Las Malvinas">
                             </div>
+                        </div>
+
+                        <!-- Clasificación de la Falla -->
+                        <div class="section-title">Clasificación de la Falla</div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Prioridad <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <span class="priority-badge priority-nivel1 active" data-priority="NIVEL 1">
+                                    <i class="fas fa-comment-dots me-1"></i>NIVEL 1 (WhatsApp)
+                                </span>
+                                <span class="priority-badge priority-nivel2" data-priority="NIVEL 2">
+                                    <i class="fas fa-home me-1"></i>NIVEL 2 (Visita Técnico)
+                                </span>
+                                <span class="priority-badge priority-nivel3" data-priority="NIVEL 3">
+                                    <i class="fas fa-network-wired me-1"></i>NIVEL 3 (Red Afectada)
+                                </span>
+                            </div>
+                            <input type="hidden" id="prioridad" name="prioridad" value="NIVEL 1" required>
                         </div>
 
                         <!-- 2. Cliente -->
@@ -259,6 +306,15 @@ include $path_to_root . 'paginas/includes/header.php';
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    // --- Lógica de Prioridad ---
+    document.querySelectorAll('.priority-badge').forEach(badge => {
+        badge.addEventListener('click', function () {
+            document.querySelectorAll('.priority-badge').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('prioridad').value = this.dataset.priority;
+        });
+    });
+
     // --- Lógica de Búsqueda de Cliente ---
     const searchInput = document.getElementById('cliente_search');
     const resultsDiv = document.getElementById('search_results');

@@ -118,8 +118,6 @@ require_once '../includes/sidebar.php';
                                 <img id="preview-image" alt="Vista previa">
                             </div>
 
-                            <hr class="my-4">
-
                             <!-- Búsqueda Manual -->
                             <div class="manual-search-section">
                                 <h6 class="fw-bold text-muted mb-3 small text-uppercase">O ingresa la referencia
@@ -130,6 +128,21 @@ require_once '../includes/sidebar.php';
                                         placeholder="Ej: 12345678">
                                     <button class="btn btn-primary" type="button"
                                         onclick="handleManualSearch()">Verificar</button>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <!-- Búsqueda Masiva Excel Secundario -->
+                            <div class="manual-search-section">
+                                <h6 class="fw-bold text-muted mb-3 small text-uppercase">O compara otro archivo Excel:
+                                </h6>
+                                <div id="drop-zone-excel-secondary" class="drop-zone"
+                                    style="min-height: 120px; padding: 15px;">
+                                    <i class="fa-solid fa-file-csv fa-2x text-secondary mb-2"></i>
+                                    <h6 id="excel-secondary-label" class="fs-6">Sube Excel Secundario</h6>
+                                    <input type="file" id="excel-secondary-input" accept=".xlsx, .xls, .csv"
+                                        style="display: none;">
                                 </div>
                             </div>
                         </div>
@@ -234,6 +247,57 @@ require_once '../includes/sidebar.php';
                                 </div>
                                 <button class="btn btn-outline-secondary mt-3" onclick="retryOCR()">Intentar de
                                     nuevo</button>
+                            </div>
+
+                            <!-- Resultado: Búsqueda Masiva Excel -->
+                            <div id="result-bulk-compare" class="result-card py-4" style="display: none;">
+                                <div class="text-center mb-4">
+                                    <h3 class="fw-bold text-primary mb-2">RESULTADOS DE COMPARACIÓN</h3>
+                                </div>
+                                <div class="mx-3">
+                                    <ul class="nav nav-pills mb-3 justify-content-center" id="pills-tab" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active bg-success text-white px-4 m-1 fw-bold"
+                                                id="pills-found-tab" data-bs-toggle="pill" data-bs-target="#pills-found"
+                                                type="button" role="tab"><i
+                                                    class="fa-solid fa-check me-2"></i>Encontradas (<span
+                                                    id="count-found">0</span>)</button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link bg-danger text-white px-4 m-1 fw-bold"
+                                                id="pills-missing-tab" data-bs-toggle="pill"
+                                                data-bs-target="#pills-missing" type="button" role="tab"><i
+                                                    class="fa-solid fa-xmark me-2"></i>No Encontradas (<span
+                                                    id="count-missing">0</span>)</button>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content border rounded bg-light" id="pills-tabContent"
+                                        style="max-height: 400px; overflow-y: auto;">
+                                        <!-- Encontradas -->
+                                        <div class="tab-pane fade show active p-3" id="pills-found" role="tabpanel">
+                                            <table class="table table-sm table-hover mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Referencia</th>
+                                                        <th>Acción</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="table-found-body"></tbody>
+                                            </table>
+                                        </div>
+                                        <!-- No Encontradas -->
+                                        <div class="tab-pane fade p-3" id="pills-missing" role="tabpanel">
+                                            <table class="table table-sm table-hover mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Referencia Buscada</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="table-missing-body"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                         </div>
@@ -366,6 +430,7 @@ require_once '../includes/sidebar.php';
     const initialStateDiv = document.getElementById('initial-state');
     const resultSuccess = document.getElementById('result-success');
     const resultError = document.getElementById('result-error');
+    const resultBulk = document.getElementById('result-bulk-compare');
     const ocrProgress = document.getElementById('ocr-progress');
     const ocrStatusText = document.getElementById('ocr-status-text');
 
@@ -401,6 +466,7 @@ require_once '../includes/sidebar.php';
         initialStateDiv.style.display = 'none';
         resultSuccess.style.display = 'none';
         resultError.style.display = 'none';
+        resultBulk.style.display = 'none';
         statusDiv.style.display = 'block';
         ocrProgress.style.width = '0%';
         ocrResultText = "";
@@ -506,8 +572,193 @@ require_once '../includes/sidebar.php';
         initialStateDiv.style.display = 'none';
         resultSuccess.style.display = 'none';
         resultError.style.display = 'none';
+        resultBulk.style.display = 'none';
 
         processExtractedTokens([manualRef], false);
+    }
+
+    // Lógica Excel Secundario
+    const dropZoneExcelSec = document.getElementById('drop-zone-excel-secondary');
+    const excelSecInput = document.getElementById('excel-secondary-input');
+
+    dropZoneExcelSec.addEventListener('click', function (e) {
+        if (e.target !== excelSecInput) excelSecInput.click();
+    });
+    dropZoneExcelSec.addEventListener('dragover', function (e) { e.preventDefault(); dropZoneExcelSec.classList.add('active'); });
+    dropZoneExcelSec.addEventListener('dragleave', function () { dropZoneExcelSec.classList.remove('active'); });
+    dropZoneExcelSec.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropZoneExcelSec.classList.remove('active');
+        if (e.dataTransfer.files[0]) handleSecondaryExcel(e.dataTransfer.files[0]);
+    });
+    excelSecInput.addEventListener('click', function (e) { e.target.value = null; });
+    excelSecInput.addEventListener('change', function (e) {
+        if (e.target.files[0]) handleSecondaryExcel(e.target.files[0]);
+    });
+
+    function handleSecondaryExcel(file) {
+        if (bankData.length === 0) {
+            Swal.fire('Atención', 'Sube primero el archivo Excel principal del banco.', 'warning');
+            return;
+        }
+
+        const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
+        const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+        if (!validTypes.includes(file.type) && !['.xlsx', '.xls', '.csv'].includes(fileExt)) {
+            Swal.fire('Formato Incorrecto', 'Por favor sube un Excel válido.', 'error');
+            return;
+        }
+
+        initialStateDiv.style.display = 'none';
+        resultSuccess.style.display = 'none';
+        resultError.style.display = 'none';
+        resultBulk.style.display = 'none';
+        statusDiv.style.display = 'block';
+        ocrStatusText.innerText = "Extrayendo referencias del archivo...";
+        ocrProgress.style.width = '100%';
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                document.getElementById('excel-secondary-label').innerText = file.name;
+                dropZoneExcelSec.classList.add('border-primary');
+
+                const data = new Uint8Array(e.target.result);
+                const wb = XLSX.read(data, { type: 'array' });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+
+                // Extraer todo a JSON 1D crudo para buscar cualquier número de más de 4 dígitos
+                const rawJson = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                let potentialRefs = new Set(); // Evitar duplicados
+
+                rawJson.forEach(row => {
+                    row.forEach(cell => {
+                        let str = String(cell).trim();
+                        // Buscar secuencias numéricas (evitar decimales si es posible, o tomar la parte entera grande)
+                        let matches = str.match(/\b\d{5,25}\b/g);
+                        if (matches) {
+                            matches.forEach(m => potentialRefs.add(m));
+                        }
+                    });
+                });
+
+                const tokensArray = Array.from(potentialRefs);
+                if (tokensArray.length > 0) {
+                    processBulkSearch(tokensArray);
+                } else {
+                    statusDiv.style.display = 'none';
+                    initialStateDiv.style.display = 'block';
+                    Swal.fire('Atención', 'No se encontraron referencias numéricas válidas en el archivo secundario.', 'warning');
+                }
+            } catch (error) {
+                console.error(error);
+                statusDiv.style.display = 'none';
+                initialStateDiv.style.display = 'block';
+                Swal.fire('Error', 'No se pudo leer el Excel.', 'error');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // Funciones Helper para la Búsqueda Masiva
+    function processBulkSearch(tokens) {
+        let foundRefs = [];
+        let missingRefs = [];
+
+        // Determinar la columna "Referencia" en bankData (Igual que processExtractedTokens)
+        const headers = Object.keys(bankData[0]);
+        let colRef = null;
+        for (let i = 0; i < headers.length; i++) {
+            let hLower = headers[i].toLowerCase();
+            if (hLower.indexOf('referencia') !== -1 || hLower.indexOf('ref') !== -1 || hLower.indexOf('operacion') !== -1 || hLower.indexOf('doc') !== -1) {
+                colRef = headers[i];
+                break;
+            }
+        }
+
+        tokens.forEach(token => {
+            let cleanToken = token.trim();
+            if (cleanToken.length < 5) return; // Ignorar muy cortos
+
+            let matched = false;
+            for (let r = 0; r < bankData.length; r++) {
+                let cellValue = colRef ? String(bankData[r][colRef]).trim() : Object.values(bankData[r]).join(" ");
+                if (cellValue.indexOf(cleanToken) !== -1) {
+                    matched = true;
+                    // Guardar ref y row data para "Verificar" botón
+                    foundRefs.push({ ref: cleanToken, row: bankData[r] });
+                    break;
+                }
+            }
+            if (!matched) {
+                missingRefs.push(cleanToken);
+            }
+        });
+
+        statusDiv.style.display = 'none';
+        showBulkResults(foundRefs, missingRefs);
+    }
+
+    function showBulkResults(found, missing) {
+        resultSuccess.style.display = 'none';
+        resultError.style.display = 'none';
+        resultBulk.style.display = 'block';
+
+        document.getElementById('count-found').innerText = found.length;
+        document.getElementById('count-missing').innerText = missing.length;
+
+        let foundHtml = '';
+        if (found.length > 0) {
+            found.forEach((item, index) => {
+                foundHtml += `
+                    <tr>
+                        <td class="align-middle fw-bold text-success">${item.ref}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-success" onclick='abrirVerificacionUnica("${item.ref}", ${JSON.stringify(item.row)})'>
+                                Verificar DB
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        } else {
+            foundHtml = '<tr><td colspan="2" class="text-center text-muted">Ninguna coincidencia encontrada</td></tr>';
+        }
+        document.getElementById('table-found-body').innerHTML = foundHtml;
+
+        let missingHtml = '';
+        if (missing.length > 0) {
+            missing.forEach(ref => {
+                missingHtml += `<tr><td class="text-secondary">${ref}</td></tr>`;
+            });
+        } else {
+            missingHtml = '<tr><td class="text-center text-muted">Todo fue encontrado</td></tr>';
+        }
+        document.getElementById('table-missing-body').innerHTML = missingHtml;
+    }
+
+    // Modal para verificar una sola referencia desde el bulk list
+    function abrirVerificacionUnica(refString, rowData) {
+        // Aprovechar showSuccess y checkDatabase que ya existen para mostrar UI de una sola
+        resultBulk.style.display = 'none';
+        showSuccess(refString, rowData, false);
+        checkDatabase(refString);
+
+        // Agregar botón de volver a la vista en bloque
+        const dbSection = document.getElementById('db-check-section');
+        let backBtn = document.getElementById('btn-back-bulk');
+        if (!backBtn) {
+            backBtn = document.createElement('button');
+            backBtn.id = 'btn-back-bulk';
+            backBtn.className = 'btn btn-outline-secondary mt-3 mx-4';
+            backBtn.innerHTML = '<i class="fa-solid fa-arrow-left me-1"></i> Volver a Lista';
+            backBtn.onclick = () => {
+                resultSuccess.style.display = 'none';
+                resultBulk.style.display = 'block';
+            };
+            resultSuccess.appendChild(backBtn);
+        }
     }
 
     function processExtractedTokens(tokens, isOCR) {
