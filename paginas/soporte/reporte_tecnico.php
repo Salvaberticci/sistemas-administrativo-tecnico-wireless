@@ -10,6 +10,50 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        .badge-nivel3 {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Estilos para badges de prioridad seleccionables */
+        .priority-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            opacity: 0.6;
+            font-size: 0.85rem;
+        }
+
+        .priority-badge:hover {
+            transform: translateY(-2px);
+            opacity: 1;
+        }
+
+        .priority-badge.active {
+            border-color: #000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+            opacity: 1;
+        }
+
+        .priority-nivel1 {
+            background-color: #ffff00;
+            color: #000;
+        }
+
+        .priority-nivel2 {
+            background-color: #fd7e14;
+            color: white;
+        }
+
+        .priority-nivel3 {
+            background-color: #dc3545;
+            color: white;
+        }
         body {
             background-color: #f8f9fa;
         }
@@ -158,6 +202,23 @@
 
                             <!-- 6. Observaciones -->
                             <div class="section-title">Diagnóstico y Solución</div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Prioridad / Clasificación</label>
+                                <div class="d-flex gap-2 flex-wrap mb-2">
+                                    <span class="priority-badge priority-nivel1 active" data-priority="NIVEL 1">
+                                        <i class="fa-brands fa-whatsapp me-1"></i>NIVEL 1
+                                    </span>
+                                    <span class="priority-badge priority-nivel2" data-priority="NIVEL 2">
+                                        <i class="fa-solid fa-house-chimney-user me-1"></i>NIVEL 2
+                                    </span>
+                                    <span class="priority-badge priority-nivel3" data-priority="NIVEL 3">
+                                        <i class="fa-solid fa-network-wired me-1"></i>NIVEL 3
+                                    </span>
+                                </div>
+                                <input type="hidden" id="prioridad" name="prioridad" value="NIVEL 1">
+                            </div>
+
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Tipo de Falla</label>
                                 <select class="form-select" name="tipo_falla" id="tipo_falla" required>
@@ -576,6 +637,13 @@
                         resultsDiv.style.display = 'block';
                     }
                 });
+        });
+
+        // Manejo de selección de prioridad
+        $('.priority-badge').click(function () {
+            $('.priority-badge').removeClass('active');
+            $(this).addClass('active');
+            $('#prioridad').val($(this).data('priority'));
         });
 
         // Enviar Formulario
