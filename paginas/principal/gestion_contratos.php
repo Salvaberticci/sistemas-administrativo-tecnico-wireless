@@ -119,14 +119,9 @@ require_once '../includes/sidebar.php';
                     </button>
                     <!-- BOTONES EXCEL NUEVOS -->
                     <div class="vr mx-1"></div>
-                    <button type="button" class="btn btn-warning d-flex align-items-center gap-2 shadow-sm"
-                        data-bs-toggle="modal" data-bs-target="#modalExportarFiltrado">
-                        <i class="fa-solid fa-filter"></i> <i class="fa-solid fa-file-excel"></i> <span
-                            class="d-none d-md-inline">Exportar Filtrado</span>
-                    </button>
-                    <button type="button" class="btn btn-success d-flex align-items-center gap-2 shadow-sm"
-                        onclick="exportExcel()">
-                        <i class="fa-solid fa-file-excel"></i> <span class="d-none d-md-inline">Exportar Todo</span>
+                    <button type="button" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm"
+                        data-bs-toggle="modal" data-bs-target="#modalOpcionesExportar">
+                        <i class="fa-solid fa-file-export"></i> <span class="d-none d-md-inline">Exportar</span>
                     </button>
                     <button type="button" class="btn btn-outline-success d-flex align-items-center gap-2 shadow-sm"
                         data-bs-toggle="modal" data-bs-target="#modalImportExcel">
@@ -1553,10 +1548,45 @@ require_once '../includes/sidebar.php';
         });
 
         // ========================================================
+        // MODAL OPCIONES EXPORTAR
+        // ========================================================
+        ?>
+            <div class="modal fade" id="modalOpcionesExportar" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-export me-2"></i>Opciones de Exportación</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center p-4">
+                            <p class="text-muted mb-4">¿Qué tipo de exportación desea realizar?</p>
+                            <div class="d-grid gap-3">
+                                <button type="button" class="btn btn-outline-success btn-lg d-flex align-items-center justify-content-center gap-2" onclick="$('#modalOpcionesExportar').modal('hide'); exportExcel();">
+                                    <i class="fa-solid fa-file-csv fa-lg"></i>
+                                    <div class="text-start lh-1">
+                                        <div class="fw-bold">General</div>
+                                        <small style="font-size: 0.7em;">Datos de tabla (CSV)</small>
+                                    </div>
+                                </button>
+                                <button type="button" class="btn btn-outline-warning btn-lg d-flex align-items-center justify-content-center gap-2" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalExportarFiltrado">
+                                    <i class="fa-solid fa-filter fa-lg"></i>
+                                    <div class="text-start lh-1">
+                                        <div class="fw-bold">Avanzado</div>
+                                        <small style="font-size: 0.7em;">Con filtros (Excel)</small>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <?php
+        // ========================================================
         // MODAL EXPORTAR FILTRADO
         // ========================================================
         ?>
-            <div class="modal fade" id="modalExportarFiltrado" tabindex="-1" aria-hidden="true">
+            < div class="modal fade" id = "modalExportarFiltrado" tabindex = "-1" aria - hidden="true" >
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header bg-warning text-dark">
@@ -1649,14 +1679,14 @@ require_once '../includes/sidebar.php';
                         </div>
                     </div>
                 </div>
-            </div>
-        // ========================================================
-        // MODAL EDITAR CONTRATO
-        // ========================================================
+            </div >
+            // ========================================================
+            // MODAL EDITAR CONTRATO
+            // ========================================================
 
 
-        // Helper Location Logic JSON
-        let editUbicacionesData = [];
+            // Helper Location Logic JSON
+            let editUbicacionesData = [];
         $.get('api_ubicaciones.php', function (data) {
             editUbicacionesData = data;
             let options = '<option value="">-- Seleccione Municipio --</option>';

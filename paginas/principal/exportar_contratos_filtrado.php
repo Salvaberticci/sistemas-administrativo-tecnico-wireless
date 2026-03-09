@@ -82,70 +82,65 @@ if (!$result) {
     die("Error en la consulta: " . $conn->error);
 }
 
-// 3. Generación del HTML para Excel
+// 3. Generación del Contenido CSV
+$fecha_actual = date('Ymd_His');
+$nombre_archivo = "Reporte_Contratos_Filtros_" . $fecha_actual . ".csv";
+
+// Configurar encabezados para forzar la descarga del archivo CSV
+header('Content-Type: text/csv; charset=utf-8');
+header('Content-Disposition: attachment; filename="' . $nombre_archivo . '"');
+
+$output = fopen('php://output', 'w');
+
+// Escribe los encabezados
+fputcsv($output, [
+    'ID',
+    'CEDULA',
+    'CLIENTE',
+    'TELEFONO',
+    'CORREO',
+    'DIRECCION',
+    'FECHA INSTALACION',
+    'PLAN',
+    'ESTADO',
+    'TIPO CONEXION',
+    'OLT',
+    'PON',
+    'CAJA NAP',
+    'IP ONU',
+    'MAC ONU',
+    'INSTALADOR',
+    'OBSERVACIONES'
+], ';');
+
+// Escribe los datos de cada fila
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $dir_completa = $row['nombre_municipio'] . " - " . $row['nombre_parroquia'] . " - " . $row['direccion'];
+
+        fputcsv($output, [
+            $row['id'],
+            $row['cedula'],
+            $row['nombre_completo'],
+            $row['telefono'],
+            $row['correo'],
+            $dir_completa,
+            $row['fecha_instalacion'],
+            $row['nombre_plan'] ?? 'N/A',
+            $row['estado'],
+            $row['tipo_conexion'],
+            $row['nombre_olt'] ?? 'N/A',
+            $row['nombre_pon'] ?? 'N/A',
+            $row['ident_caja_nap'],
+            $row['ip_onu'],
+            $row['mac_onu'],
+            $row['instalador'],
+            $row['observaciones']
+        ], ';');
+    }
+}
+
+fclose($output);
+$conn->close();
+exit;
 ?>
-<table border="1" style="font-family: Arial, sans-serif; font-size: 12px; border-collapse: collapse;">
-    <thead>
-        <tr style="background-color: #007bff; color: #ffffff; font-weight: bold; text-align: center;">
-            <th>ID</th>
-            <th>Cédula</th>
-            <th>Cliente</th>
-            <th>Teléfono</th>
-            <th>Correo</th>
-            <th>Dirección Completa</th>
-            <th>Fecha Instalación</th>
-            <th>Plan</th>
-            <th>Estado</th>
-            <th>Tipo Conexión</th>
-            <th>OLT</th>
-            <th>PON</th>
-            <th>Caja NAP</th>
-            <th>IP ONU</th>
-            <th>MAC ONU</th>
-            <th>Instalador</th>
-            <th>Observaciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                // Formatear dirección
-                $dir_completa = $row['nombre_municipio'] . " - " . $row['nombre_parroquia'] . " - " . $row['direccion'];
-
-                // Color por estado
-                $color_estado = '#000000';
-                if ($row['estado'] === 'Activo')
-                    $color_estado = '#28a745';
-                else if ($row['estado'] === 'Suspendido')
-                    $color_estado = '#dc3545';
-                else if ($row['estado'] === 'Retirado')
-                    $color_estado = '#6c757d';
-
-                echo "<tr>";
-                echo "<td>{$row['id']}</td>";
-                echo "<td>{$row['cedula']}</td>";
-                echo "<td>" . htmlspecialchars($row['nombre_completo'] ?? '') . "</td>";
-                echo "<td>{$row['telefono']}</td>";
-                echo "<td>" . htmlspecialchars($row['correo'] ?? '') . "</td>";
-                echo "<td>" . htmlspecialchars($dir_completa) . "</td>";
-                echo "<td>{$row['fecha_instalacion']}</td>";
-                echo "<td>" . htmlspecialchars($row['nombre_plan'] ?? 'N/A') . "</td>";
-                echo "<td style='color: {$color_estado}; font-weight: bold;'>{$row['estado']}</td>";
-                echo "<td>{$row['tipo_conexion']}</td>";
-                echo "<td>" . htmlspecialchars($row['nombre_olt'] ?? 'N/A') . "</td>";
-                echo "<td>" . htmlspecialchars($row['nombre_pon'] ?? 'N/A') . "</td>";
-                echo "<td>{$row['ident_caja_nap']}</td>";
-                echo "<td>{$row['ip_onu']}</td>";
-                echo "<td>{$row['mac_onu']}</td>";
-                echo "<td>" . htmlspecialchars($row['instalador'] ?? '') . "</td>";
-                echo "<td>" . htmlspecialchars($row['observaciones'] ?? '') . "</td>";
-                echo "</tr>";
-            }
-        } else {
-            echo "<tr><td colspan='17' style='text-align: center; color: red;'>No se encontraron registros con los filtros aplicados.</td></tr>";
-        }
-        ?>
-    </tbody>
-</table>
-<?php $conn->close(); ?>
