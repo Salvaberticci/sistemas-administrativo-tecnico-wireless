@@ -22,6 +22,30 @@ if ($tipo === 'municipio') {
         JOIN municipio m ON c.id_municipio = m.id_municipio 
         WHERE m.nombre_municipio = ?
     ");
+} elseif ($tipo === 'plan_prorrateo') {
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) 
+        FROM contratos 
+        WHERE plan_prorrateo_nombre = ?
+    ");
+} elseif ($tipo === 'vendedor') {
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) 
+        FROM contratos 
+        WHERE vendedor_texto = ?
+    ");
+} elseif ($tipo === 'instalador') {
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) 
+        FROM contratos 
+        WHERE instalador = ?
+    ");
+} elseif ($tipo === 'tipo_conexion') {
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) 
+        FROM contratos 
+        WHERE tipo_conexion = ?
+    ");
 } else {
     // Check contracts using this parish name (via join)
     $stmt = $conn->prepare("

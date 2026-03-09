@@ -397,6 +397,7 @@ $get_class = isset($_GET['class']) ? $_GET['class'] : $message_class;
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // -----------------------------------------------------
     // 1. LÓGICA DEL MODAL DE MODIFICACIÓN (modificaModal)
@@ -459,4 +460,97 @@ $get_class = isset($_GET['class']) ? $_GET['class'] : $message_class;
             }
         });
     }
+
+    // --- LOGICA DE AUTORIZACION (CONTRASEÑA) ---
+    let isAuthVerified = false;
+    let currentAuthorizedButton = null;
+
+    // modalModificacionPON es el id del modal.
+    const modalsToProtect = ['modificaModal', 'eliminaModal']; // Corrected 'modalModificacionPON' to 'modificaModal'
+
+    modalsToProtect.forEach(modalId => {
+        const modalEl = document.getElementById(modalId);
+        if (modalEl) {
+            modalEl.addEventListener('show.bs.modal', function (e) {
+                if (isAuthVerified && currentAuthorizedButton === e.relatedTarget) {
+                    return; // Permitir que el modal se muestre
+                }
+
+                // Prevenir que el modal se muestre
+                e.preventDefault();
+                const btn = e.relatedTarget;
+
+                Swal.fire({
+                    title: 'Verificación requerida',
+                    text: 'Ingrese su contraseña de administrador para continuar',
+                    input: 'password',
+                    inputAttributes: {
+                        autocapitalize: 'off',
+                        autocorrect: 'off'
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: 'Verificar',
+                    cancelButtonText: 'Cancelar',
+                    showLoaderOnConfirm: true,
+                    preConfirm: (clave) => {
+                        if (!clave) {
+                            Swal.showValidationMessage('La contraseña es requerida');
+                            return false;
+                        }
+                        return fetch('principal/verificar_clave.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: new URLSearchParams({ clave: clave })
+                        })
+                            .then(response => {
+                                if (!response.ok) throw new Error('Error en la red');
+                                return response.json();
+                            })
+                            .then(data => {
+                                if (!data.success) throw new Error(data.message || 'Contraseña incorrecta');
+                                return true;
+                            })
+                            .catch(error => {
+                                Swal.showValidationMessage(`Error: ${error.message}`);
+                            });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        isAuthVerified = true;
+                        currentAuthorizedButton = btn;
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Acceso autorizado',
+                            timer: 1000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            // Transferir el href manualmente por si bsModal pierde el relatedTarget
+                            if (modalId === 'eliminaModal') {
+                                const btnOk = modalEl.querySelector('.btn-ok');
+                                const url = btn.getAttribute('data-bs-href');
+                                if (btnOk && url) {
+                                    btnOk.href = url;
+                                }
+                            }
+
+                            // Volver a disparar el modal programaticamente
+                            const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                            bsModal.show(btn);
+
+                            // Resetear el flag despues de que el modal se muestre
+                            setTimeout(() => {
+                                isAuthVerified = false;
+                                currentAuthorizedButton = null;
+                            }, 500);
+                        });
+                    }
+                });
+            });
+        }
+    });
+    // --- FIN LOGICA AUTORIZACION ---
 </script>

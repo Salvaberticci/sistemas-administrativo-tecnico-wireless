@@ -317,7 +317,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         // REGISTRO DE DEUDOR SI HAY SALDO PENDIENTE
-        $saldo_pendiente = $monto_pagar - $monto_pagado;
+        $saldo_pendiente = round($monto_pagar - $monto_pagado, 2);
 
         if ($saldo_pendiente > 0) {
             $sql_deudor = "INSERT INTO clientes_deudores (id_contrato, monto_total, monto_pagado, saldo_pendiente, estado) 

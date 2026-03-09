@@ -6,7 +6,7 @@ $busqueda_filtro = isset($_GET['busqueda']) ? $_GET['busqueda'] : ''; // 🔍 NU
 $id_municipio_filtro = isset($_GET['municipio']) ? $_GET['municipio'] : 'TODOS';
 $id_parroquia_filtro = isset($_GET['parroquia']) ? $_GET['parroquia'] : 'TODOS';
 $estado_contrato_filtro = isset($_GET['estado_contrato']) ? $_GET['estado_contrato'] : 'TODOS';
-$id_vendedor_filtro = isset($_GET['vendedor']) ? $_GET['vendedor'] : 'TODOS';
+$vendedor_texto_filtro = isset($_GET['vendedor']) ? $_GET['vendedor'] : 'TODOS';
 $id_plan_filtro = isset($_GET['plan']) ? $_GET['plan'] : 'TODOS';
 $cobros_estado_filtro = isset($_GET['estado_cobros']) ? $_GET['estado_cobros'] : 'TODOS';
 $id_olt_filtro = isset($_GET['olt']) ? $_GET['olt'] : 'TODOS';
@@ -17,7 +17,8 @@ $total_clientes = 0;
 
 // Consultas para cargar los filtros
 $municipios = $conn->query("SELECT id_municipio, nombre_municipio FROM municipio ORDER BY nombre_municipio")->fetch_all(MYSQLI_ASSOC);
-$vendedores = $conn->query("SELECT id_vendedor, nombre_vendedor FROM vendedores ORDER BY nombre_vendedor")->fetch_all(MYSQLI_ASSOC);
+$vendedores_json_path = '../principal/data/vendedores.json';
+$vendedores = file_exists($vendedores_json_path) ? json_decode(file_get_contents($vendedores_json_path), true) ?: [] : [];
 $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan")->fetch_all(MYSQLI_ASSOC);
 $estados_contrato = ['ACTIVO', 'INACTIVO', 'SUSPENDIDO', 'CANCELADO'];
 $estados_cobros = ['PENDIENTE', 'VENCIDO', 'PAGADO', 'TODOS'];
@@ -47,7 +48,6 @@ $join_clause = "
     LEFT JOIN municipio m ON c.id_municipio = m.id_municipio
     LEFT JOIN parroquia pa ON c.id_parroquia = pa.id_parroquia
     LEFT JOIN planes pl ON c.id_plan = pl.id_plan
-    LEFT JOIN vendedores v ON c.id_vendedor = v.id_vendedor
     LEFT JOIN olt ol ON c.id_olt = ol.id_olt
     LEFT JOIN pon p ON c.id_pon = p.id_pon 
 ";
@@ -80,10 +80,10 @@ if ($estado_contrato_filtro !== 'TODOS') {
     $params[] = $estado_contrato_filtro;
     $types .= 's';
 }
-if ($id_vendedor_filtro !== 'TODOS') {
-    $where_clause .= " AND c.id_vendedor = ? ";
-    $params[] = $id_vendedor_filtro;
-    $types .= 'i';
+if ($vendedor_texto_filtro !== 'TODOS') {
+    $where_clause .= " AND c.vendedor_texto = ? ";
+    $params[] = $vendedor_texto_filtro;
+    $types .= 's';
 }
 if ($id_plan_filtro !== 'TODOS') {
     $where_clause .= " AND c.id_plan = ? ";
@@ -112,7 +112,7 @@ $sql = "
     SELECT 
         c.id, c.nombre_completo, c.cedula, c.telefono, c.estado AS estado_contrato, c.ip_onu,
         m.nombre_municipio AS municipio, pa.nombre_parroquia AS parroquia, 
-        pl.nombre_plan AS plan, v.nombre_vendedor AS vendedor,
+        pl.nombre_plan AS plan, c.vendedor_texto AS vendedor,
         ol.nombre_olt AS olt_nombre, p.nombre_pon AS pon_nombre 
     FROM contratos c
     {$join_clause}
@@ -248,8 +248,8 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                         <select name="vendedor" id="vendedor" class="form-select bg-white">
                             <option value="TODOS">TODOS</option>
                             <?php foreach ($vendedores as $v): ?>
-                                <option value="<?php echo $v['id_vendedor']; ?>" <?php echo ($id_vendedor_filtro == $v['id_vendedor']) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($v['nombre_vendedor']); ?>
+                                <option value="<?php echo htmlspecialchars($v); ?>" <?php echo ($vendedor_texto_filtro == $v) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($v); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>

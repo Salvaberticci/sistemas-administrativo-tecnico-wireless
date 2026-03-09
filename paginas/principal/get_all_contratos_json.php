@@ -21,6 +21,7 @@ $sql = "SELECT
             c.monto_instalacion AS costo_instalacion,
             c.monto_pagado,
             c.dias_prorrateo,
+            c.plan_prorrateo_nombre,
             c.monto_prorrateo_usd AS monto_prorrateo,
             c.observaciones,
             c.tipo_conexion,

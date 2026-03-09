@@ -16,17 +16,13 @@ require_once '../conexion.php';
 // ---------------------------------------------------------------------------------
 // AÑADIR: INCLUIR EL ENCABEZADO REUTILIZABLE
 // ---------------------------------------------------------------------------------
-require_once 'encabezado_reporte.php'; 
+require_once 'encabezado_reporte.php';
 
-// Consulta para obtener todos los vendedores con las columnas correctas
-$sql = "SELECT id_vendedor, nombre_vendedor, telefono_vendedor FROM vendedores ORDER BY nombre_vendedor ASC";
-$result = $conn->query($sql);
-
+// Consulta para obtener todos los vendedores desde el JSON
+$json_path = '../principal/data/vendedores.json';
 $data = [];
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
-    }
+if (file_exists($json_path)) {
+    $data = json_decode(file_get_contents($json_path), true) ?: [];
 }
 $conn->close();
 
@@ -58,23 +54,22 @@ $html .= '
     <table>
         <thead>
             <tr>
-                <th>ID</th>
+                <th>N°</th>
                 <th>Nombre del Vendedor</th>
-                <th>Teléfono</th>
             </tr>
         </thead>
         <tbody>';
 
 if (!empty($data)) {
-    foreach ($data as $row) {
+    $contador = 1;
+    foreach ($data as $vendedor) {
         $html .= '<tr>';
-        $html .= '<td>' . htmlspecialchars($row['id_vendedor']) . '</td>';
-        $html .= '<td>' . htmlspecialchars($row['nombre_vendedor']) . '</td>';
-        $html .= '<td>' . htmlspecialchars($row['telefono_vendedor']) . '</td>';
+        $html .= '<td>' . $contador++ . '</td>';
+        $html .= '<td>' . htmlspecialchars($vendedor) . '</td>';
         $html .= '</tr>';
     }
 } else {
-    $html .= '<tr><td colspan="3">No se encontraron registros.</td></tr>';
+    $html .= '<tr><td colspan="2">No se encontraron registros.</td></tr>';
 }
 
 $html .= '

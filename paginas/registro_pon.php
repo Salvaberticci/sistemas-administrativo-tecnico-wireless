@@ -53,6 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $path_to_root = "../";
 $page_title = "Registro de PON";
+$breadcrumb = ["Técnica", "Gestión de PON"];
+$back_url = "gestion_pon.php";
 require_once 'includes/layout_head.php';
 require_once 'includes/sidebar.php';
 ?>

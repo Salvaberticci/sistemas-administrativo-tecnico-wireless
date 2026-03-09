@@ -12,7 +12,7 @@ require_once '../conexion.php';
 $id_municipio_filtro = isset($_GET['municipio']) ? $_GET['municipio'] : 'TODOS';
 $id_parroquia_filtro = isset($_GET['parroquia']) ? $_GET['parroquia'] : 'TODOS';
 $estado_contrato_filtro = isset($_GET['estado_contrato']) ? $_GET['estado_contrato'] : 'TODOS';
-$id_vendedor_filtro = isset($_GET['vendedor']) ? $_GET['vendedor'] : 'TODOS';
+$vendedor_texto_filtro = isset($_GET['vendedor']) ? $_GET['vendedor'] : 'TODOS';
 $id_plan_filtro = isset($_GET['plan']) ? $_GET['plan'] : 'TODOS';
 $cobros_estado_filtro = isset($_GET['estado_cobros']) ? $_GET['estado_cobros'] : 'TODOS';
 // --- NUEVOS FILTROS OLT Y PON ---
@@ -27,7 +27,6 @@ $join_clause = "
     LEFT JOIN municipio m ON c.id_municipio = m.id_municipio
     LEFT JOIN parroquia pa ON c.id_parroquia = pa.id_parroquia
     LEFT JOIN planes pl ON c.id_plan = pl.id_plan
-    LEFT JOIN vendedores v ON c.id_vendedor = v.id_vendedor
     LEFT JOIN olt ol ON c.id_olt = ol.id_olt
     LEFT JOIN pon p ON c.id_pon = p.id_pon
 ";
@@ -39,8 +38,8 @@ if ($id_municipio_filtro !== 'TODOS') {
 if ($id_parroquia_filtro !== 'TODOS') {
     $where_clause .= " AND c.id_parroquia = '" . $conn->real_escape_string($id_parroquia_filtro) . "'";
 }
-if ($id_vendedor_filtro !== 'TODOS') {
-    $where_clause .= " AND c.id_vendedor = '" . $conn->real_escape_string($id_vendedor_filtro) . "'";
+if ($vendedor_texto_filtro !== 'TODOS') {
+    $where_clause .= " AND c.vendedor_texto = '" . $conn->real_escape_string($vendedor_texto_filtro) . "'";
 }
 if ($id_plan_filtro !== 'TODOS') {
     $where_clause .= " AND c.id_plan = '" . $conn->real_escape_string($id_plan_filtro) . "'";
@@ -80,7 +79,7 @@ $query = "
         m.nombre_municipio,
         pa.nombre_parroquia,
         pl.nombre_plan,
-        v.nombre_vendedor,
+        c.vendedor_texto AS nombre_vendedor,
         ol.nombre_olt, /* AÑADIDO */
         p.nombre_pon   /* AÑADIDO */
     FROM 

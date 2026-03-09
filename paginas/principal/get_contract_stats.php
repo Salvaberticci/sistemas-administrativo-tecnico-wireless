@@ -239,12 +239,9 @@ if ($action === 'get_lists') {
     while ($row = $res_inst->fetch_row())
         $installers[] = $row[0];
 
-    // Vendedores: IDs distintos
-    $sql_vend = "SELECT DISTINCT id_vendedor FROM contratos WHERE id_vendedor > 0 ORDER BY id_vendedor ASC";
-    $res_vend = $conn->query($sql_vend);
-    $vendors = [];
-    while ($row = $res_vend->fetch_row())
-        $vendors[] = $row[0];
+    // Vendedores: Distintos nombres de la columna texto
+    $json_vend = __DIR__ . '/data/vendedores.json';
+    $vendors = file_exists($json_vend) ? (json_decode(file_get_contents($json_vend), true) ?: []) : [];
 
     echo json_encode([
         'installers' => $installers,

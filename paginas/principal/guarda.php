@@ -45,10 +45,10 @@ $nombre_completo = trim($conn->real_escape_string($_POST['nombre_completo'] ?? '
 $telefono = trim($conn->real_escape_string($_POST['telefono'] ?? ''));
 $correo = trim($conn->real_escape_string($_POST['correo'] ?? ''));
 // Para claves foráneas, si vienen vacías deben ser NULL, no string vacío ''
-$id_municipio = !empty($_POST['id_municipio']) ? $conn->real_escape_string($_POST['id_municipio']) : null;
-$id_parroquia = !empty($_POST['id_parroquia']) ? $conn->real_escape_string($_POST['id_parroquia']) : null;
+$municipio_texto = !empty($_POST['id_municipio']) ? $conn->real_escape_string($_POST['id_municipio']) : '';
+$parroquia_texto = !empty($_POST['id_parroquia']) ? $conn->real_escape_string($_POST['id_parroquia']) : '';
 $id_plan = !empty($_POST['id_plan']) ? $conn->real_escape_string($_POST['id_plan']) : null;
-$id_vendedor = !empty($_POST['id_vendedor']) ? $conn->real_escape_string($_POST['id_vendedor']) : null;
+$vendedor_texto = $conn->real_escape_string($_POST['vendedor_texto'] ?? '');
 $direccion = $conn->real_escape_string($_POST['direccion'] ?? '');
 $fecha_instalacion = $conn->real_escape_string($_POST['fecha_instalacion'] ?? '');
 $ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap'] ?? '');
@@ -76,12 +76,13 @@ $moneda_pago = $conn->real_escape_string($_POST['moneda_pago'] ?? 'USD');
 $incluye_prorrateo = isset($_POST['incluye_prorrateo']) && $_POST['incluye_prorrateo'] === 'SI';
 
 if ($incluye_prorrateo) {
-    $plan_prorrateo = floatval($_POST['plan_prorrateo'] ?? 0);
+    $plan_prorrateo_nombre = $conn->real_escape_string($_POST['plan_prorrateo_nombre'] ?? '');
     $dias_prorrateo = intval($_POST['dias_prorrateo'] ?? 0);
     // Recalcular backend prorrateo just in case or trust frontend mapping
     $monto_prorrateo_usd = floatval($_POST['monto_prorrateo_usd'] ?? 0);
 } else {
     // Force to 0 if switch is off
+    $plan_prorrateo_nombre = null;
     $dias_prorrateo = 0;
     $monto_prorrateo_usd = 0;
 }
@@ -269,13 +270,10 @@ if ($error_mensaje) {
 
 
 
-    // Resolviendo IDs de Ubicaciones por Nombre
-    // (Ahora $_POST['id_...'] recibe Nombres de texto desde el frontend)
-    $id_municipio = getMunicipioId($conn, $_POST['id_municipio'] ?? '');
-    $id_parroquia = getParroquiaId($conn, $_POST['id_parroquia'] ?? '', $id_municipio);
+    // Resolviendo IDs de Ubicaciones por Nombre para mantener integridad en tablas antiguas si se desea
+    $id_municipio = getMunicipioId($conn, $municipio_texto);
+    $id_parroquia = getParroquiaId($conn, $parroquia_texto, $id_municipio);
 
-    // Validar Vendedor
-    $id_vendedor = validarFK($conn, 'vendedores', 'id_vendedor', $id_vendedor);
     // Validar Plan
     $id_plan = validarFK($conn, 'planes', 'id_plan', $id_plan);
     // Validar OLT
@@ -313,18 +311,18 @@ if ($error_mensaje) {
         // 3. INSERCIÓN EN LA TABLA DE CONTRATOS
         $sql = "INSERT INTO contratos (
         cedula, nombre_completo, telefono, correo, 
-        id_municipio, id_parroquia, id_plan, id_vendedor, 
+        id_municipio, id_parroquia, municipio_texto, parroquia_texto, id_plan, vendedor_texto, 
         direccion, fecha_instalacion, estado, ident_caja_nap, puerto_nap, 
         num_presinto_odn, id_olt, id_pon, tipo_instalacion, monto_instalacion, 
         gastos_adicionales, monto_pagar, monto_pagado, instaladores,
-        telefono_secundario, correo_adicional, medio_pago, moneda_pago, dias_prorrateo,
+        telefono_secundario, correo_adicional, medio_pago, moneda_pago, plan_prorrateo_nombre, dias_prorrateo,
         monto_prorrateo_usd, observaciones, tipo_conexion, mac_onu, ip_onu,
         nap_tx_power, onu_rx_power, distancia_drop, punto_acceso, valor_conexion_dbm,
         evidencia_fibra, evidencia_foto, firma_cliente, firma_tecnico,
         token_firma, estado_firma
     ) VALUES (
         ?, ?, ?, ?, 
-        ?, ?, ?, ?, 
+        ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, 
         ?, ?, ?, ?,
@@ -332,14 +330,12 @@ if ($error_mensaje) {
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?,
-        ?, ?
+        ?, ?, ?
     )";
 
         $stmt = $conn->prepare($sql);
 
-        // Total string: sssssiiiiissssssiisdddds (24) + ssssids (7) + sssssssssss (11) + ss (2) + ss (2) = 45
-        // Recalculated types string carefully to match new columns
-        $types = "ssssiiiissssssiisdddds" . "ssssidsssssssssssss" . "ss";
+        $types = "ssssii" . "ss" . "isssssssiisdddds" . "sssssidsssssssssssss" . "ss";
 
         $stmt->bind_param(
             $types,
@@ -349,8 +345,10 @@ if ($error_mensaje) {
             $correo,
             $id_municipio,
             $id_parroquia,
+            $municipio_texto,
+            $parroquia_texto,
             $id_plan,
-            $id_vendedor,
+            $vendedor_texto,
             $direccion,
             $fecha_instalacion,
             $estado,
@@ -369,6 +367,7 @@ if ($error_mensaje) {
             $correo_adicional,
             $medio_pago,
             $moneda_pago,
+            $plan_prorrateo_nombre,
             $dias_prorrateo,
             $monto_prorrateo_usd,
             $observaciones,
@@ -464,7 +463,7 @@ if ($error_mensaje) {
         }
 
         if ($resultado && $id_contrato > 0) {
-            $saldo_pendiente = $monto_pagar - $monto_pagado;
+            $saldo_pendiente = round($monto_pagar - $monto_pagado, 2);
 
             if ($saldo_pendiente > 0) {
                 $sql_deudor = "INSERT INTO clientes_deudores (id_contrato, monto_total, monto_pagado, saldo_pendiente, estado) 

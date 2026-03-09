@@ -45,7 +45,23 @@
         .campo-radio {
             display: none;
         }
+
+        /* Estilos para intl-tel-input premium */
+        .iti {
+            width: 100%;
+            display: block;
+        }
+
+        .iti__country-list {
+            z-index: 1056;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
     </style>
+    <!-- intl-tel-input CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/css/intlTelInput.css">
 </head>
 
 <body>
@@ -67,9 +83,17 @@
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label fw-bold">Cédula de Identidad o RIF <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="cedula" id="cedula" required
-                                        pattern="V[0-9]+" value="V" placeholder="V12345678"
-                                        style="text-transform: uppercase;">
+                                    <div class="input-group">
+                                        <select class="form-select" name="tipo_cedula" id="tipo_cedula"
+                                            style="max-width: 80px;" required>
+                                            <option value="V" selected>V</option>
+                                            <option value="E">E</option>
+                                            <option value="J">J</option>
+                                        </select>
+                                        <input type="text" class="form-control" name="cedula" id="cedula" required
+                                            pattern="[0-9]+" placeholder="12345678">
+                                    </div>
+                                    <div class="form-text small">Seleccione tipo e ingrese solo números.</div>
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label fw-bold">Nombre y Apellido Titular <span
@@ -81,7 +105,7 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-12 mb-2">
-                                    <label class="form-label fw-bold">Dirección Exacta y Referencias <span
+                                    <label class="form-label fw-bold">Dirección (Referencia de localidad) <span
                                             class="text-danger">*</span></label>
                                     <textarea class="form-control" name="direccion" rows="2" required
                                         placeholder="Dirección completa con referencias..."></textarea>
@@ -105,16 +129,15 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-6 mb-2">
-                                    <label class="form-label">Teléfono de Contacto 1 <span
+                                    <label class="form-label fw-bold">Teléfono de Contacto 1 <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="telefono" id="telefono" required
-                                        inputmode="tel" pattern="[0-9\-+\s]{7,15}" placeholder="0424-1234567">
+                                    <input type="tel" class="form-control" name="telefono" id="telefono" required
+                                        placeholder="0424-1234567">
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label">Teléfono de Contacto 2</label>
-                                    <input type="text" class="form-control" name="telefono_secundario"
-                                        id="telefono_secundario" inputmode="tel" pattern="[0-9\-+\s]{7,15}"
-                                        placeholder="0414-7654321">
+                                    <input type="tel" class="form-control" name="telefono_secundario"
+                                        id="telefono_secundario" placeholder="0414-7654321">
                                 </div>
                             </div>
 
@@ -177,8 +200,8 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-6 mb-2">
-                                    <label class="form-label">Método de Pago</label>
-                                    <select class="form-select" name="medio_pago">
+                                    <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="medio_pago" required>
                                         <option value="">-- Seleccione --</option>
                                         <option value="Efectivo">Efectivo</option>
                                         <option value="Transferencia">Transferencia</option>
@@ -191,8 +214,8 @@
                                     <div class="col-md-4 mb-2">
                                         <label class="form-label">Monto de Instalación ($) <span
                                                 class="text-danger">*</span></label>
-                                        <input type="number" step="0.01" class="form-control" name="monto_instalacion"
-                                            id="monto_instalacion" required placeholder="0.00">
+                                        <input type="number" step="0.01" min="0" class="form-control"
+                                            name="monto_instalacion" id="monto_instalacion" required placeholder="0.00">
                                     </div>
                                     <div class="col-md-4 mb-2">
                                         <label class="form-label">Gasto Adicional ($)</label>
@@ -308,25 +331,30 @@
                                     <!-- CAMPOS FTTH -->
                                     <div class="row mb-3 campo-ftth">
                                         <div class="col-md-6 mb-2">
-                                            <label class="form-label">MAC o Serial de la ONU</label>
+                                            <label class="form-label">MAC o Serial de la ONU <span
+                                                    class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="mac_onu" name="mac_onu"
                                                 pattern="[A-Fa-f0-9:\.\-]{8,20}" placeholder="FABBCC112233">
                                         </div>
                                         <div class="col-md-6 mb-2">
-                                            <label class="form-label">Dirección IP Asignada a la ONU</label>
+                                            <label class="form-label">Dirección IP Asignada a la ONU <span
+                                                    class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="ip_onu" name="ip_onu" value=""
-                                                pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" placeholder="192.168.x.x">
+                                                pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+                                                placeholder="192.168.x.x">
                                         </div>
                                     </div>
 
                                     <div class="row mb-3 campo-ftth">
                                         <div class="col-md-6 mb-2">
-                                            <label class="form-label">Identificación Caja NAP</label>
+                                            <label class="form-label">Identificación Caja NAP <span
+                                                    class="text-danger">*</span></label>
                                             <input type="text" class="form-control" name="ident_caja_nap"
                                                 placeholder="ID Caja NAP">
                                         </div>
                                         <div class="col-md-6 mb-2">
-                                            <label class="form-label">Puerto NAP</label>
+                                            <label class="form-label">Puerto NAP <span
+                                                    class="text-danger">*</span></label>
                                             <input type="text" class="form-control" name="puerto_nap"
                                                 placeholder="Puerto">
                                         </div>
@@ -334,19 +362,28 @@
 
                                     <div class="row mb-3 campo-ftth">
                                         <div class="col-md-4 mb-2">
-                                            <label class="form-label">NAP TX Power (dBm)</label>
+                                            <label class="form-label">NAP TX Power (dBm) <span
+                                                    class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="nap_tx_power"
                                                 name="nap_tx_power" pattern="-?[0-9.]+" placeholder="-25">
                                         </div>
                                         <div class="col-md-4 mb-2">
-                                            <label class="form-label">ONU RX Power (dBm)</label>
+                                            <label class="form-label">ONU RX Power (dBm) <span
+                                                    class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="onu_rx_power"
                                                 name="onu_rx_power" pattern="-?[0-9.]+" placeholder="-27">
                                         </div>
                                         <div class="col-md-4 mb-2">
-                                            <label class="form-label">Distancia de Drop (m)</label>
+                                            <label class="form-label">Distancia de Drop (m) <span
+                                                    class="text-danger">*</span></label>
                                             <input type="number" step="1" class="form-control" id="distancia_drop"
                                                 name="distancia_drop" placeholder="50">
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label fw-bold text-primary">Precinto ODN <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="text" class="form-control border-primary"
+                                                name="num_presinto_odn" placeholder="Número de precinto">
                                         </div>
                                     </div>
 
@@ -356,32 +393,24 @@
                                             <label class="form-label">Dirección IP <span
                                                     class="text-danger">*</span></label>
                                             <input type="text" class="form-control" name="ip" id="ip" value="" required
-                                                pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" placeholder="192.168.x.x">
+                                                pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+                                                placeholder="192.168.x.x">
                                         </div>
                                         <div class="col-md-4 mb-2">
-                                            <label class="form-label">Punto de Acceso</label>
+                                            <label class="form-label">Punto de Acceso <span
+                                                    class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="punto_acceso"
                                                 name="punto_acceso" placeholder="Nombre AP">
                                         </div>
                                         <div class="col-md-4 mb-2">
-                                            <label class="form-label">Valor de Conexión (dBm)</label>
+                                            <label class="form-label">Valor de Conexión (dBm) <span
+                                                    class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="valor_conexion_dbm"
                                                 name="valor_conexion_dbm" pattern="-?[0-9.]+" placeholder="-55">
                                         </div>
                                     </div>
 
-                                    <div class="row mb-3" style="display:none;">
-                                        <div class="col-md-6 mb-2">
-                                            <label class="form-label">Número de Precinto de Identificación ODN</label>
-                                            <input type="text" class="form-control" name="num_presinto_odn"
-                                                placeholder="Número de precinto">
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <label class="form-label">Evidencia de Fibra</label>
-                                            <input type="text" class="form-control" name="evidencia_fibra"
-                                                placeholder="Descripción o ubicación">
-                                        </div>
-                                    </div>
+
 
                                     <!-- OTROS DATOS -->
                                     <div class="row mb-3">
@@ -485,10 +514,6 @@
                                         <button type="submit" class="btn btn-success btn-lg" id="btnGuardar">
                                             <i class="fas fa-save me-2"></i> Registrar Contrato
                                         </button>
-                                        <button type="button" class="btn btn-outline-primary btn-lg"
-                                            id="btnGenerarLink">
-                                            <i class="fa-brands fa-whatsapp me-2"></i> Registrar y Generar Link de Firma
-                                        </button>
                                     </div>
                         </form>
                     </div>
@@ -503,8 +528,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title"><i class="fa-solid fa-link me-2"></i>Enlace de Contrato Generado</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                        onclick="location.reload()"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-center p-4">
                     <div class="mb-4">
@@ -525,9 +549,15 @@
                         <a href="#" id="btnWhatsapp" target="_blank" class="btn btn-success">
                             <i class="fa-brands fa-whatsapp me-2"></i> Enviar por WhatsApp
                         </a>
-                        <button type="button" class="btn btn-secondary" onclick="location.reload()">
-                            Cerrar y Nuevo Registro
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal"
+                                onclick="mostrarOpcionesExito(window.lastSavedId)">
+                                <i class="fa-solid fa-arrow-left me-1"></i> Volver
+                            </button>
+                            <button type="button" class="btn btn-primary w-100" onclick="location.reload()">
+                                Finalizar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -565,9 +595,25 @@
 
         $('#ip, #ip_onu').on('input', function () {
             let val = $(this).val().replace(/[^0-9.]/g, '');
-            $(this).val(val);
+            // Restringir IP a números y puntos y validar octetos 0-255
+            let parts = val.split('.');
+
+            // Validar que cada octeto no pase de 255
+            for (let i = 0; i < parts.length; i++) {
+                if (parts[i] !== '' && parseInt(parts[i]) > 255) {
+                    parts[i] = '255';
+                }
+                // Limitar a máximo 4 octetos
+                if (i >= 4) {
+                    parts.splice(4);
+                    break;
+                }
+            }
+
+            $(this).val(parts.join('.'));
         });
 
+        // Restringir Teléfono a números, guiones, más y espacios
         $('#telefono, #telefono_secundario').on('input', function () {
             let val = $(this).val().replace(/[^0-9-+\s]/g, '');
             $(this).val(val);
@@ -686,20 +732,20 @@
                 }
             });
 
-            // LÓGICA DE CAMPOS TÉCNICOS DINÁMICOS
             // Mostrar/Ocultar campos según Tipo de Conexión
             $('#tipo_conexion').on('change', function () {
                 var tipo = $(this).val();
                 // Ocultar todos primero
                 $('.campo-ftth, .campo-radio').hide();
-                // Quitar required de campos que podrian ser obligatorios
-                $('#ip').prop('required', false);
+                // Quitar required de todos los campos técnicos
+                $('.campo-ftth input, .campo-radio input').prop('required', false);
 
                 if (tipo === 'FTTH') {
                     $('.campo-ftth').show();
+                    $('#mac_onu, #ip_onu, [name="ident_caja_nap"], [name="puerto_nap"], #nap_tx_power, #onu_rx_power, #distancia_drop, [name="num_presinto_odn"]').prop('required', true);
                 } else if (tipo === 'RADIO') {
                     $('.campo-radio').show();
-                    $('#ip').prop('required', true); // IP es obligatoria para Radio
+                    $('#ip, #punto_acceso, #valor_conexion_dbm').prop('required', true);
                 }
             });
 
@@ -795,63 +841,8 @@
             guardarContrato(formData);
         });
 
-        // Botón Generar Link
-        const btnGenerarLink = document.getElementById('btnGenerarLink');
+        // Modal Link Generado
         const modalLink = new bootstrap.Modal(document.getElementById('modalLink'));
-
-        btnGenerarLink.addEventListener('click', function () {
-            const form = document.getElementById('formContrato');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            // Para link NO validamos firmas obligatorias en este punto
-            const formData = new FormData(form);
-            formData.append('generate_link', '1');
-
-            // UI Loading
-            const originalText = this.innerHTML;
-            this.disabled = true;
-            this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
-
-            fetch('guardar_contrato_instalador.php', {
-                method: 'POST',
-                body: formData
-            })
-                .then(r => r.json())
-                .then(data => {
-                    this.disabled = false;
-                    this.innerHTML = originalText;
-
-                    if (data.status === 'success') {
-                        // Mostrar Modal
-                        const linkCompleto = window.location.origin + window.location.pathname.replace('registro_contrato_instalador.php', '') + data.link;
-                        document.getElementById('linkInput').value = linkCompleto;
-
-                        // Configurar WhatsApp
-                        const telefono = formData.get('telefono') || '';
-                        const mensaje = `Estimado cliente, por favor firme su contrato de servicio en el siguiente enlace: ${linkCompleto}`;
-
-                        // Intentar abrir whatsapp directo si hay telefono, sino share generico
-                        let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-                        // Si el numero tiene formato valido (simple check), podriamos usarlo:
-                        // if(telefono.length > 9) whatsappUrl = `https://wa.me/58${telefono.substring(1)}?text=...`; 
-
-                        document.getElementById('btnWhatsapp').href = whatsappUrl;
-
-                        modalLink.show();
-                    } else {
-                        Swal.fire('Error', data.msg || 'Error desconocido', 'error');
-                    }
-                })
-                .catch(err => {
-                    this.disabled = false;
-                    this.innerHTML = originalText;
-                    console.error(err);
-                    Swal.fire('Error', 'Error de conexión', 'error');
-                });
-        });
 
         function guardarContrato(formData) {
             // Mostrar Confirmación antes de enviar
@@ -908,13 +899,8 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        Swal.fire({
-                            title: '¡Éxito!',
-                            text: 'Contrato registrado correctamente.',
-                            icon: 'success'
-                        }).then(() => {
-                            window.location.reload();
-                        });
+                        window.lastSavedId = data.id;
+                        mostrarOpcionesExito(data.id);
                     } else {
                         Swal.fire('Error', data.msg || 'Error al guardar el contrato', 'error');
                         document.getElementById('btnGuardar').disabled = false;
@@ -933,10 +919,71 @@
             const copyText = document.getElementById("linkInput");
             copyText.select();
             copyText.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(copyText.value);
+            navigator.clipboard.writeText(copyText.value).then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Copiado!',
+                    timer: 1000,
+                    showConfirmButton: false
+                });
+            });
+        }
 
-            const btn = document.querySelector('button[onclick="copiarLink()"]'); // Simple selector logic
-            // Visual feedback handled by user logic usually, simplified here
+        function mostrarOpcionesExito(id) {
+            const pdf_url = `../reportes_pdf/generar_contrato_pdf.php?id_contrato=${id}`;
+            Swal.fire({
+                title: '¡Éxito!',
+                text: 'Contrato registrado correctamente.',
+                icon: 'success',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonColor: '#198754',
+                denyButtonColor: '#0d6efd',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fa-solid fa-file-pdf"></i> Ver PDF',
+                denyButtonText: '<i class="fa-solid fa-link"></i> Generar Link',
+                cancelButtonText: 'Nueva Instalación',
+                allowOutsideClick: false
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    window.open(pdf_url, '_blank');
+                    mostrarOpcionesExito(id);
+                } else if (res.isDenied) {
+                    // Si ya tenemos el link en el modal, solo lo abrimos
+                    // Pero para ser consistentes con la otra pagina, llamamos a la funcion que genera el token si es necesario
+                    // En este portal, usualmente se genera el link AL GUARDAR o específicamente con el botón.
+                    // Si el usuario ya guardó normal, podemos generar el link ahora.
+                    generarLinkRemoto(id);
+                } else {
+                    window.location.reload();
+                }
+            });
+        }
+
+        function generarLinkRemoto(id) {
+            Swal.fire({
+                title: 'Generando enlace...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            $.post('../principal/generar_token_firma.php', { id: id }, function (resp) {
+                Swal.close();
+                if (resp.success) {
+                    const baseUrl = window.location.origin + window.location.pathname.split('/paginas/')[0] + '/paginas/soporte/firmar_remoto.php';
+                    const link = `${baseUrl}?token=${resp.token}&type=contrato`;
+
+                    document.getElementById('linkInput').value = link;
+                    const mensaje = encodeURIComponent(`Hola, por favor firma tu contrato de servicio en el siguiente enlace: ${link}`);
+                    document.getElementById('btnWhatsapp').href = `https://wa.me/?text=${mensaje}`;
+
+                    modalLink.show();
+                } else {
+                    Swal.fire('Error', resp.message || 'Error al generar link', 'error');
+                }
+            }, 'json').fail(() => {
+                Swal.fire('Error', 'Error de comunicación', 'error');
+            });
         }
 
         // CÁLCULO AUTOMÁTICO DE RESTANTE A PAGAR
@@ -1006,18 +1053,37 @@
                 pagadoUSD = pagado / tasaBCV;
             }
 
-            const debe = total - pagadoUSD;
+            // Validar que el monto pagado no exceda el total (con margen de 0.01 por redondeo)
+            if (pagadoUSD > (total + 0.01)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Monto Excedido',
+                    text: 'El monto pagado no puede ser mayor al total a pagar ($' + total.toFixed(2) + ').',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
 
-            // Si el debe es negativo (pagó de más), mostramos 0 o negativo según preferencia. 
-            // Generalmente "Debe" es >= 0.
-            inputMontoDebe.value = debe.toFixed(2);
+                if (moneda === 'BS' && tasaBCV > 0) {
+                    inputMontoPagado.value = (total * tasaBCV).toFixed(2);
+                } else {
+                    inputMontoPagado.value = total.toFixed(2);
+                }
 
-            if (debe > 0) {
+                calcularDebe();
+                return;
+            }
+
+            const debe = (total - pagadoUSD).toFixed(2);
+
+            // Si el debe es negativo (pagó de más), mostramos 0.
+            if (parseFloat(debe) > 0) {
+                inputMontoDebe.value = debe;
                 inputMontoDebe.classList.add('is-invalid'); // Visual highlight optional
                 inputMontoDebe.style.color = 'red';
             } else {
                 inputMontoDebe.classList.remove('is-invalid');
                 inputMontoDebe.style.color = 'green';
+                inputMontoDebe.value = "0.00";
             }
         }
 
@@ -1027,6 +1093,58 @@
         }
     </script>
 
+    <!-- intl-tel-input JS -->
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/intlTelInput.min.js"></script>
+    <script>
+        const tel1 = document.querySelector("#telefono");
+        const tel2 = document.querySelector("#telefono_secundario");
+
+        const iti1 = window.intlTelInput(tel1, {
+            initialCountry: "ve",
+            separateDialCode: true,
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
+        });
+
+        const iti2 = window.intlTelInput(tel2, {
+            initialCountry: "ve",
+            separateDialCode: true,
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
+        });
+
+        const setupPhoneCorrection = (input, iti) => {
+            input.addEventListener('input', () => {
+                let value = input.value;
+                const data = iti.getSelectedCountryData();
+                if (data.iso2 === 've' && value.startsWith('0')) {
+                    input.value = value.substring(1);
+                }
+            });
+        };
+
+        setupPhoneCorrection(tel1, iti1);
+        setupPhoneCorrection(tel2, iti2);
+
+        // Bloquear signos negativos en Monto Instalación
+        const inputMontoInstalacion = document.querySelector("#monto_instalacion");
+        if (inputMontoInstalacion) {
+            inputMontoInstalacion.addEventListener('keydown', (e) => {
+                if (e.key === '-' || e.key === 'e') {
+                    e.preventDefault();
+                }
+            });
+            inputMontoInstalacion.addEventListener('input', () => {
+                if (inputMontoInstalacion.value < 0) {
+                    inputMontoInstalacion.value = Math.abs(inputMontoInstalacion.value);
+                }
+            });
+        }
+
+        // Opcional: Validar antes de enviar
+        document.getElementById('formContrato').addEventListener('submit', function (e) {
+            // Si bien el backend lo guarda, podríamos advertir si el número es inválido
+            // if (!iti1.isValidNumber()) { ... }
+        });
+    </script>
 </body>
 
 </html>

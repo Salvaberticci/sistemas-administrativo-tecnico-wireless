@@ -79,8 +79,7 @@ require_once '../includes/sidebar.php';
 					$idContrato = $row['id'];
 
 					// 2. CONSULTA PARA OBTENER DATOS ACTUALES (INCLUYENDO MUNICIPIO, PARROQUIA y COMUNIDAD)
-					// 🔑 MODIFICADO: Se agrega id_comunidad a la selección
-					$sql_contrato = "SELECT id_municipio, id_parroquia 
+					$sql_contrato = "SELECT id_municipio, id_parroquia, municipio_texto, parroquia_texto 
 									 FROM contratos 
 									 WHERE id = $idContrato";
 					$resultado_contrato = $conn->query($sql_contrato);
@@ -90,8 +89,8 @@ require_once '../includes/sidebar.php';
 					}
 
 					$datos_actuales = $resultado_contrato->fetch_assoc();
-					$municipio_seleccionado = $datos_actuales['id_municipio']; // ID guardado
-					$parroquia_seleccionada = $datos_actuales['id_parroquia']; // ID guardado
+					$municipio_seleccionado = $datos_actuales['municipio_texto'] ?? ''; // Ahora usamos texto
+					$parroquia_seleccionada = $datos_actuales['parroquia_texto'] ?? ''; // Ahora usamos texto
 					
 					// 3. CONSULTA PARA OBTENER TODOS LOS MUNICIPIOS, PLANES Y VENDEDORES (para llenar la lista)
 					$sql_municipios = "SELECT id_municipio, nombre_municipio FROM municipio ORDER BY nombre_municipio ASC";
@@ -99,7 +98,7 @@ require_once '../includes/sidebar.php';
 
 					// OBTENER VALORES SELECCIONADOS DEL CONTRATO (RED)
 					// ----------------------------------------------------
-					$vendedor_seleccionado = $row['id_vendedor'];
+					$vendedor_seleccionado = $row['vendedor_texto'] ?? '';
 					$plan_seleccionado = $row['id_plan'];
 					$pon_seleccionado = $row['id_pon'];
 					$olt_seleccionado = $row['id_olt'];
@@ -108,9 +107,9 @@ require_once '../includes/sidebar.php';
 					// CONSULTAS PARA LLENAR LAS LISTAS (STATIC)
 					// ----------------------------------------------------
 					
-					// Consulta para Vendedores
-					$sql_vendedores = "SELECT id_vendedor, nombre_vendedor FROM vendedores ORDER BY nombre_vendedor ASC";
-					$resultado_vendedores = $conn->query($sql_vendedores);
+					// Vendedores desde JSON
+					$vend_json = 'data/vendedores.json';
+					$resultado_vendedores = file_exists($vend_json) ? (json_decode(file_get_contents($vend_json), true) ?: []) : [];
 
 					// Consulta para Planes
 					$sql_planes = "SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan ASC";
@@ -122,10 +121,6 @@ require_once '../includes/sidebar.php';
 					$sql_olt = "SELECT id_olt, nombre_olt FROM olt ORDER BY nombre_olt ASC";
 					$resultado_olt = $conn->query($sql_olt);
 
-					// 🔑 NUEVO: Quitar la consulta de todos los PONs (se hará por AJAX)
-					// $sql_pon = "SELECT id_pon, nombre_pon FROM pon ORDER BY nombre_pon ASC";
-					// $resultado_pon = $conn->query($sql_pon);
-					
 					// 🔑 NUEVO: Consulta rápida para obtener el nombre del PON seleccionado (Para el label inicial)
 					$nombre_pon_actual = 'Cargando...';
 					if (!empty($pon_seleccionado)) {
@@ -161,21 +156,7 @@ require_once '../includes/sidebar.php';
 					<div class="col-md-6">
 						<label for="municipio" class="form-label">Municipio</label>
 						<select name="id_municipio" id="municipio" class="form-select" required>
-							<option value="">-- Seleccione un Municipio --</option>
-
-							<?php
-							if ($resultado_municipios->num_rows > 0) {
-								while ($fila = $resultado_municipios->fetch_assoc()) {
-									$id = htmlspecialchars($fila["id_municipio"]);
-									$nombre = htmlspecialchars($fila["nombre_municipio"]);
-
-									// 🔑 Lógica de Selección: Compara el ID de la base de datos con el del contrato
-									$selected = ($id == $municipio_seleccionado) ? 'selected' : '';
-
-									echo "<option value=\"$id\" $selected>$nombre</option>";
-								}
-							}
-							?>
+							<option value="">-- Cargando Municipios --</option>
 						</select>
 					</div>
 
@@ -183,17 +164,8 @@ require_once '../includes/sidebar.php';
 
 					<div class="col-md-6">
 						<label for="parroquia" class="form-label">Parroquia</label>
-						<select name="id_parroquia" id="parroquia" class="form-select" required>
-							<option value="<?php echo $parroquia_seleccionada; ?>">
-								<?php
-								// Consulta rápida para mostrar el nombre de la parroquia actual
-								$sql_nombre = "SELECT nombre_parroquia FROM parroquia WHERE id_parroquia = $parroquia_seleccionada";
-								$res_nombre = $conn->query($sql_nombre);
-								// Asegurar que solo se muestre el nombre si la consulta fue exitosa
-								$nombre_parroquia_actual = $res_nombre->num_rows > 0 ? $res_nombre->fetch_assoc()['nombre_parroquia'] : 'Cargando...';
-								echo htmlspecialchars($nombre_parroquia_actual);
-								?> (Actual)
-							</option>
+						<select name="id_parroquia" id="parroquia" class="form-select" required disabled>
+							<option value="">-- Seleccione un Municipio primero --</option>
 						</select>
 					</div>
 
@@ -222,21 +194,13 @@ require_once '../includes/sidebar.php';
 					</div>
 
 					<div class="col-md-6">
-						<label for="id_vendedor" class="form-label">Vendedor</label>
-						<select name="id_vendedor" id="id_vendedor" class="form-select" required>
+						<label for="vendedor_texto" class="form-label">Vendedor</label>
+						<select name="vendedor_texto" id="vendedor_texto" class="form-select" required>
 							<option value="">-- Seleccione un Vendedor --</option>
-
 							<?php
-							if ($resultado_vendedores->num_rows > 0) {
-								while ($fila = $resultado_vendedores->fetch_assoc()) {
-									$id = htmlspecialchars($fila["id_vendedor"]);
-									$nombre = htmlspecialchars($fila["nombre_vendedor"]);
-
-									// Lógica CLAVE: Marca la opción guardada
-									$selected = ($id == $vendedor_seleccionado) ? 'selected' : '';
-
-									echo "<option value=\"$id\" $selected>$nombre</option>";
-								}
+							foreach ($resultado_vendedores as $nombre) {
+								$selected = ($nombre == $vendedor_seleccionado) ? 'selected' : '';
+								echo '<option value="' . htmlspecialchars($nombre) . '" ' . $selected . '>' . htmlspecialchars($nombre) . '</option>';
 							}
 							?>
 						</select>
@@ -462,51 +426,50 @@ require_once '../includes/sidebar.php';
 		// 2. FUNCIONES DE CARGA EN CASCADA
 		// =========================================================================
 
+		let ubicacionesData = [];
+		const municipioSeleccionado = "<?php echo $municipio_seleccionado; ?>";
+		const parroquiaSeleccionada = "<?php echo $parroquia_seleccionada; ?>";
 
+		// 1. Cargar JSON completo al inicio
+		$.get('api_ubicaciones.php', function (data) {
+			ubicacionesData = data;
+			let mOptions = '<option value="">-- Seleccione un Municipio --</option>';
 
+			ubicacionesData.forEach(function (item) {
+				const isSelected = (item.municipio === municipioSeleccionado) ? 'selected' : '';
+				mOptions += `<option value="${item.municipio}" ${isSelected}>${item.municipio}</option>`;
+			});
+			$('#municipio').html(mOptions);
 
-		// Función para cargar parroquias (MODIFICADA: Llama a cargarComunidades)
-		function cargarParroquiasIniciales(municipioID, parroquiaIDaSeleccionar, comunidadIDaSeleccionar) {
+			// Si hay municipio seleccionado, cargar sus parroquias
+			if (municipioSeleccionado) {
+				actualizarParroquias(municipioSeleccionado, parroquiaSeleccionada);
+			}
+		});
 
-			$('#parroquia').html('<option value="">Cargando parroquias...</option>');
-			$('#parroquia').prop('disabled', true);
+		// Manejar cambio de Municipio
+		$('#municipio').on('change', function () {
+			actualizarParroquias($(this).val());
+		});
 
+		function actualizarParroquias(municipioNombre, parroquiaNombreToSelect = '') {
+			const $pSelect = $('#parroquia');
+			if (!municipioNombre) {
+				$pSelect.html('<option value="">-- Seleccione un Municipio primero --</option>').prop('disabled', true);
+				return;
+			}
 
-			if (municipioID) {
-				$.ajax({
-					url: 'get_parroquias.php',
-					type: 'POST',
-					data: { id: municipioID }, // El script get_parroquias.php espera 'id'
-					dataType: 'json',
-					success: function (parroquias) {
-						$('#parroquia').html('<option value="">-- Seleccione una Parroquia --</option>');
-						var parroquiaSeleccionadaPostCarga = null;
-
-						$.each(parroquias, function (key, value) {
-							var selectedAttr = (key == parroquiaIDaSeleccionar) ? 'selected' : '';
-
-							if (selectedAttr) {
-								parroquiaSeleccionadaPostCarga = key;
-							}
-
-							$('#parroquia').append('<option value="' + key + '" ' + selectedAttr + '>' + value + '</option>');
-						});
-
-						$('#parroquia').prop('disabled', false);
-
-						// Si hay una parroquia pre-seleccionada, cargar sus comunidades
-						if (parroquiaSeleccionadaPostCarga) {
-							// cargarComunidadesIniciales(parroquiaSeleccionadaPostCarga, comunidadIDaSeleccionar);
-						} else {
-							// cargarComunidadesIniciales(null, null); // Deshabilita la comunidad
-						}
-					},
-					error: function () {
-						$('#parroquia').html('<option value="">Error al cargar parroquias</option>');
-					}
+			const muni = ubicacionesData.find(m => m.municipio === municipioNombre);
+			if (muni && muni.parroquias) {
+				let pOptions = '<option value="">-- Seleccione una Parroquia --</option>';
+				muni.parroquias.forEach(function (p) {
+					const pNombre = typeof p === 'object' ? p.nombre : p;
+					const isSelected = (pNombre === parroquiaNombreToSelect) ? 'selected' : '';
+					pOptions += `<option value="${pNombre}" ${isSelected}>${pNombre}</option>`;
 				});
+				$pSelect.html(pOptions).prop('disabled', false);
 			} else {
-				$('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>');
+				$pSelect.html('<option value="">Sin parroquias registradas</option>').prop('disabled', true);
 			}
 		}
 
@@ -556,29 +519,12 @@ require_once '../includes/sidebar.php';
 		// 3. EVENTOS y LLAMADAS INICIALES
 		// =========================================================================
 
-		// Al cargar la página, iniciar la carga de ubicación pre-seleccionada
-		if (municipioInicialId) {
-			cargarParroquiasIniciales(municipioInicialId, parroquiaSeleccionadaId, null);
-		}
-
-		// 🔑 NUEVA: Al cargar la página, iniciar la carga de PONs pre-seleccionados
+		// Al cargar la página, iniciar la carga de PONs pre-seleccionados
 		if (oltInicialId) {
 			cargarPonsIniciales(oltInicialId, ponSeleccionadoId);
 		}
 
-		// Manejar cambio de Municipio
-		$('#municipio').on('change', function () {
-			var nuevoMunicipioID = $(this).val();
-
-			if (nuevoMunicipioID) {
-				// Al cambiar municipio, reiniciamos parroquia y comunidad (null, null)
-				cargarParroquiasIniciales(nuevoMunicipioID, null, null);
-			} else {
-				$('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>').prop('disabled', true);
-			}
-		});
-
-
+		// (Lógica de municipios manejada arriba en el bloque GET inicial)
 
 		// 🔑 NUEVO: Manejar cambio de OLT
 		$('#id_olt').on('change', function () {

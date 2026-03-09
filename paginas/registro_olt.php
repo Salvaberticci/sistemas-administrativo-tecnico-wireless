@@ -5,8 +5,12 @@ $message = '';
 $message_class = '';
 $parroquias = [];
 
-// Consulta para obtener las parroquias
-$sql_parroquias = "SELECT id_parroquia, nombre_parroquia FROM parroquia ORDER BY nombre_parroquia ASC";
+// Consulta para obtener las parroquias que NO ESTÁN en otra OLT
+$sql_parroquias = "SELECT p.id_parroquia, p.nombre_parroquia 
+                   FROM parroquia p 
+                   LEFT JOIN olt_parroquia op ON p.id_parroquia = op.parroquia_id 
+                   WHERE op.parroquia_id IS NULL 
+                   ORDER BY p.nombre_parroquia ASC";
 $result_parroquias = $conn->query($sql_parroquias);
 
 if ($result_parroquias && $result_parroquias->num_rows > 0) {
@@ -71,6 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $path_to_root = "../";
 $page_title = "Registro de OLT";
+$breadcrumb = ["Técnica", "OLTs"];
+$back_url = "gestion_olt.php";
 require_once 'includes/layout_head.php';
 require_once 'includes/sidebar.php';
 ?>

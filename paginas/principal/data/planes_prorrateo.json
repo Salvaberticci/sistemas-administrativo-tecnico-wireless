@@ -1,9 +1,5 @@
 [
     {
-        "nombre": "100 Mbps",
-        "precio": "17.50"
-    },
-    {
         "nombre": "250 Mbps",
         "precio": "23.20"
     },
@@ -18,5 +14,9 @@
     {
         "nombre": "1 Gb",
         "precio": "48.00"
+    },
+    {
+        "nombre": "100 Mbps",
+        "precio": "17.50"
     }
 ]

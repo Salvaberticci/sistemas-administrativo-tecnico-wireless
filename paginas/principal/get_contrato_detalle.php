@@ -14,13 +14,12 @@ if (!$id) {
 $sql = "
     SELECT c.*,
         m.nombre_municipio, pa.nombre_parroquia,
-        pl.nombre_plan, v.nombre_vendedor,
+        pl.nombre_plan,
         ol.nombre_olt, pn.nombre_pon
     FROM contratos c
     LEFT JOIN municipio m   ON c.id_municipio  = m.id_municipio
     LEFT JOIN parroquia pa  ON c.id_parroquia  = pa.id_parroquia
     LEFT JOIN planes pl     ON c.id_plan       = pl.id_plan
-    LEFT JOIN vendedores v  ON c.id_vendedor   = v.id_vendedor
     LEFT JOIN olt ol        ON c.id_olt        = ol.id_olt
     LEFT JOIN pon pn        ON c.id_pon        = pn.id_pon
     WHERE c.id = ?

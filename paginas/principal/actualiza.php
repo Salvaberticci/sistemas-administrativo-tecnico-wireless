@@ -20,10 +20,10 @@ $cedula = $conn->real_escape_string($_POST['cedula'] ?? '');
 $nombre_completo = $conn->real_escape_string($_POST['nombre_completo'] ?? '');
 $telefono = $conn->real_escape_string($_POST['telefono'] ?? '');
 $correo = $conn->real_escape_string($_POST['correo'] ?? '');
-$id_municipio = $conn->real_escape_string($_POST['id_municipio'] ?? '');
-$id_parroquia = $conn->real_escape_string($_POST['id_parroquia'] ?? '');
+$municipio_texto = !empty($_POST['id_municipio']) ? $conn->real_escape_string($_POST['id_municipio']) : '';
+$parroquia_texto = !empty($_POST['id_parroquia']) ? $conn->real_escape_string($_POST['id_parroquia']) : '';
 $id_plan = $conn->real_escape_string($_POST['id_plan'] ?? '');
-$id_vendedor = $conn->real_escape_string($_POST['id_vendedor'] ?? '');
+$vendedor_texto = $conn->real_escape_string($_POST['vendedor_texto'] ?? '');
 $direccion = $conn->real_escape_string($_POST['direccion'] ?? '');
 $fecha_instalacion = $conn->real_escape_string($_POST['fecha_instalacion'] ?? '');
 $estado = $conn->real_escape_string($_POST['estado'] ?? '');
@@ -74,7 +74,7 @@ if (empty($id_parroquia))
 
 if (empty($id_plan))
 	$errores .= "El campo Plan es obligatorio.<br>";
-if (empty($id_vendedor))
+if (empty($vendedor_texto))
 	$errores .= "El campo Vendedor es obligatorio.<br>";
 if (empty($id_olt))
 	$errores .= "El campo OLT es obligatorio.<br>";
@@ -87,11 +87,45 @@ if (empty($estado))
 
 
 
+// Resolviendo IDs de Ubicaciones por Nombre
+function getMunicipioId($conn, $nombre)
+{
+	$nombre = trim($conn->real_escape_string($nombre));
+	if (empty($nombre))
+		return null;
+	$sql = "SELECT id_municipio FROM municipio WHERE nombre_municipio = '$nombre' LIMIT 1";
+	$res = $conn->query($sql);
+	if ($res && $res->num_rows > 0)
+		return $res->fetch_assoc()['id_municipio'];
+	if ($conn->query("INSERT INTO municipio (nombre_municipio) VALUES ('$nombre')"))
+		return $conn->insert_id;
+	return null;
+}
+function getParroquiaId($conn, $nombre, $id_municipio)
+{
+	$nombre = trim($conn->real_escape_string($nombre));
+	if (empty($nombre) || empty($id_municipio))
+		return null;
+	$sql = "SELECT id_parroquia FROM parroquia WHERE nombre_parroquia = '$nombre' LIMIT 1";
+	$res = $conn->query($sql);
+	if ($res && $res->num_rows > 0)
+		return $res->fetch_assoc()['id_parroquia'];
+	if ($conn->query("INSERT INTO parroquia (nombre_parroquia, id_municipio) VALUES ('$nombre', $id_municipio)"))
+		return $conn->insert_id;
+	return null;
+}
+
+$id_municipio_int = getMunicipioId($conn, $municipio_texto);
+$id_parroquia_int = getParroquiaId($conn, $parroquia_texto, $id_municipio_int);
+
+$mun_val = $id_municipio_int ?: 'NULL';
+$par_val = $id_parroquia_int ?: 'NULL';
+
 // 3. EJECUCIÓN DE LA ACTUALIZACIÓN SOLO SI NO HAY ERRORES
 if (empty($errores)) {
-	// 🔑 MODIFICADO: Se agrega el campo id_comunidad
 	$sql = "UPDATE contratos SET cedula='$cedula', nombre_completo='$nombre_completo', telefono='$telefono', correo='$correo',
-	 id_municipio='$id_municipio', id_parroquia='$id_parroquia', id_plan='$id_plan', id_vendedor='$id_vendedor', direccion='$direccion',
+	 id_municipio=$mun_val, id_parroquia=$par_val, municipio_texto='$municipio_texto', parroquia_texto='$parroquia_texto',
+	 id_plan='$id_plan', vendedor_texto='$vendedor_texto', direccion='$direccion',
 	  fecha_instalacion='$fecha_instalacion', estado='$estado', ident_caja_nap='$ident_caja_nap', puerto_nap='$puerto_nap',
 	   num_presinto_odn='$num_presinto_odn', id_olt='$id_olt', id_pon='$id_pon',
 	   tipo_conexion='$tipo_conexion', mac_onu='$mac_onu', ip_onu='$ip_onu', nap_tx_power='$nap_tx_power', onu_rx_power='$onu_rx_power',

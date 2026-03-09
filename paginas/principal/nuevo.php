@@ -61,7 +61,20 @@ require_once '../includes/sidebar.php';
     .campo-radio {
         display: none;
     }
+
+    /* Estilos para intl-tel-input premium */
+    .iti {
+        width: 100%;
+        display: block;
+    }
+
+    .iti__country-list {
+        z-index: 1056;
+        /* Mayor que el modal de Bootstrap si es necesario */
+    }
 </style>
+<!-- intl-tel-input CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/css/intlTelInput.css">
 
 <main class="main-content">
     <?php include '../includes/header.php'; ?>
@@ -84,9 +97,17 @@ require_once '../includes/sidebar.php';
 
                     <div class="col-md-6">
                         <label for="cedula" class="form-label">Cédula / RIF <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="cedula" name="cedula" required pattern="V[0-9]+"
-                            value="V" placeholder="V12345678" style="text-transform: uppercase;">
-                        <div class="form-text small">Debe empezar con V seguida de números.</div>
+                        <div class="input-group">
+                            <select class="form-select" name="tipo_cedula" id="tipo_cedula" style="max-width: 80px;"
+                                required>
+                                <option value="V" selected>V</option>
+                                <option value="E">E</option>
+                                <option value="J">J</option>
+                            </select>
+                            <input type="text" class="form-control" id="cedula" name="cedula" required pattern="[0-9]+"
+                                placeholder="12345678">
+                        </div>
+                        <div class="form-text small">Seleccione tipo e ingrese solo números.</div>
                     </div>
 
                     <div class="col-md-6">
@@ -97,9 +118,10 @@ require_once '../includes/sidebar.php';
                     </div>
 
                     <div class="col-md-6">
-                        <label for="telefono" class="form-label">Teléfono</label>
-                        <input type="text" class="form-control" id="telefono" name="telefono" inputmode="tel"
-                            pattern="[0-9\-+\s]{7,15}" placeholder="0424-1234567">
+                        <label for="telefono" class="form-label fw-bold">Teléfono de Contacto 1 <span
+                                class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="telefono" name="telefono" required
+                            placeholder="0424-1234567">
                     </div>
 
                     <div class="col-md-6">
@@ -109,9 +131,9 @@ require_once '../includes/sidebar.php';
                     </div>
 
                     <div class="col-md-6">
-                        <label for="telefono_secundario" class="form-label">Teléfono Secundario</label>
-                        <input type="text" class="form-control" id="telefono_secundario" name="telefono_secundario"
-                            inputmode="tel" pattern="[0-9\-+\s]{7,15}" placeholder="0414-7654321">
+                        <label for="telefono_secundario" class="form-label">Teléfono de Contacto 2</label>
+                        <input type="tel" class="form-control" id="telefono_secundario" name="telefono_secundario"
+                            placeholder="0414-7654321">
                     </div>
 
                     <div class="col-md-6">
@@ -168,32 +190,17 @@ require_once '../includes/sidebar.php';
 
 
                     <div class="col-md-6">
-                        <?php
-                        // ⚠️ MODIFICADO: Usar siempre base de datos, ignorar JSON para evitar error de claves foráneas
-                        $sql_vendedores_fb = "SELECT * FROM vendedores ORDER BY nombre_vendedor ASC";
-                        $res_fb = $conn->query($sql_vendedores_fb);
-                        ?>
-                        <label for="id_vendedor" class="form-label">Vendedor</label>
-
-                        <select name="id_vendedor" id="id_vendedor" class="form-select" required>
-                            <option value="">-- Seleccione un Vendedor --</option>
-                            <?php
-                            if ($res_fb && $res_fb->num_rows > 0) {
-                                while ($row = $res_fb->fetch_assoc()) {
-                                    // Usar id_vendedor como VALUE, nombre_vendedor como TEXTO
-                                    echo '<option value="' . htmlspecialchars($row['id_vendedor']) . '">' . htmlspecialchars($row['nombre_vendedor']) . '</option>';
-                                }
-                            } else {
-                                echo '<option value="" disabled>Sin vendedores registrados</option>';
-                            }
-                            ?>
+                        <label for="vendedor_texto" class="form-label">Vendedor</label>
+                        <select name="vendedor_texto" id="vendedor_texto" class="form-select" required>
+                            <option value="">Cargando vendedores...</option>
                         </select>
                     </div>
 
 
 
                     <div class="col-md-6">
-                        <label for="direccion" class="form-label">Direccion</label>
+                        <label for="direccion" class="form-label">Dirección (Referencia de localidad) <span
+                                class="text-danger">*</span></label>
                         <textarea class="form-control" id="direccion" name="direccion" rows="3" required></textarea>
                     </div>
 
@@ -224,10 +231,7 @@ require_once '../includes/sidebar.php';
                         <input type="text" class="form-control" id="puerto_nap" name="puerto_nap">
                     </div>
 
-                    <div class="col-md-6">
-                        <label for="num_presinto_odn" class="form-label">Numero_Presinto_ODN</label>
-                        <input type="text" class="form-control" id="num_presinto_odn" name="num_presinto_odn">
-                    </div>
+
 
                     <div class="col-md-6">
                         <label for="id_olt" class="form-label">OLT</label>
@@ -289,7 +293,7 @@ require_once '../includes/sidebar.php';
                     <div class="col-md-6">
                         <label for="monto_instalacion" class="form-label">Monto Instalación ($) <span
                                 class="text-danger">*</span></label>
-                        <input type="number" step="0.01" class="form-control" id="monto_instalacion"
+                        <input type="number" step="0.01" min="0" class="form-control" id="monto_instalacion"
                             name="monto_instalacion" required value="0">
                     </div>
 
@@ -316,21 +320,16 @@ require_once '../includes/sidebar.php';
                             <div class="col-md-4 mb-3">
                                 <label for="plan_prorrateo" class="form-label fw-semibold text-secondary">Plan para
                                     Prorrateo</label>
-                                <select class="form-select" id="plan_prorrateo" name="plan_prorrateo">
-                                    <option value="">-- Seleccione --</option>
-                                    <option value="17.50">100 Mbps - $17.50</option>
-                                    <option value="23.20">250 Mbps - $23.20</option>
-                                    <option value="25.00">650 Mbps - $25.00</option>
-                                    <option value="38.00">850 Mbps - $38.00</option>
-                                    <option value="48.00">1 Gb - $48.00</option>
+                                <select class="form-select" id="plan_prorrateo" name="plan_prorrateo_nombre">
+                                    <option value="">Cargando planes...</option>
                                 </select>
                             </div>
 
                             <div class="col-md-4 mb-3">
                                 <label for="dias_prorrateo" class="form-label fw-semibold text-secondary">Días de
                                     Prorrateo</label>
-                                <input type="number" class="form-control" id="dias_prorrateo" name="dias_prorrateo"
-                                    value="0" placeholder="0">
+                                <input type="number" min="0" class="form-control" id="dias_prorrateo"
+                                    name="dias_prorrateo" value="0" placeholder="0">
                             </div>
 
                             <div class="col-md-4 mb-3">
@@ -367,8 +366,9 @@ require_once '../includes/sidebar.php';
                     </div>
 
                     <div class="col-md-6">
-                        <label for="medio_pago" class="form-label">Medio de Pago</label>
-                        <select class="form-select" id="medio_pago" name="medio_pago">
+                        <label for="medio_pago" class="form-label">Medio de Pago <span
+                                class="text-danger">*</span></label>
+                        <select class="form-select" id="medio_pago" name="medio_pago" required>
                             <option value="">-- Seleccione --</option>
                             <option value="Efectivo">Efectivo</option>
                             <option value="Transferencia">Transferencia</option>
@@ -389,68 +389,81 @@ require_once '../includes/sidebar.php';
 
                     <!-- CAMPOS FTTH -->
                     <div class="col-md-6 campo-ftth">
-                        <label for="mac_onu" class="form-label">MAC o Serial de la ONU</label>
+                        <label for="mac_onu" class="form-label">MAC o Serial de la ONU <span
+                                class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="mac_onu" name="mac_onu"
                             pattern="[A-Fa-f0-9:\.\-]{8,20}" placeholder="FABBCC112233">
                     </div>
 
                     <div class="col-md-6 campo-ftth">
-                        <label for="ip_onu" class="form-label">Dirección IP Asignada a la ONU</label>
+                        <label for="ip_onu" class="form-label">Dirección IP Asignada a la ONU <span
+                                class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="ip_onu" name="ip_onu" value="192.168."
-                            pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$">
+                            pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+                            placeholder="192.168.1.1">
                     </div>
 
                     <div class="col-md-6 campo-ftth">
-                        <label for="ident_caja_nap" class="form-label">Identificación Caja NAP</label>
+                        <label for="ident_caja_nap" class="form-label">Identificación Caja NAP <span
+                                class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="ident_caja_nap" name="ident_caja_nap">
                     </div>
 
                     <div class="col-md-6 campo-ftth">
-                        <label for="puerto_nap" class="form-label">Puerto NAP</label>
+                        <label for="puerto_nap" class="form-label">Puerto NAP <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="puerto_nap" name="puerto_nap">
                     </div>
 
                     <div class="col-md-6 campo-ftth">
-                        <label for="nap_tx_power" class="form-label">NAP TX Power (dBm)</label>
+                        <label for="nap_tx_power" class="form-label">NAP TX Power (dBm) <span
+                                class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="nap_tx_power" name="nap_tx_power"
                             pattern="-?[0-9.]+" placeholder="-25.5">
                     </div>
 
                     <div class="col-md-6 campo-ftth">
-                        <label for="onu_rx_power" class="form-label">ONU RX Power (dBm)</label>
+                        <label for="onu_rx_power" class="form-label">ONU RX Power (dBm) <span
+                                class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="onu_rx_power" name="onu_rx_power"
                             pattern="-?[0-9.]+" placeholder="-27.5">
                     </div>
 
                     <div class="col-md-6 campo-ftth">
-                        <label for="distancia_drop" class="form-label">Distancia Drop (m)</label>
+                        <label for="distancia_drop" class="form-label">Distancia Drop (m) <span
+                                class="text-danger">*</span></label>
                         <input type="number" step="1" class="form-control" id="distancia_drop" name="distancia_drop"
                             placeholder="50">
                     </div>
 
+                    <div class="col-md-6 campo-ftth">
+                        <label for="num_presinto_odn" class="form-label text-primary fw-bold">Precinto ODN <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control border-primary shadow-sm" id="num_presinto_odn"
+                            name="num_presinto_odn" placeholder="Ej. A-123">
+                    </div>
+
                     <!-- CAMPOS RADIO -->
                     <div class="col-md-6 campo-radio">
-                        <label for="ip" class="form-label">Dirección IP</label>
+                        <label for="ip" class="form-label">Dirección IP <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="ip" name="ip" placeholder="192.168.x.x"
-                            pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$">
+                            pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
                     </div>
 
                     <div class="col-md-6 campo-radio">
-                        <label for="punto_acceso" class="form-label">Punto de Acceso</label>
+                        <label for="punto_acceso" class="form-label">Punto de Acceso <span
+                                class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="punto_acceso" name="punto_acceso">
                     </div>
 
                     <div class="col-md-6 campo-radio">
-                        <label for="valor_conexion_dbm" class="form-label">Valor Conexión (dBm)</label>
+                        <label for="valor_conexion_dbm" class="form-label">Valor Conexión (dBm) <span
+                                class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="valor_conexion_dbm" name="valor_conexion_dbm"
                             pattern="-?[0-9.]+" placeholder="-55.0">
                     </div>
 
                     <!-- Otros campos (Ocultos o generales según necesidad, por ahora fuera de la lógica dinámica estricta o ocultos) -->
-                    <div class="col-md-6" style="display:none;"> <!-- Ocultando temporalmente si no se piden -->
-                        <label for="num_presinto_odn" class="form-label">Número Presinto ODN</label>
-                        <input type="text" class="form-control" id="num_presinto_odn" name="num_presinto_odn">
-                    </div>
+
 
                     <div class="col-md-12" style="display:none;">
                         <label for="evidencia_fibra" class="form-label">Evidencia de Fibra</label>
@@ -597,7 +610,12 @@ require_once '../includes/sidebar.php';
         });
     }
 
-    function ejecutarGuardado(form) {
+    function ejecutarGuardado(form, idGuardado = null, pdfUrl = null) {
+        if (idGuardado) {
+            mostrarOpcionesExito(idGuardado, pdfUrl);
+            return;
+        }
+
         // Capturar firmas antes de enviar
         if (window.padCliente && !window.padCliente.isEmpty()) {
             $('#firma_cliente_data').val(window.padCliente.toDataURL());
@@ -625,28 +643,10 @@ require_once '../includes/sidebar.php';
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    Swal.fire({
-                        title: '¡Éxito!',
-                        text: data.msg || 'Contrato registrado correctamente.',
-                        icon: 'success',
-                        showCancelButton: true,
-                        showDenyButton: true,
-                        confirmButtonColor: '#198754',
-                        denyButtonColor: '#0d6efd',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: '<i class="fa-solid fa-file-pdf"></i> Ver PDF',
-                        denyButtonText: '<i class="fa-solid fa-link"></i> Generar Link',
-                        cancelButtonText: 'Ir a Gestión'
-                    }).then((res) => {
-                        if (res.isConfirmed) {
-                            window.open(data.pdf_url, '_blank');
-                            window.location.href = 'gestion_contratos.php';
-                        } else if (res.isDenied) {
-                            generarLinkDespuesDeGuardar(data.id);
-                        } else {
-                            window.location.href = 'gestion_contratos.php';
-                        }
-                    });
+                    // Guardar datos para poder volver a mostrar el modal
+                    window.lastSavedId = data.id;
+                    window.lastPdfUrl = data.pdf_url;
+                    mostrarOpcionesExito(data.id, data.pdf_url);
                 } else {
                     Swal.fire({
                         title: 'Error al Guardar',
@@ -659,6 +659,33 @@ require_once '../includes/sidebar.php';
                 console.error(error);
                 Swal.fire('Error', 'Error de conexión con el servidor', 'error');
             });
+    }
+
+    function mostrarOpcionesExito(id, pdf_url) {
+        Swal.fire({
+            title: '¡Éxito!',
+            text: 'Contrato registrado correctamente.',
+            icon: 'success',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonColor: '#198754',
+            denyButtonColor: '#0d6efd',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fa-solid fa-file-pdf"></i> Ver PDF',
+            denyButtonText: '<i class="fa-solid fa-link"></i> Generar Link',
+            cancelButtonText: 'Ir a Gestión',
+            allowOutsideClick: false
+        }).then((res) => {
+            if (res.isConfirmed) {
+                window.open(pdf_url, '_blank');
+                // No redireccionamos para que el usuario pueda seguir en la página o elegir otra opción
+                mostrarOpcionesExito(id, pdf_url);
+            } else if (res.isDenied) {
+                generarLinkDespuesDeGuardar(id);
+            } else {
+                window.location.href = 'gestion_contratos.php';
+            }
+        });
     }
 
     $(document).ready(function () {
@@ -691,7 +718,53 @@ require_once '../includes/sidebar.php';
             $('#municipio').html(options);
         });
 
-        // 2. Cargar Parroquias al cambiar Municipio (Añadir lógica si aplica, por ahora se espera confirmación del backend)
+        // 1.1 Cargar Planes de Prorrateo Dinámicamente
+        $.get('json_personal_api.php?action=get_planes_prorrateo', function (data) {
+            let options = '<option value="">-- Seleccione un Plan --</option>';
+            if (data && data.length > 0) {
+                data.forEach(function (p) {
+                    options += `<option value="${p.nombre}" data-precio="${p.precio}">${p.nombre} - $${p.precio}</option>`;
+                });
+            } else {
+                options = '<option value="">Sin planes registrados</option>';
+            }
+            $('#plan_prorrateo').html(options);
+        });
+
+        // 1.2 Cargar Vendedores Dinámicamente
+        $.get('json_personal_api.php?action=get_vendedores', function (data) {
+            let options = '<option value="">-- Seleccione un Vendedor --</option>';
+            if (data && data.length > 0) {
+                // array de strings
+                data.forEach(function (v) {
+                    options += `<option value="${v}">${v}</option>`;
+                });
+            } else {
+                options = '<option value="">Sin vendedores registrados</option>';
+            }
+            $('#vendedor_texto').html(options);
+        });
+
+        // 2. Cargar Parroquias al cambiar Municipio (CORREGIDO)
+        $('#municipio').on('change', function () {
+            const munNombre = $(this).val();
+            let options = '<option value="">-- Seleccione --</option>';
+
+            if (munNombre) {
+                const municipioObj = ubicacionesData.find(m => m.municipio === munNombre);
+
+                if (municipioObj && municipioObj.parroquias) {
+                    municipioObj.parroquias.forEach(function (p) {
+                        options += `<option value="${p.nombre}">${p.nombre}</option>`;
+                    });
+                    $('#parroquia').html(options).prop('disabled', false);
+                } else {
+                    $('#parroquia').html('<option value="">No hay parroquias</option>').prop('disabled', true);
+                }
+            } else {
+                $('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>').prop('disabled', true);
+            }
+        });
 
         // ======================================================
         // LÓGICA DE CAMPOS TÉCNICOS DINÁMICOS
@@ -706,12 +779,10 @@ require_once '../includes/sidebar.php';
 
             if (tipo === 'FTTH') {
                 $('.campo-ftth').show();
-                // En admin 'nuevo.php', usualmente no son obligatorios, pero si hubiera alguno lo pondríamos acá
-                // $('#mac_onu, #ip_onu').prop('required', true); 
+                $('#mac_onu, #ip_onu, #ident_caja_nap, #puerto_nap, #nap_tx_power, #onu_rx_power, #distancia_drop, #num_presinto_odn').prop('required', true);
             } else if (tipo === 'RADIO') {
                 $('.campo-radio').show();
-                // Si la IP de radio debe ser obligatoria cuando se elige RADIO:
-                // $('#ip').prop('required', true);
+                $('#ip, #punto_acceso, #valor_conexion_dbm').prop('required', true);
             }
         });
 
@@ -800,7 +871,8 @@ require_once '../includes/sidebar.php';
 
         // 10. Función para calcular prorrateo: (Precio Plan Manual / 30) * Días
         function calcularProrrateo() {
-            var montoPlan = parseFloat($('#plan_prorrateo').val()) || 0;
+            var selected = $('#plan_prorrateo option:selected');
+            var montoPlan = parseFloat(selected.data('precio')) || 0;
             var diasProrrateo = parseInt($('#dias_prorrateo').val()) || 0;
             var prorrateo = (montoPlan / 30) * diasProrrateo;
             $('#monto_prorrateo_usd').val(prorrateo.toFixed(2));
@@ -840,10 +912,24 @@ require_once '../includes/sidebar.php';
             $(this).val(val);
         });
 
-        // Restringir IP a números y puntos
+        // Restringir IP a números y puntos y validar octetos 0-255
         $('#ip, #ip_onu').on('input', function () {
             let val = $(this).val().replace(/[^0-9.]/g, '');
-            $(this).val(val);
+            let parts = val.split('.');
+
+            // Validar que cada octeto no pase de 255
+            for (let i = 0; i < parts.length; i++) {
+                if (parts[i] !== '' && parseInt(parts[i]) > 255) {
+                    parts[i] = '255';
+                }
+                // Limitar a máximo 4 octetos
+                if (i >= 4) {
+                    parts.splice(4);
+                    break;
+                }
+            }
+
+            $(this).val(parts.join('.'));
         });
 
         // Restringir Teléfono a números, guiones, más y espacios
@@ -926,19 +1012,43 @@ require_once '../includes/sidebar.php';
         // Inicializar medios al cargar
         filtrarMedios(mMoneda.val());
 
-        // 13. Función para calcular saldo pendiente
+        // 13. Función para calcular saldo pendiente y validar que no exceda el total
         function calcularSaldo() {
             var total = parseFloat($('#monto_pagar').val()) || 0;
-            var pagado = parseFloat($('#monto_pagado').val()) || 0;
+            var pagadoRaw = $('#monto_pagado').val();
+            var pagado = parseFloat(pagadoRaw) || 0;
             var moneda = $('#moneda_pago').val();
 
-            // Siempre calculamos el saldo en USD para el registro
+            // Convertir pagado a USD para comparar con el total
             var pagadoUSD = pagado;
             if (moneda === 'BS' && tasaBCV > 0) {
                 pagadoUSD = pagado / tasaBCV;
             }
 
-            var saldo = total - pagadoUSD;
+            // Validar que el monto pagado no exceda el total (con margen de 0.01 por redondeo)
+            if (pagadoUSD > (total + 0.01)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Monto Excedido',
+                    text: 'El monto pagado no puede ser mayor al total a pagar ($' + total.toFixed(2) + ').',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                // Ajustar al máximo permitido según la moneda
+                if (moneda === 'BS' && tasaBCV > 0) {
+                    $('#monto_pagado').val((total * tasaBCV).toFixed(2));
+                } else {
+                    $('#monto_pagado').val(total.toFixed(2));
+                }
+
+                // Recalcular con el valor ajustado
+                calcularSaldo();
+                return;
+            }
+
+            var saldo = (total - pagadoUSD).toFixed(2);
+            saldo = parseFloat(saldo);
 
             if (pagado > 0 && saldo > 0) {
                 $('#saldo_pendiente').val(saldo.toFixed(2));
@@ -1005,8 +1115,7 @@ require_once '../includes/sidebar.php';
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="fa-solid fa-link me-2"></i>Enlace de Contrato Generado</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                    onclick="location.href='gestion_contratos.php'"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center p-4">
                 <div class="mb-4">
@@ -1027,9 +1136,16 @@ require_once '../includes/sidebar.php';
                     <a href="#" id="btnWhatsapp" target="_blank" class="btn btn-success">
                         <i class="fa-brands fa-whatsapp me-2"></i> Enviar por WhatsApp
                     </a>
-                    <button type="button" class="btn btn-secondary" onclick="location.href='gestion_contratos.php'">
-                        Cerrar y Regresar
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal"
+                            onclick="mostrarOpcionesExito(window.lastSavedId, window.lastPdfUrl)">
+                            <i class="fa-solid fa-arrow-left me-1"></i> Volver
+                        </button>
+                        <button type="button" class="btn btn-primary w-100"
+                            onclick="location.href='gestion_contratos.php'">
+                            Finalizar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1048,7 +1164,7 @@ require_once '../includes/sidebar.php';
         // Usar el endpoint existente 'generar_token_firma.php'
         $.post('generar_token_firma.php', { id: idContrato }, function (resp) {
             if (resp.success) {
-                const baseUrl = window.location.origin + '/sistemas-administrativo-tecnico-wireless/paginas/soporte/firmar_remoto.php';
+                const baseUrl = window.location.origin + window.location.pathname.split('/paginas/')[0] + '/paginas/soporte/firmar_remoto.php';
                 const link = `${baseUrl}?token=${resp.token}&type=contrato`;
 
                 document.getElementById('linkInput').value = link;
@@ -1088,6 +1204,55 @@ require_once '../includes/sidebar.php';
             });
         });
     }
+    // intl-tel-input JS
+    // </script> is handled in layout_foot or above. We'll add our own script block.
+</script>
+
+<!-- intl-tel-input JS -->
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/intlTelInput.min.js"></script>
+<script>
+    const telInput1 = document.querySelector("#telefono");
+    const telInput2 = document.querySelector("#telefono_secundario");
+
+    const iti1 = window.intlTelInput(telInput1, {
+        initialCountry: "ve",
+        separateDialCode: true,
+        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
+    });
+
+    const iti2 = window.intlTelInput(telInput2, {
+        initialCountry: "ve",
+        separateDialCode: true,
+        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
+    });
+
+    const handlePhoneZeroCorrection = (input, iti) => {
+        input.addEventListener('input', () => {
+            let val = input.value;
+            const data = iti.getSelectedCountryData();
+            if (data.iso2 === 've' && val.startsWith('0')) {
+                input.value = val.substring(1);
+            }
+        });
+    };
+
+    handlePhoneZeroCorrection(telInput1, iti1);
+    handlePhoneZeroCorrection(telInput2, iti2);
+
+    // Bloquear signos negativos en Monto Instalación y Días Prorrateo
+    const montoInstalacion = document.querySelector("#monto_instalacion");
+    const diasProrrateo = document.querySelector("#dias_prorrateo");
+
+    [montoInstalacion, diasProrrateo].forEach(el => {
+        if (el) {
+            el.addEventListener('keydown', (e) => {
+                if (e.key === '-' || e.key === 'e') e.preventDefault();
+            });
+            el.addEventListener('input', () => {
+                if (el.value < 0) el.value = 0;
+            });
+        }
+    });
 </script>
 
 <?php require_once '../includes/layout_foot.php'; ?>

@@ -335,8 +335,12 @@ require_once '../includes/sidebar.php';
                     </div>
                     <div class="input-group">
                         <input type="text" class="form-control" id="newTipo" placeholder="Nuevo Tipo (Ej. FTTH, RADIO)">
-                        <button class="btn btn-success" type="button" id="btnAddTipo"><i
-                                class="fa-solid fa-plus"></i></button>
+                        <button class="btn btn-success" type="button" id="btnAddTipo">
+                            <i class="fa-solid fa-plus" id="iconTipoAction"></i>
+                        </button>
+                        <button class="btn btn-secondary d-none" type="button" id="btnCancelEditTipo">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -361,8 +365,13 @@ require_once '../includes/sidebar.php';
                     </div>
                     <div class="input-group">
                         <input type="text" class="form-control" id="newInstalador" placeholder="Nombre Instalador">
-                        <button class="btn btn-success" type="button" onclick="addPersonal('instalador')"><i
-                                class="fa-solid fa-plus"></i></button>
+                        <button class="btn btn-success" id="btnAddInstalador" type="button" onclick="addInstalador()">
+                            <i class="fa-solid fa-plus" id="iconInstaladorAction"></i>
+                        </button>
+                        <button class="btn btn-secondary d-none" id="btnCancelEditInstalador" type="button"
+                            onclick="cancelEditInstalador()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -381,8 +390,10 @@ require_once '../includes/sidebar.php';
                     <div class="list-group mb-3" id="listVendedores" style="max-height: 400px; overflow-y: auto;"></div>
                     <div class="input-group">
                         <input type="text" class="form-control" id="newVendedor" placeholder="Nombre Vendedor">
-                        <button class="btn btn-success" type="button" onclick="addPersonal('vendedor')"><i
-                                class="fa-solid fa-plus"></i></button>
+                        <button class="btn btn-success" id="btnAddVendedor" type="button" onclick="addVendedor()"><i
+                                class="fa-solid fa-plus" id="iconVendedorAction"></i></button>
+                        <button class="btn btn-secondary d-none" id="btnCancelEditVendedor" type="button"
+                            onclick="cancelEditVendedor()"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                 </div>
             </div>
@@ -402,10 +413,16 @@ require_once '../includes/sidebar.php';
                     <div class="list-group mb-3" id="listProrrateo" style="max-height: 400px; overflow-y: auto;"></div>
                     <div class="input-group">
                         <input type="text" class="form-control" id="newPlanNombre" placeholder="Nombre (Ej. 100 Mbps)">
-                        <input type="number" step="0.01" class="form-control" id="newPlanPrecio"
+                        <input type="number" step="0.01" min="0" class="form-control" id="newPlanPrecio"
                             placeholder="Precio ($)">
-                        <button class="btn btn-success" type="button" onclick="addPlanProrrateo()"><i
-                                class="fa-solid fa-plus"></i></button>
+                        <button class="btn btn-success" type="button" id="btnAddPlanProrrateo"
+                            onclick="addPlanProrrateo()" title="Agregar">
+                            <i class="fa-solid fa-plus" id="iconPlanAction"></i>
+                        </button>
+                        <button class="btn btn-secondary d-none" type="button" id="btnCancelEditPlan"
+                            onclick="cancelEditPlan()" title="Cancelar Edición">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -432,8 +449,14 @@ require_once '../includes/sidebar.php';
                             </div>
                             <div class="input-group">
                                 <input type="text" class="form-control" id="newMunicipio" placeholder="Nuevo Municipio">
-                                <button class="btn btn-success" type="button" id="btnAddMunicipio"><i
-                                        class="fa-solid fa-plus"></i></button>
+                                <button class="btn btn-success" type="button" id="btnAddMunicipio"
+                                    title="Agregar Municipio">
+                                    <i class="fa-solid fa-plus" id="iconMunAction"></i>
+                                </button>
+                                <button class="btn btn-secondary d-none" type="button" id="btnCancelEditMun"
+                                    title="Cancelar Edición">
+                                    <i class="fa-solid fa-times"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -450,8 +473,14 @@ require_once '../includes/sidebar.php';
                             <div class="input-group">
                                 <input type="text" class="form-control" id="newParroquia" placeholder="Nueva Parroquia"
                                     disabled>
-                                <button class="btn btn-success" type="button" id="btnAddParroquia" disabled><i
-                                        class="fa-solid fa-plus"></i></button>
+                                <button class="btn btn-success" type="button" id="btnAddParroquia" disabled
+                                    title="Agregar Parroquia">
+                                    <i class="fa-solid fa-plus" id="iconParAction"></i>
+                                </button>
+                                <button class="btn btn-secondary d-none" type="button" id="btnCancelEditPar"
+                                    title="Cancelar Edición">
+                                    <i class="fa-solid fa-times"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -902,12 +931,12 @@ require_once '../includes/sidebar.php';
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Teléfono</label>
                             <input type="text" class="form-control form-control-sm" id="edit_telefono" name="telefono"
-                                inputmode="tel" pattern="[0-9-+\s]{7,15}" placeholder="0424-1234567">
+                                inputmode="tel" pattern="[0-9+\s-]{7,15}" placeholder="0424-1234567">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Teléfono (Alt)</label>
                             <input type="text" class="form-control form-control-sm" id="edit_telefono2"
-                                name="telefono_secundario" inputmode="tel" pattern="[0-9-+\s]{7,15}"
+                                name="telefono_secundario" inputmode="tel" pattern="[0-9+\s-]{7,15}"
                                 placeholder="0414-7654321">
                         </div>
                         <div class="col-md-4">
@@ -923,6 +952,11 @@ require_once '../includes/sidebar.php';
                             <label class="form-label small fw-bold">Fecha de Instalación</label>
                             <input type="date" class="form-control form-control-sm" id="edit_fecha"
                                 name="fecha_instalacion">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-primary">SAE Plus ID</label>
+                            <input type="text" class="form-control form-control-sm border-primary" id="edit_sae_plus"
+                                name="sae_plus" placeholder="ID de SAE">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label small fw-bold">Dirección</label>
@@ -976,15 +1010,52 @@ require_once '../includes/sidebar.php';
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">Vendedor</label>
-                            <select class="form-select form-select-sm" id="edit_vendedor" name="id_vendedor">
-                                <option value="">-- Seleccione --</option>
-                                <?php
-                                $sql_vends = "SELECT id_vendedor, nombre_vendedor FROM vendedores ORDER BY nombre_vendedor ASC";
-                                $res_vends = $conn->query($sql_vends);
-                                while ($v = $res_vends->fetch_assoc()) {
-                                    echo '<option value="' . $v['id_vendedor'] . '">' . htmlspecialchars($v['nombre_vendedor']) . '</option>';
-                                }
-                                ?>
+                            <select class="form-select form-select-sm" id="edit_vendedor" name="vendedor_texto">
+                                <option value="">Cargando...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Plan Prorrateo</label>
+                            <select class="form-select form-select-sm" id="edit_plan_prorrateo"
+                                name="plan_prorrateo_nombre">
+                                <option value="">Cargando...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Días Prorrateo</label>
+                            <input type="number" min="0" class="form-control form-control-sm" id="edit_dias_prorrateo"
+                                name="dias_prorrateo">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Monto Prorrateo ($)</label>
+                            <input type="text" class="form-control form-control-sm bg-light" id="edit_monto_prorrateo"
+                                name="monto_prorrateo_usd" readonly>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN: COSTOS Y PAGOS -->
+                    <div class="section-title bg-light p-2 fw-bold border-start border-danger border-4 mb-3">
+                        <i class="fa-solid fa-dollar-sign me-2 text-danger"></i>Información Económica
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Monto Pagar ($)</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm" id="edit_monto_pagar"
+                                name="monto_pagar">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Monto Pagado</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm" id="edit_monto_pagado"
+                                name="monto_pagado">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Medio de Pago</label>
+                            <select class="form-select form-select-sm" id="edit_medio_pago" name="medio_pago">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Pago Móvil">Pago Móvil</option>
+                                <option value="Zelle">Zelle</option>
+                                <option value="Otro">Otro</option>
                             </select>
                         </div>
                     </div>
@@ -1038,10 +1109,10 @@ require_once '../includes/sidebar.php';
                             <input type="text" class="form-control form-control-sm" id="edit_puerto_nap"
                                 name="puerto_nap">
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold">Precinto ODN</label>
-                            <input type="text" class="form-control form-control-sm" id="edit_odn"
-                                name="num_presinto_odn">
+                        <div class="col-md-12">
+                            <label class="form-label small fw-bold">Instalador Principal</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_instalador"
+                                name="instalador" placeholder="Nombre del instalador">
                         </div>
                     </div>
 
@@ -1075,6 +1146,11 @@ require_once '../includes/sidebar.php';
                             <input type="number" step="1" class="form-control form-control-sm" id="edit_drop"
                                 name="distancia_drop" placeholder="50">
                         </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Precinto ODN</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_odn"
+                                name="num_presinto_odn">
+                        </div>
                     </div>
                     <div class="row g-3 mb-4" id="edit_campos_radio">
                         <div class="col-md-4">
@@ -1085,6 +1161,14 @@ require_once '../includes/sidebar.php';
                             <label class="form-label small fw-bold">Valor Conexión (dBm)</label>
                             <input type="text" class="form-control form-control-sm" id="edit_dbm"
                                 name="valor_conexion_dbm" pattern="-?[0-9.]+" placeholder="-55.0">
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label class="form-label small fw-bold">Observaciones</label>
+                            <textarea class="form-control form-control-sm" id="edit_observaciones" name="observaciones"
+                                rows="3"></textarea>
                         </div>
                     </div>
 
@@ -1200,7 +1284,7 @@ require_once '../includes/sidebar.php';
         $('#edit_firma_tecnico_data').val('');
 
         if (padEditCliente) padEditCliente.clear();
-        if  (padEditTecnico) padEditTecnico.clear();
+        if (padEditTecnico) padEditTecnico.clear();
     }
 
     $(document).ready(function () {
@@ -1213,7 +1297,7 @@ require_once '../includes/sidebar.php';
             $('#prev_firma_cliente_div').addClass('d-none');
             $('#pad_firma_cliente_div').removeClass('d-none');
             $(this).addClass('d-none');
-            
+
             // Forzar resize una vez visible
             const canvas = document.getElementById('edit_sigCliente');
             resizeEditPad(canvas, padEditCliente);
@@ -1223,7 +1307,7 @@ require_once '../includes/sidebar.php';
             $('#prev_firma_tecnico_div').addClass('d-none');
             $('#pad_firma_tecnico_div').removeClass('d-none');
             $(this).addClass('d-none');
-            
+
             // Forzar resize una vez visible
             const canvas = document.getElementById('edit_sigTecnico');
             resizeEditPad(canvas, padEditTecnico);
@@ -1286,6 +1370,7 @@ require_once '../includes/sidebar.php';
                 { header: 'Monto Pagar', key: 'costo_instalacion', width: 15 },
                 { header: 'Monto Pagado', key: 'monto_pagado', width: 15 },
                 { header: 'Días Prorrateo', key: 'dias_prorrateo', width: 10 },
+                { header: 'Plan Prorrateo', key: 'plan_prorrateo_nombre', width: 20 },
                 { header: 'Monto Prorr. ($)', key: 'monto_prorrateo', width: 15 },
                 { header: 'Observ.', key: 'observaciones', width: 30 },
                 { header: 'Tipo Conex.', key: 'tipo_conexion', width: 15 },
@@ -1598,7 +1683,14 @@ require_once '../includes/sidebar.php';
                 $('#edit_fecha').val(d.fecha_instalacion);
                 $('#edit_direccion').val(d.direccion);
                 $('#edit_estado').val(d.estado);
-                $('#edit_obs').val(d.observaciones);
+                $('#edit_sae_plus').val(d.sae_plus);
+                $('#edit_observaciones').val(d.observaciones);
+
+                // --- COSTOS Y PAGOS ---
+                $('#edit_monto_pagar').val(d.monto_pagar || 0);
+                $('#edit_monto_pagado').val(d.monto_pagado || 0);
+                $('#edit_medio_pago').val(d.medio_pago || '');
+                $('#edit_instalador').val(d.instalador || '');
 
                 // --- FIRMAS ---
                 resetEditPadsWorkflows();
@@ -1621,7 +1713,18 @@ require_once '../includes/sidebar.php';
                     $('#no_firma_tecnico').removeClass('d-none');
                 }
                 $('#edit_plan').val(d.id_plan);
-                $('#edit_vendedor').val(d.id_vendedor);
+
+                // Load vendedores dynamically and set value
+                $.get('json_personal_api.php?action=get_vendedores', function (vends) {
+                    let opts = '<option value="">-- Seleccione --</option>';
+                    if (vends && vends.length > 0) {
+                        vends.forEach(v => {
+                            opts += `<option value="${v}">${v}</option>`;
+                        });
+                    }
+                    $('#edit_vendedor').html(opts).val(d.vendedor_texto || '');
+                });
+
                 $('#edit_nap').val(d.ident_caja_nap);
                 $('#edit_puerto_nap').val(d.puerto_nap);
                 $('#edit_odn').val(d.num_presinto_odn);
@@ -1636,6 +1739,29 @@ require_once '../includes/sidebar.php';
 
                 // Tipo conexion
                 $('#edit_tipo_conexion').val(d.tipo_conexion).trigger('change');
+
+                // --- PRORRATEO (NUEVO) ---
+                $('#edit_dias_prorrateo').val(d.dias_prorrateo || 0);
+                $('#edit_monto_prorrateo').val(d.monto_prorrateo_usd || '0.00');
+
+                // Load plans into edit select then set value
+                $.get('json_personal_api.php?action=get_planes_prorrateo', function (planes) {
+                    let opts = '<option value="">-- Seleccione --</option>';
+                    planes.forEach(p => {
+                        opts += `<option value="${p.nombre}" data-precio="${p.precio}">${p.nombre} - $${p.precio}</option>`;
+                    });
+                    $('#edit_plan_prorrateo').html(opts).val(d.plan_prorrateo_nombre);
+                });
+
+                // Event calculating on the fly
+                $('#edit_plan_prorrateo, #edit_dias_prorrateo').off('change.calc').on('change.calc', function () {
+                    const price = parseFloat($('#edit_plan_prorrateo option:selected').data('precio')) || 0;
+                    const days = parseInt($('#edit_dias_prorrateo').val()) || 0;
+                    const result = (price / 30) * days;
+                    $('#edit_monto_prorrateo').val(result.toFixed(2));
+                });
+
+
 
                 // Cascading location (Using Text Names from Join)
                 $('#edit_municipio').val(d.nombre_municipio);
@@ -1723,9 +1849,21 @@ require_once '../includes/sidebar.php';
                 success: function (res) {
                     var $alert = $('#editContratoAlert').removeClass('d-none alert-danger alert-success');
                     if (res.success) {
-                        $alert.addClass('alert-success').html('<i class="fa-solid fa-check-circle me-1"></i>' + res.message);
-                        table.ajax.reload(null, false); // Reload table without pagination reset
-                        setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('modalEditarContrato')).hide(); }, 1200);
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Guardado!',
+                            text: res.message,
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        if (typeof table !== 'undefined') table.ajax.reload(null, false);
+                        else $('#mitabla').DataTable().ajax.reload(null, false);
+
+                        setTimeout(() => {
+                            var m = document.getElementById('modalEditarContrato');
+                            var bsModal = bootstrap.Modal.getInstance(m);
+                            if (bsModal) bsModal.hide();
+                        }, 500);
                     } else {
                         $alert.addClass('alert-danger').html('<i class="fa-solid fa-circle-exclamation me-1"></i>' + res.message);
                     }
@@ -1743,7 +1881,7 @@ require_once '../includes/sidebar.php';
         // GESTIÓN DE FIRMA REMOTA
         // ========================================================
         window.gestionarFirma = function (id, token, estado) {
-            const baseUrl = window.location.origin + '/sistemas-administrativo-tecnico-wireless/paginas/soporte/firmar_remoto.php';
+            const baseUrl = window.location.origin + window.location.pathname.split('/paginas/')[0] + '/paginas/soporte/firmar_remoto.php';
 
             if (token && estado === 'PENDIENTE') {
                 const link = `${baseUrl}?token=${token}&type=contrato`;
@@ -1796,7 +1934,7 @@ require_once '../includes/sidebar.php';
 
             $.post('generar_token_firma.php', { id: id }, function (resp) {
                 if (resp.success) {
-                    const baseUrl = window.location.origin + '/sistemas-administrativo-tecnico-wireless/paginas/soporte/firmar_remoto.php';
+                    const baseUrl = window.location.origin + window.location.pathname.split('/paginas/')[0] + '/paginas/soporte/firmar_remoto.php';
                     const link = `${baseUrl}?token=${resp.token}&type=contrato`;
 
                     Swal.fire({
@@ -1856,24 +1994,227 @@ require_once '../includes/sidebar.php';
 
     // --- INSTALADORES ---
     let instaladoresData = [];
+    let editInstaladorIndex = -1;
+
     function loadInstaladores() {
         $.get('json_personal_api.php?action=get_instaladores', function (data) {
             instaladoresData = data || [];
-            renderPersonalList('listInstaladores', instaladoresData, 'Instalador');
+            renderInstaladoresList();
+        });
+    }
+
+    function renderInstaladoresList() {
+        const list = $('#listInstaladores');
+        list.empty();
+        if (instaladoresData.length === 0) {
+            list.html('<div class="text-center text-muted p-2">Sin registros</div>');
+            return;
+        }
+        instaladoresData.forEach((item, index) => {
+            const row = `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${item}</span>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editInstalador(${index})" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="btn btn-sm btn-danger py-0 px-2" onclick="deleteInstalador(${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                </div>`;
+            list.append(row);
+        });
+    }
+
+    window.addInstalador = async function () {
+        const nombre = $('#newInstalador').val().trim().toUpperCase();
+        if (!nombre) return;
+
+        if (editInstaladorIndex === -1 && instaladoresData.includes(nombre)) {
+            Swal.fire({ target: document.getElementById('modalInstaladores'), title: 'Atención', text: 'Este instalador ya existe', icon: 'warning' });
+            return;
+        }
+
+        const actionLabel = (editInstaladorIndex > -1) ? 'Actualizar Instalador' : 'Agregar Instalador';
+        const ok = await verificarClave(actionLabel, document.getElementById('modalInstaladores'));
+        if (!ok) return;
+
+        if (editInstaladorIndex > -1) {
+            instaladoresData[editInstaladorIndex] = nombre;
+            cancelEditInstalador();
+        } else {
+            instaladoresData.push(nombre);
+            $('#newInstalador').val('');
+        }
+
+        saveInstaladores();
+        renderInstaladoresList();
+    };
+
+    window.editInstalador = function (index) {
+        editInstaladorIndex = index;
+        $('#newInstalador').val(instaladoresData[index]);
+        $('#btnAddInstalador').removeClass('btn-success').addClass('btn-info').attr('title', 'Actualizar');
+        $('#iconInstaladorAction').removeClass('fa-plus').addClass('fa-check');
+        $('#btnCancelEditInstalador').removeClass('d-none');
+    };
+
+    window.cancelEditInstalador = function () {
+        editInstaladorIndex = -1;
+        $('#newInstalador').val('');
+        $('#btnAddInstalador').removeClass('btn-info').addClass('btn-success').attr('title', 'Agregar');
+        $('#iconInstaladorAction').removeClass('fa-check').addClass('fa-plus');
+        $('#btnCancelEditInstalador').addClass('d-none');
+    };
+
+    window.deleteInstalador = async function (index) {
+        const nombre = instaladoresData[index];
+
+        try {
+            const usageResp = await fetch(`verificar_uso_ubicacion.php?tipo=instalador&nombre=${encodeURIComponent(nombre)}`);
+            const usageData = await usageResp.json();
+            if (usageData.usage > 0) {
+                Swal.fire({
+                    target: document.getElementById('modalInstaladores'),
+                    title: 'No se puede eliminar',
+                    text: `El instalador "${nombre}" está asignado a ${usageData.usage} contrato(s). No puede ser eliminado de la lista mientras esté en uso.`,
+                    icon: 'error'
+                });
+                return;
+            }
+        } catch (err) { console.error("Error validando uso:", err); }
+
+        const ok = await verificarClave('Eliminar Instalador: ' + nombre, document.getElementById('modalInstaladores'));
+        if (!ok) return;
+
+        instaladoresData.splice(index, 1);
+        saveInstaladores();
+        renderInstaladoresList();
+        Swal.fire({ target: document.getElementById('modalInstaladores'), title: 'Eliminado', icon: 'success', timer: 1000, showConfirmButton: false });
+    };
+
+    function saveInstaladores() {
+        $.ajax({
+            url: 'json_personal_api.php?action=save_instaladores',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(instaladoresData),
+            success: function () { _pageNeedsReload = true; },
+            error: function () { Swal.fire('Error', 'No se pudo guardar', 'error'); }
         });
     }
 
     // --- VENDEDORES ---
     let vendedoresData = [];
+    let editVendedorIndex = -1;
+
     function loadVendedores() {
         $.get('json_personal_api.php?action=get_vendedores', function (data) {
             vendedoresData = data || [];
-            renderPersonalList('listVendedores', vendedoresData, 'Vendedor');
+            renderVendedoresList();
+        });
+    }
+
+    function renderVendedoresList() {
+        const list = $('#listVendedores');
+        list.empty();
+        if (vendedoresData.length === 0) {
+            list.html('<div class="text-center text-muted p-2">Sin registros</div>');
+            return;
+        }
+        vendedoresData.forEach((item, index) => {
+            const row = `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${item}</span>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editVendedor(${index})" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="btn btn-sm btn-danger py-0 px-2" onclick="deleteVendedor(${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                </div>`;
+            list.append(row);
+        });
+    }
+
+    window.addVendedor = async function () {
+        const nombre = $('#newVendedor').val().trim().toUpperCase();
+        if (!nombre) return;
+
+        if (editVendedorIndex === -1 && vendedoresData.includes(nombre)) {
+            Swal.fire({ target: document.getElementById('modalVendedores'), title: 'Atención', text: 'Este vendedor ya existe', icon: 'warning' });
+            return;
+        }
+
+        const actionLabel = (editVendedorIndex > -1) ? 'Actualizar Vendedor' : 'Agregar Vendedor';
+        const ok = await verificarClave(actionLabel, document.getElementById('modalVendedores'));
+        if (!ok) return;
+
+        if (editVendedorIndex > -1) {
+            vendedoresData[editVendedorIndex] = nombre;
+            cancelEditVendedor();
+        } else {
+            vendedoresData.push(nombre);
+            $('#newVendedor').val('');
+        }
+
+        saveVendedores();
+        renderVendedoresList();
+    };
+
+    window.editVendedor = function (index) {
+        editVendedorIndex = index;
+        $('#newVendedor').val(vendedoresData[index]);
+        $('#btnAddVendedor').removeClass('btn-success').addClass('btn-info').attr('title', 'Actualizar');
+        $('#iconVendedorAction').removeClass('fa-plus').addClass('fa-check');
+        $('#btnCancelEditVendedor').removeClass('d-none');
+    };
+
+    window.cancelEditVendedor = function () {
+        editVendedorIndex = -1;
+        $('#newVendedor').val('');
+        $('#btnAddVendedor').removeClass('btn-info').addClass('btn-success').attr('title', 'Agregar');
+        $('#iconVendedorAction').removeClass('fa-check').addClass('fa-plus');
+        $('#btnCancelEditVendedor').addClass('d-none');
+    };
+
+    window.deleteVendedor = async function (index) {
+        const nombre = vendedoresData[index];
+
+        try {
+            const usageResp = await fetch(`verificar_uso_ubicacion.php?tipo=vendedor&nombre=${encodeURIComponent(nombre)}`);
+            const usageData = await usageResp.json();
+            if (usageData.usage > 0) {
+                Swal.fire({
+                    target: document.getElementById('modalVendedores'),
+                    title: 'No se puede eliminar',
+                    text: `El vendedor "${nombre}" está asignado a ${usageData.usage} contrato(s). No puede ser eliminado de la lista mientras esté en uso.`,
+                    icon: 'error'
+                });
+                return;
+            }
+        } catch (err) { console.error("Error validando uso:", err); }
+
+        const ok = await verificarClave('Eliminar Vendedor: ' + nombre, document.getElementById('modalVendedores'));
+        if (!ok) return;
+
+        vendedoresData.splice(index, 1);
+        saveVendedores();
+        renderVendedoresList();
+        Swal.fire({ target: document.getElementById('modalVendedores'), title: 'Eliminado', icon: 'success', timer: 1000, showConfirmButton: false });
+    };
+
+    function saveVendedores() {
+        $.ajax({
+            url: 'json_personal_api.php?action=save_vendedores',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(vendedoresData),
+            success: function () { _pageNeedsReload = true; },
+            error: function () { Swal.fire('Error', 'No se pudo guardar', 'error'); }
         });
     }
 
     // --- PLANES PRORRATEO ---
     let prorrateoData = [];
+    let editPlanIndex = -1;
+    let _pageNeedsReload = false; // Flag: recarga si hubo cambios en vendedores/prorrateo
+
     function loadPlanesProrrateo() {
         $.get('json_personal_api.php?action=get_planes_prorrateo', function (data) {
             prorrateoData = data || [];
@@ -1892,44 +2233,96 @@ require_once '../includes/sidebar.php';
             const row = `
                 <div class="list-group-item d-flex justify-content-between align-items-center">
                     <span>${item.nombre} - $${item.precio}</span>
-                    <button class="btn btn-sm btn-danger py-0 px-2" onclick="deletePlanProrrateo(${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editPlanProrrateo(${index})" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="btn btn-sm btn-danger py-0 px-2" onclick="deletePlanProrrateo(${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
+                    </div>
                 </div>`;
             list.append(row);
         });
     }
 
-    window.addPlanProrrateo = function () {
+    window.addPlanProrrateo = async function () {
         const nombre = $('#newPlanNombre').val().trim();
         const precio = $('#newPlanPrecio').val().trim();
 
         if (!nombre || !precio) {
-            Swal.fire('Error', 'Ingrese nombre y precio', 'warning');
+            Swal.fire({ target: document.getElementById('modalProrrateo'), title: 'Error', text: 'Ingrese nombre y precio', icon: 'warning' });
             return;
         }
 
-        prorrateoData.push({ nombre: nombre, precio: precio });
-        $('#newPlanNombre').val('');
-        $('#newPlanPrecio').val('');
+        // Requiere clave para Agregar o Editar
+        const actionLabel = (editPlanIndex > -1) ? 'Actualizar Plan' : 'Agregar Plan';
+        const ok = await verificarClave(actionLabel, document.getElementById('modalProrrateo'));
+        if (!ok) return;
+
+        if (editPlanIndex > -1) {
+            // Actualizar
+            prorrateoData[editPlanIndex] = { nombre: nombre, precio: precio };
+            cancelEditPlan(); // Resetear UI y editPlanIndex
+        } else {
+            // Agregar nuevo
+            prorrateoData.push({ nombre: nombre, precio: precio });
+            $('#newPlanNombre').val('');
+            $('#newPlanPrecio').val('');
+        }
 
         savePlanesProrrateo();
         renderProrrateoList();
     };
 
-    window.deletePlanProrrateo = function (index) {
-        Swal.fire({
-            title: '¿Eliminar Plan?',
-            text: `Se eliminará este plan.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Sí, eliminar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                prorrateoData.splice(index, 1);
-                savePlanesProrrateo();
-                renderProrrateoList();
+    window.editPlanProrrateo = function (index) {
+        editPlanIndex = index;
+        const plan = prorrateoData[index];
+        $('#newPlanNombre').val(plan.nombre);
+        $('#newPlanPrecio').val(plan.precio);
+
+        // Cambiar UI a modo edición
+        $('#btnAddPlanProrrateo').removeClass('btn-success').addClass('btn-info').attr('title', 'Actualizar Plan');
+        $('#iconPlanAction').removeClass('fa-plus').addClass('fa-check');
+        $('#btnCancelEditPlan').removeClass('d-none');
+    };
+
+    window.cancelEditPlan = function () {
+        editPlanIndex = -1;
+        $('#newPlanNombre').val('');
+        $('#newPlanPrecio').val('');
+
+        // Resetear UI a modo agregar
+        $('#btnAddPlanProrrateo').removeClass('btn-info').addClass('btn-success').attr('title', 'Agregar Plan');
+        $('#iconPlanAction').removeClass('fa-check').addClass('fa-plus');
+        $('#btnCancelEditPlan').addClass('d-none');
+    };
+
+    window.deletePlanProrrateo = async function (index) {
+        const nombre = prorrateoData[index].nombre;
+
+        // 1. Check usage first
+        try {
+            const usageResp = await fetch(`verificar_uso_ubicacion.php?tipo=plan_prorrateo&nombre=${encodeURIComponent(nombre)}`);
+            const usageData = await usageResp.json();
+            if (usageData.usage > 0) {
+                const { isConfirmed } = await Swal.fire({
+                    target: document.getElementById('modalProrrateo'),
+                    title: '¿Eliminar Plan en Uso?',
+                    text: `El plan "${nombre}" está asignado a ${usageData.usage} contratos. Al eliminarlo de aquí, ya no podrá seleccionarse en nuevos contratos ni ediciones, pero los registros existentes mantendrán el dato como texto. ¿Desea continuar?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, continuar'
+                });
+                if (!isConfirmed) return;
             }
-        });
+        } catch (err) { console.error("Error validando uso:", err); }
+
+        const ok = await verificarClave('Eliminar Plan: ' + nombre, document.getElementById('modalProrrateo'));
+        if (!ok) return;
+
+        prorrateoData.splice(index, 1);
+        savePlanesProrrateo();
+        renderProrrateoList();
+        Swal.fire({ target: document.getElementById('modalProrrateo'), title: 'Eliminado', icon: 'success', timer: 1000, showConfirmButton: false });
     };
 
     function savePlanesProrrateo() {
@@ -1938,97 +2331,19 @@ require_once '../includes/sidebar.php';
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(prorrateoData),
+            success: function () { _pageNeedsReload = true; },
             error: function () { Swal.fire('Error', 'No se pudo guardar', 'error'); }
         });
     }
 
-    // Funciones Genéricas UI
-    function renderPersonalList(listId, dataArr, typeLabel) {
-        const list = $('#' + listId);
-        list.empty();
-        if (dataArr.length === 0) {
-            list.html('<div class="text-center text-muted p-2">Sin registros</div>');
-            return;
-        }
-        dataArr.forEach((item, index) => {
-            const row = `
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>${item}</span>
-                    <button class="btn btn-sm btn-danger py-0 px-2" onclick="deletePersonal('${listId}', ${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
-                </div>`;
-            list.append(row);
-        });
-    }
 
-    window.addPersonal = function (type) {
-        let inputId = (type === 'instalador') ? 'newInstalador' : 'newVendedor';
-        let listId = (type === 'instalador') ? 'listInstaladores' : 'listVendedores';
-        let dataArr = (type === 'instalador') ? instaladoresData : vendedoresData;
-
-        // Obtener ID real del array porque lo pasamos por referencia
-        if (type === 'instalador') dataArr = instaladoresData;
-        else dataArr = vendedoresData;
-
-        const val = $('#' + inputId).val().trim().toUpperCase();
-        if (!val) return;
-
-        if (dataArr.includes(val)) {
-            Swal.fire('Atención', 'Este registro ya existe', 'warning');
-            return;
-        }
-
-        dataArr.push(val);
-        $('#' + inputId).val('');
-
-        savePersonal((type === 'instalador'));
-        renderPersonalList(listId, dataArr, '');
-    };
-
-    window.deletePersonal = function (listId, index) {
-        let isInstalador = (listId === 'listInstaladores');
-        let label = isInstalador ? 'Instalador' : 'Vendedor';
-        let dataArr = isInstalador ? instaladoresData : vendedoresData;
-
-        Swal.fire({
-            title: '¿Eliminar?',
-            text: `Se eliminará este ${label}.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Sí, eliminar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Actualizar el array correcto
-                if (isInstalador) instaladoresData.splice(index, 1);
-                else vendedoresData.splice(index, 1);
-
-                savePersonal(isInstalador);
-
-                // Re-render
-                if (isInstalador) renderPersonalList('listInstaladores', instaladoresData, 'Instalador');
-                else renderPersonalList('listVendedores', vendedoresData, 'Vendedor');
-            }
-        });
-    };
-
-    function savePersonal(isInstalador) {
-        const action = isInstalador ? 'save_instaladores' : 'save_vendedores';
-        const dataPayload = isInstalador ? instaladoresData : vendedoresData;
-
-        $.ajax({
-            url: 'json_personal_api.php?action=' + action,
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(dataPayload),
-            error: function () { Swal.fire('Error', 'No se pudo guardar', 'error'); }
-        });
-    }
-
-    // --- TIPOS (Mantenido Original) ---
+    // --- TIPOS ---
     let tiposData = [];
+    let editTipoIndex = -1;
+
     function loadTipos() {
         $.get('api_tipos_instalacion.php', function (data) {
-            tiposData = data;
+            tiposData = data || [];
             renderTipos();
         });
     }
@@ -2036,35 +2351,64 @@ require_once '../includes/sidebar.php';
     window.renderTipos = function () {
         const list = $('#listTipos');
         list.empty();
+        if (tiposData.length === 0) {
+            list.html('<div class="text-center text-muted p-2">Sin registros</div>');
+            return;
+        }
         tiposData.forEach((t, index) => {
-            const item = `
+            const row = `
                 <div class="list-group-item d-flex justify-content-between align-items-center">
                     <span>${t}</span>
-                    <button class="btn btn-sm btn-danger py-0 px-2" onclick="deleteTipo(${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
-                </div>
-            `;
-            list.append(item);
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editTipo(${index})" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="btn btn-sm btn-danger py-0 px-2" onclick="deleteTipo(${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                </div>`;
+            list.append(row);
         });
     };
 
-    window.deleteTipo = function (index) {
-        Swal.fire({
-            title: '¿Eliminar Tipo de Conexión?',
-            text: `Se eliminará "${tiposData[index]}".`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Sí, eliminar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                tiposData.splice(index, 1);
-                saveTipos();
-                renderTipos();
+    window.editTipo = function (index) {
+        editTipoIndex = index;
+        $('#newTipo').val(tiposData[index]);
+        $('#btnAddTipo').removeClass('btn-success').addClass('btn-info').attr('title', 'Actualizar');
+        $('#iconTipoAction').removeClass('fa-plus').addClass('fa-check');
+        $('#btnCancelEditTipo').removeClass('d-none');
+    };
+
+    window.cancelEditTipo = function () {
+        editTipoIndex = -1;
+        $('#newTipo').val('');
+        $('#btnAddTipo').removeClass('btn-info').addClass('btn-success').attr('title', 'Agregar');
+        $('#iconTipoAction').removeClass('fa-check').addClass('fa-plus');
+        $('#btnCancelEditTipo').addClass('d-none');
+    };
+
+    window.deleteTipo = async function (index) {
+        const nombre = tiposData[index];
+
+        try {
+            const usageResp = await fetch(`verificar_uso_ubicacion.php?tipo=tipo_conexion&nombre=${encodeURIComponent(nombre)}`);
+            const usageData = await usageResp.json();
+            if (usageData.usage > 0) {
+                Swal.fire({
+                    target: document.getElementById('modalTipos'),
+                    title: 'No se puede eliminar',
+                    text: `El tipo de conexión "${nombre}" está asignado a ${usageData.usage} contrato(s). No puede ser eliminado mientras esté en uso.`,
+                    icon: 'error'
+                });
+                return;
             }
-        });
-    };
-    // ... resto script tipos ...
+        } catch (err) { console.error("Error validando uso:", err); }
 
+        const ok = await verificarClave('Eliminar Tipo: ' + nombre, document.getElementById('modalTipos'));
+        if (!ok) return;
+
+        tiposData.splice(index, 1);
+        saveTipos();
+        renderTipos();
+        Swal.fire({ target: document.getElementById('modalTipos'), title: 'Eliminado', icon: 'success', timer: 1000, showConfirmButton: false });
+    };
 
     function saveTipos() {
         $.ajax({
@@ -2072,10 +2416,8 @@ require_once '../includes/sidebar.php';
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(tiposData),
-            success: function (response) { },
-            error: function () {
-                Swal.fire('Error', 'No se pudo guardar los cambios', 'error');
-            }
+            success: function () { _pageNeedsReload = true; },
+            error: function () { Swal.fire('Error', 'No se pudo guardar los cambios', 'error'); }
         });
     }
 
@@ -2084,6 +2426,8 @@ require_once '../includes/sidebar.php';
     // ==========================================
     let ubicacionesData = [];
     let selectedMunicipioIndex = -1;
+    let editMunicipioIndex = -1; // Nueva variable para edición inline
+    let editParroquiaIndex = -1; // Nueva variable para edición inline
 
     function loadUbicaciones() {
         $.get('api_ubicaciones.php', function (data) {
@@ -2108,7 +2452,7 @@ require_once '../includes/sidebar.php';
                      onclick="selectMunicipio(${index})" style="cursor: pointer;">
                     <span>${m.municipio}</span>
                     <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editMunicipio(event, ${index})" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editMunicipioMode(event, ${index})" title="Editar"><i class="fa-solid fa-pencil"></i></button>
                         <button class="btn btn-sm btn-danger py-0 px-2" onclick="deleteMunicipio(event, ${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
                     </div>
                 </div>
@@ -2139,11 +2483,12 @@ require_once '../includes/sidebar.php';
         }
 
         parroquias.forEach((p, pIndex) => {
+            const pNombre = typeof p === 'object' ? p.nombre : p;
             const item = `
                 <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>${p}</span>
+                    <span>${pNombre}</span>
                     <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editParroquia(${pIndex})" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editParroquiaMode(${pIndex})" title="Editar"><i class="fa-solid fa-pencil"></i></button>
                         <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteParroquia(${pIndex})" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 </div>
@@ -2152,19 +2497,18 @@ require_once '../includes/sidebar.php';
         });
     };
 
-    // Helper: verify password before sensitive action
-    async function verificarClave(nombreElemento) {
-        console.log("Iniciando verificación para:", nombreElemento);
-        const { value: clave, isConfirmed } = await Swal.fire({
-            target: document.getElementById('modalUbicaciones'),
-            title: `Eliminar "${nombreElemento}"`,
-            html: '<p class="text-muted small mb-2">Ingrese su contraseña administrativa para confirmar.</p>'
+    // Helper: verify password before sensitive action (Generic version)
+    async function verificarClave(nombreAccion, targetModal = null) {
+        console.log("Iniciando verificación para:", nombreAccion);
+        const swalConfig = {
+            title: `Confirmar Acción`,
+            html: `<p class="text-muted small mb-2">Se requiere contraseña administrativa para: <b>${nombreAccion}</b></p>`
                 + '<input id="swal-clave" type="password" class="swal2-input" placeholder="Contraseña">',
             icon: 'warning',
             showCancelButton: true,
             cancelButtonText: 'Cancelar',
             confirmButtonColor: '#d33',
-            confirmButtonText: 'Eliminar',
+            confirmButtonText: 'Confirmar',
             focusConfirm: false,
             preConfirm: () => {
                 const c = document.getElementById('swal-clave').value;
@@ -2174,7 +2518,11 @@ require_once '../includes/sidebar.php';
                 }
                 return c;
             }
-        });
+        };
+
+        if (targetModal) swalConfig.target = targetModal;
+
+        const { value: clave, isConfirmed } = await Swal.fire(swalConfig);
 
         console.log("Swal result:", { isConfirmed, hasClave: !!clave });
         if (!isConfirmed || !clave) return false;
@@ -2189,13 +2537,22 @@ require_once '../includes/sidebar.php';
             const data = await resp.json();
             console.log("Respuesta servidor:", data);
             if (!data.success) {
-                Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Error', text: data.message, icon: 'error' });
+                Swal.fire({ target: targetModal, title: 'Error', text: data.message, icon: 'error' });
                 return false;
             }
+            // Notificar éxito al usuario
+            Swal.fire({
+                target: targetModal,
+                title: 'Verificado',
+                text: 'Contraseña correcta, procediendo...',
+                icon: 'success',
+                timer: 1000,
+                showConfirmButton: false
+            });
             return true;
         } catch (err) {
             console.error("Error en verificarClave:", err);
-            Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Error', text: 'Error al verificar la contraseña: ' + err.message, icon: 'error' });
+            Swal.fire({ target: targetModal, title: 'Error', text: 'Error al verificar la contraseña: ' + err.message, icon: 'error' });
             return false;
         }
     }
@@ -2223,7 +2580,7 @@ require_once '../includes/sidebar.php';
             }
         } catch (err) { console.error("Error validando uso:", err); }
 
-        const ok = await verificarClave(nombre + ' y todas sus parroquias');
+        const ok = await verificarClave(nombre + ' y todas sus parroquias', document.getElementById('modalUbicaciones'));
         if (!ok) return;
 
         ubicacionesData.splice(index, 1);
@@ -2240,7 +2597,8 @@ require_once '../includes/sidebar.php';
     };
 
     window.deleteParroquia = async function (pIndex) {
-        const nombre = ubicacionesData[selectedMunicipioIndex].parroquias[pIndex];
+        const pData = ubicacionesData[selectedMunicipioIndex].parroquias[pIndex];
+        const nombre = typeof pData === 'object' ? pData.nombre : pData;
 
         // 1. Check usage first
         try {
@@ -2261,7 +2619,7 @@ require_once '../includes/sidebar.php';
             }
         } catch (err) { console.error("Error validando uso:", err); }
 
-        const ok = await verificarClave(nombre);
+        const ok = await verificarClave(nombre, document.getElementById('modalUbicaciones'));
         if (!ok) return;
 
         ubicacionesData[selectedMunicipioIndex].parroquias.splice(pIndex, 1);
@@ -2270,44 +2628,40 @@ require_once '../includes/sidebar.php';
         Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Eliminado', icon: 'success', timer: 1200, showConfirmButton: false });
     };
 
-    window.editMunicipio = async function (e, index) {
+    // --- MODOS EDICIÓN UBICACIONES ---
+    window.editMunicipioMode = function (e, index) {
         e.stopPropagation();
-        const { value: nuevoNombre, isConfirmed } = await Swal.fire({
-            target: document.getElementById('modalUbicaciones'),
-            title: 'Editar Municipio',
-            input: 'text',
-            inputLabel: 'Nuevo nombre del municipio',
-            inputValue: ubicacionesData[index].municipio,
-            showCancelButton: true,
-            cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Guardar',
-            inputValidator: (v) => { if (!v || !v.trim()) return 'El nombre no puede estar vacío'; }
-        });
-        if (!isConfirmed || !nuevoNombre) return;
-        ubicacionesData[index].municipio = nuevoNombre.trim();
-        saveData();
-        renderMunicipios();
-        Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Actualizado', icon: 'success', timer: 1000, showConfirmButton: false });
+        editMunicipioIndex = index;
+        $('#newMunicipio').val(ubicacionesData[index].municipio).focus();
+        $('#btnAddMunicipio').removeClass('btn-success').addClass('btn-info').attr('title', 'Actualizar Municipio');
+        $('#iconMunAction').removeClass('fa-plus').addClass('fa-check');
+        $('#btnCancelEditMun').removeClass('d-none');
     };
 
-    window.editParroquia = async function (pIndex) {
-        const nombre = ubicacionesData[selectedMunicipioIndex].parroquias[pIndex];
-        const { value: nuevoNombre, isConfirmed } = await Swal.fire({
-            target: document.getElementById('modalUbicaciones'),
-            title: 'Editar Parroquia',
-            input: 'text',
-            inputLabel: 'Nuevo nombre de la parroquia',
-            inputValue: nombre,
-            showCancelButton: true,
-            cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Guardar',
-            inputValidator: (v) => { if (!v || !v.trim()) return 'El nombre no puede estar vacío'; }
-        });
-        if (!isConfirmed || !nuevoNombre) return;
-        ubicacionesData[selectedMunicipioIndex].parroquias[pIndex] = nuevoNombre.trim();
-        saveData();
-        renderParroquias();
-        Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Actualizado', icon: 'success', timer: 1000, showConfirmButton: false });
+    window.cancelEditMun = function () {
+        editMunicipioIndex = -1;
+        $('#newMunicipio').val('');
+        $('#btnAddMunicipio').removeClass('btn-info').addClass('btn-success').attr('title', 'Agregar Municipio');
+        $('#iconMunAction').removeClass('fa-check').addClass('fa-plus');
+        $('#btnCancelEditMun').addClass('d-none');
+    };
+
+    window.editParroquiaMode = function (index) {
+        editParroquiaIndex = index;
+        const pData = ubicacionesData[selectedMunicipioIndex].parroquias[index];
+        const pNombre = typeof pData === 'object' ? pData.nombre : pData;
+        $('#newParroquia').val(pNombre).focus();
+        $('#btnAddParroquia').removeClass('btn-success').addClass('btn-info').attr('title', 'Actualizar Parroquia');
+        $('#iconParAction').removeClass('fa-plus').addClass('fa-check');
+        $('#btnCancelEditPar').removeClass('d-none');
+    };
+
+    window.cancelEditPar = function () {
+        editParroquiaIndex = -1;
+        $('#newParroquia').val('');
+        $('#btnAddParroquia').removeClass('btn-info').addClass('btn-success').attr('title', 'Agregar Parroquia');
+        $('#iconParAction').removeClass('fa-check').addClass('fa-plus');
+        $('#btnCancelEditPar').addClass('d-none');
     };
 
     function saveData() {
@@ -2316,7 +2670,7 @@ require_once '../includes/sidebar.php';
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(ubicacionesData),
-            success: function (response) { },
+            success: function (response) { _pageNeedsReload = true; },
             error: function () {
                 Swal.fire('Error', 'No se pudo guardar los cambios', 'error');
             }
@@ -2338,18 +2692,42 @@ require_once '../includes/sidebar.php';
         $('#modalVendedores').on('show.bs.modal', function () { loadVendedores(); });
         $('#modalProrrateo').on('show.bs.modal', function () { loadPlanesProrrateo(); });
 
-        $('#btnAddTipo').click(function () {
+        // Recargar página al cerrar modal si hubo cambios en cascada
+        $('#modalTipos, #modalInstaladores, #modalVendedores, #modalProrrateo').on('hidden.bs.modal', function () {
+            if (_pageNeedsReload) { location.reload(); }
+        });
+
+        $('#btnAddTipo').click(async function () {
             const nombre = $('#newTipo').val().trim().toUpperCase();
-            if (nombre) {
-                if (tiposData.includes(nombre)) {
-                    Swal.fire('Error', 'El tipo de conexión ya existe', 'warning');
-                    return;
-                }
+            if (!nombre) return;
+
+            if (editTipoIndex === -1 && tiposData.includes(nombre)) {
+                Swal.fire({ target: document.getElementById('modalTipos'), title: 'Error', text: 'El tipo de conexión ya existe', icon: 'warning' });
+                return;
+            }
+
+            const actionLabel = (editTipoIndex > -1) ? 'Actualizar Tipo' : 'Agregar Tipo';
+            const ok = await verificarClave(actionLabel, document.getElementById('modalTipos'));
+            if (!ok) return;
+
+            if (editTipoIndex > -1) {
+                tiposData[editTipoIndex] = nombre;
+                cancelEditTipo();
+            } else {
                 tiposData.push(nombre);
                 $('#newTipo').val('');
-                saveTipos();
-                renderTipos();
             }
+            saveTipos();
+            renderTipos();
+        });
+
+        $('#btnCancelEditTipo').click(function () { cancelEditTipo(); });
+
+        // 0. Bloquear ingreso de negativos en campos de prorrateo
+        $('#newPlanPrecio, #edit_dias_prorrateo').on('keydown', function (e) {
+            if (e.key === '-' || e.key === 'e') e.preventDefault();
+        }).on('input', function () {
+            if ($(this).val() < 0) $(this).val(0);
         });
 
         // --- IMPORTAR EXCEL (AJAX) ---
@@ -2405,33 +2783,67 @@ require_once '../includes/sidebar.php';
         $('#modalUbicaciones').on('show.bs.modal', function () {
             loadUbicaciones();
         });
+        $('#modalUbicaciones').on('hidden.bs.modal', function () {
+            if (_pageNeedsReload) { location.reload(); }
+        });
 
-        $('#btnAddMunicipio').click(function () {
+        $('#btnAddMunicipio').click(async function () {
             const nombre = $('#newMunicipio').val().trim();
-            if (nombre) {
+            if (!nombre) return;
+
+            if (editMunicipioIndex > -1) {
+                // Modo Edición
+                const ok = await verificarClave('Actualizar Municipio: ' + nombre, document.getElementById('modalUbicaciones'));
+                if (!ok) return;
+                ubicacionesData[editMunicipioIndex].municipio = nombre;
+                cancelEditMun();
+            } else {
+                // Modo Agregar
                 if (ubicacionesData.some(m => m.municipio.toLowerCase() === nombre.toLowerCase())) {
-                    Swal.fire('Error', 'El municipio ya existe', 'warning');
+                    Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Error', text: 'El municipio ya existe', icon: 'warning' });
                     return;
                 }
+                const ok = await verificarClave('Agregar Municipio: ' + nombre, document.getElementById('modalUbicaciones'));
+                if (!ok) return;
                 ubicacionesData.push({ municipio: nombre, parroquias: [] });
                 $('#newMunicipio').val('');
-                saveData();
-                renderMunicipios();
             }
+            saveData();
+            renderMunicipios();
         });
 
-        $('#btnAddParroquia').click(function () {
+        $('#btnCancelEditMun').click(function () { cancelEditMun(); });
+
+        $('#btnAddParroquia').click(async function () {
             const nombre = $('#newParroquia').val().trim();
-            if (nombre && selectedMunicipioIndex !== -1) {
-                if (ubicacionesData[selectedMunicipioIndex].parroquias.some(p => p.toLowerCase() === nombre.toLowerCase())) {
-                    Swal.fire('Error', 'La parroquia ya existe en este municipio', 'warning');
+            if (!nombre || selectedMunicipioIndex === -1) return;
+
+            if (editParroquiaIndex > -1) {
+                // Modo Edición
+                const ok = await verificarClave('Actualizar Parroquia: ' + nombre, document.getElementById('modalUbicaciones'));
+                if (!ok) return;
+                const pData = ubicacionesData[selectedMunicipioIndex].parroquias[editParroquiaIndex];
+                if (typeof pData === 'object') {
+                    pData.nombre = nombre;
+                } else {
+                    ubicacionesData[selectedMunicipioIndex].parroquias[editParroquiaIndex] = { nombre: nombre, comunidades: [] };
+                }
+                cancelEditPar();
+            } else {
+                // Modo Agregar
+                if (ubicacionesData[selectedMunicipioIndex].parroquias.some(p => (typeof p === 'object' ? p.nombre : p).toLowerCase() === nombre.toLowerCase())) {
+                    Swal.fire({ target: document.getElementById('modalUbicaciones'), title: 'Error', text: 'La parroquia ya existe', icon: 'warning' });
                     return;
                 }
-                ubicacionesData[selectedMunicipioIndex].parroquias.push(nombre);
+                const ok = await verificarClave('Agregar Parroquia: ' + nombre, document.getElementById('modalUbicaciones'));
+                if (!ok) return;
+                ubicacionesData[selectedMunicipioIndex].parroquias.push({ nombre: nombre, comunidades: [] });
                 $('#newParroquia').val('');
-                saveData();
-                renderParroquias();
             }
+            saveData();
+            renderParroquias();
         });
+
+        $('#btnCancelEditPar').click(function () { cancelEditPar(); });
     });
 </script>

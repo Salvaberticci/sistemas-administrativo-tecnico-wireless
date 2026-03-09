@@ -1,4 +1,6 @@
 <?php
+// Forzar a PHP a enviar la cabecera UTF-8, previniendo configuraciones por defecto del servidor (ej. latin1)
+
 $hostname = "localhost";
 $username = "root";
 $password = "";

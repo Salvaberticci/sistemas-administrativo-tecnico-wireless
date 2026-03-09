@@ -21,7 +21,7 @@ use Dompdf\Options;
 $id_municipio_filtro = isset($_GET['municipio']) ? $_GET['municipio'] : 'TODOS';
 $id_parroquia_filtro = isset($_GET['parroquia']) ? $_GET['parroquia'] : 'TODOS';
 $estado_contrato_filtro = isset($_GET['estado_contrato']) ? $_GET['estado_contrato'] : 'TODOS';
-$id_vendedor_filtro = isset($_GET['vendedor']) ? $_GET['vendedor'] : 'TODOS';
+$vendedor_texto_filtro = isset($_GET['vendedor']) ? $_GET['vendedor'] : 'TODOS';
 $id_plan_filtro = isset($_GET['plan']) ? $_GET['plan'] : 'TODOS';
 $cobros_estado_filtro = isset($_GET['estado_cobros']) ? $_GET['estado_cobros'] : 'TODOS';
 
@@ -39,7 +39,6 @@ $join_clause = "
     LEFT JOIN municipio m ON c.id_municipio = m.id_municipio
     LEFT JOIN parroquia pa ON c.id_parroquia = pa.id_parroquia
     LEFT JOIN planes pl ON c.id_plan = pl.id_plan
-    LEFT JOIN vendedores v ON c.id_vendedor = v.id_vendedor
     LEFT JOIN olt ol ON c.id_olt = ol.id_olt    /* AÑADIDO OLT */
     LEFT JOIN pon p ON c.id_pon = p.id_pon      /* AÑADIDO PON */
 ";
@@ -60,10 +59,10 @@ if ($estado_contrato_filtro !== 'TODOS') {
     $params[] = $estado_contrato_filtro;
     $types .= 's';
 }
-if ($id_vendedor_filtro !== 'TODOS') {
-    $where_clause .= " AND c.id_vendedor = ? ";
-    $params[] = $id_vendedor_filtro;
-    $types .= 'i';
+if ($vendedor_texto_filtro !== 'TODOS') {
+    $where_clause .= " AND c.vendedor_texto = ? ";
+    $params[] = $vendedor_texto_filtro;
+    $types .= 's';
 }
 if ($id_plan_filtro !== 'TODOS') {
     $where_clause .= " AND c.id_plan = ? ";
@@ -97,7 +96,7 @@ $sql = "
         c.id, c.nombre_completo, c.cedula, c.telefono, c.estado AS estado_contrato,
         c.ip_onu, 
         m.nombre_municipio AS municipio, pa.nombre_parroquia AS parroquia, 
-        pl.nombre_plan AS plan, v.nombre_vendedor AS vendedor,
+        pl.nombre_plan AS plan, c.vendedor_texto AS vendedor,
         ol.nombre_olt AS olt_nombre, p.nombre_pon AS pon_nombre /* SELECCIONAR NOMBRES DE OLT Y PON */
     FROM contratos c
     {$join_clause}
@@ -188,7 +187,8 @@ ob_start();
     echo generar_encabezado_empresa('Reporte Filtrado De Contratos');
     ?>
     <div style="font-size: 11px; text-align: right; margin-bottom: 5px;">Total de Clientes Filtrados:
-        <?php echo $total_clientes; ?></div>
+        <?php echo $total_clientes; ?>
+    </div>
 
     <table>
         <thead>

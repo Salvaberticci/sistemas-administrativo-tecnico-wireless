@@ -497,7 +497,8 @@
 
                     if (data.status === 'success') {
                         // Mostrar Modal
-                        const linkCompleto = window.location.origin + window.location.pathname.replace('reporte_tecnico.php', '') + data.link;
+                        const baseUrl = window.location.origin + window.location.pathname.split('/paginas/')[0] + '/paginas/soporte/';
+                        const linkCompleto = baseUrl + data.link;
                         document.getElementById('linkInput').value = linkCompleto;
 
                         // Configurar WhatsApp
