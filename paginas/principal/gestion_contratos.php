@@ -119,9 +119,14 @@ require_once '../includes/sidebar.php';
                     </button>
                     <!-- BOTONES EXCEL NUEVOS -->
                     <div class="vr mx-1"></div>
+                    <button type="button" class="btn btn-warning d-flex align-items-center gap-2 shadow-sm"
+                        data-bs-toggle="modal" data-bs-target="#modalExportarFiltrado">
+                        <i class="fa-solid fa-filter"></i> <i class="fa-solid fa-file-excel"></i> <span
+                            class="d-none d-md-inline">Exportar Filtrado</span>
+                    </button>
                     <button type="button" class="btn btn-success d-flex align-items-center gap-2 shadow-sm"
                         onclick="exportExcel()">
-                        <i class="fa-solid fa-file-excel"></i> <span class="d-none d-md-inline">Exportar</span>
+                        <i class="fa-solid fa-file-excel"></i> <span class="d-none d-md-inline">Exportar Todo</span>
                     </button>
                     <button type="button" class="btn btn-outline-success d-flex align-items-center gap-2 shadow-sm"
                         data-bs-toggle="modal" data-bs-target="#modalImportExcel">
@@ -1548,8 +1553,107 @@ require_once '../includes/sidebar.php';
         });
 
         // ========================================================
+        // MODAL EXPORTAR FILTRADO
+        // ========================================================
+        ?>
+            <div class="modal fade" id="modalExportarFiltrado" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title fw-bold"><i class="fa-solid fa-filter me-2"></i>Exportar con Filtros</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="formExportarFiltrado">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Cédula</label>
+                                        <input type="text" class="form-control form-control-sm" id="export_cedula" name="cedula" placeholder="Ej. V12345678">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Cliente</label>
+                                        <input type="text" class="form-control form-control-sm" id="export_cliente" name="cliente" placeholder="Nombre completo">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Desde Fecha (Instalación)</label>
+                                        <input type="date" class="form-control form-control-sm" id="export_fecha_desde" name="fecha_desde">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Hasta Fecha (Instalación)</label>
+                                        <input type="date" class="form-control form-control-sm" id="export_fecha_hasta" name="fecha_hasta">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Municipio</label>
+                                        <select class="form-select form-select-sm" id="export_municipio" name="municipio">
+                                            <option value="">-- Todos --</option>
+                                    <!-- Cargado por JS igual que en edit_municipio -->
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Estado</label>
+                                        <select class="form-select form-select-sm" id="export_estado" name="estado">
+                                            <option value="">-- Todos --</option>
+                                            <option value="Activo">Activo</option>
+                                            <option value="Suspendido">Suspendido</option>
+                                            <option value="Retirado">Retirado</option>
+                                            <option value="Corte">Corte</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">Plan</label>
+                                        <select class="form-select form-select-sm" id="export_plan" name="id_plan">
+                                            <option value="">-- Todos --</option>
+                                            <?php
+                                            $res_p = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan ASC");
+                                            while ($pl = $res_p->fetch_assoc())
+                                                echo '<option value="' . $pl['id_plan'] . '">' . htmlspecialchars($pl['nombre_plan']) . '</option>';
+                                            ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">Tipo de Conexión</label>
+                                        <select class="form-select form-select-sm" id="export_tipo_conexion" name="tipo_conexion">
+                                            <option value="">-- Todos --</option>
+                                            <?php
+                                            $jsonTipos = 'data/tipos_instalacion.json';
+                                            if (file_exists($jsonTipos)) {
+                                                $tipos = json_decode(file_get_contents($jsonTipos), true);
+                                                foreach ($tipos as $t)
+                                                    echo '<option value="' . $t . '">' . $t . '</option>';
+                                            } else {
+                                                echo '<option value="FTTH">FTTH</option><option value="RADIO">RADIO</option>';
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">OLT</label>
+                                        <select class="form-select form-select-sm" id="export_olt" name="id_olt">
+                                            <option value="">-- Todas --</option>
+                                            <?php
+                                            $res_o = $conn->query("SELECT id_olt, nombre_olt FROM olt ORDER BY nombre_olt ASC");
+                                            while ($o = $res_o->fetch_assoc())
+                                                echo '<option value="' . $o['id_olt'] . '">' . htmlspecialchars($o['nombre_olt']) . '</option>';
+                                            ?>
+                                        </select>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-warning" id="btnProcesarExportarFiltrado"><i class="fa-solid fa-download me-2"></i>Descargar Excel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        // ========================================================
         // MODAL EDITAR CONTRATO
         // ========================================================
+
 
         // Helper Location Logic JSON
         let editUbicacionesData = [];
@@ -1560,6 +1664,42 @@ require_once '../includes/sidebar.php';
                 options += `<option value="${m.municipio}">${m.municipio}</option>`;
             });
             $('#edit_municipio').html(options);
+
+            // Also populate export modal municipality
+            let exportOptions = '<option value="">-- Todos --</option>';
+            editUbicacionesData.forEach(function (m) {
+                exportOptions += `<option value="${m.municipio}">${m.municipio}</option>`;
+            });
+            $('#export_municipio').html(exportOptions);
+        });
+
+        // ========================================================
+        // LOGICA EXPORTAR FILTRADO
+        // ========================================================
+        $('#btnProcesarExportarFiltrado').on('click', function () {
+            const formData = $('#formExportarFiltrado').serialize();
+
+            // Cerrar el modal
+            $('#modalExportarFiltrado').modal('hide');
+
+            // Mostrar SweetAlert de carga
+            Swal.fire({
+                title: 'Generando Reporte...',
+                html: 'Espere por favor.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Usar un Iframe oculto o redireccionamiento para descargar el archivo
+            // Redirigir la ventana actual al script de descarga. El navegador gestionará el archivo sin recargar la página.
+            window.location.href = 'exportar_contratos_filtrado.php?' + formData;
+
+            // Cerrar el alert después de unos segundos, asumiendo que empezó la descarga
+            setTimeout(() => {
+                Swal.close();
+            }, 3000);
         });
 
         // Helper: load parroquias into #edit_parroquia
