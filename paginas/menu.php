@@ -19,7 +19,7 @@ require_once 'includes/sidebar.php';
 
                     </div>
                     <div class="col-md-4 text-center">
-                        <img src="../images/logo.jpg" alt="Wireless Supply" class="img-fluid rounded-circle shadow-sm"
+                        <img src="../images/logo.jpg" alt="Wireless Supply" class="img-fluid shadow-sm"
                             style="max-height: 180px;">
                     </div>
                 </div>
