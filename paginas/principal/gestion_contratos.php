@@ -764,9 +764,10 @@ require_once '../includes/sidebar.php';
                         data.by_month.forEach(item => {
                             const [fullDate, instName] = item.fecha.split(' - ');
                             if (fullDate && fullDate !== 'null') {
-                                item.fecha_descriptiva = `${formatDescriptiveDateJS(fullDate)}\n${instName}`;
+                                // En Chart.js, un array genera múltiples líneas.
+                                item.fecha_descriptiva = [formatDescriptiveDateJS(fullDate), instName];
                             } else {
-                                item.fecha_descriptiva = `Sin Fecha\n${instName}`;
+                                item.fecha_descriptiva = ['Sin Fecha', instName];
                             }
                         });
                     }
