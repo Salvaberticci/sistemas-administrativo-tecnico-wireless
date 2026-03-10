@@ -636,6 +636,23 @@ require_once '../includes/sidebar.php';
 
     <!-- Scripts para PDF Export (Usando PHP Backend) -->
     <script>
+        function formatDescriptiveDateJS(dateStr) {
+            if (!dateStr || dateStr === '0000-00-00' || dateStr === 'null') return 'Sin Fecha';
+            const date = new Date(dateStr + 'T12:00:00'); // Use noon to avoid timezone shifts
+            if (isNaN(date.getTime())) return dateStr;
+
+            const months = [
+                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+            ];
+
+            const day = date.getDate();
+            const month = months[date.getMonth()];
+            const year = date.getFullYear();
+
+            return `${day} de ${month} del ${year}`;
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             // Cargar Dashboard Stats
             fetchStatsDashboard();
@@ -742,8 +759,18 @@ require_once '../includes/sidebar.php';
                     // 2. Instalaciones por Tipo (Horizontal Blue)
                     renderStatsChartV4('chartType', data.by_type, 'tipo', 'Instalaciones por Tipo', true, '#3a7bd5');
 
-                    // 3. Instalaciones Mensuales (Horizontal Blue)
-                    renderStatsChartV4('chartMonthly', data.by_month, 'mes', 'Instalaciones', true, '#3a7bd5');
+                    // 3. Instalaciones Mensuales (Horizontal Blue) - AHORA CON FECHAS DESCRIPTIVAS
+                    if (data.by_month) {
+                        data.by_month.forEach(item => {
+                            const [fullDate, instName] = item.fecha.split(' - ');
+                            if (fullDate && fullDate !== 'null') {
+                                item.fecha_descriptiva = `${formatDescriptiveDateJS(fullDate)} - ${instName}`;
+                            } else {
+                                item.fecha_descriptiva = `Sin Fecha - ${instName}`;
+                            }
+                        });
+                    }
+                    renderStatsChartV4('chartMonthly', data.by_month, 'fecha_descriptiva', 'Instalaciones', true, '#3a7bd5');
 
                     // 4. Tipo de Instalación (Horizontal Multi-color)
                     renderStatsChartV4('chartConnection', data.by_connection, 'conexion', 'Tipos de Conexión', true, null);

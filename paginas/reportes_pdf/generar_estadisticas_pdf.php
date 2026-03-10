@@ -82,15 +82,16 @@ $sql_type = "SELECT
                    GROUP BY tipo 
                    ORDER BY total DESC";
 
-// 3. Instalaciones por Mes e Instalador (Fecha Instalación)
+// 3. Instalaciones por Fecha e Instalador (Fecha Instalación Completa)
 $sql_monthly = "SELECT 
-                    DATE_FORMAT(fecha_instalacion, '%Y-%m') as mes, 
+                    fecha_instalacion as fecha, 
                     COALESCE(NULLIF(instalador, ''), 'Sin Asignar') as nombre_instalador,
                     COUNT(*) as total 
                    FROM contratos 
                    $sql_where 
-                   GROUP BY mes, nombre_instalador 
-                   ORDER BY mes ASC, total DESC";
+                   AND (fecha_instalacion > '1970-01-01' OR fecha_instalacion IS NULL)
+                   GROUP BY fecha, nombre_instalador 
+                   ORDER BY fecha ASC, total DESC";
 
 // 4. Tipos de Conexión (tipo_conexion)
 $sql_connection = "SELECT 
@@ -167,11 +168,14 @@ if ($stmt) {
         $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $res = $stmt->get_result();
-    while ($row = $res->fetch_assoc())
+    while ($row = $res->fetch_assoc()) {
+        $fullDate = $row['fecha'];
+        $formattedDate = formatDescriptiveDatePHP($fullDate);
         $stats_monthly[] = [
-            'mes' => "{$row['mes']} - {$row['nombre_instalador']}",
+            'mes' => "{$formattedDate} — {$row['nombre_instalador']}",
             'total' => $row['total']
         ];
+    }
     $stmt->close();
 }
 
@@ -249,6 +253,37 @@ if ($stmt) {
 }
 
 $conn->close();
+
+function formatDescriptiveDatePHP($dateStr)
+{
+    if (!$dateStr || $dateStr === '0000-00-00' || $dateStr === 'null')
+        return 'Sin Fecha';
+    $timestamp = strtotime($dateStr);
+    if (!$timestamp)
+        return $dateStr;
+
+    $months = [
+        "January" => "Enero",
+        "February" => "Febrero",
+        "March" => "Marzo",
+        "April" => "Abril",
+        "May" => "Mayo",
+        "June" => "Junio",
+        "July" => "Julio",
+        "August" => "Agosto",
+        "September" => "Septiembre",
+        "October" => "Octubre",
+        "November" => "Noviembre",
+        "December" => "Diciembre"
+    ];
+
+    $day = date('d', $timestamp);
+    $monthEn = date('F', $timestamp);
+    $monthEs = $months[$monthEn] ?? $monthEn;
+    $year = date('Y', $timestamp);
+
+    return "{$day} de {$monthEs} del {$year}";
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN CONSTANTS (Mirrored from Modal UI)

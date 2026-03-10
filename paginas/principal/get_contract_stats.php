@@ -116,15 +116,17 @@ if ($action === 'modal_stats') {
                        GROUP BY tipo 
                        ORDER BY total DESC";
 
-    // 5. Por Mes e Instalador (Fecha Instalación)
+    // 5. Por Fecha e Instalador (Fecha Instalación Completa)
+    // Filtramos fechas <= '1970-01-01' para limpiar ruido de registros mal migrados o nulos
     $sql_monthly = "SELECT 
-                        DATE_FORMAT(fecha_instalacion, '%Y-%m') as mes, 
+                        fecha_instalacion as fecha, 
                         COALESCE(NULLIF(instalador, ''), 'Sin Asignar') as nombre_instalador,
                         COUNT(*) as total 
                        FROM contratos 
                        $sql_where 
-                       GROUP BY mes, nombre_instalador 
-                       ORDER BY mes ASC, total DESC";
+                       AND (fecha_instalacion > '1970-01-01' OR fecha_instalacion IS NULL)
+                       GROUP BY fecha, nombre_instalador 
+                       ORDER BY fecha ASC, total DESC";
 
     // 6. Por Tipo de Conexión
     $sql_connection = "SELECT 
@@ -219,7 +221,7 @@ if ($action === 'modal_stats') {
         $stats_monthly = [];
         while ($row = $res_monthly->fetch_assoc()) {
             $stats_monthly[] = [
-                'mes' => "{$row['mes']} - {$row['nombre_instalador']}",
+                'fecha' => "{$row['fecha']} - {$row['nombre_instalador']}",
                 'total' => $row['total']
             ];
         }
