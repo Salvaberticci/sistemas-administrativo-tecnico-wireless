@@ -68,6 +68,16 @@ if ($action === 'modal_stats') {
         $sql_where = "WHERE " . implode(" AND ", $where);
     }
 
+    // 0. Total Global (para Fiabilidad SAE Plus)
+    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM contratos $sql_where");
+    if ($stmt) {
+        if (!empty($types))
+            $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $total_global = $stmt->get_result()->fetch_assoc()['total'];
+        $stmt->close();
+    }
+
     // 1. Por Instalador
     $sql_installers = "SELECT 
                         COALESCE(NULLIF(instalador, ''), 'Sin Asignar') as nombre, 
@@ -86,16 +96,15 @@ if ($action === 'modal_stats') {
                        GROUP BY nombre_vendedor 
                        ORDER BY total DESC";
 
-    // 3. Por Ubicación (Municipio y Parroquia)
+    // 3. Por Ubicación (Parroquia y Vendedor)
     $sql_location = "SELECT 
-                        COALESCE(m.nombre_municipio, 'Sin Municipio') as nombre_municipio,
                         COALESCE(p.nombre_parroquia, 'Sin Parroquia') as nombre_parroquia,
+                        COALESCE(NULLIF(c.vendedor_texto, ''), 'Sin Asignar') as nombre_vendedor,
                         COUNT(*) as total
                      FROM contratos c
-                     LEFT JOIN municipio m ON c.id_municipio = m.id_municipio
                      LEFT JOIN parroquia p ON c.id_parroquia = p.id_parroquia
                      $sql_where
-                     GROUP BY m.nombre_municipio, p.nombre_parroquia
+                     GROUP BY nombre_parroquia, nombre_vendedor
                      ORDER BY total DESC";
 
     // 4. Por Tipo de Instalación
@@ -107,14 +116,15 @@ if ($action === 'modal_stats') {
                        GROUP BY tipo 
                        ORDER BY total DESC";
 
-    // 5. Por Mes (Fecha Instalación)
+    // 5. Por Mes e Instalador (Fecha Instalación)
     $sql_monthly = "SELECT 
                         DATE_FORMAT(fecha_instalacion, '%Y-%m') as mes, 
+                        COALESCE(NULLIF(instalador, ''), 'Sin Asignar') as nombre_instalador,
                         COUNT(*) as total 
                        FROM contratos 
                        $sql_where 
-                       GROUP BY mes 
-                       ORDER BY mes ASC";
+                       GROUP BY mes, nombre_instalador 
+                       ORDER BY mes ASC, total DESC";
 
     // 6. Por Tipo de Conexión
     $sql_connection = "SELECT 
@@ -124,6 +134,16 @@ if ($action === 'modal_stats') {
                        $sql_where 
                        GROUP BY conexion 
                        ORDER BY total DESC";
+
+    // 7. Por SAE Plus (FTTH / Radio) - Categorización: CARGADO vs NO CARGADO
+    $sql_sae = "SELECT 
+                    COALESCE(NULLIF(tipo_conexion, ''), 'Sin Definir') as conexion,
+                    CASE WHEN sae_plus IS NOT NULL AND sae_plus != '' THEN 'CARGADO' ELSE 'NO CARGADO' END as sae_status,
+                    COUNT(*) as total 
+                 FROM contratos 
+                 $sql_where 
+                 GROUP BY conexion, sae_status 
+                 ORDER BY conexion DESC, sae_status DESC";
 
     // Ejecutar Query Instaladores
     $stmt = $conn->prepare($sql_installers);
@@ -166,7 +186,7 @@ if ($action === 'modal_stats') {
         $stats_location = [];
         while ($row = $res_loc->fetch_assoc()) {
             $stats_location[] = [
-                'ubicacion' => "{$row['nombre_municipio']} - {$row['nombre_parroquia']}",
+                'ubicacion' => "{$row['nombre_parroquia']} - {$row['nombre_vendedor']}",
                 'total' => $row['total']
             ];
         }
@@ -198,7 +218,10 @@ if ($action === 'modal_stats') {
         $res_monthly = $stmt->get_result();
         $stats_monthly = [];
         while ($row = $res_monthly->fetch_assoc()) {
-            $stats_monthly[] = $row;
+            $stats_monthly[] = [
+                'mes' => "{$row['mes']} - {$row['nombre_instalador']}",
+                'total' => $row['total']
+            ];
         }
         $stmt->close();
     }
@@ -218,13 +241,33 @@ if ($action === 'modal_stats') {
         $stmt->close();
     }
 
+    // ... (SAE Plus) ...
+    $stmt = $conn->prepare($sql_sae);
+    if ($stmt) {
+        if (!empty($types)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $res_sae = $stmt->get_result();
+        $stats_sae = [];
+        while ($row = $res_sae->fetch_assoc()) {
+            $stats_sae[] = [
+                'status' => "{$row['conexion']} ({$row['sae_status']})",
+                'total' => $row['total']
+            ];
+        }
+        $stmt->close();
+    }
+
     echo json_encode([
+        'total_global' => $total_global ?? 0,
         'by_installer' => $stats_installers ?? [],
         'by_vendor' => $stats_vendors ?? [],
         'by_location' => $stats_location ?? [],
         'by_type' => $stats_type ?? [],
         'by_month' => $stats_monthly ?? [],
-        'by_connection' => $stats_connection ?? []
+        'by_connection' => $stats_connection ?? [],
+        'by_sae' => $stats_sae ?? []
     ]);
     exit;
 }

@@ -1,3 +1,44 @@
+<?php
+// registro_contrato_instalador.php
+// Standalone form for installers — mirrors nuevo.php exactly, no session required.
+
+require_once '../conexion.php';
+
+// --- QUERY: all municipalities ---
+$sql_municipios = "SELECT id_municipio, nombre_municipio FROM municipio ORDER BY nombre_municipio ASC";
+$resultado_municipios = $conn->query($sql_municipios);
+
+// --- QUERY: all OLTs ---
+$olts = [];
+$sql_olts = "SELECT id_olt, nombre_olt FROM olt ORDER BY nombre_olt ASC";
+$resultado_olts = $conn->query($sql_olts);
+if ($resultado_olts && $resultado_olts->num_rows > 0) {
+    while ($row = $resultado_olts->fetch_assoc()) {
+        $olts[] = $row;
+    }
+}
+
+// --- QUERY: plans ---
+$sql_planes = "SELECT id_plan, nombre_plan, monto FROM planes ORDER BY nombre_plan ASC";
+$resultado_planes = $conn->query($sql_planes);
+
+// --- JSON: installers and vendors ---
+$jsonInstaladores = '../../paginas/principal/data/instaladores.json';
+$instaladoresList = [];
+if (file_exists($jsonInstaladores)) {
+    $instaladoresList = json_decode(file_get_contents($jsonInstaladores), true) ?: [];
+}
+
+// --- Tipo de Conexión JSON ---
+$jsonFileTypes = '../../paginas/principal/data/tipos_instalacion.json';
+$tiposConexion = ['FTTH', 'RADIO'];
+if (file_exists($jsonFileTypes)) {
+    $typesData = json_decode(file_get_contents($jsonFileTypes), true);
+    if (is_array($typesData)) {
+        $tiposConexion = $typesData;
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 
@@ -9,6 +50,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- intl-tel-input CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/css/intlTelInput.css">
     <style>
         body {
             background-color: #f8f9fa;
@@ -16,7 +59,7 @@
 
         .signature-pad {
             border: 2px dashed #ccc;
-            borderradius: 5px;
+            border-radius: 5px;
             width: 100%;
             height: 200px;
             background-color: #fff;
@@ -26,10 +69,11 @@
         .section-title {
             background-color: #e9ecef;
             padding: 8px 15px;
-            border-left: 4px solid #0d6efd;
+            border-left: 4px solid #198754;
             font-weight: bold;
             margin-top: 20px;
             margin-bottom: 15px;
+            border-radius: 3px;
         }
 
         .preview-image {
@@ -38,7 +82,6 @@
             border: 1px solid #ddd;
             border-radius: 5px;
             margin-top: 10px;
-            margin-top: 10px;
         }
 
         .campo-ftth,
@@ -46,7 +89,7 @@
             display: none;
         }
 
-        /* Estilos para intl-tel-input premium */
+        /* Estilos para intl-tel-input */
         .iti {
             width: 100%;
             display: block;
@@ -60,461 +103,440 @@
             border-radius: 8px;
         }
     </style>
-    <!-- intl-tel-input CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/css/intlTelInput.css">
 </head>
 
 <body>
-
     <div class="container py-4">
         <div class="row justify-content-center">
             <div class="col-lg-10">
                 <div class="card shadow-lg border-0">
                     <div class="card-header bg-success text-white text-center py-3">
-                        <h4 class="mb-0"><i class="fas fa-file-signature me-2"></i>Registro de Nuevo Contrato -
+                        <h4 class="mb-0"><i class="fas fa-file-signature me-2"></i>Registro de Nuevo Contrato —
                             Instalador</h4>
                     </div>
                     <div class="card-body p-4">
-                        <form id="formContrato" enctype="multipart/form-data">
 
-                            <!-- 1. Datos del Cliente -->
-                            <div class="section-title">Datos del Cliente</div>
-                            <div class="row mb-3">
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold">Cédula de Identidad o RIF <span
-                                            class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <select class="form-select" name="tipo_cedula" id="tipo_cedula"
-                                            style="max-width: 80px;" required>
-                                            <option value="V" selected>V</option>
-                                            <option value="E">E</option>
-                                            <option value="J">J</option>
-                                        </select>
-                                        <input type="text" class="form-control" name="cedula" id="cedula" required
-                                            pattern="[0-9]+" placeholder="12345678">
-                                    </div>
-                                    <div class="form-text small">Seleccione tipo e ingrese solo números.</div>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold">Nombre y Apellido Titular <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="nombre_completo" id="nombre_completo"
-                                        required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+" placeholder="Nombre completo">
-                                </div>
+                        <form id="formContrato" action="guardar_contrato_instalador.php" method="POST"
+                            enctype="multipart/form-data" class="row g-3" autocomplete="off">
+
+                            <!-- ═══════════════════════════════════════════ -->
+                            <!-- DATOS DEL CLIENTE                          -->
+                            <!-- ═══════════════════════════════════════════ -->
+                            <div class="col-12">
+                                <div class="section-title">Datos del Cliente</div>
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-12 mb-2">
-                                    <label class="form-label fw-bold">Dirección (Referencia de localidad) <span
-                                            class="text-danger">*</span></label>
-                                    <textarea class="form-control" name="direccion" rows="2" required
-                                        placeholder="Dirección completa con referencias..."></textarea>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">Municipio <span class="text-danger">*</span></label>
-                                    <select name="id_municipio" id="municipio" class="form-select" required>
-                                        <option value="">-- Seleccione --</option>
+                            <div class="col-md-6">
+                                <label for="cedula" class="form-label">Cédula / RIF <span
+                                        class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <select class="form-select" name="tipo_cedula" id="tipo_cedula"
+                                        style="max-width: 80px;" required>
+                                        <option value="V" selected>V</option>
+                                        <option value="E">E</option>
+                                        <option value="J">J</option>
                                     </select>
+                                    <input type="text" class="form-control" id="cedula" name="cedula" required
+                                        pattern="[0-9]+" placeholder="12345678">
                                 </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">Parroquia <span class="text-danger">*</span></label>
-                                    <select name="id_parroquia" id="parroquia" class="form-select" required disabled>
-                                        <option value="">-- Primero seleccione municipio --</option>
-                                    </select>
-                                </div>
+                                <div class="form-text small">Seleccione tipo e ingrese solo números.</div>
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold">Teléfono de Contacto 1 <span
-                                            class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control" name="telefono" id="telefono" required
-                                        placeholder="0424-1234567">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">Teléfono de Contacto 2</label>
-                                    <input type="tel" class="form-control" name="telefono_secundario"
-                                        id="telefono_secundario" placeholder="0414-7654321">
-                                </div>
+                            <div class="col-md-6">
+                                <label for="nombre_completo" class="form-label">Nombre Completo <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nombre_completo" name="nombre_completo"
+                                    required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+" title="Solo letras y espacios">
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">Correo Electrónico</label>
-                                    <input type="email" class="form-control" name="correo"
-                                        placeholder="email@ejemplo.com">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">Correo Electrónico Adicional</label>
-                                    <input type="email" class="form-control" name="correo_adicional"
-                                        placeholder="otro@ejemplo.com">
-                                </div>
+                            <div class="col-md-6">
+                                <label for="telefono" class="form-label fw-bold">Teléfono de Contacto 1 <span
+                                        class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="telefono" name="telefono" required
+                                    placeholder="0424-1234567">
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold">Plan de Servicio <span
-                                            class="text-danger">*</span></label>
-                                    <select class="form-select" name="id_plan" id="id_plan" required>
-                                        <option value="">-- Seleccione un Plan --</option>
-                                    </select>
-                                </div>
+                            <div class="col-md-6">
+                                <label for="correo" class="form-label">Correo</label>
+                                <input type="email" class="form-control" id="correo" name="correo"
+                                    placeholder="ejemplo@correo.com">
                             </div>
 
-                            <!-- 2. Información de Instalación y Pago -->
-                            <div class="section-title">Información de Instalación y Pago</div>
-                            <div class="row mb-3">
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold">Fecha de Instalación <span
-                                            class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="fecha_instalacion"
-                                        value="<?php echo date('Y-m-d'); ?>" required>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold">Tipo de Instalación <span
-                                            class="text-danger">*</span></label>
-                                    <select class="form-select" name="tipo_instalacion" required>
-                                        <option value="">-- Seleccione --</option>
-                                        <?php
-                                        // ⚠️ CARGA JSON TIPOS
-                                        $jsonTypes = '../../paginas/principal/data/tipos_instalacion.json';
-                                        if (file_exists($jsonTypes)) {
-                                            $types = json_decode(file_get_contents($jsonTypes), true) ?: [];
-                                            foreach ($types as $t) {
-                                                echo '<option value="' . htmlspecialchars($t) . '">' . htmlspecialchars($t) . '</option>';
-                                            }
-                                        } else {
-                                            // Fallback default
-                                            echo '<option value="NUEVO FTTH">Nuevo FTTH</option>
-                                                  <option value="NUEVO RADIO">Nuevo Radio</option>
-                                                  <option value="MIGRACION">Migración</option>
-                                                  <option value="MUDANZA">Mudanza</option>';
+                            <div class="col-md-6">
+                                <label for="telefono_secundario" class="form-label">Teléfono de Contacto 2</label>
+                                <input type="tel" class="form-control" id="telefono_secundario"
+                                    name="telefono_secundario" placeholder="0414-7654321">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="correo_adicional" class="form-label">Correo Adicional</label>
+                                <input type="email" class="form-control" id="correo_adicional" name="correo_adicional"
+                                    placeholder="otro@correo.com">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="municipio" class="form-label">Municipio</label>
+                                <select name="id_municipio" id="municipio" class="form-select" required>
+                                    <option value="">Cargando municipios...</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="parroquia" class="form-label">Parroquia</label>
+                                <select name="id_parroquia" id="parroquia" class="form-select" disabled required>
+                                    <option value="">-- Primero seleccione un municipio --</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_plan" class="form-label">Plan</label>
+                                <select name="id_plan" id="id_plan" class="form-select" required>
+                                    <option value="">-- Seleccione un Plan --</option>
+                                    <?php
+                                    if ($resultado_planes && $resultado_planes->num_rows > 0) {
+                                        while ($fila = $resultado_planes->fetch_assoc()) {
+                                            echo '<option value="' . htmlspecialchars($fila["id_plan"]) . '" data-monto-plan="' . htmlspecialchars($fila["monto"]) . '">'
+                                                . htmlspecialchars($fila["nombre_plan"]) . ' ($' . htmlspecialchars($fila["monto"]) . ')'
+                                                . '</option>';
                                         }
-                                        ?>
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="vendedor_texto" class="form-label">Vendedor</label>
+                                <select name="vendedor_texto" id="vendedor_texto" class="form-select" required>
+                                    <option value="">Cargando vendedores...</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="direccion" class="form-label">Dirección (Referencia de localidad) <span
+                                        class="text-danger">*</span></label>
+                                <textarea class="form-control" id="direccion" name="direccion" rows="3"
+                                    required></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="fecha_instalacion" class="form-label">Fecha de Instalación</label>
+                                <input type="date" class="form-control" id="fecha_instalacion" name="fecha_instalacion"
+                                    required max="<?php echo date('Y-m-d'); ?>">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="estado_contrato" class="form-label">Estado del Contrato</label>
+                                <select class="form-select" id="estado_contrato" name="estado_contrato" required>
+                                    <option value="">-- Seleccione el Estado --</option>
+                                    <option value="ACTIVO" selected>ACTIVO</option>
+                                    <option value="INACTIVO">INACTIVO</option>
+                                    <option value="SUSPENDIDO">SUSPENDIDO</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="ident_caja_nap" class="form-label">Identificación Caja Nap</label>
+                                <input type="text" class="form-control" id="ident_caja_nap" name="ident_caja_nap">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="puerto_nap" class="form-label">Puerto NAP</label>
+                                <input type="text" class="form-control" id="puerto_nap" name="puerto_nap">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_olt" class="form-label">OLT</label>
+                                <select name="id_olt" id="id_olt" class="form-select" required>
+                                    <option value="">-- Seleccione una OLT --</option>
+                                    <?php
+                                    if (!empty($olts)) {
+                                        foreach ($olts as $olt) {
+                                            echo '<option value="' . htmlspecialchars($olt["id_olt"]) . '">'
+                                                . htmlspecialchars($olt["nombre_olt"])
+                                                . '</option>';
+                                        }
+                                    } else {
+                                        echo '<option value="" disabled>No se encontraron OLTs.</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_pon" class="form-label">PON</label>
+                                <select name="id_pon" id="id_pon" class="form-select" required disabled>
+                                    <option value="">-- Seleccione una OLT primero --</option>
+                                </select>
+                            </div>
+
+                            <!-- ═══════════════════════════════════════════ -->
+                            <!-- INSTALACIÓN Y PAGO                         -->
+                            <!-- ═══════════════════════════════════════════ -->
+                            <div class="col-12">
+                                <div class="section-title">Información de Instalación y Pago</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="tipo_conexion" class="form-label">Tipo de Conexión</label>
+                                <select name="tipo_conexion" id="tipo_conexion" class="form-select" required>
+                                    <option value="">-- Seleccione Conexión --</option>
+                                    <?php foreach ($tiposConexion as $type) {
+                                        echo '<option value="' . htmlspecialchars($type) . '">' . htmlspecialchars($type) . '</option>';
+                                    } ?>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="monto_instalacion" class="form-label">Monto Instalación ($) <span
+                                        class="text-danger">*</span></label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="monto_instalacion"
+                                    name="monto_instalacion" required value="0">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="gastos_adicionales" class="form-label">Gastos Adicionales ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="gastos_adicionales"
+                                    name="gastos_adicionales" value="0">
+                            </div>
+
+                            <!-- Switch de Prorrateo -->
+                            <div class="col-12 mt-3 mb-2">
+                                <div
+                                    class="form-check form-switch bg-light border rounded p-3 d-flex align-items-center gap-3">
+                                    <input class="form-check-input ms-0 mt-0" type="checkbox" role="switch"
+                                        id="incluye_prorrateo" name="incluye_prorrateo" value="SI"
+                                        style="width: 3em; height: 1.5em; cursor: pointer;">
+                                    <label class="form-check-label mb-0 fw-bold text-success" for="incluye_prorrateo"
+                                        style="cursor: pointer;">¿Aplica días de prorrateo?</label>
+                                </div>
+                            </div>
+
+                            <!-- Contenedor Oculto Prorrateo -->
+                            <div class="col-12" id="contenedor_prorrateo" style="display: none;">
+                                <div class="row p-3 border rounded bg-white mt-1 shadow-sm">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="plan_prorrateo" class="form-label fw-semibold text-secondary">Plan
+                                            para Prorrateo</label>
+                                        <select class="form-select" id="plan_prorrateo" name="plan_prorrateo_nombre">
+                                            <option value="">Cargando planes...</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="dias_prorrateo" class="form-label fw-semibold text-secondary">Días
+                                            de Prorrateo</label>
+                                        <input type="number" min="0" class="form-control" id="dias_prorrateo"
+                                            name="dias_prorrateo" value="0" placeholder="0">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="monto_prorrateo_usd"
+                                            class="form-label fw-semibold text-secondary">Monto Prorrateo ($)</label>
+                                        <input type="number" step="0.01" class="form-control fw-bold bg-light"
+                                            id="monto_prorrateo_usd" name="monto_prorrateo_usd" readonly
+                                            placeholder="0.00">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="monto_pagar" class="form-label">Monto Total a Pagar ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="monto_pagar"
+                                    name="monto_pagar" readonly>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="monto_pagado" class="form-label">Monto Pagado</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.01" class="form-control" id="monto_pagado"
+                                        name="monto_pagado" required>
+                                    <select class="form-select" id="moneda_pago" name="moneda_pago"
+                                        style="max-width: 100px;">
+                                        <option value="USD" selected>USD</option>
+                                        <option value="BS">BS</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="medio_pago" required>
-                                        <option value="">-- Seleccione --</option>
-                                        <option value="Efectivo">Efectivo</option>
-                                        <option value="Transferencia">Transferencia</option>
-                                        <option value="Pago Móvil">Pago Móvil</option>
-                                        <option value="Zelle">Zelle</option>
-                                        <option value="Otro">Otro</option>
-                                    </select>
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label">Monto de Instalación ($) <span
-                                                class="text-danger">*</span></label>
-                                        <input type="number" step="0.01" min="0" class="form-control"
-                                            name="monto_instalacion" id="monto_instalacion" required placeholder="0.00">
-                                    </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label">Gasto Adicional ($)</label>
-                                        <input type="number" step="0.01" class="form-control" name="gastos_adicionales"
-                                            id="gastos_adicionales" value="0" placeholder="0.00">
-                                    </div>
-                                </div>
+                            <div class="col-md-6" id="div_saldo_pendiente" style="display:none;">
+                                <label for="saldo_pendiente" class="form-label text-danger fw-bold">Saldo Pendiente
+                                    ($)</label>
+                                <input type="number" step="0.01" class="form-control border-danger text-danger fw-bold"
+                                    id="saldo_pendiente" name="saldo_pendiente" readonly>
+                            </div>
 
-                                <!-- Switch de Prorrateo -->
-                                <div class="col-12 mt-3 mb-2">
-                                    <div
-                                        class="form-check form-switch bg-light border rounded p-3 d-flex align-items-center gap-3">
-                                        <input class="form-check-input ms-0 mt-0" type="checkbox" role="switch"
-                                            id="incluye_prorrateo" name="incluye_prorrateo" value="SI"
-                                            style="width: 3em; height: 1.5em; cursor: pointer;">
-                                        <label class="form-check-label mb-0 fw-bold text-primary"
-                                            for="incluye_prorrateo" style="cursor: pointer;">¿Aplica días de
-                                            prorrateo?</label>
-                                    </div>
-                                </div>
+                            <div class="col-md-6">
+                                <label for="medio_pago" class="form-label">Medio de Pago <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select" id="medio_pago" name="medio_pago" required>
+                                    <option value="">-- Seleccione --</option>
+                                    <option value="Efectivo">Efectivo</option>
+                                    <option value="Transferencia">Transferencia</option>
+                                    <option value="Pago Móvil">Pago Móvil</option>
+                                    <option value="Zelle">Zelle</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
 
-                                <!-- Contenedor Oculto Prorrateo -->
-                                <div class="col-12" id="contenedor_prorrateo" style="display: none;">
-                                    <div class="row p-3 border rounded bg-white mt-1 shadow-sm">
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label fw-semibold text-secondary">Plan para
-                                                Prorrateo</label>
-                                            <select class="form-select" id="plan_prorrateo" name="plan_prorrateo">
-                                                <option value="">-- Seleccione --</option>
-                                                <?php
-                                                // ⚠️ CARGA JSON PRORRATEO
-                                                $jsonProrrateo = '../../paginas/principal/data/planes_prorrateo.json';
-                                                if (file_exists($jsonProrrateo)) {
-                                                    $pPlans = json_decode(file_get_contents($jsonProrrateo), true) ?: [];
-                                                    foreach ($pPlans as $p) {
-                                                        // Value = price, Text = Name - $Price
-                                                        echo '<option value="' . htmlspecialchars($p['precio']) . '">' .
-                                                            htmlspecialchars($p['nombre']) . ' - $' . htmlspecialchars($p['precio']) .
-                                                            '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="17.50">100 Mbps - $17.50</option>
-                                                          <option value="23.20">250 Mbps - $23.20</option>
-                                                          <option value="25.00">650 Mbps - $25.00</option>
-                                                          <option value="38.00">850 Mbps - $38.00</option>
-                                                          <option value="48.00">1 Gb - $48.00</option>';
-                                                }
-                                                ?>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label fw-semibold text-secondary">Días de
-                                                Prorrateo</label>
-                                            <input type="number" class="form-control" name="dias_prorrateo"
-                                                id="dias_prorrateo" value="0" placeholder="0">
-                                        </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label fw-semibold text-secondary">Monto Prorrateo
-                                                ($)</label>
-                                            <input type="number" step="0.01" class="form-control fw-bold bg-light"
-                                                name="monto_prorrateo_usd" id="monto_prorrateo_usd" readonly
-                                                placeholder="0.00">
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="col-md-12">
+                                <label for="observaciones" class="form-label">Observaciones</label>
+                                <textarea class="form-control" id="observaciones" name="observaciones"
+                                    rows="2"></textarea>
+                            </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label fw-bold">Monto Total a Pagar ($)</label>
-                                        <input type="number" step="0.01" class="form-control" name="monto_pagar"
-                                            id="monto_pagar" placeholder="0.00">
-                                    </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label fw-bold">Monto Pagado</label>
-                                        <div class="input-group">
-                                            <input type="number" step="0.01" class="form-control" name="monto_pagado"
-                                                id="monto_pagado" placeholder="0.00">
-                                            <select class="form-select" name="moneda_pago" style="max-width: 80px;">
-                                                <option value="USD">USD</option>
-                                                <option value="BS">BS</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label fw-bold text-danger">Restante a Pagar ($)</label>
-                                        <input type="number" step="0.01" class="form-control text-danger fw-bold"
-                                            id="monto_debe" readonly placeholder="0.00">
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Observaciones</label>
-                                    <textarea class="form-control" name="observaciones" rows="2"
-                                        placeholder="Observaciones generales..."></textarea>
-                                </div>
-
-                                <!-- 3. Detalles Técnicos de Conexión -->
+                            <!-- ═══════════════════════════════════════════ -->
+                            <!-- DETALLES TÉCNICOS DE CONEXIÓN              -->
+                            <!-- ═══════════════════════════════════════════ -->
+                            <div class="col-12">
                                 <div class="section-title">Detalles Técnicos de Conexión</div>
-                                <div class="row mb-3">
-                                    <div class="col-md-6 mb-2">
-                                        <div class="col-md-6 mb-2">
-                                            <label class="form-label fw-bold">Tipo de Conexión <span
-                                                    class="text-danger">*</span></label>
-                                            <select class="form-select" name="tipo_conexion" id="tipo_conexion"
-                                                required>
-                                                <option value="">-- Seleccione --</option>
-                                                <option value="FTTH">FTTH (Fibra Óptica)</option>
-                                                <option value="RADIO">Radio/Antena</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                            </div>
 
-                                    <!-- CAMPOS FTTH -->
-                                    <div class="row mb-3 campo-ftth">
-                                        <div class="col-md-6 mb-2">
-                                            <label class="form-label">MAC o Serial de la ONU <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="mac_onu" name="mac_onu"
-                                                pattern="[A-Fa-f0-9:\.\-]{8,20}" placeholder="FABBCC112233">
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <label class="form-label">Dirección IP Asignada a la ONU <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="ip_onu" name="ip_onu" value=""
-                                                pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
-                                                placeholder="192.168.x.x">
-                                        </div>
-                                    </div>
+                            <!-- CAMPOS FTTH -->
+                            <div class="col-md-6 campo-ftth">
+                                <label for="mac_onu" class="form-label">MAC o Serial de la ONU <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="mac_onu" name="mac_onu"
+                                    pattern="[A-Fa-f0-9:\.\-]{8,20}" placeholder="FABBCC112233">
+                            </div>
 
-                                    <div class="row mb-3 campo-ftth">
-                                        <div class="col-md-6 mb-2">
-                                            <label class="form-label">Identificación Caja NAP <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" name="ident_caja_nap"
-                                                placeholder="ID Caja NAP">
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <label class="form-label">Puerto NAP <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" name="puerto_nap"
-                                                placeholder="Puerto">
-                                        </div>
-                                    </div>
+                            <div class="col-md-6 campo-ftth">
+                                <label for="ip_onu" class="form-label">Dirección IP Asignada a la ONU <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="ip_onu" name="ip_onu" value="192.168."
+                                    pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+                                    placeholder="192.168.1.1">
+                            </div>
 
-                                    <div class="row mb-3 campo-ftth">
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">NAP TX Power (dBm) <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="nap_tx_power"
-                                                name="nap_tx_power" pattern="-?[0-9.]+" placeholder="-25">
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">ONU RX Power (dBm) <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="onu_rx_power"
-                                                name="onu_rx_power" pattern="-?[0-9.]+" placeholder="-27">
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">Distancia de Drop (m) <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="number" step="1" class="form-control" id="distancia_drop"
-                                                name="distancia_drop" placeholder="50">
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label fw-bold text-primary">Precinto ODN <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control border-primary"
-                                                name="num_presinto_odn" placeholder="Número de precinto">
-                                        </div>
-                                    </div>
+                            <div class="col-md-6 campo-ftth">
+                                <label for="ident_caja_nap_ftth" class="form-label">Identificación Caja NAP <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="ident_caja_nap_ftth" name="ident_caja_nap">
+                            </div>
 
-                                    <!-- CAMPOS RADIO -->
-                                    <div class="row mb-3 campo-radio">
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">Dirección IP <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" name="ip" id="ip" value="" required
-                                                pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
-                                                placeholder="192.168.x.x">
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">Punto de Acceso <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="punto_acceso"
-                                                name="punto_acceso" placeholder="Nombre AP">
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">Valor de Conexión (dBm) <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="valor_conexion_dbm"
-                                                name="valor_conexion_dbm" pattern="-?[0-9.]+" placeholder="-55">
-                                        </div>
-                                    </div>
+                            <div class="col-md-6 campo-ftth">
+                                <label for="puerto_nap_ftth" class="form-label">Puerto NAP <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="puerto_nap_ftth" name="puerto_nap">
+                            </div>
 
+                            <div class="col-md-6 campo-ftth">
+                                <label for="nap_tx_power" class="form-label">NAP TX Power (dBm) <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nap_tx_power" name="nap_tx_power"
+                                    pattern="-?[0-9.]+" placeholder="-25.5">
+                            </div>
 
+                            <div class="col-md-6 campo-ftth">
+                                <label for="onu_rx_power" class="form-label">ONU RX Power (dBm) <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="onu_rx_power" name="onu_rx_power"
+                                    pattern="-?[0-9.]+" placeholder="-27.5">
+                            </div>
 
-                                    <!-- OTROS DATOS -->
-                                    <div class="row mb-3">
-                                        <div class="col-md-12 mb-2">
-                                            <label class="form-label">Instalador <span
-                                                    class="text-danger">*</span></label>
-                                            <?php
-                                            // ⚠️ CARGA JSON INSTALADORES (Ruta ajustada por carpeta soporte)
-                                            $jsonInstaladores = '../../paginas/principal/data/instaladores.json';
-                                            $instaladoresList = [];
-                                            if (file_exists($jsonInstaladores)) {
-                                                $instaladoresList = json_decode(file_get_contents($jsonInstaladores), true) ?: [];
-                                            }
-                                            ?>
-                                            <select name="instalador" class="form-select" required>
-                                                <option value="">-- Seleccione un Instalador --</option>
-                                                <?php
-                                                if (!empty($instaladoresList)) {
-                                                    foreach ($instaladoresList as $inst) {
-                                                        echo '<option value="' . htmlspecialchars($inst) . '">' . htmlspecialchars($inst) . '</option>';
-                                                    }
-                                                } else {
-                                                    // En este archivo no tenemos $conn abierta fácilmente aca arriba, 
-                                                    // así que fallback simple o requerir conexión.
-                                                    // Como es vista "publica/soporte", mejor confiar en el JSON o input texto fallback
-                                                    echo '<option value="">Error cargando lista</option>';
-                                                }
-                                                ?>
-                                            </select>
-                                        </div>
-                                    </div>
+                            <div class="col-md-6 campo-ftth">
+                                <label for="distancia_drop" class="form-label">Distancia Drop (m) <span
+                                        class="text-danger">*</span></label>
+                                <input type="number" step="1" class="form-control" id="distancia_drop"
+                                    name="distancia_drop" placeholder="50">
+                            </div>
 
-                                    <!-- Campo Vendedor -->
-                                    <div class="row mb-3">
-                                        <div class="col-md-12 mb-2">
-                                            <label class="form-label fw-bold">Vendido Por</label>
-                                            <?php
-                                            $jsonVendedores = '../../paginas/principal/data/vendedores.json';
-                                            $vendedoresList = [];
-                                            if (file_exists($jsonVendedores)) {
-                                                $vendedoresList = json_decode(file_get_contents($jsonVendedores), true) ?: [];
-                                                if (isset($vendedoresList['vendedores'])) {
-                                                    $vendedoresList = $vendedoresList['vendedores'];
-                                                }
-                                            }
-                                            ?>
-                                            <select name="vendedor_texto" id="vendedor_texto" class="form-select">
-                                                <option value="">-- Seleccione un Vendedor --</option>
-                                                <?php
-                                                if (!empty($vendedoresList)) {
-                                                    foreach ($vendedoresList as $vend) {
-                                                        $nombre = is_array($vend) ? ($vend['nombre'] ?? $vend['name'] ?? $vend) : $vend;
-                                                        echo '<option value="' . htmlspecialchars($nombre) . '">' . htmlspecialchars($nombre) . '</option>';
-                                                    }
-                                                }
-                                                ?>
-                                            </select>
-                                        </div>
-                                    </div>
+                            <div class="col-md-6 campo-ftth">
+                                <label for="num_presinto_odn" class="form-label text-primary fw-bold">Precinto ODN <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control border-primary shadow-sm" id="num_presinto_odn"
+                                    name="num_presinto_odn" placeholder="Ej. A-123">
+                            </div>
 
-                                    <!-- 4. Evidencia Fotográfica y Documentación -->
-                                    <div class="section-title">Evidencia y Documentación</div>
-                                    <div class="row mb-3">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label fw-bold">Foto Instalación Terminada</label>
-                                            <input type="file" class="form-control" name="evidencia_foto_file"
-                                                id="foto_instalacion" accept="image/*">
-                                            <div id="preview_foto" class="mt-2 text-center"></div>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label fw-bold">Documento de Identidad
-                                                (Cédula/RIF)</label>
-                                            <input type="file" class="form-control" name="evidencia_documento_file"
-                                                id="foto_documento" accept="image/*">
-                                            <div id="preview_documento" class="mt-2 text-center"></div>
-                                        </div>
-                                    </div>
+                            <!-- CAMPOS RADIO -->
+                            <div class="col-md-6 campo-radio">
+                                <label for="ip" class="form-label">Dirección IP <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="ip" name="ip" placeholder="192.168.x.x"
+                                    pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
+                            </div>
 
-                                    <!-- 5. Firmas Digitales -->
-                                    <div class="section-title">Firmas Digitales</div>
+                            <div class="col-md-6 campo-radio">
+                                <label for="punto_acceso" class="form-label">Punto de Acceso <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="punto_acceso" name="punto_acceso">
+                            </div>
 
-                                    <div class="mb-4">
-                                        <label class="form-label fw-bold">Firma del Cliente <span
-                                                class="text-danger">*</span></label>
-                                        <canvas id="sigCliente" class="signature-pad"></canvas>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
-                                            onclick="clearPad('cliente')">Limpiar</button>
-                                        <input type="hidden" name="firma_cliente_data" id="firma_cliente_data">
-                                    </div>
+                            <div class="col-md-6 campo-radio">
+                                <label for="valor_conexion_dbm" class="form-label">Valor Conexión (dBm) <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="valor_conexion_dbm"
+                                    name="valor_conexion_dbm" pattern="-?[0-9.]+" placeholder="-55.0">
+                            </div>
 
-                                    <div class="mb-4">
-                                        <label class="form-label fw-bold">Firma del Técnico <span
-                                                class="text-danger">*</span></label>
-                                        <canvas id="sigTecnico" class="signature-pad"></canvas>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
-                                            onclick="clearPad('tecnico')">Limpiar</button>
-                                        <input type="hidden" name="firma_tecnico_data" id="firma_tecnico_data">
-                                    </div>
+                            <!-- Instalador -->
+                            <div class="col-md-6">
+                                <label for="instaladores" class="form-label fw-bold">Instalador</label>
+                                <select name="instaladores[]" id="instaladores" class="form-select">
+                                    <option value="">-- Seleccione un Instalador --</option>
+                                    <?php
+                                    if (!empty($instaladoresList)) {
+                                        foreach ($instaladoresList as $inst) {
+                                            echo '<option value="' . htmlspecialchars($inst) . '">' . htmlspecialchars($inst) . '</option>';
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
 
-                                    <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-success btn-lg" id="btnGuardar">
-                                            <i class="fas fa-save me-2"></i> Registrar Contrato
-                                        </button>
-                                    </div>
+                            <!-- ═══════════════════════════════════════════ -->
+                            <!-- EVIDENCIA FOTOGRÁFICA                      -->
+                            <!-- ═══════════════════════════════════════════ -->
+                            <div class="col-12">
+                                <div class="section-title">Evidencia y Documentación</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="evidencia_foto" class="form-label">Evidencia Fotográfica
+                                    (Instalación)</label>
+                                <input type="file" class="form-control" id="evidencia_foto" name="evidencia_foto"
+                                    accept="image/*">
+                                <div id="preview_foto" class="mt-2 text-center"></div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="foto_documento" class="form-label">Documento de Identidad</label>
+                                <input type="file" class="form-control" id="foto_documento"
+                                    name="evidencia_documento_file" accept="image/*">
+                                <div id="preview_documento" class="mt-2 text-center"></div>
+                            </div>
+
+                            <!-- ═══════════════════════════════════════════ -->
+                            <!-- FIRMAS DIGITALES                           -->
+                            <!-- ═══════════════════════════════════════════ -->
+                            <div class="col-12">
+                                <div class="section-title">Firmas Digitales</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Firma del Cliente <span
+                                        class="text-danger">*</span></label>
+                                <canvas id="sigCliente" class="signature-pad"></canvas>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                                    onclick="clearPad('cliente')">Limpiar</button>
+                                <input type="hidden" name="firma_cliente_data" id="firma_cliente_data">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Firma del Técnico <span
+                                        class="text-danger">*</span></label>
+                                <canvas id="sigTecnico" class="signature-pad"></canvas>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                                    onclick="clearPad('tecnico')">Limpiar</button>
+                                <input type="hidden" name="firma_tecnico_data" id="firma_tecnico_data">
+                            </div>
+
+                            <!-- ═══════════════════════════════════════════ -->
+                            <!-- SUBMIT                                      -->
+                            <!-- ═══════════════════════════════════════════ -->
+                            <div class="col-12 d-grid mt-3">
+                                <button type="submit" class="btn btn-success btn-lg" id="btnGuardar">
+                                    <i class="fas fa-save me-2"></i>Registrar Contrato
+                                </button>
+                            </div>
+
                         </form>
                     </div>
                 </div>
@@ -528,7 +550,8 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title"><i class="fa-solid fa-link me-2"></i>Enlace de Contrato Generado</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-center p-4">
                     <div class="mb-4">
@@ -536,7 +559,6 @@
                         <h4>¡Contrato Pre-registrado!</h4>
                         <p class="text-muted">El contrato está pendiente de firma del cliente.</p>
                     </div>
-
                     <label class="form-label fw-bold text-start w-100">Enlace para el Cliente:</label>
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="linkInput" readonly>
@@ -544,15 +566,14 @@
                             <i class="fa-regular fa-copy"></i>
                         </button>
                     </div>
-
                     <div class="d-grid gap-2">
                         <a href="#" id="btnWhatsapp" target="_blank" class="btn btn-success">
-                            <i class="fa-brands fa-whatsapp me-2"></i> Enviar por WhatsApp
+                            <i class="fa-brands fa-whatsapp me-2"></i>Enviar por WhatsApp
                         </a>
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal"
                                 onclick="mostrarOpcionesExito(window.lastSavedId)">
-                                <i class="fa-solid fa-arrow-left me-1"></i> Volver
+                                <i class="fa-solid fa-arrow-left me-1"></i>Volver
                             </button>
                             <button type="button" class="btn btn-primary w-100" onclick="location.reload()">
                                 Finalizar
@@ -566,75 +587,16 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
 
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SIGNATURE PAD INIT                         -->
+    <!-- ═══════════════════════════════════════════ -->
     <script>
-        // Inicializar Signature Pads
         const canvasCliente = document.getElementById('sigCliente');
         const canvasTecnico = document.getElementById('sigTecnico');
-
-        // ======================================================
-        // VALIDACIÓN Y FORMATEO DE CAMPOS (REQUERIMIENTO USUARIO)
-        // ======================================================
-        // 1. Forzar prefijo 'V' en Cédula y permitir solo dígitos después
-        $('#cedula').on('input', function () {
-            let val = $(this).val().toUpperCase();
-
-            // Asegurar que siempre empiece con V
-            if (!val.startsWith('V')) {
-                val = 'V' + val.replace(/[^0-9]/g, '');
-            } else {
-                // Mantener la V inicial y limpiar el resto
-                val = 'V' + val.substring(1).replace(/[^0-9]/g, '');
-            }
-
-            $(this).val(val);
-        });
-
-        $('#ip, #ip_onu').on('input', function () {
-            let val = $(this).val().replace(/[^0-9.]/g, '');
-            // Restringir IP a números y puntos y validar octetos 0-255
-            let parts = val.split('.');
-
-            // Validar que cada octeto no pase de 255
-            for (let i = 0; i < parts.length; i++) {
-                if (parts[i] !== '' && parseInt(parts[i]) > 255) {
-                    parts[i] = '255';
-                }
-                // Limitar a máximo 4 octetos
-                if (i >= 4) {
-                    parts.splice(4);
-                    break;
-                }
-            }
-
-            $(this).val(parts.join('.'));
-        });
-
-        // Restringir Teléfono a números, guiones, más y espacios
-        $('#telefono, #telefono_secundario').on('input', function () {
-            let val = $(this).val().replace(/[^0-9-+\s]/g, '');
-            $(this).val(val);
-        });
-
-        $('#nombre_completo').on('input', function () {
-            let val = $(this).val().replace(/[^A-Za-zñÑáéíóúÁÉÍÓÚ\s]/g, '');
-            $(this).val(val);
-        });
-
-        $('#mac_onu').on('input', function () {
-            let val = $(this).val().toUpperCase().replace(/[^A-F0-9:.-]/g, '');
-            $(this).val(val);
-        });
-
-        $('#nap_tx_power, #onu_rx_power, #valor_conexion_dbm').on('input', function () {
-            let val = $(this).val().replace(/[^0-9.-]/g, '');
-            // Only allow one '-' at the beginning
-            if (val.indexOf('-') > 0) val = val.substring(0, val.indexOf('-')) + val.substring(val.indexOf('-') + 1);
-            $(this).val(val);
-        });
 
         function resizeCanvas(canvas) {
             var ratio = Math.max(window.devicePixelRatio || 1, 1);
@@ -642,62 +604,141 @@
             canvas.height = canvas.offsetHeight * ratio;
             canvas.getContext("2d").scale(ratio, ratio);
         }
+
         window.onresize = function () { resizeCanvas(canvasCliente); resizeCanvas(canvasTecnico); };
         resizeCanvas(canvasCliente); resizeCanvas(canvasTecnico);
 
         const padCliente = new SignaturePad(canvasCliente);
         const padTecnico = new SignaturePad(canvasTecnico);
 
-        function clearPad(type) {
+        window.clearPad = function (type) {
             if (type === 'cliente') padCliente.clear();
             if (type === 'tecnico') padTecnico.clear();
+        };
+
+        window.padCliente = padCliente;
+        window.padTecnico = padTecnico;
+    </script>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- INPUT VALIDATION & FIELD MASKING           -->
+    <!-- ═══════════════════════════════════════════ -->
+    <script>
+        // 1. Cédula: solo dígitos (el prefix V se maneja con el select en este form)
+        $('#cedula').on('input', function () {
+            let val = $(this).val().replace(/[^0-9]/g, '');
+            $(this).val(val);
+        });
+
+        // 2. IP validation
+        $('#ip, #ip_onu').on('input', function () {
+            let val = $(this).val().replace(/[^0-9.]/g, '');
+            let parts = val.split('.');
+            for (let i = 0; i < parts.length; i++) {
+                if (parts[i] !== '' && parseInt(parts[i]) > 255) parts[i] = '255';
+                if (i >= 4) { parts.splice(4); break; }
+            }
+            $(this).val(parts.join('.'));
+        });
+
+        // 3. Nombre: solo letras y espacios
+        $('#nombre_completo').on('input', function () {
+            let val = $(this).val().replace(/[^A-Za-zñÑáéíóúÁÉÍÓÚ\s]/g, '');
+            $(this).val(val);
+        });
+
+        // 4. MAC: hex, colon, dot, dash
+        $('#mac_onu').on('input', function () {
+            let val = $(this).val().toUpperCase().replace(/[^A-F0-9:.-]/g, '');
+            $(this).val(val);
+        });
+
+        // 5. Potencias (dBm): numbers, dots, one leading dash
+        $('#nap_tx_power, #onu_rx_power, #valor_conexion_dbm').on('input', function () {
+            let val = $(this).val().replace(/[^0-9.-]/g, '');
+            if (val.indexOf('-') > 0) val = val.substring(0, val.indexOf('-')) + val.substring(val.indexOf('-') + 1);
+            $(this).val(val);
+        });
+
+        // 6. Image preview
+        function setupPreview(inputId, previewId) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            input.addEventListener('change', function () {
+                const preview = document.getElementById(previewId);
+                preview.innerHTML = '';
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.style.maxWidth = '180px';
+                        img.style.maxHeight = '180px';
+                        img.style.borderRadius = '6px';
+                        img.style.border = '1px solid #dee2e6';
+                        img.style.marginTop = '8px';
+                        preview.appendChild(img);
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
         }
 
-        // Cargar Ubicaciones desde JSON
-        let ubicacionesData = [];
+        setupPreview('evidencia_foto', 'preview_foto');
+        setupPreview('foto_documento', 'preview_documento');
+    </script>
 
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- MAIN LOGIC (jQuery ready)                  -->
+    <!-- ═══════════════════════════════════════════ -->
+    <script>
         $(document).ready(function () {
-            // Cargar JSON completo al inicio
+
+            // === 1. CARGAR DATOS DINÁMICOS ===
+
+            let ubicacionesData = [];
             $.get('../principal/api_ubicaciones.php', function (data) {
                 ubicacionesData = data;
-                let options = '<option value="">-- Seleccione --</option>';
-
-                // Llenar Municipios
+                let options = '<option value="">-- Seleccione un Municipio --</option>';
                 ubicacionesData.forEach(function (item) {
                     options += `<option value="${item.municipio}">${item.municipio}</option>`;
                 });
                 $('#municipio').html(options);
             });
 
-            // Cargar Planes de Servicio
-            $.get('../principal/api_planes.php', function (data) {
+            $.get('../principal/json_personal_api.php?action=get_planes_prorrateo', function (data) {
                 let options = '<option value="">-- Seleccione un Plan --</option>';
-                data.forEach(function (plan) {
-                    options += `<option value="${plan.id_plan}" data-monto-plan="${plan.monto}">${plan.nombre_plan} ($${plan.monto})</option>`;
-                });
-                $('#id_plan').html(options);
+                if (data && data.length > 0) {
+                    data.forEach(function (p) {
+                        options += `<option value="${p.nombre}" data-precio="${p.precio}">${p.nombre} - $${p.precio}</option>`;
+                    });
+                } else {
+                    options = '<option value="">Sin planes registrados</option>';
+                }
+                $('#plan_prorrateo').html(options);
             });
 
-            // Cargar Tipos de Instalación
-            $.get('../principal/api_tipos_instalacion.php', function (data) {
-                let options = '<option value="">-- Seleccione --</option>';
-                data.forEach(function (tipo) {
-                    options += `<option value="${tipo}">${tipo}</option>`;
-                });
-                $('select[name="tipo_instalacion"]').html(options);
+            $.get('../principal/json_personal_api.php?action=get_vendedores', function (data) {
+                let options = '<option value="">-- Seleccione un Vendedor --</option>';
+                if (data && data.length > 0) {
+                    data.forEach(function (v) {
+                        options += `<option value="${v}">${v}</option>`;
+                    });
+                } else {
+                    options = '<option value="">Sin vendedores registrados</option>';
+                }
+                $('#vendedor_texto').html(options);
             });
 
-            // Cargar Parroquias al cambiar Municipio
+            // === 2. CASCADAS (Municipio->Parroquia, OLT->PON) ===
+
             $('#municipio').on('change', function () {
                 const munNombre = $(this).val();
                 let options = '<option value="">-- Seleccione --</option>';
-
                 if (munNombre) {
                     const municipioObj = ubicacionesData.find(m => m.municipio === munNombre);
-
                     if (municipioObj && municipioObj.parroquias) {
                         municipioObj.parroquias.forEach(function (p) {
-                            // Ahora p es un objeto {nombre: "...", comunidades: []}
                             options += `<option value="${p.nombre}">${p.nombre}</option>`;
                         });
                         $('#parroquia').html(options).prop('disabled', false);
@@ -705,62 +746,67 @@
                         $('#parroquia').html('<option value="">No hay parroquias</option>').prop('disabled', true);
                     }
                 } else {
-                    $('#parroquia').html('<option value="">-- Primero seleccione municipio --</option>').prop('disabled', true);
+                    $('#parroquia').html('<option value="">-- Primero seleccione un municipio --</option>').prop('disabled', true);
                 }
-                $('#comunidad').html('<option value="">-- Primero seleccione parroquia --</option>').prop('disabled', true);
             });
 
-            // Cargar Comunidades al cambiar Parroquia (Agregado para consistencia)
-            $('#parroquia').on('change', function () {
-                const munNombre = $('#municipio').val();
-                const parrNombre = $(this).val();
-                let options = '<option value="">-- Seleccione --</option>';
-
-                if (munNombre && parrNombre) {
-                    const munObj = ubicacionesData.find(m => m.municipio === munNombre);
-                    if (munObj && munObj.parroquias) {
-                        const parObj = munObj.parroquias.find(p => p.nombre === parrNombre);
-                        if (parObj && parObj.comunidades) {
-                            parObj.comunidades.forEach(function (c) {
-                                options += `<option value="${c}">${c}</option>`;
-                            });
+            function cargarPons(idOlt) {
+                var $ponSelect = $('#id_pon');
+                $ponSelect.html('<option value="">Cargando PONs...</option>').prop('disabled', true);
+                if (idOlt) {
+                    $.ajax({
+                        url: '../principal/gets_pon_by_olt.php',
+                        type: 'GET',
+                        data: { id_olt: idOlt },
+                        dataType: 'json',
+                        success: function (response) {
+                            $ponSelect.empty();
+                            if (!response.error && response.pons && response.pons.length > 0) {
+                                $ponSelect.append('<option value="">-- Seleccione un PON --</option>');
+                                $.each(response.pons, function (index, pon) {
+                                    $ponSelect.append('<option value="' + pon.id_pon + '">' + pon.nombre_pon + '</option>');
+                                });
+                                $ponSelect.prop('disabled', false);
+                            } else {
+                                $ponSelect.append('<option value="" disabled>' + (response.message || 'No se encontraron PONs.') + '</option>');
+                            }
+                        },
+                        error: function () {
+                            $ponSelect.html('<option value="" disabled>Error de comunicación al cargar PONs.</option>');
                         }
-                    }
-                    $('#comunidad').html(options).prop('disabled', false);
+                    });
                 } else {
-                    $('#comunidad').html('<option value="">-- Primero seleccione parroquia --</option>').prop('disabled', true);
+                    $ponSelect.html('<option value="">-- Seleccione una OLT primero --</option>');
                 }
+            }
+
+            $('#id_olt').on('change', function () {
+                cargarPons($(this).val());
             });
 
-            // Mostrar/Ocultar campos según Tipo de Conexión
+            // === 3. TIPO DE CONEXIÓN (FTTH/RADIO) ===
+
             $('#tipo_conexion').on('change', function () {
                 var tipo = $(this).val();
-                // Ocultar todos primero
                 $('.campo-ftth, .campo-radio').hide();
-                // Quitar required de todos los campos técnicos
                 $('.campo-ftth input, .campo-radio input').prop('required', false);
 
                 if (tipo === 'FTTH') {
                     $('.campo-ftth').show();
-                    $('#mac_onu, #ip_onu, [name="ident_caja_nap"], [name="puerto_nap"], #nap_tx_power, #onu_rx_power, #distancia_drop, [name="num_presinto_odn"]').prop('required', true);
+                    $('#mac_onu, #ip_onu, #ident_caja_nap_ftth, #puerto_nap_ftth, #nap_tx_power, #onu_rx_power, #distancia_drop, #num_presinto_odn').prop('required', true);
                 } else if (tipo === 'RADIO') {
                     $('.campo-radio').show();
                     $('#ip, #punto_acceso, #valor_conexion_dbm').prop('required', true);
                 }
-            });
+            }).trigger('change');
 
-            // Trigger change al cargar (por si hay valor preseleccionado)
-            $('#tipo_conexion').trigger('change');
+            // === 4. PRORRATEO Y TOTALES ===
 
-            // LÓGICA DE CÁLCULOS DE PAGO
-
-            // Lógica del Switch de Prorrateo
             $('#incluye_prorrateo').on('change', function () {
                 if ($(this).is(':checked')) {
                     $('#contenedor_prorrateo').slideDown();
                 } else {
                     $('#contenedor_prorrateo').slideUp();
-                    // Reset prorrateo fields
                     $('#plan_prorrateo').val('');
                     $('#dias_prorrateo').val('0');
                     $('#monto_prorrateo_usd').val('0.00');
@@ -768,383 +814,322 @@
                 }
             });
 
-            // Calcular prorrateo cuando cambia el plan manual o los días
             $('#plan_prorrateo, #dias_prorrateo').on('change input', function () {
                 calcularProrrateo();
                 calcularTotal();
             });
 
-            // Calcular total al cambiar montos
-            $('#monto_instalacion, #gastos_adicionales').on('input', function () {
+            $('#gastos_adicionales, #monto_instalacion').on('input', function () {
                 calcularTotal();
             });
 
-            // Función para calcular prorrateo: (Precio Plan Manual / 30) * Días
             function calcularProrrateo() {
-                var montoPlan = parseFloat($('#plan_prorrateo').val()) || 0;
+                var selected = $('#plan_prorrateo option:selected');
+                var montoPlan = parseFloat(selected.data('precio')) || 0;
                 var diasProrrateo = parseInt($('#dias_prorrateo').val()) || 0;
                 var prorrateo = (montoPlan / 30) * diasProrrateo;
                 $('#monto_prorrateo_usd').val(prorrateo.toFixed(2));
             }
 
-            // Función para calcular monto total
             function calcularTotal() {
                 var instalacion = parseFloat($('#monto_instalacion').val()) || 0;
                 var adicionales = parseFloat($('#gastos_adicionales').val()) || 0;
                 var prorrateo = parseFloat($('#monto_prorrateo_usd').val()) || 0;
                 var total = instalacion + adicionales + prorrateo;
                 $('#monto_pagar').val(total.toFixed(2));
+                calcularSaldo();
             }
 
-            // Preview de Foto
+            $('#monto_pagado').on('input', function () {
+                calcularSaldo();
+            });
 
-            // Preview de Foto Instalación
-            $('#foto_instalacion').on('change', function (e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function (event) {
-                        $('#preview_foto').html(`<img src="${event.target.result}" class="preview-image">`);
-                    };
-                    reader.readAsDataURL(file);
+            // === 5. CONVERSIÓN DE MONEDA Y SALDO ===
+
+            let tasaBCV = 0;
+            $.get('../principal/get_tasa_dolar.php', function (data) {
+                if (data.success) {
+                    tasaBCV = data.promedio;
                 }
             });
 
-            // Preview de Foto Documento
-            $('#foto_documento').on('change', function (e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function (event) {
-                        $('#preview_documento').html(`<img src="${event.target.result}" class="preview-image">`);
-                    };
-                    reader.readAsDataURL(file);
+            const mPagado = $('#monto_pagado');
+            const mMoneda = $('#moneda_pago');
+            const mMedio = $('#medio_pago');
+
+            const mediosPorMoneda = {
+                'USD': ['Efectivo', 'Zelle', 'Otro'],
+                'BS': ['Efectivo', 'Transferencia', 'Pago Móvil', 'Otro']
+            };
+
+            function filtrarMedios(moneda) {
+                const actual = mMedio.val();
+                mMedio.empty().append('<option value="">-- Seleccione --</option>');
+                if (mediosPorMoneda[moneda]) {
+                    mediosPorMoneda[moneda].forEach(medio => {
+                        mMedio.append(`<option value="${medio}">${medio}</option>`);
+                    });
                 }
-            });
-        });
-
-        // Enviar Formulario
-        document.getElementById('formContrato').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            // Validar firmas
-            if (padCliente.isEmpty() || padTecnico.isEmpty()) {
-                Swal.fire('Error', 'Debe capturar ambas firmas (cliente y técnico).', 'error');
-                return;
+                if (mediosPorMoneda[moneda] && mediosPorMoneda[moneda].includes(actual)) {
+                    mMedio.val(actual);
+                }
             }
 
-            // Guardar firmas en inputs ocultos
-            document.getElementById('firma_cliente_data').value = padCliente.toDataURL();
-            document.getElementById('firma_tecnico_data').value = padTecnico.toDataURL();
-
-            const formData = new FormData(this);
-            guardarContrato(formData);
-        });
-
-        // Modal Link Generado
-        const modalLink = new bootstrap.Modal(document.getElementById('modalLink'));
-
-        function guardarContrato(formData) {
-            // Mostrar Confirmación antes de enviar
-            const cedula = document.getElementById('cedula').value;
-            const nombre = document.getElementById('nombre_completo').value;
-            const tipo = document.querySelector('select[name="tipo_instalacion"]').value;
-            const plan = document.getElementById('id_plan').options[document.getElementById('id_plan').selectedIndex].text;
-            const total = document.getElementById('monto_pagar').value;
-            const pagado = document.getElementById('monto_pagado').value;
-            const moneda = document.querySelector('select[name="moneda_pago"]').value;
-            const medio = document.querySelector('select[name="medio_pago"]').value;
-
-            const htmlResumen = `
-                <div class="text-start">
-                    <table class="table table-sm table-bordered mt-2">
-                        <tbody>
-                            <tr><th class="bg-light">Cédula:</th><td>${cedula}</td></tr>
-                            <tr><th class="bg-light">Titular:</th><td>${nombre}</td></tr>
-                            <tr><th class="bg-light">Tipo:</th><td>${tipo}</td></tr>
-                            <tr><th class="bg-light">Plan:</th><td>${plan}</td></tr>
-                            <tr><th class="bg-light">Monto Total:</th><td>$${total}</td></tr>
-                            <tr><th class="bg-light">Monto Pagado:</th><td>${pagado} ${moneda}</td></tr>
-                            <tr><th class="bg-light">Medio de Pago:</th><td>${medio}</td></tr>
-                        </tbody>
-                    </table>
-                    <p class="text-center fw-bold text-success mt-1">¿Desea registrar este contrato?</p>
-                </div>
-            `;
-
-            Swal.fire({
-                title: 'Confirmar Datos',
-                html: htmlResumen,
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonColor: '#198754',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Sí, Registrar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    ejecutarGuardado(formData);
-                }
-            });
-        }
-
-        function ejecutarGuardado(formData) {
-            document.getElementById('btnGuardar').disabled = true;
-            document.getElementById('btnGuardar').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-
-            fetch('guardar_contrato_instalador.php', {
-                method: 'POST',
-                body: formData
-            })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        window.lastSavedId = data.id;
-                        mostrarOpcionesExito(data.id);
+            mMoneda.on('change', function () {
+                const moneda = $(this).val();
+                const monto = parseFloat(mPagado.val()) || 0;
+                if (tasaBCV > 0 && monto > 0) {
+                    if (moneda === 'BS') {
+                        mPagado.val((monto * tasaBCV).toFixed(2));
                     } else {
-                        Swal.fire('Error', data.msg || 'Error al guardar el contrato', 'error');
-                        document.getElementById('btnGuardar').disabled = false;
-                        document.getElementById('btnGuardar').innerHTML = '<i class="fas fa-save me-2"></i> Registrar Contrato';
+                        mPagado.val((monto / tasaBCV).toFixed(2));
                     }
-                })
-                .catch(err => {
-                    console.error(err);
-                    Swal.fire('Error', 'Error de conexión con el servidor', 'error');
-                    document.getElementById('btnGuardar').disabled = false;
-                    document.getElementById('btnGuardar').innerHTML = '<i class="fas fa-save me-2"></i> Registrar Contrato';
-                });
-        }
+                }
+                filtrarMedios(moneda);
+                calcularSaldo();
+            });
 
-        function copiarLink() {
-            const copyText = document.getElementById("linkInput");
-            copyText.select();
-            copyText.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(copyText.value).then(() => {
+            filtrarMedios(mMoneda.val());
+
+            function calcularSaldo() {
+                var total = parseFloat($('#monto_pagar').val()) || 0;
+                var pagado = parseFloat(mPagado.val()) || 0;
+                var moneda = mMoneda.val();
+                var pagadoUSD = pagado;
+
+                if (moneda === 'BS' && tasaBCV > 0) {
+                    pagadoUSD = pagado / tasaBCV;
+                }
+
+                if (pagadoUSD > (total + 0.01)) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Monto Excedido',
+                        text: 'El monto pagado no puede ser mayor al total a pagar ($' + total.toFixed(2) + ').',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    if (moneda === 'BS' && tasaBCV > 0) {
+                        mPagado.val((total * tasaBCV).toFixed(2));
+                    } else {
+                        mPagado.val(total.toFixed(2));
+                    }
+                    calcularSaldo();
+                    return;
+                }
+
+                var saldo = (total - pagadoUSD).toFixed(2);
+                saldo = parseFloat(saldo);
+
+                if (saldo > 0) {
+                    $('#saldo_pendiente').val(saldo.toFixed(2));
+                    $('#div_saldo_pendiente').fadeIn();
+                } else {
+                    $('#div_saldo_pendiente').fadeOut();
+                    $('#saldo_pendiente').val("0.00");
+                }
+            }
+
+            // Initial trigger
+            calcularProrrateo();
+            calcularTotal();
+
+            // === 6. ENVÍO DEL FORMULARIO ===
+
+            $('#formContrato').on('submit', function (e) {
+                e.preventDefault();
+                const form = this;
+
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const cedula = $('#cedula').val();
+                const nombre = $('#nombre_completo').val();
+                const plan = $('#id_plan option:selected').text();
+                const montoTotal = $('#monto_pagar').val();
+                const montoPagado = mPagado.val();
+                const moneda = mMoneda.val();
+                const medio = mMedio.val();
+                const tecnico = $('#instaladores').val();
+
+                const htmlResumen = `
+                    <div class="text-start">
+                        <table class="table table-sm table-bordered mt-2">
+                            <tbody>
+                                <tr><th class="bg-light">Cédula:</th><td>${cedula}</td></tr>
+                                <tr><th class="bg-light">Titular:</th><td>${nombre}</td></tr>
+                                <tr><th class="bg-light">Plan:</th><td>${plan}</td></tr>
+                                <tr><th class="bg-light">Monto Total:</th><td>$${montoTotal}</td></tr>
+                                <tr><th class="bg-light">Monto Pagado:</th><td>${montoPagado} ${moneda}</td></tr>
+                                <tr><th class="bg-light">Medio de Pago:</th><td>${medio}</td></tr>
+                                <tr><th class="bg-light">Instalador:</th><td>${tecnico || 'No asignado'}</td></tr>
+                            </tbody>
+                        </table>
+                        <p class="text-center fw-bold text-primary mt-3">¿Desea registrar este contrato con estos datos?</p>
+                    </div>
+                `;
+
                 Swal.fire({
-                    icon: 'success',
-                    title: '¡Copiado!',
-                    timer: 1000,
-                    showConfirmButton: false
+                    title: 'Confirmar Registro',
+                    html: htmlResumen,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#198754',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, Registrar',
+                    cancelButtonText: 'Cancelar y Verificar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Capturar firmas
+                        if (window.padCliente && !window.padCliente.isEmpty()) {
+                            $('#firma_cliente_data').val(window.padCliente.toDataURL());
+                        }
+                        if (window.padTecnico && !window.padTecnico.isEmpty()) {
+                            $('#firma_tecnico_data').val(window.padTecnico.toDataURL());
+                        }
+
+                        Swal.fire({
+                            title: 'Procesando...',
+                            text: 'Guardando registro.',
+                            allowOutsideClick: false,
+                            didOpen: () => { Swal.showLoading(); }
+                        });
+
+                        fetch(form.action, {
+                            method: 'POST',
+                            body: new FormData(form)
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    window.lastSavedId = data.id;
+                                    mostrarOpcionesExito(data.id);
+                                } else {
+                                    Swal.fire({
+                                        title: 'Error al Guardar',
+                                        html: `<div class="text-danger fw-bold">${data.msg}</div>`,
+                                        icon: 'error'
+                                    });
+                                }
+                            })
+                            .catch(error => {
+                                console.error(error);
+                                Swal.fire('Error', 'Error de conexión con el servidor', 'error');
+                            });
+                    }
                 });
             });
-        }
+
+        }); // end document.ready
+
+        // === 7. OPCIONES POST-GUARDADO ===
 
         function mostrarOpcionesExito(id) {
-            const pdf_url = `../reportes_pdf/generar_contrato_pdf.php?id_contrato=${id}`;
             Swal.fire({
-                title: '¡Éxito!',
-                text: 'Contrato registrado correctamente.',
+                title: '¡Contrato Registrado!',
+                text: 'El contrato fue guardado correctamente.',
                 icon: 'success',
                 showCancelButton: true,
                 showDenyButton: true,
                 confirmButtonColor: '#198754',
                 denyButtonColor: '#0d6efd',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: '<i class="fa-solid fa-file-pdf"></i> Ver PDF',
-                denyButtonText: '<i class="fa-solid fa-link"></i> Generar Link',
-                cancelButtonText: 'Nueva Instalación',
+                confirmButtonText: '<i class="fa-solid fa-link"></i> Generar Link de Firma',
+                denyButtonText: '<i class="fa-solid fa-plus"></i> Nuevo Registro',
+                cancelButtonText: 'Cerrar',
                 allowOutsideClick: false
             }).then((res) => {
                 if (res.isConfirmed) {
-                    window.open(pdf_url, '_blank');
-                    mostrarOpcionesExito(id);
+                    generarLink(id);
                 } else if (res.isDenied) {
-                    // Si ya tenemos el link en el modal, solo lo abrimos
-                    // Pero para ser consistentes con la otra pagina, llamamos a la funcion que genera el token si es necesario
-                    // En este portal, usualmente se genera el link AL GUARDAR o específicamente con el botón.
-                    // Si el usuario ya guardó normal, podemos generar el link ahora.
-                    generarLinkRemoto(id);
-                } else {
-                    window.location.reload();
+                    location.reload();
                 }
             });
         }
 
-        function generarLinkRemoto(id) {
+        function generarLink(idContrato) {
             Swal.fire({
-                title: 'Generando enlace...',
+                title: 'Generando...',
                 allowOutsideClick: false,
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            $.post('../principal/generar_token_firma.php', { id: id }, function (resp) {
-                Swal.close();
+            $.post('../principal/generar_token_firma.php', { id: idContrato }, function (resp) {
                 if (resp.success) {
                     const baseUrl = window.location.origin + window.location.pathname.split('/paginas/')[0] + '/paginas/soporte/firmar_remoto.php';
                     const link = `${baseUrl}?token=${resp.token}&type=contrato`;
-
                     document.getElementById('linkInput').value = link;
+
+                    const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
                     const mensaje = encodeURIComponent(`Hola, por favor firma tu contrato de servicio en el siguiente enlace: ${link}`);
-                    document.getElementById('btnWhatsapp').href = `https://wa.me/?text=${mensaje}`;
+                    document.getElementById('btnWhatsapp').href = `https://wa.me/${telefono}?text=${mensaje}`;
 
-                    modalLink.show();
+                    Swal.close();
+                    new bootstrap.Modal(document.getElementById('modalLink')).show();
                 } else {
-                    Swal.fire('Error', resp.message || 'Error al generar link', 'error');
+                    Swal.fire('Error', resp.message || 'Error al generar el link', 'error');
                 }
-            }, 'json').fail(() => {
-                Swal.fire('Error', 'Error de comunicación', 'error');
+            }, 'json').fail(function () {
+                Swal.fire('Error', 'Error de comunicación con el servidor', 'error');
             });
         }
 
-        // CÁLCULO AUTOMÁTICO DE RESTANTE A PAGAR
-        const inputMontoPagar = document.getElementById('monto_pagar');
-        const inputMontoPagado = document.getElementById('monto_pagado');
-        const inputMontoDebe = document.getElementById('monto_debe');
-
-        // LÓGICA DE CONVERSIÓN DE MONEDA Y FILTRADO DE PAGOS (BCV)
-        let tasaBCV = 0;
-        $.get('../../paginas/principal/get_tasa_dolar.php', function (data) {
-            if (data.success) {
-                tasaBCV = data.promedio;
-                console.log("Tasa BCV cargada (Instalador): " + tasaBCV);
-            }
-        });
-
-        const selectMoneda = document.querySelector('select[name="moneda_pago"]');
-        const selectMedio = document.querySelector('select[name="medio_pago"]');
-
-        const mediosPorMoneda = {
-            'USD': ['Efectivo', 'Zelle', 'Otro'],
-            'BS': ['Efectivo', 'Transferencia', 'Pago Móvil', 'Otro']
-        };
-
-        function filtrarMedios(moneda) {
-            const actual = selectMedio.value;
-            selectMedio.innerHTML = '<option value="">-- Seleccione --</option>';
-            if (mediosPorMoneda[moneda]) {
-                mediosPorMoneda[moneda].forEach(medio => {
-                    const opt = document.createElement('option');
-                    opt.value = medio;
-                    opt.textContent = medio;
-                    selectMedio.appendChild(opt);
-                });
-            }
-            if (mediosPorMoneda[moneda].includes(actual)) {
-                selectMedio.value = actual;
-            }
-        }
-
-        if (selectMoneda) {
-            selectMoneda.addEventListener('change', function () {
-                const moneda = this.value;
-                const monto = parseFloat(inputMontoPagado.value) || 0;
-
-                if (tasaBCV > 0 && monto > 0) {
-                    if (moneda === 'BS') {
-                        inputMontoPagado.value = (monto * tasaBCV).toFixed(2);
-                    } else {
-                        inputMontoPagado.value = (monto / tasaBCV).toFixed(2);
-                    }
-                }
-                filtrarMedios(moneda);
-                calcularDebe();
+        function copiarLink() {
+            const linkInput = document.getElementById("linkInput");
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                Swal.fire({ icon: 'success', title: '¡Copiado!', text: 'Enlace copiado al portapapeles', timer: 1500, showConfirmButton: false });
             });
-            // Inicializar
-            filtrarMedios(selectMoneda.value);
-        }
-
-        function calcularDebe() {
-            const total = parseFloat(inputMontoPagar.value) || 0;
-            const pagado = parseFloat(inputMontoPagado.value) || 0;
-            const moneda = selectMoneda ? selectMoneda.value : 'USD';
-
-            let pagadoUSD = pagado;
-            if (moneda === 'BS' && tasaBCV > 0) {
-                pagadoUSD = pagado / tasaBCV;
-            }
-
-            // Validar que el monto pagado no exceda el total (con margen de 0.01 por redondeo)
-            if (pagadoUSD > (total + 0.01)) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Monto Excedido',
-                    text: 'El monto pagado no puede ser mayor al total a pagar ($' + total.toFixed(2) + ').',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-
-                if (moneda === 'BS' && tasaBCV > 0) {
-                    inputMontoPagado.value = (total * tasaBCV).toFixed(2);
-                } else {
-                    inputMontoPagado.value = total.toFixed(2);
-                }
-
-                calcularDebe();
-                return;
-            }
-
-            const debe = (total - pagadoUSD).toFixed(2);
-
-            // Si el debe es negativo (pagó de más), mostramos 0.
-            if (parseFloat(debe) > 0) {
-                inputMontoDebe.value = debe;
-                inputMontoDebe.classList.add('is-invalid'); // Visual highlight optional
-                inputMontoDebe.style.color = 'red';
-            } else {
-                inputMontoDebe.classList.remove('is-invalid');
-                inputMontoDebe.style.color = 'green';
-                inputMontoDebe.value = "0.00";
-            }
-        }
-
-        if (inputMontoPagar && inputMontoPagado && inputMontoDebe) {
-            inputMontoPagar.addEventListener('input', calcularDebe);
-            inputMontoPagado.addEventListener('input', calcularDebe);
         }
     </script>
 
     <!-- intl-tel-input JS -->
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/intlTelInput.min.js"></script>
     <script>
-        const tel1 = document.querySelector("#telefono");
-        const tel2 = document.querySelector("#telefono_secundario");
+        const telInput1 = document.querySelector("#telefono");
+        const telInput2 = document.querySelector("#telefono_secundario");
 
-        const iti1 = window.intlTelInput(tel1, {
+        const iti1 = window.intlTelInput(telInput1, {
             initialCountry: "ve",
             separateDialCode: true,
             utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
         });
 
-        const iti2 = window.intlTelInput(tel2, {
+        const iti2 = window.intlTelInput(telInput2, {
             initialCountry: "ve",
             separateDialCode: true,
             utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
         });
 
-        const setupPhoneCorrection = (input, iti) => {
+        const handlePhoneZeroCorrection = (input, iti) => {
             input.addEventListener('input', () => {
-                let value = input.value;
+                let val = input.value;
                 const data = iti.getSelectedCountryData();
-                if (data.iso2 === 've' && value.startsWith('0')) {
-                    input.value = value.substring(1);
+                if (data.iso2 === 've' && val.startsWith('0')) {
+                    input.value = val.substring(1);
                 }
             });
         };
 
-        setupPhoneCorrection(tel1, iti1);
-        setupPhoneCorrection(tel2, iti2);
+        handlePhoneZeroCorrection(telInput1, iti1);
+        handlePhoneZeroCorrection(telInput2, iti2);
 
-        // Bloquear signos negativos en Monto Instalación
-        const inputMontoInstalacion = document.querySelector("#monto_instalacion");
-        if (inputMontoInstalacion) {
-            inputMontoInstalacion.addEventListener('keydown', (e) => {
-                if (e.key === '-' || e.key === 'e') {
-                    e.preventDefault();
-                }
-            });
-            inputMontoInstalacion.addEventListener('input', () => {
-                if (inputMontoInstalacion.value < 0) {
-                    inputMontoInstalacion.value = Math.abs(inputMontoInstalacion.value);
-                }
-            });
-        }
-
-        // Opcional: Validar antes de enviar
-        document.getElementById('formContrato').addEventListener('submit', function (e) {
-            // Si bien el backend lo guarda, podríamos advertir si el número es inválido
-            // if (!iti1.isValidNumber()) { ... }
+        // Block negative sign in numeric fields
+        [document.querySelector("#monto_instalacion"), document.querySelector("#dias_prorrateo")].forEach(el => {
+            if (el) {
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === '-' || e.key === 'e') e.preventDefault();
+                });
+                el.addEventListener('input', () => {
+                    if (el.value < 0) el.value = 0;
+                });
+            }
         });
     </script>
+
 </body>
 
 </html>

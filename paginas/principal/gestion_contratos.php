@@ -14,6 +14,9 @@ require_once '../includes/sidebar.php';
 
 <!-- DataTables CSS -->
 <link href="<?php echo $path_to_root; ?>css/datatables.min.css" rel="stylesheet">
+<!-- Chart.js & Datalabels -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <style>
     /* Estilos para tabla ancha */
     .dataTables_wrapper {
@@ -119,9 +122,9 @@ require_once '../includes/sidebar.php';
                     </button>
                     <!-- BOTONES EXCEL NUEVOS -->
                     <div class="vr mx-1"></div>
-                    <button type="button" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm"
-                        data-bs-toggle="modal" data-bs-target="#modalOpcionesExportar">
-                        <i class="fa-solid fa-file-export"></i> <span class="d-none d-md-inline">Exportar</span>
+                    <button type="button" class="btn btn-success d-flex align-items-center gap-2 shadow-sm"
+                        onclick="exportExcel()">
+                        <i class="fa-solid fa-file-excel"></i> <span class="d-none d-md-inline">Exportar</span>
                     </button>
                     <button type="button" class="btn btn-outline-success d-flex align-items-center gap-2 shadow-sm"
                         data-bs-toggle="modal" data-bs-target="#modalImportExcel">
@@ -165,8 +168,8 @@ require_once '../includes/sidebar.php';
                 <!-- Filtros Extra (Poc) -->
                 <div class="row mb-3">
                     <div class="col-md-3">
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text bg-light border-primary"><i
                                     class="fa-solid fa-filter text-primary"></i></span>
                             <select id="filter_empty" class="form-select border-primary">
                                 <option value="">Todos los registros</option>
@@ -214,7 +217,14 @@ require_once '../includes/sidebar.php';
                             </select>
                         </div>
                     </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-secondary w-100 shadow-sm"
+                            id="btn_clear_main_filters">
+                            <i class="fa-solid fa-filter-circle-xmark me-2"></i>Limpiar Filtros
+                        </button>
+                    </div>
                 </div>
+
                 <!-- Dashboard Cards -->
                 <div class="row mb-4">
                     <div class="col-md-6 mb-3 mb-md-0">
@@ -495,7 +505,7 @@ require_once '../includes/sidebar.php';
 
     <!-- MODAL ESTADÍSTICAS -->
     <div class="modal fade" id="modalStats" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-dialog-scrollable" style="max-width: 97vw; width: 97vw;">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title fw-bold"><i class="fa-solid fa-chart-bar me-2"></i>Estadísticas [VERSIÓN 3 -
@@ -537,8 +547,12 @@ require_once '../includes/sidebar.php';
                                     </select>
                                 </div>
                                 <div class="col-md-12 text-end">
-                                    <button class="btn btn-primary" id="btnFilterStats"><i
-                                            class="fa-solid fa-filter me-2"></i>Aplicar Filtros</button>
+                                    <button class="btn btn-outline-secondary me-2" id="btnResetStats">
+                                        <i class="fa-solid fa-eraser me-2"></i>Limpiar Filtros
+                                    </button>
+                                    <button class="btn btn-primary" id="btnFilterStats">
+                                        <i class="fa-solid fa-filter me-2"></i>Aplicar Filtros
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -546,41 +560,67 @@ require_once '../includes/sidebar.php';
 
                     <!-- Resultados Gráficas -->
                     <div class="row g-4">
-                        <div class="col-md-4">
-                            <h6 class="fw-bold text-primary text-center">Instalaciones por Instalador</h6>
-                            <div class="chart-container" style="position: relative; height:300px; width:100%">
-                                <canvas id="chartInstaller"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <h6 class="fw-bold text-success text-center">Ventas por Vendedor</h6>
-                            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                        <!-- FILA 1: Ventas y Ubicación -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-success text-center mb-3"><i
+                                    class="fa-solid fa-user-tie me-2"></i>Ventas por Vendedor</h6>
+                            <div class="chart-container shadow-sm border rounded p-3 bg-white"
+                                style="position: relative; height:1500px; width:100%">
                                 <canvas id="chartVendor"></canvas>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <h6 class="fw-bold text-info text-center">Contratos por Ubicación</h6>
-                            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-info text-center mb-3"><i
+                                    class="fa-solid fa-map-location-dot me-2"></i>Contratos por Ubicación</h6>
+                            <div class="chart-container shadow-sm border rounded p-3 bg-white"
+                                style="position: relative; height:800px; width:100%">
                                 <canvas id="chartLocation"></canvas>
                             </div>
                         </div>
 
-                        <div class="col-md-4">
-                            <h6 class="fw-bold text-warning text-center">Tipo de Instalación</h6>
-                            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                        <!-- FILA 2: Tipos -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-warning text-center mb-3"><i
+                                    class="fa-solid fa-list-check me-2"></i>Tipo de Instalación</h6>
+                            <div class="chart-container shadow-sm border rounded p-3 bg-white"
+                                style="position: relative; height:1000px; width:100%">
                                 <canvas id="chartType"></canvas>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <h6 class="fw-bold text-danger text-center">Instalaciones Mensuales</h6>
-                            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-secondary text-center mb-3"><i
+                                    class="fa-solid fa-tower-broadcast me-2"></i>Tipo de Conexión</h6>
+                            <div class="chart-container shadow-sm border rounded p-3 bg-white"
+                                style="position: relative; height:800px; width:100%">
+                                <canvas id="chartConnection"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- FILA 3: SAE Plus (Ancho completo) -->
+                        <div class="col-md-12">
+                            <h6 class="fw-bold fs-5 text-dark text-center mt-3 mb-3"><i
+                                    class="fa-solid fa-database me-2"></i>Desglose Carga en SAE Plus (FTTH / Radio)</h6>
+                            <div class="chart-container shadow-sm border rounded p-3 bg-white"
+                                style="position: relative; height:500px; width:100%">
+                                <canvas id="chartSae"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- FILA 4: Mensuales e Instaladores (Al final) -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-danger text-center mb-3"><i
+                                    class="fa-solid fa-calendar-days me-2"></i>Instalaciones Mensuales</h6>
+                            <div class="chart-container shadow-sm border rounded p-3 bg-white"
+                                style="position: relative; height:2000px; width:100%">
                                 <canvas id="chartMonthly"></canvas>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <h6 class="fw-bold text-secondary text-center">Tipo de Conexión</h6>
-                            <div class="chart-container" style="position: relative; height:300px; width:100%">
-                                <canvas id="chartConnection"></canvas>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary text-center mb-3"><i
+                                    class="fa-solid fa-helmet-safety me-2"></i>Instalaciones por Instalador</h6>
+                            <div class="chart-container shadow-sm border rounded p-3 bg-white"
+                                style="position: relative; height:1200px; width:100%">
+                                <canvas id="chartInstaller"></canvas>
                             </div>
                         </div>
                     </div>
@@ -605,10 +645,25 @@ require_once '../includes/sidebar.php';
             modalStats.addEventListener('show.bs.modal', function () {
                 fetchStatsLists();
                 fetchModalStats(); // Load charts immediately
+
+                // Restricción de fecha: No permitir fechas futuras
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('statStartDate').setAttribute('max', today);
+                document.getElementById('statEndDate').setAttribute('max', today);
             });
 
             // Botón Filtrar
             document.getElementById('btnFilterStats').addEventListener('click', function () {
+                fetchModalStats();
+            });
+
+            // Botón Limpiar Filtros
+            document.getElementById('btnResetStats').addEventListener('click', function () {
+                document.getElementById('statStartDate').value = '';
+                document.getElementById('statEndDate').value = '';
+                document.getElementById('statInstaller').value = '';
+                document.getElementById('statVendor').value = '';
+                document.getElementById('statContractType').value = '';
                 fetchModalStats();
             });
 
@@ -681,27 +736,30 @@ require_once '../includes/sidebar.php';
             fetch('get_contract_stats.php?' + params.toString())
                 .then(response => response.json())
                 .then(data => {
-                    // 1. Zonas de Ventas (Vertical Blue)
-                    renderStatsChartV4('chartLocation', data.by_location, 'ubicacion', 'Zonas de Ventas', false, '#3a7bd5');
+                    // 1. Zonas de Ventas (Horizontal Blue)
+                    renderStatsChartV4('chartLocation', data.by_location, 'ubicacion', 'Zonas de Ventas', true, '#3a7bd5');
 
-                    // 2. Instalaciones por Tipo (Vertical Blue)
-                    renderStatsChartV4('chartType', data.by_type, 'tipo', 'Instalaciones por Tipo', false, '#3a7bd5');
+                    // 2. Instalaciones por Tipo (Horizontal Blue)
+                    renderStatsChartV4('chartType', data.by_type, 'tipo', 'Instalaciones por Tipo', true, '#3a7bd5');
 
-                    // 3. Instalaciones (Monthly Vertical Blue)
-                    renderStatsChartV4('chartMonthly', data.by_month, 'mes', 'Instalaciones', false, '#3a7bd5');
+                    // 3. Instalaciones Mensuales (Horizontal Blue)
+                    renderStatsChartV4('chartMonthly', data.by_month, 'mes', 'Instalaciones', true, '#3a7bd5');
 
                     // 4. Tipo de Instalación (Horizontal Multi-color)
                     renderStatsChartV4('chartConnection', data.by_connection, 'conexion', 'Tipos de Conexión', true, null);
 
-                    // 5. Instaladores (Horizontal Blue)
+                    // 5. Instaladores (Horizontal Blue - Match Location)
                     renderStatsChartV4('chartInstaller', data.by_installer, 'nombre', 'Instaladores', true, '#3a7bd5');
 
                     // 6. Vendedor (Horizontal Blue)
                     renderStatsChartV4('chartVendor', data.by_vendor, 'nombre_vendedor', 'Ventas', true, '#3a7bd5');
+
+                    // 7. SAE Plus (Horizontal Multi-color)
+                    renderStatsChartV4('chartSae', data.by_sae, 'status', 'Carga en SAE Plus', true, null, data.total_global);
                 });
         }
 
-        function renderStatsChartV4(canvasId, data, labelKey, title, isHorizontal = false, customColor = null) {
+        function renderStatsChartV4(canvasId, data, labelKey, title, isHorizontal = false, customColor = null, denominator = null) {
             console.log('Rendering V4 Chart:', canvasId, title);
             const ctx = document.getElementById(canvasId).getContext('2d');
 
@@ -709,7 +767,14 @@ require_once '../includes/sidebar.php';
                 chartInstances[canvasId].destroy();
             }
 
-            if (!data || data.length === 0) {
+            // Filtrar datos para quitar los que tienen total = 0 (limpieza de ruido visual)
+            const filteredData = data ? data.filter(item => parseInt(item.total) > 0) : [];
+
+            if (filteredData.length === 0) {
+                // Ajustar altura mínima para mensaje "Sin Datos"
+                const container = document.getElementById(canvasId).parentElement;
+                container.style.height = '450px';
+
                 chartInstances[canvasId] = new Chart(ctx, {
                     type: 'bar',
                     data: { labels: ['Sin Datos'], datasets: [{ data: [0], backgroundColor: ['#e9ecef'] }] },
@@ -721,9 +786,46 @@ require_once '../includes/sidebar.php';
                 return;
             }
 
-            const labels = data.map(item => item[labelKey]);
-            const values = data.map(item => item.total);
-            const colors = customColor ? new Array(data.length).fill(customColor) : generateColors(data.length);
+            // CALCULAR ALTURA DINÁMICA: Asegurar al menos 60px por barra en modo horizontal
+            if (isHorizontal) {
+                const calculatedHeight = Math.max(450, filteredData.length * 60);
+                document.getElementById(canvasId).parentElement.style.height = calculatedHeight + 'px';
+            }
+
+            const labels = filteredData.map(item => item[labelKey]);
+            const values = filteredData.map(item => item.total);
+
+            // Lógica de colores semánticos avanzados para SAE Plus (Tecnología + Estado)
+            let colors;
+            if (canvasId === 'chartSae') {
+                colors = labels.map(lbl => {
+                    const isLoaded = lbl.includes('(CARGADO)');
+                    const isFTTH = lbl.toUpperCase().includes('FTTH');
+                    const isRadio = lbl.toUpperCase().includes('RADIO');
+
+                    if (isFTTH) return isLoaded ? '#10b981' : '#a855f7'; // Esmeralda vs Púrpura
+                    if (isRadio) return isLoaded ? '#3b82f6' : '#f59e0b'; // Azul vs Naranja
+
+                    // Fallback para otros o indefinidos
+                    return isLoaded ? '#059669' : '#94a3b8';
+                });
+            } else {
+                colors = customColor ? new Array(data.length).fill(customColor) : generateColors(data.length);
+            }
+
+            // Pre-calcular totales por categoría para SAE Plus (FTTH vs RADIO)
+            const categoryTotals = {};
+            if (canvasId === 'chartSae') {
+                filteredData.forEach(item => {
+                    const lbl = item[labelKey];
+                    const category = lbl.split(' (')[0]; // Extrae "FTTH" o "RADIO"
+                    categoryTotals[category] = (categoryTotals[category] || 0) + parseInt(item.total);
+                });
+            }
+
+            // Calcular el valor máximo para el eje con un margen del 25% para las etiquetas
+            const maxVal = Math.max(...values);
+            const axisMax = maxVal > 0 ? Math.ceil(maxVal * 1.25) : 10;
 
             chartInstances[canvasId] = new Chart(ctx, {
                 type: 'bar',
@@ -735,28 +837,81 @@ require_once '../includes/sidebar.php';
                         backgroundColor: colors,
                         borderColor: colors.map(c => c.startsWith('hsl') ? c.replace('60%', '50%') : c),
                         borderWidth: 1,
-                        barPercentage: 0.8
+                        barPercentage: 0.9,
+                        categoryPercentage: 0.9,
+                        minBarLength: 5
                     }]
                 },
+                plugins: [ChartDataLabels, {
+                    id: 'custom_canvas_background_color',
+                    beforeDraw: (chart) => {
+                        const { ctx } = chart;
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'destination-over';
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, chart.width, chart.height);
+                        ctx.restore();
+                    }
+                }],
                 options: {
+                    animation: false,
                     indexAxis: isHorizontal ? 'y' : 'x',
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        title: { display: true, text: title, font: { size: 14, weight: 'bold' } }
+                        title: { display: false },
+                        datalabels: {
+                            display: true, // Forzar visualización en todas las barras
+                            anchor: 'end',
+                            align: isHorizontal ? 'right' : 'top',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderColor: '#ccc',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            padding: { top: 2, bottom: 2, left: 4, right: 4 },
+                            color: '#000',
+                            font: { weight: 'bold', size: canvasId === 'chartSae' ? 14 : 12 },
+                            offset: 4,
+                            formatter: function (value, context) {
+                                if (value <= 0) return '';
+                                const label = context.chart.data.labels[context.dataIndex];
+
+                                if (canvasId === 'chartSae') {
+                                    const category = label.split(' (')[0];
+                                    const catTotal = categoryTotals[category] || 0;
+                                    const localPerc = catTotal > 0 ? ((value / catTotal) * 100).toFixed(1) : '0.0';
+                                    const fiabPerc = denominator > 0 ? ((value / denominator) * 100).toFixed(1) : '0.0';
+
+                                    return `${value}\n${localPerc}% (${category})\nFiab: ${fiabPerc}%`;
+                                } else {
+                                    const dataset = context.chart.data.datasets[0].data;
+                                    const localTotal = dataset.reduce((a, b) => a + b, 0);
+                                    const percentage = localTotal > 0 ? ((value / localTotal) * 100).toFixed(1) : '0.0';
+                                    return `${value}\n${percentage}%`;
+                                }
+                            }
+                        }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 },
-                            grid: { display: false }
-                        },
                         x: {
+                            display: true,
+                            grid: { display: false },
+                            max: isHorizontal ? axisMax : undefined,
                             ticks: {
                                 autoSkip: false,
                                 maxRotation: isHorizontal ? 0 : 90,
-                                minRotation: isHorizontal ? 0 : 45
+                                minRotation: isHorizontal ? 0 : 45,
+                                font: { size: 13 }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: !isHorizontal ? axisMax : undefined,
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0,
+                                font: { size: 13 }
                             },
                             grid: { display: false }
                         }
@@ -781,20 +936,28 @@ require_once '../includes/sidebar.php';
             const vend = document.getElementById('statVendor').value;
             const type = document.getElementById('statContractType').value;
 
-            // Capture 6 Charts
             const fields = {
-                start: start,
-                end: end,
+                start,
+                end,
                 installer: inst,
                 vendor: vend,
-                type: type,
-                img_installer: document.getElementById('chartInstaller').toDataURL('image/png'),
-                img_vendor: document.getElementById('chartVendor').toDataURL('image/png'),
-                img_location: document.getElementById('chartLocation').toDataURL('image/png'),
-                img_type: document.getElementById('chartType').toDataURL('image/png'),
-                img_monthly: document.getElementById('chartMonthly').toDataURL('image/png'),
-                img_connection: document.getElementById('chartConnection').toDataURL('image/png')
+                type
             };
+
+            // Grab base64 images from all 7 ch arts for exact high-fidelity PDF rendering
+            const chartIds = [
+                'chartLocation', 'chartType', 'chartMonthly',
+                'chartConnection', 'chartInstaller', 'chartVendor', 'chartSae'
+            ];
+
+            chartIds.forEach(id => {
+                const canvas = document.getElementById(id);
+                if (canvas && chartInstances[id]) {
+                    // Temporarily increase scale for higher resolution export if possible, 
+                    // though toDataURL just takes what's rendered. We'll capture as-is (1.0 quality PNG)
+                    fields['img_' + id] = canvas.toDataURL('image/png', 1.0);
+                }
+            });
 
             const form = document.createElement('form');
             form.method = 'POST';
@@ -810,7 +973,6 @@ require_once '../includes/sidebar.php';
                     form.appendChild(input);
                 }
             }
-
             document.body.appendChild(form);
             form.submit();
             document.body.removeChild(form);
@@ -821,6 +983,7 @@ require_once '../includes/sidebar.php';
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
 <!-- Modals -->
 <div class="modal fade" id="eliminaModal" tabindex="-1" aria-hidden="true">
@@ -1237,135 +1400,6 @@ require_once '../includes/sidebar.php';
 <!-- ===== FIN MODAL EDITAR CONTRATO ===== -->
 
 
-
-<!-- MODALES EXPORTACION -->
-        // ========================================================
-        // MODAL OPCIONES EXPORTAR
-        // ========================================================
-            <div class="modal fade" id="modalOpcionesExportar" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-sm">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-export me-2"></i>Opciones de Exportación</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body text-center p-4">
-                            <p class="text-muted mb-4">¿Qué tipo de exportación desea realizar?</p>
-                            <div class="d-grid gap-3">
-                                <button type="button" class="btn btn-outline-success btn-lg d-flex align-items-center justify-content-center gap-2" onclick="$('#modalOpcionesExportar').modal('hide'); exportExcel();">
-                                    <i class="fa-solid fa-file-csv fa-lg"></i>
-                                    <div class="text-start lh-1">
-                                        <div class="fw-bold">General</div>
-                                        <small style="font-size: 0.7em;">Datos de tabla (CSV)</small>
-                                    </div>
-                                </button>
-                                <button type="button" class="btn btn-outline-warning btn-lg d-flex align-items-center justify-content-center gap-2" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalExportarFiltrado">
-                                    <i class="fa-solid fa-filter fa-lg"></i>
-                                    <div class="text-start lh-1">
-                                        <div class="fw-bold">Avanzado</div>
-                                        <small style="font-size: 0.7em;">Con filtros (Excel)</small>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        // ========================================================
-        // MODAL EXPORTAR FILTRADO
-        // ========================================================
-            < div class="modal fade" id = "modalExportarFiltrado" tabindex = "-1" aria - hidden="true" >
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header bg-warning text-dark">
-                            <h5 class="modal-title fw-bold"><i class="fa-solid fa-filter me-2"></i>Exportar con Filtros</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="formExportarFiltrado">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Cédula</label>
-                                        <input type="text" class="form-control form-control-sm" id="export_cedula" name="cedula" placeholder="Ej. V12345678">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Cliente</label>
-                                        <input type="text" class="form-control form-control-sm" id="export_cliente" name="cliente" placeholder="Nombre completo">
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Desde Fecha (Instalación)</label>
-                                        <input type="date" class="form-control form-control-sm" id="export_fecha_desde" name="fecha_desde">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Hasta Fecha (Instalación)</label>
-                                        <input type="date" class="form-control form-control-sm" id="export_fecha_hasta" name="fecha_hasta">
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Municipio</label>
-                                        <select class="form-select form-select-sm" id="export_municipio" name="municipio">
-                                            <option value="">-- Todos --</option>
-                                    <!-- Cargado por JS igual que en edit_municipio -->
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Estado</label>
-                                        <select class="form-select form-select-sm" id="export_estado" name="estado">
-                                            <option value="">-- Todos --</option>
-                                            <option value="Activo">Activo</option>
-                                            <option value="Suspendido">Suspendido</option>
-                                            <option value="Retirado">Retirado</option>
-                                            <option value="Corte">Corte</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">Plan</label>
-                                        <select class="form-select form-select-sm" id="export_plan" name="id_plan">
-                                            <option value="">-- Todos --</option>
-                                            $res_p = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan ASC");
-                                            while ($pl = $res_p->fetch_assoc())
-                                                echo '<option value="' . $pl['id_plan'] . '">' . htmlspecialchars($pl['nombre_plan']) . '</option>';
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">Tipo de Conexión</label>
-                                        <select class="form-select form-select-sm" id="export_tipo_conexion" name="tipo_conexion">
-                                            <option value="">-- Todos --</option>
-                                            $jsonTipos = 'data/tipos_instalacion.json';
-                                            if (file_exists($jsonTipos)) {
-                                                $tipos = json_decode(file_get_contents($jsonTipos), true);
-                                                foreach ($tipos as $t)
-                                                    echo '<option value="' . $t . '">' . $t . '</option>';
-                                            } else {
-                                                echo '<option value="FTTH">FTTH</option><option value="RADIO">RADIO</option>';
-                                            }
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">OLT</label>
-                                        <select class="form-select form-select-sm" id="export_olt" name="id_olt">
-                                            <option value="">-- Todas --</option>
-                                            $res_o = $conn->query("SELECT id_olt, nombre_olt FROM olt ORDER BY nombre_olt ASC");
-                                            while ($o = $res_o->fetch_assoc())
-                                                echo '<option value="' . $o['id_olt'] . '">' . htmlspecialchars($o['nombre_olt']) . '</option>';
-                                        </select>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer bg-light">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                            <button type="button" class="btn btn-warning" id="btnProcesarExportarFiltrado"><i class="fa-solid fa-download me-2"></i>Descargar Excel</button>
-                        </div>
-                    </div>
-                </div>
-            </div >
-            // ========================================================
-<!-- FIN MODALES EXPORTACION -->
-
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -1374,7 +1408,7 @@ require_once '../includes/sidebar.php';
 
 <script>
     // === LÓGICA DE FIRMAS PARA EL MODAL DE EDICIÓN ===
-    let padEditCliente, padEditTecnico;
+    letpadEditCliente, padEditTecnico;
 
     function resizeEditPad(canvas, pad) {
         if (!canvas || !pad) return;
@@ -1443,14 +1477,13 @@ require_once '../includes/sidebar.php';
         });
     });
 
-    // Modificar el submit para capturar la data
-    function prepareSignaturesForSubmit() {
-        if (padEditCliente && !padEditCliente.isEmpty() && !$('#pad_firma_cliente_div').hasClass('d-none')) {
-            $('#edit_firma_cliente_data').val(padEditCliente.toDataURL());
-        }
-        if (padEditTecnico && !padEditTecnico.isEmpty() && !$('#pad_firma_tecnico_div').hasClass('d-none')) {
-            $('#edit_firma_tecnico_data').val(padEditTecnico.toDataURL());
-        }
+    // Modificar el submit para capturar la datafunction prepareSignaturesForSubmit() {
+    if (padEditCliente && !padEditCliente.isEmpty() && !$('#pad_firma_cliente_div').hasClass('d-none')) {
+        $('#edit_firma_cliente_data').val(padEditCliente.toDataURL());
+    }
+    if (padEditTecnico && !padEditTecnico.isEmpty() && !$('#pad_firma_tecnico_div').hasClass('d-none')) {
+        $('#edit_firma_tecnico_data').val(padEditTecnico.toDataURL());
+    }
     }
 </script>
 
@@ -1676,12 +1709,18 @@ require_once '../includes/sidebar.php';
             table.draw();
         });
 
-            // MODAL EDITAR CONTRATO
-            // ========================================================
+        // Botón Limpiar Filtros tabla principal
+        $('#btn_clear_main_filters').on('click', function () {
+            $('#filter_empty').val('');
+            table.search('').columns().search('').draw();
+        });
 
+        // ========================================================
+        // MODAL EDITAR CONTRATO
+        // ========================================================
 
-            // Helper Location Logic JSON
-            let editUbicacionesData = [];
+        // Helper Location Logic JSON
+        let editUbicacionesData = [];
         $.get('api_ubicaciones.php', function (data) {
             editUbicacionesData = data;
             let options = '<option value="">-- Seleccione Municipio --</option>';
@@ -1689,42 +1728,6 @@ require_once '../includes/sidebar.php';
                 options += `<option value="${m.municipio}">${m.municipio}</option>`;
             });
             $('#edit_municipio').html(options);
-
-            // Also populate export modal municipality
-            let exportOptions = '<option value="">-- Todos --</option>';
-            editUbicacionesData.forEach(function (m) {
-                exportOptions += `<option value="${m.municipio}">${m.municipio}</option>`;
-            });
-            $('#export_municipio').html(exportOptions);
-        });
-
-        // ========================================================
-        // LOGICA EXPORTAR FILTRADO
-        // ========================================================
-        $('#btnProcesarExportarFiltrado').on('click', function () {
-            const formData = $('#formExportarFiltrado').serialize();
-
-            // Cerrar el modal
-            $('#modalExportarFiltrado').modal('hide');
-
-            // Mostrar SweetAlert de carga
-            Swal.fire({
-                title: 'Generando Reporte...',
-                html: 'Espere por favor.',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            // Usar un Iframe oculto o redireccionamiento para descargar el archivo
-            // Redirigir la ventana actual al script de descarga. El navegador gestionará el archivo sin recargar la página.
-            window.location.href = 'exportar_contratos_filtrado.php?' + formData;
-
-            // Cerrar el alert después de unos segundos, asumiendo que empezó la descarga
-            setTimeout(() => {
-                Swal.close();
-            }, 3000);
         });
 
         // Helper: load parroquias into #edit_parroquia
