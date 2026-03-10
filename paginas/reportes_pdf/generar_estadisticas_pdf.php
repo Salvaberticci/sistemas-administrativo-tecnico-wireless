@@ -177,7 +177,7 @@ if ($stmt) {
         $fullDate = $row['fecha'];
         $formattedDate = formatDescriptiveDatePHP($fullDate);
         $stats_monthly[] = [
-            'mes' => "{$formattedDate} — {$row['nombre_instalador']}",
+            'mes' => "{$formattedDate}<br><span style='font-size:8.5px; color:#6b7280;'>{$row['nombre_instalador']}</span>",
             'total' => $row['total']
         ];
     }
@@ -391,7 +391,7 @@ function render_native_charts($canvasId, $rows, $navy, $denominator = null)
 
         if ($isSae && $denominator > 0) {
             $fiab = ($val / $denominator) * 100;
-            $html .= "<br><span style='font-size:7.5px; color:#0d6efd;'>Fiab: " . number_format($fiab, 1) . "%</span>";
+            $html .= "<br><span style='font-size:7.5px; color:#0d6efd;'>Fiabilidad: " . number_format($fiab, 1) . "%</span>";
         }
 
         $html .= "</div>";

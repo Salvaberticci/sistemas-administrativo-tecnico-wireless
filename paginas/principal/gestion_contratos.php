@@ -764,9 +764,9 @@ require_once '../includes/sidebar.php';
                         data.by_month.forEach(item => {
                             const [fullDate, instName] = item.fecha.split(' - ');
                             if (fullDate && fullDate !== 'null') {
-                                item.fecha_descriptiva = `${formatDescriptiveDateJS(fullDate)} - ${instName}`;
+                                item.fecha_descriptiva = `${formatDescriptiveDateJS(fullDate)}\n${instName}`;
                             } else {
-                                item.fecha_descriptiva = `Sin Fecha - ${instName}`;
+                                item.fecha_descriptiva = `Sin Fecha\n${instName}`;
                             }
                         });
                     }
@@ -910,7 +910,7 @@ require_once '../includes/sidebar.php';
                                     const localPerc = catTotal > 0 ? ((value / catTotal) * 100).toFixed(1) : '0.0';
                                     const fiabPerc = denominator > 0 ? ((value / denominator) * 100).toFixed(1) : '0.0';
 
-                                    return `${value}\n${localPerc}% (${category})\nFiab: ${fiabPerc}%`;
+                                    return `${value}\n${localPerc}% (${category})\nFiabilidad: ${fiabPerc}%`;
                                 } else {
                                     const dataset = context.chart.data.datasets[0].data;
                                     const localTotal = dataset.reduce((a, b) => a + b, 0);
