@@ -83,13 +83,18 @@ $sql_type = "SELECT
                    ORDER BY total DESC";
 
 // 3. Instalaciones por Fecha e Instalador (Fecha Instalación Completa)
+// Filtramos fechas <= '1970-01-01' para limpiar ruido de registros mal migrados o nulos
+$monthly_where = "WHERE (fecha_instalacion > '1970-01-01' OR fecha_instalacion IS NULL)";
+if (count($where) > 0) {
+    $monthly_where .= " AND " . implode(" AND ", $where);
+}
+
 $sql_monthly = "SELECT 
                     fecha_instalacion as fecha, 
                     COALESCE(NULLIF(instalador, ''), 'Sin Asignar') as nombre_instalador,
                     COUNT(*) as total 
                    FROM contratos 
-                   $sql_where 
-                   AND (fecha_instalacion > '1970-01-01' OR fecha_instalacion IS NULL)
+                   $monthly_where 
                    GROUP BY fecha, nombre_instalador 
                    ORDER BY fecha ASC, total DESC";
 
