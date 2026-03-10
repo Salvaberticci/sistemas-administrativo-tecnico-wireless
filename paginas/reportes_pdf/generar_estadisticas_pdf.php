@@ -391,6 +391,7 @@ $html = '<!DOCTYPE html>
     <meta charset="UTF-8">
     <title>Reporte Estadístico — Wireless Supply, C.A.</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
         @page { margin: 0; }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:Helvetica,Arial,sans-serif; font-size:10px; color:#1a1a2e; background:#f8fafc; margin: 0; padding: 0; }
