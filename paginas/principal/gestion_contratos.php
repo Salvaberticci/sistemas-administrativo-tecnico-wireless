@@ -930,34 +930,13 @@ require_once '../includes/sidebar.php';
         }
 
         function exportStatsPDF() {
-            const start = document.getElementById('statStartDate').value;
-            const end = document.getElementById('statEndDate').value;
-            const inst = document.getElementById('statInstaller').value;
-            const vend = document.getElementById('statVendor').value;
-            const type = document.getElementById('statContractType').value;
-
             const fields = {
-                start,
-                end,
-                installer: inst,
-                vendor: vend,
-                type
+                start: document.getElementById('statStartDate').value,
+                end: document.getElementById('statEndDate').value,
+                installer: document.getElementById('statInstaller').value,
+                vendor: document.getElementById('statVendor').value,
+                type: document.getElementById('statContractType').value
             };
-
-            // Grab base64 images from all 7 ch arts for exact high-fidelity PDF rendering
-            const chartIds = [
-                'chartLocation', 'chartType', 'chartMonthly',
-                'chartConnection', 'chartInstaller', 'chartVendor', 'chartSae'
-            ];
-
-            chartIds.forEach(id => {
-                const canvas = document.getElementById(id);
-                if (canvas && chartInstances[id]) {
-                    // Temporarily increase scale for higher resolution export if possible, 
-                    // though toDataURL just takes what's rendered. We'll capture as-is (1.0 quality PNG)
-                    fields['img_' + id] = canvas.toDataURL('image/png', 1.0);
-                }
-            });
 
             const form = document.createElement('form');
             form.method = 'POST';
@@ -965,13 +944,11 @@ require_once '../includes/sidebar.php';
             form.target = '_blank';
 
             for (const key in fields) {
-                if (fields.hasOwnProperty(key)) {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-                    input.value = fields[key];
-                    form.appendChild(input);
-                }
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = fields[key];
+                form.appendChild(input);
             }
             document.body.appendChild(form);
             form.submit();
@@ -1408,7 +1385,7 @@ require_once '../includes/sidebar.php';
 
 <script>
     // === LÓGICA DE FIRMAS PARA EL MODAL DE EDICIÓN ===
-    letpadEditCliente, padEditTecnico;
+    letpadEdit        Cliente, padEditTecnico;
 
     function resizeEditPad(canvas, pad) {
         if (!canvas || !pad) return;

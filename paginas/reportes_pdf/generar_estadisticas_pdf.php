@@ -23,15 +23,6 @@ $installer = $_POST['installer'] ?? $_GET['installer'] ?? '';
 $vendor_id = $_POST['vendor'] ?? $_GET['vendor'] ?? '';
 $contract_type = $_POST['type'] ?? $_GET['type'] ?? '';
 
-// === CAPTURA DE IMÁGENES BASE64 DE GRÁFICOS ===
-$img_chartLocation = $_POST['img_chartLocation'] ?? '';
-$img_chartType = $_POST['img_chartType'] ?? '';
-$img_chartMonthly = $_POST['img_chartMonthly'] ?? '';
-$img_chartConnection = $_POST['img_chartConnection'] ?? '';
-$img_chartInstaller = $_POST['img_chartInstaller'] ?? '';
-$img_chartVendor = $_POST['img_chartVendor'] ?? '';
-$img_chartSae = $_POST['img_chartSae'] ?? '';
-
 // === CONSTRUCCIÓN DE QUERIES (Lógica sincronizada con Versión 4) ===
 $where = [];
 $params = [];
@@ -279,25 +270,116 @@ $C_TEXT = '#1a1a2e';
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPER: professional section (chart page + table page)
 // ─────────────────────────────────────────────────────────────────────────────
-function section_html($id_num, $title, $base64Image, $rows, $firstColLabel, $primaryColor, $navy, $white, $light, $strip, $textColor, $denominator = null)
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPER: Render Native Bars (HTML/CSS) for PDF
+// ─────────────────────────────────────────────────────────────────────────────
+function render_native_charts($canvasId, $rows, $navy, $denominator = null)
+{
+    if (empty($rows)) {
+        return "<div style='padding:20px; text-align:center; background:#f1f5f9; color:#94a3b8; border-radius:8px; margin:15px;'>Sin Datos Disponibles</div>";
+    }
+
+    $localTotal = 0;
+    foreach ($rows as $r) {
+        $vals = array_values($r);
+        $localTotal += (int) end($vals);
+    }
+
+    $isSae = ($canvasId === 'chartSae');
+    $categoryTotals = [];
+    if ($isSae) {
+        foreach ($rows as $r) {
+            $vals = array_values($r);
+            $group = explode(' (', (string) $vals[0])[0];
+            $categoryTotals[$group] = ($categoryTotals[$group] ?? 0) + (int) end($vals);
+        }
+    }
+
+    // Determine max value for relative width scaling
+    $maxVal = 0;
+    foreach ($rows as $r) {
+        $vals = array_values($r);
+        $maxVal = max($maxVal, (int) end($vals));
+    }
+    if ($maxVal === 0)
+        $maxVal = 1;
+
+    $html = "<div style='padding:10px 15px 25px 15px;'>";
+    $html .= "<table style='width:100%; border-collapse:collapse; font-family:Helvetica,Arial,sans-serif;'>";
+
+    foreach ($rows as $row) {
+        $vals = array_values($row);
+        $label = (string) $vals[0];
+        $val = (int) end($vals);
+
+        // Percentage calculations
+        $perc = ($localTotal > 0) ? ($val / $localTotal) : 0;
+        $barWidth = ($val / $maxVal) * 92; // Max 92% to leave space for value text
+
+        // Color Logic
+        $color = '#0d6efd'; // Default Blue
+        if ($isSae) {
+            $isLoaded = stripos($label, '(CARGADO)') !== false;
+            $isFTTH = stripos($label, 'FTTH') !== false;
+            $isRadio = stripos($label, 'RADIO') !== false;
+
+            if ($isFTTH)
+                $color = $isLoaded ? '#10b981' : '#a855f7';
+            elseif ($isRadio)
+                $color = $isLoaded ? '#3b82f6' : '#f59e0b';
+            else
+                $color = $isLoaded ? '#059669' : '#94a3b8';
+        }
+
+        $html .= "<tr>";
+        // Label Column
+        $html .= "<td style='padding:6px 0; width:180px; font-size:10px; color:#4a5568; vertical-align:middle; border-bottom:1px solid #edf2f7;'>" . htmlspecialchars($label) . "</td>";
+
+        // Bar Column
+        $html .= "<td style='padding:6px 5px; vertical-align:middle; border-bottom:1px solid #edf2f7;'>";
+        $html .= "<div style='width:100%; background:#f1f5f9; height:24px; border-radius:3px; overflow:hidden;'>";
+        $html .= "<div style='width:{$barWidth}%; background:{$color}; height:24px; border-radius:3px; position:relative;'>";
+        $html .= "</div>";
+        $html .= "</div>";
+        $html .= "</td>";
+
+        // Value Column (Small badge like Chart.js)
+        $html .= "<td style='padding:6px 0; width:90px; vertical-align:middle; border-bottom:1px solid #edf2f7; text-align:right;'>";
+        $html .= "<div style='display:inline-block; background:#fff; border:1px solid #ddd; border-radius:3px; padding:4px 6px; font-size:10px; font-weight:bold; line-height:1.2; min-width:60px;'>";
+        $html .= "<span style='color:{$navy};'>{$val}</span><br>";
+        $html .= "<span style='font-size:8px; color:#666;'>" . number_format($perc * 100, 1) . "%</span>";
+
+        if ($isSae && $denominator > 0) {
+            $fiab = ($val / $denominator) * 100;
+            $html .= "<br><span style='font-size:7.5px; color:#0d6efd;'>Fiab: " . number_format($fiab, 1) . "%</span>";
+        }
+
+        $html .= "</div>";
+        $html .= "</td>";
+
+        $html .= "</tr>";
+    }
+
+    $html .= "</table>";
+    $html .= "</div>";
+
+    return $html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPER: professional section (chart page + table page)
+// ─────────────────────────────────────────────────────────────────────────────
+function section_html($id_num, $title, $canvasId, $rows, $firstColLabel, $primaryColor, $navy, $white, $light, $strip, $textColor, $denominator = null)
 {
     $out = "<div class='section'>";
-    $out .= "<div style='background:{$primaryColor}; padding:12px 25px;'>";
+    $out .= "<div style='background:{$primaryColor}; padding:10px 25px;'>";
     $out .= "<div style='color:#fff; font-size:16px; font-weight:bold; letter-spacing:0.5px;'>{$id_num}. " . htmlspecialchars($title) . "</div>";
     $out .= "</div>";
 
-    // Chart (Padding reduced to 0 to eliminate any gap between header and image)
-    $out .= "<div style='padding:0; text-align:center;'>";
-    if ($base64Image) {
-        // Remove max-height to allow tall charts to be large and legible in portrait mode.
-        // width: 100% ensures it fills the page horizontally.
-        $out .= "<img src='{$base64Image}' style='display:block; margin:0 auto; width:100%; height:auto;'>";
-    } else {
-        $out .= "<div style='height:150px; line-height:150px; background:#f1f5f9; color:#94a3b8; border-radius:8px;'>Sin Representación Gráfica</div>";
-    }
-    $out .= "</div>";
+    // Chart Area (Now using Native Code)
+    $out .= render_native_charts($canvasId, $rows, $navy, $denominator);
 
-    // Table (Slightly reduced margin to keep it compact)
+    // Table Area
     $out .= "<div style=\"margin:0 15px 15px 15px; background:{$white}; border:1px solid #e0e6ed; border-radius:8px; overflow:hidden;\">";
     $out .= "<div style=\"background:{$light}; padding:8px 15px; font-weight:bold; color:{$primaryColor}; border-bottom:1px solid #e0e6ed; font-size:12px;\">DATOS DETALLADOS</div>";
 
@@ -458,14 +540,14 @@ $html .= "</table></div>";
 $html .= "<div style=\"background:{$C_NAVY}; width:100%; height:10px; margin-top:20px;\"></div>";
 $html .= "</div>"; // end cover
 
-// ── SECTIONS (mirrored from modal icons & colors) ───────────────────────────
-$html .= section_html('1', 'Zonas de Ventas', $img_chartLocation, $stats_location, 'Parroquia — Vendedor', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
-$html .= section_html('2', 'Instalaciones por Tipo', $img_chartType, $stats_type, 'Tipo de Instalación', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
-$html .= section_html('3', 'Instalaciones Mensuales', $img_chartMonthly, $stats_monthly, 'Mes — Instalador', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
-$html .= section_html('4', 'Tipos de Conexión', $img_chartConnection, $stats_connection, 'Tipo de Conexión', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
-$html .= section_html('5', 'Instaladores', $img_chartInstaller, $stats_installers, 'Nombre del Instalador', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
-$html .= section_html('6', 'Ventas por Vendedor', $img_chartVendor, $stats_vendors, 'Vendedor', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
-$html .= section_html('7', 'Carga en SAE Plus (Desglose)', $img_chartSae, $stats_sae, 'Conexión (Estado)', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT, $total_global);
+// ── SECTIONS (Now using Native Chart Rendering) ───────────────────────────
+$html .= section_html('1', 'Zonas de Ventas', 'chartLocation', $stats_location, 'Parroquia — Vendedor', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
+$html .= section_html('2', 'Instalaciones por Tipo', 'chartType', $stats_type, 'Tipo de Instalación', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
+$html .= section_html('3', 'Instalaciones Mensuales', 'chartMonthly', $stats_monthly, 'Mes — Instalador', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
+$html .= section_html('4', 'Tipos de Conexión', 'chartConnection', $stats_connection, 'Tipo de Conexión', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
+$html .= section_html('5', 'Instaladores', 'chartInstaller', $stats_installers, 'Nombre del Instalador', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
+$html .= section_html('6', 'Ventas por Vendedor', 'chartVendor', $stats_vendors, 'Vendedor', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT);
+$html .= section_html('7', 'Carga en SAE Plus (Desglose)', 'chartSae', $stats_sae, 'Conexión (Estado)', $C_BLUE, $C_NAVY, $C_WHITE, $C_LIGHT, $C_STRIP, $C_TEXT, $total_global);
 
 $html .= '</body></html>';
 
