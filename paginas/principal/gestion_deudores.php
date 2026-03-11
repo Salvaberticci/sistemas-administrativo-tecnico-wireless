@@ -188,6 +188,7 @@ require_once '../includes/sidebar.php';
 
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     $(document).ready(function () {
@@ -204,16 +205,58 @@ require_once '../includes/sidebar.php';
     });
 
     function marcarPagado(id) {
-        if (confirm('¿Confirma que este cliente ha pagado su deuda?')) {
-            $.post('marcar_pagado.php', { id: id }, function (resp) {
-                if (resp === 'OK') {
-                    alert('Cliente marcado como pagado');
-                    location.reload();
-                } else {
-                    alert('Error al actualizar');
-                }
-            });
-        }
+        Swal.fire({
+            title: '¿Confirmar Pago?',
+            text: "Esta acción marcará la deuda como pagada y limpiará el saldo pendiente.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#343a40',
+            confirmButtonText: '<i class="fa-solid fa-check me-2"></i>Sí, confirmar pago',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Mostrar estado de carga
+                Swal.fire({
+                    title: 'Procesando...',
+                    text: 'Actualizando registro en el sistema',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.post('marcar_pagado.php', { id: id }, function (resp) {
+                    if (resp === 'OK') {
+                        Swal.fire({
+                            title: '¡Guardado!',
+                            text: 'El cliente ha sido marcado como pagado exitosamente.',
+                            icon: 'success',
+                            confirmButtonColor: '#0d6efd',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'No se pudo actualizar el registro: ' + resp,
+                            icon: 'error',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                }).fail(function() {
+                    Swal.fire({
+                        title: 'Error de Red',
+                        text: 'No se pudo comunicar con el servidor.',
+                        icon: 'error',
+                        confirmButtonColor: '#dc3545'
+                    });
+                });
+            }
+        });
     }
     function verContrato(id) {
         // Mostrar modal de carga o simplemente reset
