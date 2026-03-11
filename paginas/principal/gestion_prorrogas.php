@@ -2,7 +2,7 @@
 require_once '../conexion.php';
 
 $path_to_root = "../../";
-$page_title = "Gestión de Prórrogas y Ventas";
+$page_title = "Gestión de Prórrogas";
 $breadcrumb = ["Cobranzas"];
 $back_url = "../menu.php";
 require_once '../includes/layout_head.php';
@@ -55,18 +55,13 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
     <div class="page-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h4 class="fw-bold text-primary mb-1">Centro de Prórrogas y Ventas</h4>
-                <p class="text-muted small mb-0">Gestione solicitudes internas de prórroga y nuevos contratos de venta.
-                </p>
+                <h4 class="fw-bold text-primary mb-1">Centro de Prórrogas</h4>
+                <p class="text-muted small mb-0">Gestione solicitudes internas de prórroga.</p>
             </div>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-dark shadow-sm" data-bs-toggle="modal"
                     data-bs-target="#modalInternal">
                     <i class="fa-solid fa-user-clock me-1"></i> Nueva Prórroga
-                </button>
-                <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal"
-                    data-bs-target="#modalSales">
-                    <i class="fa-solid fa-file-signature me-1"></i> Nueva Venta
                 </button>
                 <div class="vr mx-1"></div>
                 <button type="button" class="btn btn-success shadow-sm" onclick="exportExcel()">
@@ -178,156 +173,7 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
     </div>
 </div>
 
-<!-- Modal Ventas: Galanet-Ventas -->
-<div class="modal fade" id="modalSales" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header modal-header-sales text-white">
-                <div>
-                    <h5 class="modal-title fw-bold">Galanet-Ventas</h5>
-                    <small class="opacity-75">Carga de Nueva Firma / Solicitud de Venta</small>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="formSales" action="guardar_prorroga.php" method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="tipo_solicitud" value="VENTA">
-                <div class="modal-body p-4">
-                    <div class="alert alert-primary border-0 shadow-sm small py-2 mb-4">
-                        <i class="fa-solid fa-circle-check me-2"></i>
-                        Por favor, asegúrese de ingresar la información exacta. Si posee más de un servicio, llene el
-                        formulario por cada uno.
-                    </div>
 
-                    <div class="row">
-                        <!-- Columna Izquierda: Datos del Titular -->
-                        <div class="col-md-6 border-end">
-                            <h6 class="form-section-title fw-bold text-uppercase">Datos del Titular</h6>
-
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Cédula de Identidad *</label>
-                                <input type="text" name="cedula_titular" class="form-control" placeholder="Ej: 12345678"
-                                    required pattern="[0-9]+">
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Nombres y Apellidos Completos *</label>
-                                <input type="text" name="nombre_titular" class="form-control" required>
-                            </div>
-
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <label class="form-label small fw-bold">Teléfono *</label>
-                                    <input type="text" name="telefono" class="form-control" required>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small fw-bold">Teléfono Extra</label>
-                                    <input type="text" name="telefono_extra" class="form-control">
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Correo Electrónico</label>
-                                <input type="email" name="email" class="form-control">
-                            </div>
-
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <label class="form-label small fw-bold">Municipio *</label>
-                                    <select name="id_municipio" class="form-select" required>
-                                        <option value="">Seleccione...</option>
-                                        <?php while ($m = $municipios->fetch_assoc()): ?>
-                                            <option value="<?= $m['id_municipio'] ?>">
-                                                <?= $m['nombre_municipio'] ?>
-                                            </option>
-                                        <?php endwhile; ?>
-                                    </select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small fw-bold">Parroquia *</label>
-                                    <select name="id_parroquia" class="form-select" required>
-                                        <option value="">Seleccione...</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Dirección Completa *</label>
-                                <textarea name="direccion" class="form-control" rows="2"
-                                    placeholder="Dirección con punto de referencia" required></textarea>
-                            </div>
-                        </div>
-
-                        <!-- Columna Derecha: Datos Contrato/Servicio -->
-                        <div class="col-md-6">
-                            <h6 class="form-section-title fw-bold text-uppercase">Datos del Servicio</h6>
-
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Plan de Internet *</label>
-                                <select name="id_plan" class="form-select" required>
-                                    <option value="">Seleccione...</option>
-                                    <?php while ($p = $planes->fetch_assoc()): ?>
-                                        <option value="<?= $p['id_plan'] ?>">
-                                            <?= $p['nombre_plan'] ?>
-                                        </option>
-                                    <?php endwhile; ?>
-                                </select>
-                            </div>
-
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <label class="form-label small fw-bold">Fecha de Corte *</label>
-                                    <input type="date" name="fecha_corte" class="form-control" required>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small fw-bold">Firma del Contrato *</label>
-                                    <input type="date" name="fecha_firma" class="form-control" required>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Foto del Contrato *</label>
-                                <input type="file" name="foto_contrato" class="form-control" accept="image/*" required>
-                            </div>
-
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <label class="form-label small fw-bold">Prorateo *</label>
-                                    <select name="prorateo" class="form-select" required>
-                                        <option value="SI">SÍ</option>
-                                        <option value="NO">NO</option>
-                                    </select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small fw-bold">Método de Pago</label>
-                                    <select name="metodo_pago" class="form-select">
-                                        <option value="">Seleccione...</option>
-                                        <?php foreach ($metodos_pago as $m): ?>
-                                            <option value="<?= $m ?>">
-                                                <?= $m ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Fecha de Instalación / Estado</label>
-                                <div class="input-group">
-                                    <input type="date" name="fecha_instalacion" class="form-control">
-                                    <input type="text" name="estado_venta" class="form-control" placeholder="Estado">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light border-0">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn btn-primary px-4 shadow">Cargar Venta</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 </div>
 

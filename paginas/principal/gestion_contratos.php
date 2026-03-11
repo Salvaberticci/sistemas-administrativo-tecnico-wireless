@@ -1413,7 +1413,7 @@ require_once '../includes/sidebar.php';
 
 <script>
     // === LÓGICA DE FIRMAS PARA EL MODAL DE EDICIÓN ===
-    letpadEdit        Cliente, padEditTecnico;
+    let padEditCliente, padEditTecnico;
 
     function resizeEditPad(canvas, pad) {
         if (!canvas || !pad) return;
@@ -1482,7 +1482,8 @@ require_once '../includes/sidebar.php';
         });
     });
 
-    // Modificar el submit para capturar la datafunction prepareSignaturesForSubmit() {
+    // Modificar el submit para capturar la data
+    function prepareSignaturesForSubmit() {
     if (padEditCliente && !padEditCliente.isEmpty() && !$('#pad_firma_cliente_div').hasClass('d-none')) {
         $('#edit_firma_cliente_data').val(padEditCliente.toDataURL());
     }
