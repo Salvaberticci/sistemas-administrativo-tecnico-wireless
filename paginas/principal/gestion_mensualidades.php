@@ -275,6 +275,12 @@ require_once '../includes/sidebar.php';
                                 </div>
                                 <input type="hidden" name="id_contrato" id="id_contrato_hidden_modal" required>
                                 <div id="contrato_search_results_modal" class="list-group shadow-lg position-absolute w-100" style="z-index: 1060;"></div>
+                                <!-- Nuevo: Info del plan -->
+                                <div id="info_plan_cliente" class="mt-2 d-none">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 py-2 px-3 w-100 text-start">
+                                        <i class="fas fa-satellite-dish me-1"></i> Plan: <strong id="val_plan_nombre">---</strong>
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="mb-4 bg-light p-3 rounded border shadow-sm">
@@ -320,59 +326,79 @@ require_once '../includes/sidebar.php';
                             <!-- Área de Scroll para el Desglose -->
                             <div class="desglose-scroll pe-2" style="max-height: 280px; overflow-y: auto;">
                                 <!-- Mensualidad -->
-                                <div class="d-flex align-items-center mb-2 bg-white border-start border-4 border-primary rounded p-2 shadow-sm">
-                                    <div class="form-check form-switch me-3 mb-0">
-                                        <input class="form-check-input desglose-switch" type="checkbox" id="switch_mensualidad" name="desglose_mensualidad_activado" value="1">
+                                <div class="mb-2 bg-white border-start border-4 border-primary rounded p-2 shadow-sm">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="form-check form-switch me-3 mb-0">
+                                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_mensualidad" name="desglose_mensualidad_activado" value="1">
+                                        </div>
+                                        <label class="form-check-label fw-bold text-dark small mb-0" for="switch_mensualidad">Mensualidad</label>
                                     </div>
-                                    <label class="form-check-label fw-bold text-dark me-auto small mb-0" for="switch_mensualidad">Mensualidad</label>
-                                    <div class="d-none desglose-fields d-flex gap-2" id="fields_mensualidad" style="width: 220px;">
-                                        <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="monto_mensualidad" placeholder="Monto">
-                                        <input type="number" step="1" class="form-control form-control-sm" name="meses_mensualidad" placeholder="Meses">
+                                    <div class="d-none desglose-fields row g-2 mt-1" id="fields_mensualidad">
+                                        <div class="col-7">
+                                            <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_mensualidad" placeholder="0.00">
+                                        </div>
+                                        <div class="col-5">
+                                            <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Meses</label>
+                                            <input type="number" step="1" min="1" class="form-control form-control-sm" name="meses_mensualidad" placeholder="Cant.">
+                                        </div>
                                     </div>
                                 </div>
 
                                 <!-- Instalación -->
-                                <div class="d-flex align-items-center mb-2 bg-white border-start border-4 border-info rounded p-2 shadow-sm">
-                                    <div class="form-check form-switch me-3 mb-0">
-                                        <input class="form-check-input desglose-switch" type="checkbox" id="switch_instalacion" name="desglose_instalacion_activado" value="1">
+                                <div class="mb-2 bg-white border-start border-4 border-info rounded p-2 shadow-sm">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="form-check form-switch me-3 mb-0">
+                                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_instalacion" name="desglose_instalacion_activado" value="1">
+                                        </div>
+                                        <label class="form-check-label fw-bold text-dark small mb-0" for="switch_instalacion">Instalación</label>
                                     </div>
-                                    <label class="form-check-label fw-bold text-dark me-auto small mb-0" for="switch_instalacion">Instalación</label>
-                                    <div class="d-none desglose-fields" id="fields_instalacion" style="width: 220px;">
-                                        <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="monto_instalacion" placeholder="Monto">
+                                    <div class="d-none desglose-fields mt-1" id="fields_instalacion">
+                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_instalacion" placeholder="0.00">
                                     </div>
                                 </div>
 
-                                <!-- Abono/Prorrateo/Equipos -->
-                                <div class="d-flex align-items-center mb-2 bg-white border-start border-4 border-secondary rounded p-2 shadow-sm">
-                                    <div class="form-check form-switch me-3 mb-0">
-                                        <input class="form-check-input desglose-switch" type="checkbox" id="switch_equipo" name="desglose_equipo_activado" value="1">
+                                <!-- Equipos -->
+                                <div class="mb-2 bg-white border-start border-4 border-secondary rounded p-2 shadow-sm">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="form-check form-switch me-3 mb-0">
+                                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_equipo" name="desglose_equipo_activado" value="1">
+                                        </div>
+                                        <label class="form-check-label fw-bold text-dark small mb-0" for="switch_equipo">Equipos/Materiales</label>
                                     </div>
-                                    <label class="form-check-label fw-bold text-dark me-auto small mb-0" for="switch_equipo">Equipos/Materiales</label>
-                                    <div class="d-none desglose-fields" id="fields_equipo" style="width: 220px;">
-                                        <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="monto_equipo" placeholder="Monto">
+                                    <div class="d-none desglose-fields mt-1" id="fields_equipo">
+                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_equipo" placeholder="0.00">
                                     </div>
                                 </div>
 
                                 <div class="row g-2 mb-2">
                                     <div class="col-6">
-                                        <div class="d-flex align-items-center bg-white border-start border-4 border-warning rounded p-2 shadow-sm h-100">
-                                            <div class="form-check form-switch me-2 mb-0">
-                                                <input class="form-check-input desglose-switch" type="checkbox" id="switch_abono" name="desglose_abono_activado" value="1">
+                                        <div class="bg-white border-start border-4 border-warning rounded p-2 shadow-sm h-100">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="form-check form-switch me-2 mb-0">
+                                                    <input class="form-check-input desglose-switch" type="checkbox" id="switch_abono" name="desglose_abono_activado" value="1">
+                                                </div>
+                                                <label class="form-check-label fw-bold text-dark small mb-0" for="switch_abono" style="font-size: 0.75rem;">Abono</label>
                                             </div>
-                                            <label class="form-check-label fw-bold text-dark small mb-0" for="switch_abono" style="font-size: 0.75rem;">Abono</label>
-                                            <div class="d-none desglose-fields ms-auto" id="fields_abono" style="width: 80px;">
-                                                <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="monto_abono" placeholder="$.">
+                                            <div class="d-none desglose-fields mt-1" id="fields_abono">
+                                                <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_abono" placeholder="0.00">
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <div class="d-flex align-items-center bg-white border-start border-4 border-danger rounded p-2 shadow-sm h-100">
-                                            <div class="form-check form-switch me-2 mb-0">
-                                                <input class="form-check-input desglose-switch" type="checkbox" id="switch_prorrateo" name="desglose_prorrateo_activado" value="1">
+                                        <div class="bg-white border-start border-4 border-danger rounded p-2 shadow-sm h-100">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="form-check form-switch me-2 mb-0">
+                                                    <input class="form-check-input desglose-switch" type="checkbox" id="switch_prorrateo" name="desglose_prorrateo_activado" value="1">
+                                                </div>
+                                                <label class="form-check-label fw-bold text-dark small mb-0" for="switch_prorrateo" style="font-size: 0.75rem;">Prorrateo</label>
                                             </div>
-                                            <label class="form-check-label fw-bold text-dark small mb-0" for="switch_prorrateo" style="font-size: 0.75rem;">Prorrateo</label>
-                                            <div class="d-none desglose-fields ms-auto" id="fields_prorrateo" style="width: 80px;">
-                                                <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="monto_prorrateo" placeholder="$.">
+                                            <div class="d-none desglose-fields mt-1" id="fields_prorrateo">
+                                                <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_prorrateo" placeholder="0.00">
                                             </div>
                                         </div>
                                     </div>
@@ -388,28 +414,52 @@ require_once '../includes/sidebar.php';
                                     </div>
                                     <div class="d-none desglose-fields" id="fields_extra">
                                         <div id="contenedor_extras">
-                                            <div class="row g-2 mb-2 fila-extra align-items-end border-bottom pb-2">
-                                                <div class="col-6 position-relative">
-                                                    <input type="text" class="form-control form-control-sm extra-search" placeholder="Cliente..." autocomplete="off">
+                                            <div class="fila-extra mb-3 border-bottom pb-3">
+                                                <div class="position-relative mb-2">
+                                                    <label class="small text-muted fw-bold mb-1">Usuario / Contrato</label>
+                                                    <input type="text" class="form-control form-control-sm extra-search" placeholder="ID, Nombre o Cédula..." autocomplete="off">
                                                     <input type="hidden" name="extra_contrato[]" class="extra-hidden">
                                                     <div class="list-group shadow-lg position-absolute w-100 extra-results" style="z-index: 1080; max-height: 100px; overflow-y: auto;"></div>
+                                                    <div class="extra-plan-info mt-1 d-none" style="font-size: 0.65rem;">
+                                                        <span class="text-primary fw-bold"><i class="fas fa-tag me-1"></i> <span class="extra-plan-name">---</span></span>
+                                                    </div>
                                                 </div>
-                                                <div class="col-4">
-                                                    <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="extra_monto[]" placeholder="Monto">
-                                                </div>
-                                                <div class="col-2 text-end">
-                                                    <button type="button" class="btn btn-sm text-danger border-0 btn-remove-extra" disabled><i class="fas fa-trash"></i></button>
+                                                <div class="row g-2 align-items-end">
+                                                    <div class="col-6">
+                                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="extra_monto[]" placeholder="0.00">
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Mes</label>
+                                                        <input type="number" step="1" min="1" class="form-control form-control-sm" name="extra_meses[]" placeholder="1" value="1">
+                                                    </div>
+                                                    <div class="col-2 text-end">
+                                                        <button type="button" class="btn btn-sm text-danger border-0 btn-remove-extra" disabled><i class="fas fa-trash"></i></button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <button type="button" class="btn btn-sm btn-link text-info p-0 mt-1" id="btn_add_extra"><i class="fas fa-plus-circle"></i> Añadir otro</button>
+                                        <button type="button" class="btn btn-sm btn-link text-info p-0 mt-1" id="btn_add_extra"><i class="fas fa-plus-circle"></i> Añadir otro Usuario</button>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="alert alert-light border d-flex justify-content-between align-items-center py-2 mb-3 shadow-sm mt-3 mx-0">
-                                <span class="fw-bold small text-muted">Venta: $ <span id="val_monto_total">0.00</span></span>
-                                <span class="fw-bold small text-danger">Suma: $ <span id="val_suma_desglose">0.00</span></span>
+                            <!-- Sección de Resumen Dinámico -->
+                            <div class="bg-dark bg-opacity-10 rounded p-3 mb-3 border shadow-sm mt-3 mx-0">
+                                <div class="row g-2 text-center text-md-start">
+                                    <div class="col-4 border-end">
+                                        <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.6rem;">Capture</div>
+                                        <div class="fw-bold text-dark">$ <span id="val_monto_total">0.00</span></div>
+                                    </div>
+                                    <div class="col-4 border-end">
+                                        <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.6rem;">Asignado</div>
+                                        <div class="fw-bold text-primary">$ <span id="val_suma_desglose">0.00</span></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.6rem;">Restante</div>
+                                        <div class="fw-bold" id="container_restante">$ <span id="val_monto_restante">0.00</span></div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="row g-2 mt-2">
@@ -810,7 +860,7 @@ require_once '../includes/sidebar.php';
             switchesDesglose.forEach(sw => {
                 if (sw.checked) {
                     // Buscar los inputs de monto dentro del contenedor hermano
-                    const container = sw.closest('.rounded').querySelector('.desglose-fields');
+                    const container = sw.closest('.rounded, .fila-extra, .bg-white').querySelector('.desglose-fields');
                     if (container) {
                         const montos = container.querySelectorAll('.desglose-monto');
                         montos.forEach(m => {
@@ -820,18 +870,23 @@ require_once '../includes/sidebar.php';
                 }
             });
 
+            let restante = totalDeclarado - sumatoriaDesglose;
+
             // Actualizar UI
-            document.getElementById('val_monto_total').textContent = `$${totalDeclarado.toFixed(2)}`;
-            const spanSumatoria = document.getElementById('val_suma_desglose');
-            spanSumatoria.textContent = `$${sumatoriaDesglose.toFixed(2)}`;
+            document.getElementById('val_monto_total').textContent = totalDeclarado.toFixed(2);
+            document.getElementById('val_suma_desglose').textContent = sumatoriaDesglose.toFixed(2);
+            const spanRestante = document.getElementById('val_monto_restante');
+            const containerRestante = document.getElementById('container_restante');
+            
+            spanRestante.textContent = Math.abs(restante).toFixed(2);
 
             // Validar
-            // Usamos un pequeño epsilon para evitar problemas de precisión en JS (0.1 + 0.2 != 0.3)
-            if (Math.abs(totalDeclarado - sumatoriaDesglose) < 0.01 && totalDeclarado > 0) {
-                spanSumatoria.className = 'text-success';
+            // Usamos un pequeño epsilon para evitar problemas de precisión en JS
+            if (Math.abs(restante) < 0.01 && totalDeclarado > 0) {
+                containerRestante.className = 'fw-bold text-success';
                 btnSubmitCobro.disabled = false;
             } else {
-                spanSumatoria.className = 'text-danger fw-bold';
+                containerRestante.className = 'fw-bold text-danger';
                 btnSubmitCobro.disabled = true;
             }
         }
@@ -862,8 +917,32 @@ require_once '../includes/sidebar.php';
 
         // Recalcular cuando se escribe en los montos del desglose
         document.addEventListener('input', function(e) {
+            // Validación estricta para números (evitar negativos y caracteres no numéricos)
+            if (e.target.type === 'number' && e.target.classList.contains('form-control-sm')) {
+                // Si es un campo de meses (entero positivo)
+                if (e.target.step === '1') {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                } else {
+                    // Si es un campo de monto (decimal positivo)
+                    // Permitimos solo números y un punto
+                    let val = e.target.value;
+                    if (val.includes('-')) {
+                        e.target.value = val.replace('-', '');
+                    }
+                }
+            }
+
             if(e.target.classList.contains('desglose-monto') || e.target.id === 'input_monto_cobro') {
                 setTimeout(validarSumatoriaDesglose, 50); // Dar tiempo a que el hidden se asiente si es el principal
+            }
+        });
+
+        // Bloqueo de teclas prohibidas (signo menos y tecla 'e')
+        document.addEventListener('keydown', function(e) {
+            if (e.target.type === 'number' && e.target.classList.contains('form-control-sm')) {
+                if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') {
+                    e.preventDefault();
+                }
             }
         });
 
@@ -929,10 +1008,30 @@ require_once '../includes/sidebar.php';
                                         
                                         // Auto-rellenar monto si se tiene precio de plan
                                         if (c.monto_plan && parseFloat(c.monto_plan) > 0) {
+                                            const switchExtra = document.getElementById('switch_extra');
+                                            if (!switchExtra.checked) {
+                                                switchExtra.checked = true;
+                                                switchExtra.dispatchEvent(new Event('change'));
+                                            }
+
                                             montoInput.value = parseFloat(c.monto_plan).toFixed(2);
+                                            montoInput.readOnly = true;
+                                            
+                                            // Mostrar nombre del plan en la fila
+                                            const planInfoDiv = row.querySelector('.extra-plan-info');
+                                            const planNameSpan = row.querySelector('.extra-plan-name');
+                                            if (planInfoDiv && planNameSpan) {
+                                                planNameSpan.textContent = c.nombre_plan || 'Sin Plan';
+                                                planInfoDiv.classList.remove('d-none');
+                                            }
+
                                             // Activar validacion
                                             const eventInput = new Event('input', { bubbles: true });
                                             montoInput.dispatchEvent(eventInput);
+                                        } else {
+                                            montoInput.readOnly = false;
+                                            const planInfoDiv = row.querySelector('.extra-plan-info');
+                                            if (planInfoDiv) planInfoDiv.classList.add('d-none');
                                         }
                                     };
                                     resultsContainer.appendChild(a);
@@ -995,12 +1094,28 @@ require_once '../includes/sidebar.php';
                                                 switchMensualidad.checked = true;
                                                 switchMensualidad.dispatchEvent(new Event('change'));
                                             }
-                                            document.querySelector('[name="monto_mensualidad"]').value = parseFloat(c.monto_plan).toFixed(2);
+                                            const inputMonto = document.querySelector('[name="monto_mensualidad"]');
+                                            inputMonto.value = parseFloat(c.monto_plan).toFixed(2);
+                                            inputMonto.readOnly = true;
                                             document.querySelector('[name="meses_mensualidad"]').value = 1;
                                             
+                                            // Mostrar nombre del plan
+                                            const infoPlan = document.getElementById('info_plan_cliente');
+                                            const valPlanNombre = document.getElementById('val_plan_nombre');
+                                            if (infoPlan && valPlanNombre) {
+                                                valPlanNombre.textContent = c.nombre_plan || 'Sin Plan';
+                                                infoPlan.classList.remove('d-none');
+                                            }
+
                                             // Activar validacion de sumatoria
                                             const eventInput = new Event('input', { bubbles: true });
-                                            document.querySelector('[name="monto_mensualidad"]').dispatchEvent(eventInput);
+                                            inputMonto.dispatchEvent(eventInput);
+                                        } else {
+                                            // Si no hay plan, liberar el campo por si acaso
+                                            const inputMonto = document.querySelector('[name="monto_mensualidad"]');
+                                            if (inputMonto) inputMonto.readOnly = false;
+                                            const infoPlan = document.getElementById('info_plan_cliente');
+                                            if (infoPlan) infoPlan.classList.add('d-none');
                                         }
                                     };
                                     resultsContainer.appendChild(a);
