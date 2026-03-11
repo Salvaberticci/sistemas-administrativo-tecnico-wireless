@@ -564,7 +564,7 @@ require_once '../includes/sidebar.php';
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title fw-bold"><i class="fas fa-info-circle me-2"></i>Detalle de Justificación</h5>
+                <h5 class="modal-title fw-bold text-white"><i class="fas fa-info-circle me-2"></i>Detalles del Pago</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
@@ -579,7 +579,7 @@ require_once '../includes/sidebar.php';
                     <div class="row g-3 mb-4">
                         <div class="col-6">
                             <label class="small text-muted fw-bold d-block mb-1">Monto Cargado</label>
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 fs-6" id="justif_monto">$0.00</span>
+                            <span class="badge bg-danger text-white fs-6 px-3" id="justif_monto">$0.00</span>
                         </div>
                         <div class="col-6 text-end">
                             <label class="small text-muted fw-bold d-block mb-1">F. Creación</label>
