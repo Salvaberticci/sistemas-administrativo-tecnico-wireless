@@ -559,6 +559,64 @@ require_once '../includes/sidebar.php';
     </div>
 </div>
 
+<!-- Modal Justificación (Cargos Manuales) -->
+<div class="modal fade" id="modalJustificacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="fas fa-info-circle me-2"></i>Detalle de Justificación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="justif_loader" class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="small text-muted mt-2">Cargando detalles...</p>
+                </div>
+                <div id="justif_content" class="d-none">
+                    <h6 class="fw-bold text-primary mb-1" id="justif_cliente_nombre">---</h6>
+                    <p class="small text-muted mb-3">Contrato #<span id="justif_id_contrato">---</span> | Factura #<span id="justif_id_cobro">---</span></p>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <label class="small text-muted fw-bold d-block mb-1">Monto Cargado</label>
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 fs-6" id="justif_monto">$0.00</span>
+                        </div>
+                        <div class="col-6 text-end">
+                            <label class="small text-muted fw-bold d-block mb-1">F. Creación</label>
+                            <span class="small fw-bold" id="justif_fecha_creacion">--/--/----</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-light rounded p-3 border mb-4 shadow-sm">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="small text-muted fw-bold d-block mb-0" style="font-size: 0.65rem;">Referencia</label>
+                                <span class="fw-bold text-dark" id="justif_referencia">---</span>
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted fw-bold d-block mb-0" style="font-size: 0.65rem;">Banco Receptor</label>
+                                <span class="fw-bold text-dark" id="justif_banco">---</span>
+                            </div>
+                            <div class="col-12 mt-2">
+                                <label class="small text-muted fw-bold d-block mb-0" style="font-size: 0.65rem;">Autorizado por</label>
+                                <span class="fw-bold text-success" id="justif_autorizado">---</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold small text-muted mb-2 text-uppercase" style="letter-spacing: 0.5px;">Justificación Redactada:</h6>
+                    <div class="alert alert-secondary border-0 bg-light p-3 small mb-0 scroll-premium" style="max-height: 150px; overflow-y: auto; line-height: 1.5;" id="justif_texto">
+                        ---
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Historial -->
 <div class="modal fade" id="modalHistorial" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -1683,6 +1741,45 @@ require_once '../includes/sidebar.php';
             .catch(err => {
                 console.error(err);
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Error al cargar datos.</td></tr>';
+            });
+    };
+
+    window.verJustificacion = function (idCobro) {
+        const loader = document.getElementById('justif_loader');
+        const content = document.getElementById('justif_content');
+        
+        loader.classList.remove('d-none');
+        content.classList.add('d-none');
+
+        var modal = new bootstrap.Modal(document.getElementById('modalJustificacion'));
+        modal.show();
+
+        fetch(`get_justificacion_data.php?id_cobro=${idCobro}`)
+            .then(r => r.json())
+            .then(res => {
+                loader.classList.add('d-none');
+                if (res.success) {
+                    const d = res.data;
+                    document.getElementById('justif_cliente_nombre').textContent = d.nombre_cliente;
+                    document.getElementById('justif_id_contrato').textContent = d.id_contrato;
+                    document.getElementById('justif_id_cobro').textContent = idCobro;
+                    document.getElementById('justif_monto').textContent = '$' + parseFloat(d.monto_cargado).toFixed(2);
+                    document.getElementById('justif_fecha_creacion').textContent = new Date(d.fecha_creacion).toLocaleString();
+                    document.getElementById('justif_referencia').textContent = d.referencia_pago || 'N/A';
+                    document.getElementById('justif_banco').textContent = d.nombre_banco || 'No especificado';
+                    document.getElementById('justif_autorizado').textContent = d.autorizado_por;
+                    document.getElementById('justif_texto').innerHTML = d.justificacion.replace(/\n/g, '<br>');
+                    
+                    content.classList.remove('d-none');
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                    modal.hide();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
+                modal.hide();
             });
     };
 
