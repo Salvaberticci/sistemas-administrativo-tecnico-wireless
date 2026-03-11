@@ -147,8 +147,10 @@ ob_start();
     <link rel="icon" type="image/jpg" href="../../images/logo.jpg" />
     <style>
         body {
-            font-family: Arial, sans-serif;
-            font-size: 10px;
+            font-family: Helvetica, Arial, sans-serif; /* Use Helvetica (Core PDF Font) for speed */
+            font-size: 9px;
+            margin: 0;
+            padding: 0;
         }
 
         h1 {
@@ -208,16 +210,15 @@ ob_start();
         <thead>
             <tr>
                 <th style="width: 4%;">ID</th>
-                <th style="width: 6%;">IP</th>
-                <th style="width: 22%;">Cliente</th>
+                <th style="width: 8%;">IP</th>
+                <th style="width: 18%;">Cliente</th>
                 <th style="width: 8%;">Cédula</th>
                 <th style="width: 8%;">Teléfono</th>
-                <th style="width: 8%;">Municipio</th>
-                <th style="width: 8%;">Parroquia</th>
+                <th style="width: 16%;">Ubicación</th>
                 <th style="width: 8%;">Plan</th>
                 <th style="width: 8%;">Vendedor</th>
-                <th style="width: 4%;">OLT</th>
-                <th style="width: 4%;">PON</th>
+                <th style="width: 6%;">OLT</th>
+                <th style="width: 6%;">PON</th>
                 <th style="width: 10%;">Estado</th>
             </tr>
         </thead>
@@ -225,23 +226,22 @@ ob_start();
             <?php if ($total_clientes > 0): ?>
                 <?php foreach ($clientes as $fila): ?>
                     <tr>
-                        <td class="center"><?php echo $fila['id']; ?></td>
-                        <td class="center"><?php echo $fila['ip_onu']; ?></td>
-                        <td><?php echo $fila['nombre_completo']; ?></td>
-                        <td class="center"><?php echo $fila['cedula']; ?></td>
-                        <td class="center"><?php echo $fila['telefono']; ?></td>
-                        <td><?php echo $fila['municipio']; ?></td>
-                        <td><?php echo $fila['parroquia']; ?></td>
-                        <td><?php echo $fila['plan']; ?></td>
-                        <td><?php echo $fila['vendedor']; ?></td>
-                        <td class="center"><?php echo $fila['olt_nombre'] ?? 'N/A'; ?></td>
-                        <td class="center"><?php echo $fila['pon_nombre'] ?? 'N/A'; ?></td>
-                        <td class="center"><?php echo $fila['estado_contrato']; ?></td>
+                        <td class="center"><?= $fila['id'] ?></td>
+                        <td class="center"><?= $fila['ip_onu'] ?></td>
+                        <td><?= $fila['nombre_completo'] ?></td>
+                        <td class="center"><?= $fila['cedula'] ?></td>
+                        <td class="center"><?= $fila['telefono'] ?></td>
+                        <td><?= ($fila['municipio'] ?? '-') . ($fila['parroquia'] ? "<br><span style='font-size:7px; color:#666'>{$fila['parroquia']}</span>" : "") ?></td>
+                        <td><?= $fila['plan'] ?></td>
+                        <td><?= $fila['vendedor'] ?></td>
+                        <td class="center"><?= $fila['olt_nombre'] ?? 'N/A' ?></td>
+                        <td class="center"><?= $fila['pon_nombre'] ?? 'N/A' ?></td>
+                        <td class="center"><?= $fila['estado_contrato'] ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="12" class="center">No hay clientes con los filtros seleccionados.</td>
+                    <td colspan="11" class="center">No hay clientes con los filtros seleccionados.</td>
                 </tr>
             <?php endif; ?>
         </tbody>
