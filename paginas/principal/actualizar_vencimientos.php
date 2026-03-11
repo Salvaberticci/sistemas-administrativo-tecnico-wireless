@@ -2,8 +2,9 @@
 // Script de mantenimiento que se puede ejecutar con Cron o al inicio del día.
 require_once '../conexion.php'; 
 
-// 1. Obtener la fecha actual en formato 'YYYY-MM-DD'
+// 1. Inicializar variables para evitar errores de tipo/definición
 $fecha_hoy = date('Y-m-d');
+$filas_actualizadas = 0;
 
 // 2. Consulta SQL para actualizar los estados
 // Criterios de actualización:

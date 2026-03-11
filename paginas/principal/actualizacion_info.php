@@ -42,8 +42,8 @@ require_once 'actualizar_vencimientos.php';
     <h1 class="text-primary mb-3">⚙️ Mantenimiento en Curso...</h1>
     <p class="lead">Actualizando los estados de cuentas por cobrar al día "<?php echo htmlspecialchars($fecha_hoy); ?>".</p>
     
-    <?php if ($filas_actualizadas > 0): ?>
-        <p class="text-success h4 mt-4">✅ "<?php echo $filas_actualizadas; ?> Cuentas Marcadas Como VENCIDAS".</p>
+    <?php if (($filas_actualizadas ?? 0) > 0): ?>
+        <p class="text-success h4 mt-4">✅ "<?php echo (int)($filas_actualizadas ?? 0); ?> Cuentas Marcadas Como VENCIDAS".</p>
     <?php else: ?>
         <p class="text-info h4 mt-4">Información al día. No se detectaron nuevos vencimientos.</p>
     <?php endif; ?>
