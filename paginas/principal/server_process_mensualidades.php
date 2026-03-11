@@ -218,10 +218,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     
     // Eliminar: Solo permitida si NO está Pagado, o si es un pago MANUAL (Capture Desglosado)
     if ($estado != 'PAGADO' || $aRow['es_manual'] > 0) {
-        $acciones .= '<button type="button" class="btn btn-sm btn-danger" 
-                        data-bs-toggle="modal" data-bs-target="#modalEliminar" 
-                        data-id="' . $id_cobro . '" data-nombre="' . htmlspecialchars($aRow['nombre_completo']) . '" 
-                        title="Eliminar"><i class="fas fa-trash"></i></button>';
+        $acciones .= '<button type="button" onclick="confirmarEliminarCobro(' . $id_cobro . ', \'' . addslashes($aRow['nombre_completo']) . '\')" class="btn btn-sm btn-danger" title="Eliminar"><i class="fas fa-trash"></i></button>';
     }
     
     // Historial

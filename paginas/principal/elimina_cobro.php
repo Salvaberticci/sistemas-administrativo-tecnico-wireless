@@ -38,7 +38,10 @@ if (!$user || !password_verify($clave, $user['clave'])) {
 }
 
 // 2. Obtener el estado y Referencia del cobro antes de eliminar
-$stmt_check = $conn->prepare("SELECT estado, referencia_pago FROM cuentas_por_cobrar WHERE id_cobro = ?");
+$stmt_check = $conn->prepare("SELECT cxc.estado, cxc.referencia_pago, co.estado AS contrato_estado, co.nombre_completo 
+                             FROM cuentas_por_cobrar cxc 
+                             LEFT JOIN contratos co ON cxc.id_contrato = co.id 
+                             WHERE cxc.id_cobro = ?");
 $stmt_check->bind_param("i", $id_cobro);
 $stmt_check->execute();
 $result_check = $stmt_check->get_result();
@@ -47,6 +50,11 @@ $stmt_check->close();
 
 if (!$cobro) {
     echo json_encode(['success' => false, 'message' => 'El cobro no existe.']);
+    exit;
+}
+
+if ($cobro['contrato_estado'] === 'ACTIVO') {
+    echo json_encode(['success' => false, 'message' => "No se puede eliminar porque el cliente {$cobro['nombre_completo']} tiene un contrato ACTIVO."]);
     exit;
 }
 

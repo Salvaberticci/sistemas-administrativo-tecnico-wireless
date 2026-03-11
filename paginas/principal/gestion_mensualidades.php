@@ -544,14 +544,9 @@ require_once '../includes/sidebar.php';
                 <h5 class="fw-bold">¿Eliminar Cobro?</h5>
                 <form id="formEliminar" method="POST" action="elimina_cobro.php">
                     <input type="hidden" name="id" id="id_cobro_eliminar">
-                    <p class="text-muted small mb-2">Se eliminará el cobro #<strong id="id_display_eliminar"></strong>
+                    <input type="hidden" name="clave" id="delete_password_hidden">
+                    <p class="text-muted small mb-4">Se eliminará el cobro #<strong id="id_display_eliminar"></strong>
                         de <strong id="cliente_nombre_eliminar"></strong></p>
-
-                    <div class="mb-3 text-start">
-                        <label for="delete_password" class="form-label small fw-bold">Confirme su Contraseña</label>
-                        <input type="password" name="clave" class="form-control form-control-sm" id="delete_password"
-                            placeholder="Ingrese su clave" required>
-                    </div>
 
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-danger fw-medium">Sí, Eliminar</button>
@@ -1162,13 +1157,40 @@ require_once '../includes/sidebar.php';
         }
 
         // === MODAL ELIMINAR LÓGICA ===
+        window.confirmarEliminarCobro = async function (id, nombre) {
+            const proceeds = await solicitarClaveAdmin('Eliminar Cobro');
+            if (proceeds) {
+                // Check if can delete (contract status)
+                fetch(`check_can_delete_payment.php?id=${id}`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            if (res.can_delete) {
+                                $('#id_cobro_eliminar').val(id);
+                                $('#id_display_eliminar').text(id);
+                                $('#cliente_nombre_eliminar').text(nombre);
+                                // The password from 'solicitarClaveAdmin' is verified, 
+                                // but we need it for the final POST 'elimina_cobro.php' 
+                                // so we'll reuse the one from the successful validation if possible 
+                                // or just prompt again. Since solicitarClaveAdmin is separate, 
+                                // I'll modify solicitarClaveAdmin to return the password instead of just true/false.
+                                // Actually, let's just use the hidden input and store the password there.
+                                // I will update solicitarClaveAdmin to return the text if success.
+                                
+                                var modal = new bootstrap.Modal(document.getElementById('modalEliminar'));
+                                modal.show();
+                            } else {
+                                Swal.fire('No se puede eliminar', res.message, 'warning');
+                            }
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    });
+            }
+        };
+
         $('#modalEliminar').on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget);
-            var modal = $(this);
-            modal.find('#id_cobro_eliminar').val(button.data('id'));
-            modal.find('#id_display_eliminar').text(button.data('id'));
-            modal.find('#cliente_nombre_eliminar').text(button.data('nombre'));
-            $('#delete_password').val(''); // Limpiar contraseña al abrir
+            // Already handled by confirmingEliminarCobro for new flow
         });
 
         $('#formEliminar').on('submit', function(e) {
@@ -1376,7 +1398,11 @@ require_once '../includes/sidebar.php';
                 body: 'clave=' + encodeURIComponent(password)
             });
             const data = await resp.json();
-            if (data.success) return true;
+            if (data.success) {
+                // Store password for subsequent form submissions if needed
+                $('#delete_password_hidden').val(password);
+                return true;
+            }
             Swal.fire('Error', 'Clave incorrecta', 'error');
         }
         return false;
