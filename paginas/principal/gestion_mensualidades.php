@@ -1146,40 +1146,53 @@ require_once '../includes/sidebar.php';
                 }
             }
 
-            // 2. Regex de Referencia Avanzado (Ajustado según captures reales)
-            // Keywords prioritarias: Nro. de referencia, Número de operación, Referencia, Operación
+            // 2. Regex de Referencia Avanzado (Blindado contra ruido y fragmentación)
+            // Keywords con ligeros comodines para soportar mis-reads (ej: Operacien, Referencla)
             const keywords = [
                 'Nro\\.?\\s+de\\s+referencia',
                 'N[uú]mero\\s+de\\s+referencia',
-                'Nro\\.?\\s+de\\s+operaci[oó]n',
-                'N[uú]mero\\s+de\\s+operaci[oó]n',
-                'Referencia',
-                'Operaci[oó]n',
-                'Operacion', // Sin tilde (común en OCR)
+                'Nro\\.?\\s+de\\s+operaci[oó\\.\\s]*n',
+                'N[uú]mero\\s+de\\s+operaci[oó\\.\\s]*n',
+                'Referenc[ia|la|ia|1a]+',
+                'Operaci[oó\\.\\s]*n',
+                'Operacion',
                 'Confirmaci[oó]n',
                 'Aprobaci[oó]n',
                 'Ref\\.',
                 'Ref\\s'
             ].join('|');
             
-            // Buscamos la keyword seguida de ":" o espacio, y luego el número (aceptando ceros a la izquierda)
-            // Agregamos [^0-9\n]* para saltar iconos de "copiar" o decoraciones antes del número
-            const refRegex = new RegExp(`(?:${keywords})(?:\\s*:)?\\s*[^0-9\\n]*(\\d{6,})`, 'i');
+            // Aceptamos que entre la palabra y el número haya casi cualquier cosa que no sea otra palabra
+            // El número puede contener espacios o puntos que luego limpiaremos
+            const refRegex = new RegExp(`(?:${keywords})(?:\\s*:)?\\s*[^\\w\\n]*([\\d\\s\\.]{6,})`, 'i');
             const refMatch = text.match(refRegex);
             
             if (refMatch) {
-                // Limpiar espacios y asegurar que capturamos ceros a la izquierda (Provincial usa 0000...)
-                let cleanRef = refMatch[1].trim().replace(/\s/g, '');
-                document.querySelector('[name="referencia_pago"]').value = cleanRef;
-                foundRef = true;
-            } else {
-                // Intento B: Buscar el número más largo que no sea el monto
-                const flatText = text.replace(/\n/g, ' '); 
-                const allNumbers = flatText.match(/\b\d{6,25}\b/g);
-                if (allNumbers && allNumbers.length > 0) {
-                    allNumbers.sort((a,b) => b.length - a.length);
-                    document.querySelector('[name="referencia_pago"]').value = allNumbers[0];
+                // Limpiar espacios y puntos internos (algunos OCR ven 123.456.789 en la ref)
+                let cleanRef = refMatch[1].trim().replace(/[\s\.]/g, '');
+                // Si accidentalmente capturó el monto (porque tiene decimales), buscamos si hay otro número
+                if (cleanRef.length > 5) {
+                    document.querySelector('[name="referencia_pago"]').value = cleanRef;
                     foundRef = true;
+                }
+            } 
+            
+            if (!foundRef) {
+                // Intento B (Ultra-Fallback): Buscar el bloque numérico más largo del texto
+                // Incluso si está roto por espacios
+                const flatText = text.replace(/\n/g, ' '); 
+                // Buscamos cualquier secuencia larga de dígitos que pueda tener espacios/puntos pero NO comas (el monto suele tener comas en Vzla)
+                const allNumbers = flatText.match(/(?:\d[\s\.]*){8,25}/g);
+                if (allNumbers && allNumbers.length > 0) {
+                    const sortedNumbers = allNumbers
+                        .map(n => n.replace(/[\s\.]/g, ''))
+                        .filter(n => n.length >= 8)
+                        .sort((a,b) => b.length - a.length);
+                        
+                    if (sortedNumbers.length > 0) {
+                        document.querySelector('[name="referencia_pago"]').value = sortedNumbers[0];
+                        foundRef = true;
+                    }
                 }
             }
 
