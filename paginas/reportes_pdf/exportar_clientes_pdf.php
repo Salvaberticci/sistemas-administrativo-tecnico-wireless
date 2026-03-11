@@ -24,6 +24,7 @@ $estado_contrato_filtro = isset($_GET['estado_contrato']) ? $_GET['estado_contra
 $vendedor_texto_filtro = isset($_GET['vendedor']) ? $_GET['vendedor'] : 'TODOS';
 $id_plan_filtro = isset($_GET['plan']) ? $_GET['plan'] : 'TODOS';
 $cobros_estado_filtro = isset($_GET['estado_cobros']) ? $_GET['estado_cobros'] : 'TODOS';
+$busqueda_filtro = isset($_GET['busqueda']) ? $_GET['busqueda'] : ''; // 🔍 SYNC: Filtro de búsqueda textual
 
 // --- NUEVOS FILTROS ---
 $id_olt_filtro = isset($_GET['olt']) ? $_GET['olt'] : 'TODOS';
@@ -40,8 +41,19 @@ $join_clause = "
     LEFT JOIN parroquia pa ON c.id_parroquia = pa.id_parroquia
     LEFT JOIN planes pl ON c.id_plan = pl.id_plan
     LEFT JOIN olt ol ON c.id_olt = ol.id_olt    /* AÑADIDO OLT */
-    LEFT JOIN pon p ON c.id_pon = p.id_pon      /* AÑADIDO PON */
+    LEFT JOIN pon p ON c.id_pon = p.id_pon
 ";
+
+// --- SYNC: Filtro de Búsqueda General ---
+if (!empty($busqueda_filtro)) {
+    $where_clause .= " AND (c.nombre_completo LIKE ? OR c.cedula LIKE ? OR c.ip_onu LIKE ? OR c.telefono LIKE ?) ";
+    $busqueda_param = "%" . $busqueda_filtro . "%";
+    $params[] = $busqueda_param;
+    $params[] = $busqueda_param;
+    $params[] = $busqueda_param;
+    $params[] = $busqueda_param;
+    $types .= 'ssss';
+}
 
 // Lógica de filtros (similar a reporte_clientes.php)
 if ($id_municipio_filtro !== 'TODOS') {
@@ -153,19 +165,21 @@ ob_start();
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            /* border-collapse: collapse;  <-- REMOVED: Very memory intensive for large tables in Dompdf */
             margin-top: 15px;
+            table-layout: fixed; /* Better performance */
         }
 
         th,
         td {
-            border: 1px solid #59acffff;
+            border: 1px solid #59acff; /* Simplified 6-digit hex */
             padding: 4px;
             text-align: left;
+            word-wrap: break-word;
         }
 
         th {
-            background-color: #8fd0ffff;
+            background-color: #8fd0ff; /* Simplified 6-digit hex */
             text-align: center;
             font-size: 11px;
         }
@@ -244,12 +258,16 @@ $html = ob_get_clean();
 // 4. CONFIGURACIÓN Y GENERACIÓN DEL PDF
 $options = new Options();
 $options->set('isHtml5ParserEnabled', true);
-$options->set('isRemoteEnabled', true);
+$options->set('isRemoteEnabled', false); // Disable remote if not needed for better security/perf
 $options->set('defaultFont', 'Arial');
+$options->set('isFontSubsettingEnabled', true); // Critical for memory saving
+
+// Force Garbage Collection before rendering
+gc_collect_cycles();
 
 $dompdf = new Dompdf($options);
 $dompdf->loadHtml($html, 'UTF-8');
-$dompdf->setPaper('letter', 'landscape'); // Usamos landscape (horizontal) por la cantidad de columnas
+$dompdf->setPaper('letter', 'landscape');
 
 // Renderiza el HTML a PDF
 $dompdf->render();

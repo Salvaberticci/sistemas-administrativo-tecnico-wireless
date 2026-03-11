@@ -12,6 +12,12 @@ $cobros_estado_filtro = isset($_GET['estado_cobros']) ? $_GET['estado_cobros'] :
 $id_olt_filtro = isset($_GET['olt']) ? $_GET['olt'] : 'TODOS';
 $id_pon_filtro = isset($_GET['pon']) ? $_GET['pon'] : 'TODOS';
 
+// --- PAGINACIÓN ---
+$registros_por_pagina = 25;
+$pagina_actual = isset($_GET['p']) ? (int)$_GET['p'] : 1;
+if ($pagina_actual < 1) $pagina_actual = 1;
+$offset = ($pagina_actual - 1) * $registros_por_pagina;
+
 $clientes = [];
 $total_clientes = 0;
 
@@ -106,8 +112,7 @@ if ($cobros_estado_filtro !== 'TODOS') {
     $params[] = $cobros_estado_filtro;
     $types .= 's';
 }
-
-// 3. CONSULTA SQL FINAL
+// 3. CONSULTA SQL BASE
 $sql = "
     SELECT 
         c.id, c.nombre_completo, c.cedula, c.telefono, c.estado AS estado_contrato, c.ip_onu,
@@ -121,6 +126,23 @@ $sql = "
     ORDER BY c.nombre_completo ASC
 ";
 
+// 3.1. CONSULTA PARA EL TOTAL (PARA PAGINACIÓN)
+$sql_count = "SELECT COUNT(DISTINCT c.id) as total FROM contratos c {$join_clause} {$where_clause}";
+$stmt_count = $conn->prepare($sql_count);
+if (!empty($params)) {
+    $stmt_count->bind_param($types, ...$params);
+}
+$stmt_count->execute();
+$res_count = $stmt_count->get_result()->fetch_assoc();
+$total_clientes_filtrados = $res_count['total'];
+$total_paginas = ceil($total_clientes_filtrados / $registros_por_pagina);
+
+// 3.2. CONSULTA SQL FINAL CON LIMIT
+$sql .= " LIMIT ? OFFSET ? ";
+$params[] = $registros_por_pagina;
+$params[] = $offset;
+$types .= 'ii';
+
 $stmt = $conn->prepare($sql);
 
 if (!empty($params)) {
@@ -132,8 +154,9 @@ $resultado = $stmt->get_result();
 
 if ($resultado->num_rows > 0) {
     $clientes = $resultado->fetch_all(MYSQLI_ASSOC);
-    $total_clientes = count($clientes);
+    $total_clientes_pagina = count($clientes);
 }
+$total_clientes = $total_clientes_filtrados; // Para mostrar el total real en el header
 
 // --- TEMPLATE START ---
 $path_to_root = "../../";
@@ -397,6 +420,44 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                             </tbody>
                         </table>
                     </div>
+                </div>
+                <!-- Pagination Footer -->
+                <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center p-3">
+                    <div class="small text-muted">
+                        Mostrando <?php echo count($clientes); ?> de <?php echo $total_clientes; ?> clientes
+                    </div>
+                    <?php if ($total_paginas > 1): ?>
+                        <nav aria-label="Navegación de páginas">
+                            <ul class="pagination pagination-sm mb-0">
+                                <?php
+                                // Preservar filtros en los links
+                                $params_link = $_GET;
+                                
+                                // Botón Anterior
+                                $params_link['p'] = $pagina_actual - 1;
+                                $disabled_prev = ($pagina_actual <= 1) ? 'disabled' : '';
+                                echo "<li class='page-item {$disabled_prev}'><a class='page-link' href='?" . http_build_query($params_link) . "'><i class='fa-solid fa-chevron-left text-primary'></i></a></li>";
+
+                                // Páginas
+                                $rango = 2;
+                                for ($i = 1; $i <= $total_paginas; $i++) {
+                                    if ($i == 1 || $i == $total_paginas || ($i >= $pagina_actual - $rango && $i <= $pagina_actual + $rango)) {
+                                        $params_link['p'] = $i;
+                                        $active = ($i == $pagina_actual) ? 'active' : '';
+                                        echo "<li class='page-item {$active}'><a class='page-link' href='?" . http_build_query($params_link) . "'>{$i}</a></li>";
+                                    } elseif ($i == $pagina_actual - $rango - 1 || $i == $pagina_actual + $rango + 1) {
+                                        echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
+                                    }
+                                }
+
+                                // Botón Siguiente
+                                $params_link['p'] = $pagina_actual + 1;
+                                $disabled_next = ($pagina_actual >= $total_paginas) ? 'disabled' : '';
+                                echo "<li class='page-item {$disabled_next}'><a class='page-link' href='?" . http_build_query($params_link) . "'><i class='fa-solid fa-chevron-right text-primary'></i></a></li>";
+                                ?>
+                            </ul>
+                        </nav>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php else: ?>
