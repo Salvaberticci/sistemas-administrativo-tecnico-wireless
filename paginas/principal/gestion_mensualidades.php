@@ -304,6 +304,17 @@ require_once '../includes/sidebar.php';
                         <label class="form-label fw-bold text-primary small mb-1"><i class="fas fa-camera"></i> Escaneo Automático de Comprobante (Opcional)</label>
                         <p class="text-muted small mb-0" style="font-size: 0.8rem;">Sube el capture temporalmente para rellenar Monto, Referencia y Banco (BETA).</p>
                         <input class="form-control form-control-sm mt-2" type="file" id="capture_upload" accept="image/*">
+                        
+                        <!-- Previsualización del Capture -->
+                        <div id="capture_preview_container" class="mt-3 d-none">
+                            <div class="position-relative d-inline-block border rounded shadow-sm overflow-hidden bg-white" style="max-width: 100%; max-height: 300px;">
+                                <img id="capture_preview_img" src="" alt="Preview" style="max-width: 100%; height: auto; display: block;">
+                                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-1" style="width: 24px; height: 24px; line-height: 12px; font-size: 10px;" onclick="clearCaptureUpload()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
                         <div id="ocr_status" class="mt-2 small text-info fw-bold d-none">
                             <i class="fas fa-spinner fa-spin"></i> Analizando comprobante, por favor espera...
                         </div>
@@ -1104,6 +1115,17 @@ require_once '../includes/sidebar.php';
         return false;
     }
 
+    window.clearCaptureUpload = function() {
+        document.getElementById('capture_upload').value = '';
+        document.getElementById('capture_preview_container').classList.add('d-none');
+        document.getElementById('capture_preview_img').src = '';
+        const statusDiv = document.getElementById('ocr_status');
+        if (statusDiv) {
+            statusDiv.classList.add('d-none');
+            statusDiv.innerHTML = '';
+        }
+    };
+
 
     // === OCR TESSERACT.JS LOGIC ===
     const scriptTesseract = document.createElement('script');
@@ -1112,7 +1134,20 @@ require_once '../includes/sidebar.php';
 
     document.getElementById('capture_upload').addEventListener('change', async function(e) {
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file) {
+            clearCaptureUpload();
+            return;
+        }
+
+        // Mostrar Previsualización
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const previewContainer = document.getElementById('capture_preview_container');
+            const previewImg = document.getElementById('capture_preview_img');
+            previewImg.src = event.target.result;
+            previewContainer.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
 
         const statusDiv = document.getElementById('ocr_status');
         statusDiv.classList.remove('d-none');
