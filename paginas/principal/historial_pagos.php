@@ -51,7 +51,7 @@ if ($resultado->num_rows > 0) {
 $path_to_root = "../../";
 $page_title = "Historial de Pagos - " . $nombre_cliente;
 $breadcrumb = ["Cobranzas", "Gestión de Mensualidades y Pagos"];
-$back_url = "gestion_mensualidades.php?maintenance_done=1";
+$back_url = "gestion_mensualidades.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>

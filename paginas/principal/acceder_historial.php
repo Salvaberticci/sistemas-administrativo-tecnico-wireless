@@ -93,7 +93,7 @@ $conn->close();
                 <?php endif; ?>
             </div>
             <div class="card-footer text-end">
-                <a href="gestion_mensualidades.php?maintenance_done=1" class="btn btn-secondary">Volver a Cobros</a>
+                <a href="gestion_mensualidades.php" class="btn btn-secondary">Volver a Cobros</a>
             </div>
         </div>
     </div>

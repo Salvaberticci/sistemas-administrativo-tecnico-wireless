@@ -5,11 +5,6 @@
  */
 require_once '../conexion.php';
 
-// Redirección si no ha pasado mantenimiento (copiado de gestion_cobros.php)
-if (!isset($_GET['maintenance_done'])) {
-    header('Location: actualizacion_info.php');
-    exit();
-}
 
 // Lógica de mensajes
 $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : '';
@@ -91,13 +86,13 @@ require_once '../includes/sidebar.php';
                     <span id="tasa_display" class="text-secondary small">Cargando tasa...</span>
                 </div>
                 <?php
-                // Contar reportes pendientes
-                $res_pend = $conn->query("SELECT COUNT(*) FROM pagos_reportados WHERE estado = 'PENDIENTE'");
+                // Contar clientes deudores pendientes
+                $res_pend = $conn->query("SELECT COUNT(*) FROM clientes_deudores WHERE estado = 'PENDIENTE'");
                 $cant_pend = $res_pend ? $res_pend->fetch_array()[0] : 0;
                 if ($cant_pend > 0):
                     ?>
-                    <a href="aprobar_pagos.php" class="btn btn-warning shadow-sm me-2 fw-bold pulse-warning">
-                        <i class="fas fa-bell me-2"></i> <?php echo $cant_pend; ?> Pagos Pendientes
+                    <a href="gestion_deudores.php" class="btn btn-warning shadow-sm me-2 fw-bold pulse-warning">
+                        <i class="fas fa-bell me-2"></i> <?php echo $cant_pend; ?> Deudores Pendientes
                     </a>
                 <?php endif; ?>
                 <button type="button" class="btn btn-success shadow-sm" data-bs-toggle="modal"
@@ -1401,7 +1396,7 @@ require_once '../includes/sidebar.php';
             document.getElementById('modal_ex_mensaje_principal').textContent = urlParams.get('message') || 'Operación realizada con éxito.';
             exitoModal.show();
             if (history.replaceState) {
-                var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?maintenance_done=1';
+                var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                 window.history.replaceState({ path: newUrl }, '', newUrl);
             }
         }

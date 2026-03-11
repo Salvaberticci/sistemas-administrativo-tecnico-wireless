@@ -205,11 +205,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $conn->close();
 
     // Redirigir siempre a gestion_mensualidades.php para mostrar el mensaje de éxito/error en la lista.
-    header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode($message) . "&class=" . $class);
+    header("Location: gestion_mensualidades.php?message=" . urlencode($message) . "&class=" . $class);
     exit();
 } else {
     // Si acceden directamente al procesador, los enviamos a la lista
-    header("Location: gestion_mensualidades.php?maintenance_done=1");
+    header("Location: gestion_mensualidades.php");
     exit();
 }
 ?>
