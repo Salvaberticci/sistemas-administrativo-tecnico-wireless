@@ -204,7 +204,51 @@ require_once '../includes/sidebar.php';
         });
     });
 
-    function marcarPagado(id) {
+    async function solicitarClaveAdmin(titulo = 'Confirmar Acción') {
+        const focusHandler = (e) => {
+            if (e.target.closest(".swal2-container")) {
+                e.stopImmediatePropagation();
+            }
+        };
+        document.addEventListener('focusin', focusHandler, true);
+
+        const { value: password } = await Swal.fire({
+            title: titulo,
+            input: 'password',
+            inputLabel: 'Ingrese su clave de usuario para proceder',
+            inputPlaceholder: 'Contraseña',
+            inputAttributes: {
+                autocapitalize: 'off',
+                autocorrect: 'off'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Confirmar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            didClose: () => {
+                document.removeEventListener('focusin', focusHandler, true);
+            }
+        });
+
+        if (password) {
+            const resp = await fetch('verificar_clave.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'clave=' + encodeURIComponent(password)
+            });
+            const data = await resp.json();
+            if (data.success) {
+                return true;
+            }
+            Swal.fire('Error', 'Clave incorrecta', 'error');
+        }
+        return false;
+    }
+
+    async function marcarPagado(id) {
+        const proceeds = await solicitarClaveAdmin('Confirmar Pago');
+        if (!proceeds) return;
+
         Swal.fire({
             title: '¿Confirmar Pago?',
             text: "Esta acción marcará la deuda como pagada y limpiará el saldo pendiente.",
