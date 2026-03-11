@@ -1607,8 +1607,10 @@ require_once '../includes/sidebar.php';
             }
 
             let resultMsg = "OCR Finalizado. ";
-            resultMsg += foundMonto ? "Monto OK. " : "";
-            resultMs            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + resultMsg;
+            resultMsg += foundRef ? "Ref OK. " : "";
+            resultMsg += foundBanco ? "Banco OK. " : "";
+
+            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + resultMsg;
             statusDiv.classList.replace('text-info', 'text-success');
 
             await worker.terminate();
@@ -1678,6 +1680,9 @@ require_once '../includes/sidebar.php';
                     tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">${res.message}</td></tr>`;
                 }
             })
+            .catch(err => {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Error al cargar datos.</td></tr>';
             });
     };
 
