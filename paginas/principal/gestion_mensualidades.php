@@ -256,207 +256,212 @@ require_once '../includes/sidebar.php';
 
 <!-- Modal Generar Cobro -->
 <div class="modal fade" id="modalGenerarCobro" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title fw-bold">Generar Cargo Manual</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form action="generar_cobro_manual.php" method="POST">
-                <div class="modal-body p-4">
-                    <div class="mb-3 position-relative">
-                        <label class="form-label fw-semibold text-secondary small">Buscar Contrato</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0 text-muted"><i
-                                    class="fas fa-search"></i></span>
-                            <input type="text" class="form-control border-start-0 ps-0" id="contrato_search_modal"
-                                placeholder="ID, Nombre o Cédula" required autocomplete="off">
-                        </div>
-                        <input type="hidden" name="id_contrato" id="id_contrato_hidden_modal" required>
-                        <div id="contrato_search_results_modal" class="list-group shadow-sm position-absolute w-100"
-                            style="z-index: 1050;"></div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label fw-semibold text-secondary small d-block">Monto del Cargo</label>
-
-                            <div class="btn-group w-100 mb-2" role="group">
-                                <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_usd"
-                                    value="usd" checked>
-                                <label class="btn btn-outline-success btn-sm" for="moneda_cobro_usd"><i
-                                        class="fas fa-dollar-sign"></i> USD</label>
-
-                                <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_bs"
-                                    value="bs">
-                                <label class="btn btn-outline-primary btn-sm" for="moneda_cobro_bs">Bs</label>
+                <div class="modal-body p-0">
+                    <div class="row g-0">
+                        <!-- COLUMNA IZQUIERDA: DATOS Y DESGLOSE -->
+                        <div class="col-md-7 border-end p-4">
+                            <div class="mb-4 position-relative">
+                                <label class="form-label fw-bold text-dark small"><i class="fas fa-search me-1 text-success"></i> 1. Buscar Contrato</label>
+                                <div class="input-group shadow-sm border rounded">
+                                    <span class="input-group-text bg-white border-0 text-muted"><i class="fas fa-user-circle"></i></span>
+                                    <input type="text" class="form-control border-0 ps-0" id="contrato_search_modal" placeholder="ID, Nombre o Cédula" required autocomplete="off">
+                                </div>
+                                <input type="hidden" name="id_contrato" id="id_contrato_hidden_modal" required>
+                                <div id="contrato_search_results_modal" class="list-group shadow-lg position-absolute w-100" style="z-index: 1060;"></div>
                             </div>
 
-                            <input type="number" step="0.01" min="0.01" class="form-control" id="input_monto_cobro"
-                                required>
-                            <input type="hidden" name="monto" id="monto_cobro_hidden"> <!-- Valor final en USD -->
-                            <div id="equiv_cobro" class="form-text fw-bold text-primary mt-1"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Escáner Inteligente OCR -->
-                    <div class="mb-3 p-3 border rounded bg-light border-primary border-opacity-25" style="border-style: dashed !important;">
-                        <label class="form-label fw-bold text-primary small mb-1"><i class="fas fa-camera"></i> Escaneo Automático de Comprobante (Opcional)</label>
-                        <p class="text-muted small mb-0" style="font-size: 0.8rem;">Sube el capture temporalmente para rellenar Monto, Referencia y Banco (BETA).</p>
-                        <input class="form-control form-control-sm mt-2" type="file" id="capture_upload" accept="image/*">
-                        
-                        <!-- Previsualización del Capture -->
-                        <div id="capture_preview_container" class="mt-3 d-none">
-                            <div class="position-relative d-inline-block border rounded shadow-sm overflow-hidden bg-white" style="max-width: 100%; max-height: 300px;">
-                                <img id="capture_preview_img" src="" alt="Preview" style="max-width: 100%; height: auto; display: block;">
-                                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-1" style="width: 24px; height: 24px; line-height: 12px; font-size: 10px;" onclick="clearCaptureUpload()">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="ocr_status" class="mt-2 small text-info fw-bold d-none">
-                            <i class="fas fa-spinner fa-spin"></i> Analizando comprobante, por favor espera...
-                        </div>
-                    </div>
-
-                    <!-- Datos Globales del Pago -->
-                    <div class="row bg-light rounded p-3 mb-3 border">
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label fw-semibold text-secondary small">Referencia de Pago</label>
-                            <input type="text" class="form-control" name="referencia_pago" id="input_ref_generar_cobro" required placeholder="N° de Transferencia/Pago">
-                        </div>
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label fw-semibold text-secondary small">Banco Destino (Dónde pagó el cliente)</label>
-                            <select class="form-select" name="id_banco_pago" id="select_banco_cobro" required>
-                                <option value="">Seleccione...</option>
-                                <!-- Llenado por JS -->
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- DESGLOSE DEL PAGO -->
-                    <h6 class="fw-bold text-muted small mb-3 border-bottom pb-2">Desglose del Pago (Debe coincidir con la sumatoria)</h6>
-                    
-                    <!-- Switch 1: Mensualidad -->
-                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="form-check form-switch me-3 mb-0">
-                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_mensualidad" name="desglose_mensualidad_activado" value="1">
-                        </div>
-                        <label class="form-check-label fw-bold text-dark me-auto" for="switch_mensualidad" style="min-width: 100px;">Mensualidad</label>
-                        
-                        <div class="d-none desglose-fields d-flex gap-2 w-100" id="fields_mensualidad">
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_mensualidad" placeholder="Monto">
-                            <input type="number" step="1" min="1" class="form-control form-control-sm" name="meses_mensualidad" placeholder="Cant. Meses">
-                        </div>
-                    </div>
-
-                    <!-- Switch 2: Instalación -->
-                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="form-check form-switch me-3 mb-0">
-                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_instalacion" name="desglose_instalacion_activado" value="1">
-                        </div>
-                        <label class="form-check-label fw-bold text-dark me-auto" for="switch_instalacion" style="min-width: 100px;">Instalación</label>
-                        
-                        <div class="d-none desglose-fields w-100" id="fields_instalacion">
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_instalacion" placeholder="Monto Instalación">
-                        </div>
-                    </div>
-
-                    <!-- Switch 3: Prorrateo -->
-                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="form-check form-switch me-3 mb-0">
-                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_prorrateo" name="desglose_prorrateo_activado" value="1">
-                        </div>
-                        <label class="form-check-label fw-bold text-dark me-auto" for="switch_prorrateo" style="min-width: 100px;">Prorrateo</label>
-                        
-                        <div class="d-none desglose-fields w-100" id="fields_prorrateo">
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_prorrateo" placeholder="Monto Prorrateo">
-                        </div>
-                    </div>
-
-                    <!-- Switch 4: Abono -->
-                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="form-check form-switch me-3 mb-0">
-                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_abono" name="desglose_abono_activado" value="1">
-                        </div>
-                        <label class="form-check-label fw-bold text-dark me-auto" for="switch_abono" style="min-width: 100px;">Abono</label>
-                        
-                        <div class="d-none desglose-fields w-100" id="fields_abono">
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_abono" placeholder="Monto Abono">
-                        </div>
-                    </div>
-
-                    <!-- Switch 5: Equipo -->
-                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="form-check form-switch me-3 mb-0">
-                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_equipo" name="desglose_equipo_activado" value="1">
-                        </div>
-                        <label class="form-check-label fw-bold text-dark me-auto" for="switch_equipo" style="min-width: 100px;">Equipo</label>
-                        
-                        <div class="d-none desglose-fields w-100" id="fields_equipo">
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_equipo" placeholder="Monto por Equipo">
-                        </div>
-                    </div>
-
-                    <!-- Switch 6: Mensualidad Extra (Otros Contratos) -->
-                    <div class="mb-4 bg-light p-2 rounded border border-info">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="form-check form-switch me-3 mb-0">
-                                <input class="form-check-input desglose-switch" type="checkbox" id="switch_extra" name="desglose_extra_activado" value="1">
-                            </div>
-                            <label class="form-check-label fw-bold text-info me-auto" for="switch_extra">Mensualidad Extra (Otros Usuarios)</label>
-                        </div>
-                        
-                        <div class="d-none desglose-fields w-100" id="fields_extra">
-                            <div id="contenedor_extras">
-                                <!-- Primera fila por defecto -->
-                                <div class="row g-2 mb-2 fila-extra align-items-end">
-                                    <div class="col-5 position-relative">
-                                        <input type="text" class="form-control form-control-sm extra-search" placeholder="ID, Nombre o CI" autocomplete="off">
-                                        <input type="hidden" name="extra_contrato[]" class="extra-hidden">
-                                        <div class="list-group shadow-sm position-absolute w-100 extra-results" style="z-index: 1050; max-height: 150px; overflow-y: auto;"></div>
+                            <div class="mb-4 bg-light p-3 rounded border shadow-sm">
+                                <label class="form-label fw-bold text-dark small d-block mb-3">2. Monto Declarado del Pago</label>
+                                <div class="row g-3">
+                                    <div class="col-md-5">
+                                        <div class="btn-group w-100 border rounded bg-white p-1" role="group">
+                                            <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_usd" value="usd" checked>
+                                            <label class="btn btn-outline-success border-0 btn-sm py-2" for="moneda_cobro_usd"><i class="fas fa-dollar-sign"></i> USD</label>
+                                            <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_bs" value="bs">
+                                            <label class="btn btn-outline-primary border-0 btn-sm py-2" for="moneda_cobro_bs">Bs</label>
+                                        </div>
                                     </div>
-                                    <div class="col-3">
-                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="extra_monto[]" placeholder="Monto">
-                                    </div>
-                                    <div class="col-3">
-                                        <input type="number" step="1" min="1" class="form-control form-control-sm" name="extra_meses[]" placeholder="Meses">
-                                    </div>
-                                    <div class="col-1 text-end">
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-extra" disabled><i class="fas fa-times"></i></button>
+                                    <div class="col-md-7">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white text-muted fw-bold">$</span>
+                                            <input type="number" step="0.01" min="0.01" class="form-control form-control-lg fw-bold text-success border-0 shadow-none" id="input_monto_cobro" required placeholder="0.00" style="background-color: transparent;">
+                                        </div>
+                                        <input type="hidden" name="monto" id="monto_cobro_hidden">
+                                        <div id="equiv_cobro" class="form-text fw-bold text-primary mt-1 px-1" style="font-size: 0.8rem;"></div>
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-sm btn-info text-white mt-1 w-100" id="btn_add_extra">
-                                <i class="fas fa-plus"></i> Añadir otra Mensualidad Extra
-                            </button>
-                        </div>
-                    </div>
 
-                    <!-- Totales y sumatoria Validación -->
-                    <div class="alert alert-secondary d-flex justify-content-between align-items-center py-2 mb-3">
-                        <span class="fw-bold small">Verificación de Desglose:</span>
-                        <div class="text-end">
-                            <span class="d-block small text-muted">Monto Superior Declarado: <strong id="val_monto_total">$0.00</strong></span>
-                            <span class="d-block small text-muted">Suma del Desglose: <strong id="val_suma_desglose" class="text-danger">$0.00</strong></span>
-                        </div>
-                    </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-hashtag"></i> N° Referencia</label>
+                                    <input type="text" class="form-control form-control-sm shadow-sm" name="referencia_pago" id="input_ref_generar_cobro" required placeholder="Nro de operación">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-university"></i> Banco Recepto</label>
+                                    <select class="form-select form-select-sm shadow-sm" name="id_banco_pago" id="select_banco_cobro" required>
+                                        <option value="">Seleccione banco...</option>
+                                    </select>
+                                </div>
+                            </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-secondary small">Autorizado por</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" name="autorizado_por" id="input_autorizado_por"
-                                required placeholder="Escriba un nombre...">
-                            <button class="btn btn-outline-primary" type="button"
-                                onclick="document.getElementById('input_autorizado_por').value = '<?php echo addslashes($user_name); ?>'">
-                                <i class="fas fa-user-check me-1"></i> Usar mi usuario
-                            </button>
+                            <h6 class="fw-bold text-success small mb-3 border-bottom pb-2 d-flex justify-content-between">
+                                <span><i class="fas fa-layer-group me-1"></i> 3. Desglose del Pago</span>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-1 px-2" style="font-size: 0.65rem;">Suma Dinámica</span>
+                            </h6>
+                            
+                            <!-- Área de Scroll para el Desglose -->
+                            <div class="desglose-scroll pe-2" style="max-height: 280px; overflow-y: auto;">
+                                <!-- Mensualidad -->
+                                <div class="d-flex align-items-center mb-2 bg-white border-start border-4 border-primary rounded p-2 shadow-sm">
+                                    <div class="form-check form-switch me-3 mb-0">
+                                        <input class="form-check-input desglose-switch" type="checkbox" id="switch_mensualidad" name="desglose_mensualidad_activado" value="1">
+                                    </div>
+                                    <label class="form-check-label fw-bold text-dark me-auto small mb-0" for="switch_mensualidad">Mensualidad</label>
+                                    <div class="d-none desglose-fields d-flex gap-2" id="fields_mensualidad" style="width: 220px;">
+                                        <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="monto_mensualidad" placeholder="Monto">
+                                        <input type="number" step="1" class="form-control form-control-sm" name="meses_mensualidad" placeholder="Meses">
+                                    </div>
+                                </div>
+
+                                <!-- Instalación -->
+                                <div class="d-flex align-items-center mb-2 bg-white border-start border-4 border-info rounded p-2 shadow-sm">
+                                    <div class="form-check form-switch me-3 mb-0">
+                                        <input class="form-check-input desglose-switch" type="checkbox" id="switch_instalacion" name="desglose_instalacion_activado" value="1">
+                                    </div>
+                                    <label class="form-check-label fw-bold text-dark me-auto small mb-0" for="switch_instalacion">Instalación</label>
+                                    <div class="d-none desglose-fields" id="fields_instalacion" style="width: 220px;">
+                                        <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="monto_instalacion" placeholder="Monto">
+                                    </div>
+                                </div>
+
+                                <!-- Abono/Prorrateo/Equipos -->
+                                <div class="d-flex align-items-center mb-2 bg-white border-start border-4 border-secondary rounded p-2 shadow-sm">
+                                    <div class="form-check form-switch me-3 mb-0">
+                                        <input class="form-check-input desglose-switch" type="checkbox" id="switch_equipo" name="desglose_equipo_activado" value="1">
+                                    </div>
+                                    <label class="form-check-label fw-bold text-dark me-auto small mb-0" for="switch_equipo">Equipos/Materiales</label>
+                                    <div class="d-none desglose-fields" id="fields_equipo" style="width: 220px;">
+                                        <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="monto_equipo" placeholder="Monto">
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center bg-white border-start border-4 border-warning rounded p-2 shadow-sm h-100">
+                                            <div class="form-check form-switch me-2 mb-0">
+                                                <input class="form-check-input desglose-switch" type="checkbox" id="switch_abono" name="desglose_abono_activado" value="1">
+                                            </div>
+                                            <label class="form-check-label fw-bold text-dark small mb-0" for="switch_abono" style="font-size: 0.75rem;">Abono</label>
+                                            <div class="d-none desglose-fields ms-auto" id="fields_abono" style="width: 80px;">
+                                                <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="monto_abono" placeholder="$.">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center bg-white border-start border-4 border-danger rounded p-2 shadow-sm h-100">
+                                            <div class="form-check form-switch me-2 mb-0">
+                                                <input class="form-check-input desglose-switch" type="checkbox" id="switch_prorrateo" name="desglose_prorrateo_activado" value="1">
+                                            </div>
+                                            <label class="form-check-label fw-bold text-dark small mb-0" for="switch_prorrateo" style="font-size: 0.75rem;">Prorrateo</label>
+                                            <div class="d-none desglose-fields ms-auto" id="fields_prorrateo" style="width: 80px;">
+                                                <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="monto_prorrateo" placeholder="$.">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Mensualidad Extra -->
+                                <div class="mb-3 bg-white border rounded p-3 shadow-sm border-info mt-3">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="form-check form-switch me-3 mb-0">
+                                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_extra" name="desglose_extra_activado" value="1">
+                                        </div>
+                                        <label class="form-check-label fw-bold text-info me-auto small mb-0" for="switch_extra">Pago de Terceros</label>
+                                    </div>
+                                    <div class="d-none desglose-fields" id="fields_extra">
+                                        <div id="contenedor_extras">
+                                            <div class="row g-2 mb-2 fila-extra align-items-end border-bottom pb-2">
+                                                <div class="col-6 position-relative">
+                                                    <input type="text" class="form-control form-control-sm extra-search" placeholder="Cliente..." autocomplete="off">
+                                                    <input type="hidden" name="extra_contrato[]" class="extra-hidden">
+                                                    <div class="list-group shadow-lg position-absolute w-100 extra-results" style="z-index: 1080; max-height: 100px; overflow-y: auto;"></div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <input type="number" step="0.01" class="form-control form-control-sm desglose-monto" name="extra_monto[]" placeholder="Monto">
+                                                </div>
+                                                <div class="col-2 text-end">
+                                                    <button type="button" class="btn btn-sm text-danger border-0 btn-remove-extra" disabled><i class="fas fa-trash"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-link text-info p-0 mt-1" id="btn_add_extra"><i class="fas fa-plus-circle"></i> Añadir otro</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-light border d-flex justify-content-between align-items-center py-2 mb-3 shadow-sm mt-3 mx-0">
+                                <span class="fw-bold small text-muted">Venta: $ <span id="val_monto_total">0.00</span></span>
+                                <span class="fw-bold small text-danger">Suma: $ <span id="val_suma_desglose">0.00</span></span>
+                            </div>
+
+                            <div class="row g-2 mt-2">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold text-muted small mb-1">Autorizado por</label>
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="text" class="form-control shadow-sm" name="autorizado_por" id="input_autorizado_por" required placeholder="Firma administrativa">
+                                        <button class="btn btn-outline-primary" type="button" onclick="document.getElementById('input_autorizado_por').value = '<?php echo addslashes($user_name); ?>'">
+                                            <i class="fas fa-user-check"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold text-muted small mb-1">Justificación del Cargo</label>
+                                    <textarea class="form-control form-control-sm shadow-sm" name="justificacion" rows="2" placeholder="Explique el motivo del cargo manual..." required></textarea>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-secondary small">Justificación</label>
-                        <textarea class="form-control" name="justificacion" rows="2" required></textarea>
+
+                        <!-- COLUMNA DERECHA: OCR Y CAPTURE -->
+                        <div class="col-md-5 bg-light p-4 rounded-end">
+                            <h6 class="fw-bold text-primary mb-3"><i class="fas fa-camera-retro me-1"></i> 4. Comprobante de Pago</h6>
+                            <div class="mb-4 bg-white p-3 rounded shadow-sm border">
+                                <input class="form-control form-control-sm mb-0 shadow-none border-0" type="file" id="capture_upload" accept="image/*">
+                                <div id="ocr_status" class="mt-2 small text-info fw-bold d-none">
+                                    <i class="fas fa-sync fa-spin"></i> Procesando OCR...
+                                </div>
+                            </div>
+
+                            <!-- Previsualización -->
+                            <div id="capture_preview_container" class="d-none">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small fw-bold text-secondary">Imagen del Capture:</span>
+                                    <button type="button" class="btn btn-sm text-danger p-0 border-0" onclick="clearCaptureUpload()">Eliminar</button>
+                                </div>
+                                <div class="position-relative border rounded shadow-lg overflow-hidden bg-white" style="border: 2px solid #ccc !important;">
+                                    <div class="zoom-box scroll-premium" style="height: 520px; overflow-y: auto; background: #fafafa;">
+                                        <img id="capture_preview_img" src="" alt="Capture" style="width: 100%; height: auto;">
+                                    </div>
+                                    <div class="position-absolute bottom-0 start-0 w-100 p-2 bg-dark bg-opacity-50 text-white text-center" style="font-size: 0.6rem;">
+                                        <i class="fas fa-eye"></i> MODO VERIFICACIÓN
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Placeholder -->
+                            <div id="capture_placeholder" class="text-center py-5 border rounded bg-white border-dashed h-100 d-flex flex-column justify-content-center align-items-center" style="border: 2px dashed #ccc !important; min-height: 480px; color: #ddd;">
+                                <i class="fas fa-file-invoice-dollar fa-5x mb-3 opacity-25"></i>
+                                <h6 class="fw-bold opacity-50">Esperando comprobante</h6>
+                                <p class="small opacity-50 px-4 text-center">Selecciona la imagen para visualizarla aquí.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-top-0">
@@ -1118,11 +1123,12 @@ require_once '../includes/sidebar.php';
     window.clearCaptureUpload = function() {
         document.getElementById('capture_upload').value = '';
         document.getElementById('capture_preview_container').classList.add('d-none');
+        document.getElementById('capture_placeholder').classList.remove('d-none');
         document.getElementById('capture_preview_img').src = '';
         const statusDiv = document.getElementById('ocr_status');
         if (statusDiv) {
             statusDiv.classList.add('d-none');
-            statusDiv.innerHTML = '';
+            statusDiv.innerHTML = '<i class="fas fa-sync fa-spin"></i> Procesando OCR...';
         }
     };
 
@@ -1142,10 +1148,9 @@ require_once '../includes/sidebar.php';
         // Mostrar Previsualización
         const reader = new FileReader();
         reader.onload = function(event) {
-            const previewContainer = document.getElementById('capture_preview_container');
-            const previewImg = document.getElementById('capture_preview_img');
-            previewImg.src = event.target.result;
-            previewContainer.classList.remove('d-none');
+            document.getElementById('capture_preview_img').src = event.target.result;
+            document.getElementById('capture_preview_container').classList.remove('d-none');
+            document.getElementById('capture_placeholder').classList.add('d-none');
         };
         reader.readAsDataURL(file);
 
