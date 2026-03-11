@@ -1146,25 +1146,29 @@ require_once '../includes/sidebar.php';
                 }
             }
 
-            // 2. Regex de Referencia Avanzado (Blindado contra ruido y fragmentación)
-            // Keywords con ligeros comodines para soportar mis-reads (ej: Operacien, Referencla)
+            // 2. Regex de Referencia Avanzado (Blindado contra encabezados y texto)
             const keywords = [
                 'Nro\\.?\\s+de\\s+referencia',
                 'N[uú]mero\\s+de\\s+referencia',
-                'Nro\\.?\\s+de\\s+operaci[oó\\.\\s]*n',
-                'N[uú]mero\\s+de\\s+operaci[oó\\.\\s]*n',
-                'Referenc[ia|la|ia|1a]+',
-                'Operaci[oó\\.\\s]*n',
-                'Operacion',
-                'Confirmaci[oó]n',
-                'Aprobaci[oó]n',
-                'Ref\\.',
-                'Ref\\s'
+                'Nro\\.?\\s+de\\s+operaci[oó]n',
+                'N[uú]mero\\s+de\\s+operaci[oó]n',
+                '\\bReferencia\\b',
+                '\\bOperaci[oó]n\\b',
+                '\\bOperacion\\b',
+                '\\bConfirmaci[oó]n\\b',
+                '\\bAprobaci[oó]n\\b',
+                '\\bRef\\b\\.?',
             ].join('|');
             
-            // Aceptamos que entre la palabra y el número haya casi cualquier cosa que no sea otra palabra
-            // El número puede contener espacios, puntos o letras (alfanumérico)
-            const refRegex = new RegExp(`(?:${keywords})(?:\\s*:)?\\s*[^\\w\\n]*([a-z0-9\\s\\.]{6,})`, 'i');
+            // Excluimos "Comprobante de operación" o "Transferencias" para no confundir con etiquetas de datos
+            if (text.toLowerCase().includes('comprobante de operaci')) {
+                // Si el texto tiene encabezados, intentamos buscar la etiqueta que esté más abajo
+                // (Tesseract a veces lee de arriba a abajo)
+            }
+
+            // Buscamos la keyword y capturamos SOLO el bloque numérico que le sigue
+            // [^\d\n]* salta cualquier ruido que no sea número hasta encontrar el primer dígito
+            const refRegex = new RegExp(`(?:${keywords})(?:\\s*:)?\\s*[^0-9\\n]*(\\d[\\d\\s\\.]{5,20})`, 'i');
             const refMatch = text.match(refRegex);
             
             if (refMatch) {
