@@ -564,6 +564,52 @@ require_once '../includes/sidebar.php';
     </div>
 </div>
 
+<!-- Modal Editar Cobro -->
+<div class="modal fade" id="modalEditarCobro" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold">Modificar Cobro #<span id="edit_id_cobro_display"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditarCobro">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="id_cobro" id="edit_id_cobro">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Cliente</label>
+                        <p class="form-control-static fw-bold" id="edit_cliente_nombre"></p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_monto_total" class="form-label fw-bold small text-muted">Monto Total ($)</label>
+                        <input type="number" step="0.01" class="form-control" name="monto_total" id="edit_monto_total" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_fecha_vencimiento" class="form-label fw-bold small text-muted">Fecha de Vencimiento</label>
+                        <input type="date" class="form-control" name="fecha_vencimiento" id="edit_fecha_vencimiento" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_estado" class="form-label fw-bold small text-muted">Estado</label>
+                        <select name="estado" id="edit_estado" class="form-select" required>
+                            <option value="PENDIENTE">PENDIENTE</option>
+                            <option value="PAGADO">PAGADO</option>
+                            <option value="VENCIDO">VENCIDO</option>
+                            <option value="CANCELADO">CANCELADO</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Exito -->
 <div class="modal fade" id="modalExito" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -1125,6 +1171,35 @@ require_once '../includes/sidebar.php';
             $('#delete_password').val(''); // Limpiar contraseña al abrir
         });
 
+        $('#formEliminar').on('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('elimina_cobro.php', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('modalEliminar')).hide();
+                    tablaUnica.ajax.reload(null, false);
+                    Swal.fire({
+                        title: '¡Eliminado!',
+                        text: res.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                }
+            })
+            .catch(err => {
+                Swal.fire('Error', 'Error técnico al eliminar.', 'error');
+            });
+        });
+
         // === BUSCADOR AUTOCOMPLETE CONTRATOS ===
         const searchInput = document.getElementById('contrato_search_modal');
         const resultsContainer = document.getElementById('contrato_search_results_modal');
@@ -1488,9 +1563,53 @@ require_once '../includes/sidebar.php';
     window.confirmarEdicionCobro = async function (id) {
         const proceeds = await solicitarClaveAdmin('Modificar Cobro');
         if (proceeds) {
-            window.location.href = 'modifica_cobro1.php?id=' + id;
+            // Fetch data
+            fetch(`get_cobro_data.php?id=${id}`)
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        const d = res.data;
+                        $('#edit_id_cobro').val(d.id_cobro);
+                        $('#edit_id_cobro_display').text(d.id_cobro);
+                        $('#edit_cliente_nombre').text(d.nombre_cliente);
+                        $('#edit_monto_total').val(d.monto_total);
+                        $('#edit_fecha_vencimiento').val(d.fecha_vencimiento);
+                        $('#edit_estado').val(d.estado);
+                        
+                        var modal = new bootstrap.Modal(document.getElementById('modalEditarCobro'));
+                        modal.show();
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+                });
         }
     };
+
+    $('#formEditarCobro').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('actualizar_cobro.php', {
+            method: 'POST',
+            body: new URLSearchParams(formData)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                bootstrap.Modal.getInstance(document.getElementById('modalEditarCobro')).hide();
+                tablaUnica.ajax.reload(null, false);
+                Swal.fire({
+                    title: '¡Actualizado!',
+                    text: res.message,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire('Error', res.message, 'error');
+            }
+        });
+    });
 </script>
 
 <?php require_once '../includes/layout_foot.php'; ?>

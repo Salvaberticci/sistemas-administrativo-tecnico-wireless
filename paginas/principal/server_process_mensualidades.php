@@ -212,24 +212,25 @@ while ($aRow = $rResult->fetch_assoc()) {
     $row[] = $sae_select;
 
     // 10. Acciones
-    $acciones = '';
+    $acciones = '<div class="d-flex justify-content-end gap-1">';
     // Modificar
-    $acciones .= '<a href="javascript:void(0)" onclick="confirmarEdicionCobro(' . $id_cobro . ')" class="btn btn-sm btn-warning me-1" title="Modificar"><i class="fas fa-edit"></i></a>';
+    $acciones .= '<button type="button" onclick="confirmarEdicionCobro(' . $id_cobro . ')" class="btn btn-sm btn-warning" title="Modificar"><i class="fas fa-edit"></i></button>';
     
     // Eliminar: Solo permitida si NO está Pagado, o si es un pago MANUAL (Capture Desglosado)
     if ($estado != 'PAGADO' || $aRow['es_manual'] > 0) {
-        $acciones .= '<button type="button" class="btn btn-sm btn-danger me-1" 
+        $acciones .= '<button type="button" class="btn btn-sm btn-danger" 
                         data-bs-toggle="modal" data-bs-target="#modalEliminar" 
                         data-id="' . $id_cobro . '" data-nombre="' . htmlspecialchars($aRow['nombre_completo']) . '" 
                         title="Eliminar"><i class="fas fa-trash"></i></button>';
     }
     
     // Historial
-    $acciones .= '<a href="historial_pagos.php?id=' . $id_contrato . '" class="btn btn-sm btn-info me-1" title="Historial"><i class="fas fa-history"></i></a>';
+    $acciones .= '<a href="historial_pagos.php?id=' . $id_contrato . '" class="btn btn-sm btn-info" title="Historial"><i class="fas fa-history"></i></a>';
     // Justificación (if manual)
     if ($aRow['es_manual'] > 0) {
         $acciones .= '<a href="acceder_historial.php?id_cobro=' . $id_cobro . '" class="btn btn-sm btn-dark" title="Justificación"><i class="fas fa-info-circle"></i></a>';
     }
+    $acciones .= '</div>';
 
     $row[] = $acciones;
     $output['aaData'][] = $row;
