@@ -180,7 +180,6 @@ require_once '../includes/sidebar.php';
                 </div>
             </div>
             <div class="modal-footer bg-light border-top-0">
-                <a href="#" id="vc_btn_edit" class="btn btn-outline-primary shadow-sm"><i class="fas fa-edit me-1"></i> Editar Contrato</a>
                 <button type="button" class="btn btn-dark shadow-sm px-4" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
@@ -263,9 +262,6 @@ require_once '../includes/sidebar.php';
                 $('#vc_ap').text(data.punto_acceso || '---');
                 $('#vc_signal').text(data.valor_conexion_dbm ? data.valor_conexion_dbm + ' dBm' : '---');
             }
-            
-            // Botón Editar
-            $('#vc_btn_edit').attr('href', '../principal/modifica.php?id=' + id);
             
         });
     }
