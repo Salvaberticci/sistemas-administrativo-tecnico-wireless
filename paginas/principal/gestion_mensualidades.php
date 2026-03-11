@@ -559,6 +559,40 @@ require_once '../includes/sidebar.php';
     </div>
 </div>
 
+<!-- Modal Historial -->
+<div class="modal fade" id="modalHistorial" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title fw-bold">Historial de Pagos - <span id="hist_cliente_nombre"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover w-100" style="font-size: 0.85rem;">
+                        <thead class="bg-light text-muted">
+                            <tr>
+                                <th>ID</th>
+                                <th>Emisión</th>
+                                <th>Vencimiento</th>
+                                <th>Fecha Pago</th>
+                                <th>Monto</th>
+                                <th>Referencia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hist_table_body">
+                            <!-- Data populated via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Editar Cobro -->
 <div class="modal fade" id="modalEditarCobro" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -1574,10 +1608,7 @@ require_once '../includes/sidebar.php';
 
             let resultMsg = "OCR Finalizado. ";
             resultMsg += foundMonto ? "Monto OK. " : "";
-            resultMsg += foundRef ? "Ref OK. " : "";
-            resultMsg += foundBanco ? "Banco OK. " : "";
-
-            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + resultMsg;
+            resultMs            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + resultMsg;
             statusDiv.classList.replace('text-info', 'text-success');
 
             await worker.terminate();
@@ -1612,6 +1643,42 @@ require_once '../includes/sidebar.php';
                     }
                 });
         }
+    };
+
+    window.verHistorialPago = function(idContrato, nombreCliente) {
+        document.getElementById('hist_cliente_nombre').textContent = nombreCliente;
+        const tbody = document.getElementById('hist_table_body');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando historial...</td></tr>';
+        
+        var modal = new bootstrap.Modal(document.getElementById('modalHistorial'));
+        modal.show();
+
+        fetch(`get_historial_pagos.php?id_contrato=${idContrato}`)
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    tbody.innerHTML = '';
+                    if (res.data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No se encontraron pagos registrados.</td></tr>';
+                    } else {
+                        res.data.forEach(p => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${p.id_cobro}</td>
+                                <td>${p.fecha_emision}</td>
+                                <td>${p.fecha_vencimiento}</td>
+                                <td>${p.fecha_pago}</td>
+                                <td class="fw-bold text-success">$${parseFloat(p.monto_total).toFixed(2)}</td>
+                                <td>${p.referencia_pago || '-'}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">${res.message}</td></tr>`;
+                }
+            })
+            });
     };
 
     $('#formEditarCobro').on('submit', function(e) {

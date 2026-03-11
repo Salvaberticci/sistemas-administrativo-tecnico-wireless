@@ -222,7 +222,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     }
     
     // Historial
-    $acciones .= '<a href="historial_pagos.php?id=' . $id_contrato . '" class="btn btn-sm btn-info" title="Historial"><i class="fas fa-history"></i></a>';
+    $acciones .= '<button type="button" onclick="verHistorialPago(' . $id_contrato . ', \'' . addslashes($aRow['nombre_completo']) . '\')" class="btn btn-sm btn-info" title="Historial"><i class="fas fa-history"></i></button>';
     // Justificación (if manual)
     if ($aRow['es_manual'] > 0) {
         $acciones .= '<a href="acceder_historial.php?id_cobro=' . $id_cobro . '" class="btn btn-sm btn-dark" title="Justificación"><i class="fas fa-info-circle"></i></a>';
