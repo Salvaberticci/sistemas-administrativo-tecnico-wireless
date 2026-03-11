@@ -1182,15 +1182,18 @@ require_once '../includes/sidebar.php';
             .then(r => r.json())
             .then(res => {
                 if (res.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('modalEliminar')).hide();
-                    tablaUnica.ajax.reload(null, false);
                     Swal.fire({
                         title: '¡Eliminado!',
                         text: res.message,
                         icon: 'success',
-                        timer: 2000,
+                        timer: 1500,
                         showConfirmButton: false
                     });
+                    
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('modalEliminar')).hide();
+                        tablaUnica.ajax.reload(null, false);
+                    }, 500);
                 } else {
                     Swal.fire('Error', res.message, 'error');
                 }
@@ -1596,15 +1599,18 @@ require_once '../includes/sidebar.php';
         .then(r => r.json())
         .then(res => {
             if (res.success) {
-                bootstrap.Modal.getInstance(document.getElementById('modalEditarCobro')).hide();
-                tablaUnica.ajax.reload(null, false);
                 Swal.fire({
-                    title: '¡Actualizado!',
+                    title: '¡Guardado!',
                     text: res.message,
                     icon: 'success',
-                    timer: 2000,
+                    timer: 1500,
                     showConfirmButton: false
                 });
+
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('modalEditarCobro')).hide();
+                    tablaUnica.ajax.reload(null, false);
+                }, 500);
             } else {
                 Swal.fire('Error', res.message, 'error');
             }

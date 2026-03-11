@@ -74,7 +74,7 @@ try {
             $conn->query("DELETE FROM cuentas_por_cobrar WHERE id_cobro IN ($in_clause)");
         }
 
-        $msg = "Se eliminó el capture completo (Referencia $referencia), afectando " . count($ids_a_borrar) . " registro(s).";
+        $msg = "Se eliminó el capture completo (Referencia $referencia) correctamente.";
 
     } else {
         // ES UN COBRO AISLADO
@@ -84,7 +84,7 @@ try {
         $conn->query("DELETE FROM cobros_manuales_historial WHERE id_cobro_cxc = $id_cobro");
         $conn->query("DELETE FROM cuentas_por_cobrar WHERE id_cobro = $id_cobro");
 
-        $msg = "Cobro aislado eliminado correctamente.";
+        $msg = "Eliminado correctamente.";
     }
 
     $conn->commit();

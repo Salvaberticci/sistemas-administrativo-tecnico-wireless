@@ -21,7 +21,7 @@ $stmt = $conn->prepare("UPDATE cuentas_por_cobrar SET monto_total = ?, fecha_ven
 $stmt->bind_param("dssi", $monto_total, $fecha_vencimiento, $estado, $id_cobro);
 
 if ($stmt->execute()) {
-    echo json_encode(['success' => true, 'message' => "Cobro #{$id_cobro} actualizado con éxito."]);
+    echo json_encode(['success' => true, 'message' => "Guardado correctamente."]);
 } else {
     echo json_encode(['success' => false, 'message' => 'Error al actualizar: ' . $stmt->error]);
 }
