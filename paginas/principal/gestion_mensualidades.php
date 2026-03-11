@@ -334,13 +334,26 @@ require_once '../includes/sidebar.php';
                                         <label class="form-check-label fw-bold text-dark small mb-0" for="switch_mensualidad">Mensualidad</label>
                                     </div>
                                     <div class="d-none desglose-fields row g-2 mt-1" id="fields_mensualidad">
-                                        <div class="col-7">
+                                        <div class="col-5">
                                             <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
                                             <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_mensualidad" placeholder="0.00">
                                         </div>
-                                        <div class="col-5">
-                                            <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Meses</label>
-                                            <input type="number" step="1" min="1" class="form-control form-control-sm" name="meses_mensualidad" placeholder="Cant.">
+                                        <div class="col-4">
+                                            <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Mes Pago</label>
+                                            <select class="form-select form-select-sm" name="mes_inicio_mensualidad">
+                                                <?php
+                                                $meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                                                $mesActual = date('n') - 1;
+                                                foreach($meses as $i => $m) {
+                                                    $selected = ($i == $mesActual) ? 'selected' : '';
+                                                    echo "<option value='$m' $selected>$m</option>";
+                                                }
+                                                ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-3">
+                                            <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Cant.</label>
+                                            <input type="number" step="1" min="1" max="3" class="form-control form-control-sm" name="meses_mensualidad" value="1">
                                         </div>
                                     </div>
                                 </div>
@@ -425,13 +438,24 @@ require_once '../includes/sidebar.php';
                                                     </div>
                                                 </div>
                                                 <div class="row g-2 align-items-end">
-                                                    <div class="col-6">
+                                                    <div class="col-4">
                                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
                                                         <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="extra_monto[]" placeholder="0.00">
                                                     </div>
                                                     <div class="col-4">
-                                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Mes</label>
-                                                        <input type="number" step="1" min="1" class="form-control form-control-sm" name="extra_meses[]" placeholder="1" value="1">
+                                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Mes Pago</label>
+                                                        <select class="form-select form-select-sm" name="extra_mes_inicio[]">
+                                                            <?php
+                                                            foreach($meses as $i => $m) {
+                                                                $selected = ($i == $mesActual) ? 'selected' : '';
+                                                                echo "<option value='$m' $selected>$m</option>";
+                                                            }
+                                                            ?>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-2">
+                                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Cant.</label>
+                                                        <input type="number" step="1" min="1" max="3" class="form-control form-control-sm" name="extra_meses[]" value="1">
                                                     </div>
                                                     <div class="col-2 text-end">
                                                         <button type="button" class="btn btn-sm text-danger border-0 btn-remove-extra" disabled><i class="fas fa-trash"></i></button>
@@ -921,7 +945,13 @@ require_once '../includes/sidebar.php';
             if (e.target.type === 'number' && e.target.classList.contains('form-control-sm')) {
                 // Si es un campo de meses (entero positivo)
                 if (e.target.step === '1') {
+                    // Solo números
                     e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                    
+                    // Limitar a máximo 3 si tiene el atributo 'max="3"'
+                    if (e.target.max === '3' && parseInt(e.target.value) > 3) {
+                        e.target.value = 3;
+                    }
                 } else {
                     // Si es un campo de monto (decimal positivo)
                     // Permitimos solo números y un punto
@@ -932,7 +962,17 @@ require_once '../includes/sidebar.php';
                 }
             }
 
-            if(e.target.classList.contains('desglose-monto') || e.target.id === 'input_monto_cobro') {
+            if(e.target.classList.contains('desglose-monto') || e.target.id === 'input_monto_cobro' || e.target.name === 'meses_mensualidad' || e.target.name === 'extra_meses[]') {
+                // Si cambiamos meses, recalculamos monto si hay precio base
+                if (e.target.name === 'meses_mensualidad' || e.target.name === 'extra_meses[]') {
+                    const row = e.target.closest('.rounded, .fila-extra');
+                    const montoInput = row.querySelector('.desglose-monto');
+                    if (montoInput && montoInput.dataset.basePrice) {
+                        const base = parseFloat(montoInput.dataset.basePrice);
+                        const cant = parseInt(e.target.value) || 0;
+                        montoInput.value = (base * cant).toFixed(2);
+                    }
+                }
                 setTimeout(validarSumatoriaDesglose, 50); // Dar tiempo a que el hidden se asiente si es el principal
             }
         });
@@ -1015,7 +1055,9 @@ require_once '../includes/sidebar.php';
                                             }
 
                                             montoInput.value = parseFloat(c.monto_plan).toFixed(2);
+                                            montoInput.dataset.basePrice = c.monto_plan;
                                             montoInput.readOnly = true;
+                                            row.querySelector('[name="extra_meses[]"]').value = 1;
                                             
                                             // Mostrar nombre del plan en la fila
                                             const planInfoDiv = row.querySelector('.extra-plan-info');
@@ -1096,6 +1138,7 @@ require_once '../includes/sidebar.php';
                                             }
                                             const inputMonto = document.querySelector('[name="monto_mensualidad"]');
                                             inputMonto.value = parseFloat(c.monto_plan).toFixed(2);
+                                            inputMonto.dataset.basePrice = c.monto_plan;
                                             inputMonto.readOnly = true;
                                             document.querySelector('[name="meses_mensualidad"]').value = 1;
                                             
