@@ -334,26 +334,19 @@ require_once '../includes/sidebar.php';
                                         <label class="form-check-label fw-bold text-dark small mb-0" for="switch_mensualidad">Mensualidad</label>
                                     </div>
                                     <div class="d-none desglose-fields row g-2 mt-1" id="fields_mensualidad">
-                                        <div class="col-5">
+                                        <div class="col-4">
                                             <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
                                             <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_mensualidad" placeholder="0.00">
                                         </div>
-                                        <div class="col-4">
-                                            <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Mes Pago</label>
-                                            <select class="form-select form-select-sm" name="mes_inicio_mensualidad">
-                                                <?php
-                                                $meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-                                                $mesActual = date('n') - 1;
-                                                foreach($meses as $i => $m) {
-                                                    $selected = ($i == $mesActual) ? 'selected' : '';
-                                                    echo "<option value='$m' $selected>$m</option>";
-                                                }
-                                                ?>
-                                            </select>
-                                        </div>
                                         <div class="col-3">
                                             <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Cant.</label>
-                                            <input type="number" step="1" min="1" max="3" class="form-control form-control-sm" name="meses_mensualidad" value="1">
+                                            <input type="number" step="1" min="1" max="3" class="form-control form-control-sm meses-cantidad" name="meses_mensualidad" value="1">
+                                        </div>
+                                        <div class="col-5">
+                                            <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Meses a Pagar</label>
+                                            <div class="container-meses-dinamicos d-flex flex-wrap gap-1">
+                                                <!-- Se genera vía JS -->
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -438,24 +431,19 @@ require_once '../includes/sidebar.php';
                                                     </div>
                                                 </div>
                                                 <div class="row g-2 align-items-end">
-                                                    <div class="col-4">
+                                                    <div class="col-3">
                                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
                                                         <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="extra_monto[]" placeholder="0.00">
                                                     </div>
-                                                    <div class="col-4">
-                                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Mes Pago</label>
-                                                        <select class="form-select form-select-sm" name="extra_mes_inicio[]">
-                                                            <?php
-                                                            foreach($meses as $i => $m) {
-                                                                $selected = ($i == $mesActual) ? 'selected' : '';
-                                                                echo "<option value='$m' $selected>$m</option>";
-                                                            }
-                                                            ?>
-                                                        </select>
-                                                    </div>
                                                     <div class="col-2">
                                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Cant.</label>
-                                                        <input type="number" step="1" min="1" max="3" class="form-control form-control-sm" name="extra_meses[]" value="1">
+                                                        <input type="number" step="1" min="1" max="3" class="form-control form-control-sm meses-cantidad" name="extra_meses[]" value="1">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Meses a Pagar</label>
+                                                        <div class="container-meses-dinamicos d-flex flex-wrap gap-1">
+                                                            <!-- Se genera vía JS -->
+                                                        </div>
                                                     </div>
                                                     <div class="col-2 text-end">
                                                         <button type="button" class="btn btn-sm text-danger border-0 btn-remove-extra" disabled><i class="fas fa-trash"></i></button>
@@ -875,7 +863,35 @@ require_once '../includes/sidebar.php';
         const btnSubmitCobro = document.querySelector('#modalGenerarCobro form button[type="submit"]');
         const switchesDesglose = document.querySelectorAll('.desglose-switch');
         const inputsMontoDesglose = document.querySelectorAll('.desglose-monto');
-        
+        const NOMBRES_MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        function actualizarMesesDinamicos(inputCant) {
+            const row = inputCant.closest('.desglose-fields, .fila-extra');
+            if (!row) return;
+            const container = row.querySelector('.container-meses-dinamicos');
+            if (!container) return;
+
+            const cant = parseInt(inputCant.value) || 1;
+            const isExtra = inputCant.name.includes('extra');
+            // Nota: Para extras, usaremos un nombre de array que PHP pueda mapear por fila si es posible, 
+            // pero para simplificar la compatibilidad con el backend actual, usaremos un truco de concatenación si es necesario o nombres array.
+            const name = isExtra ? 'extra_meses_seleccionados[]' : 'meses_seleccionados_mensualidad[]';
+            
+            let html = '';
+            const mesBaseIndex = new Date().getMonth();
+
+            for (let i = 0; i < cant; i++) {
+                const mesSugeridoIndex = (mesBaseIndex + i) % 12;
+                html += `<select class="form-select form-select-sm mb-1" name="${name}" style="flex: 1 1 80px; min-width: 80px;">`;
+                NOMBRES_MESES.forEach((m, idx) => {
+                    const selected = (idx === mesSugeridoIndex) ? 'selected' : '';
+                    html += `<option value="${m}" ${selected}>${m}</option>`;
+                });
+                html += `</select>`;
+            }
+            container.innerHTML = html;
+        }
+
         function validarSumatoriaDesglose() {
             let totalDeclarado = parseFloat(document.getElementById('monto_cobro_hidden').value) || 0;
             let sumatoriaDesglose = 0;
@@ -921,8 +937,12 @@ require_once '../includes/sidebar.php';
                 const container = this.closest('.rounded').querySelector('.desglose-fields');
                 if (this.checked) {
                     container.classList.remove('d-none');
+                    // Generar meses iniciales si es mensualidad
+                    const inputCant = container.querySelector('.meses-cantidad');
+                    if (inputCant) actualizarMesesDinamicos(inputCant);
+                    
                     // Hacer inputs 'required'
-                    container.querySelectorAll('input').forEach(inp => {
+                    container.querySelectorAll('input, select').forEach(inp => {
                         if (inp.type !== 'hidden' && !inp.classList.contains('extra-search')) {
                           inp.setAttribute('required', 'required');
                         }
@@ -962,9 +982,10 @@ require_once '../includes/sidebar.php';
                 }
             }
 
-            if(e.target.classList.contains('desglose-monto') || e.target.id === 'input_monto_cobro' || e.target.name === 'meses_mensualidad' || e.target.name === 'extra_meses[]') {
-                // Si cambiamos meses, recalculamos monto si hay precio base
-                if (e.target.name === 'meses_mensualidad' || e.target.name === 'extra_meses[]') {
+            if(e.target.classList.contains('desglose-monto') || e.target.id === 'input_monto_cobro' || e.target.classList.contains('meses-cantidad')) {
+                // Si cambiamos meses, recalculamos monto si hay precio base y actualizamos selectores
+                if (e.target.classList.contains('meses-cantidad')) {
+                    actualizarMesesDinamicos(e.target);
                     const row = e.target.closest('.rounded, .fila-extra');
                     const montoInput = row.querySelector('.desglose-monto');
                     if (montoInput && montoInput.dataset.basePrice) {
@@ -995,7 +1016,8 @@ require_once '../includes/sidebar.php';
                 const nuevaFila = filaOriginal.cloneNode(true);
                 
                 // Limpiar valores
-                nuevaFila.querySelectorAll('input').forEach(inp => inp.value = '');
+                nuevaFila.querySelectorAll('input').forEach(inp => inp.value = (inp.classList.contains('meses-cantidad') ? '1' : ''));
+                nuevaFila.querySelector('.container-meses-dinamicos').innerHTML = '';
                 nuevaFila.querySelector('.extra-results').innerHTML = '';
                 
                 // Habilitar botón eliminar
@@ -1057,7 +1079,9 @@ require_once '../includes/sidebar.php';
                                             montoInput.value = parseFloat(c.monto_plan).toFixed(2);
                                             montoInput.dataset.basePrice = c.monto_plan;
                                             montoInput.readOnly = true;
-                                            row.querySelector('[name="extra_meses[]"]').value = 1;
+                                            const cantInput = row.querySelector('[name="extra_meses[]"]');
+                                            cantInput.value = 1;
+                                            cantInput.dispatchEvent(new Event('input', { bubbles: true }));
                                             
                                             // Mostrar nombre del plan en la fila
                                             const planInfoDiv = row.querySelector('.extra-plan-info');
@@ -1140,7 +1164,9 @@ require_once '../includes/sidebar.php';
                                             inputMonto.value = parseFloat(c.monto_plan).toFixed(2);
                                             inputMonto.dataset.basePrice = c.monto_plan;
                                             inputMonto.readOnly = true;
-                                            document.querySelector('[name="meses_mensualidad"]').value = 1;
+                                            const inputCant = document.querySelector('[name="meses_mensualidad"]');
+                                            inputCant.value = 1;
+                                            inputCant.dispatchEvent(new Event('input', { bubbles: true }));
                                             
                                             // Mostrar nombre del plan
                                             const infoPlan = document.getElementById('info_plan_cliente');
