@@ -313,7 +313,7 @@ require_once '../includes/sidebar.php';
                     <div class="row bg-light rounded p-3 mb-3 border">
                         <div class="col-md-6 mb-2">
                             <label class="form-label fw-semibold text-secondary small">Referencia de Pago</label>
-                            <input type="text" class="form-control" name="referencia_pago" required placeholder="N° de Transferencia/Pago">
+                            <input type="text" class="form-control" name="referencia_pago" id="input_ref_generar_cobro" required placeholder="N° de Transferencia/Pago">
                         </div>
                         <div class="col-md-6 mb-2">
                             <label class="form-label fw-semibold text-secondary small">Banco Destino (Dónde pagó el cliente)</label>
@@ -1163,25 +1163,24 @@ require_once '../includes/sidebar.php';
             ].join('|');
             
             // Aceptamos que entre la palabra y el número haya casi cualquier cosa que no sea otra palabra
-            // El número puede contener espacios o puntos que luego limpiaremos
-            const refRegex = new RegExp(`(?:${keywords})(?:\\s*:)?\\s*[^\\w\\n]*([\\d\\s\\.]{6,})`, 'i');
+            // El número puede contener espacios, puntos o letras (alfanumérico)
+            const refRegex = new RegExp(`(?:${keywords})(?:\\s*:)?\\s*[^\\w\\n]*([a-z0-9\\s\\.]{6,})`, 'i');
             const refMatch = text.match(refRegex);
             
             if (refMatch) {
-                // Limpiar espacios y puntos internos (algunos OCR ven 123.456.789 en la ref)
-                let cleanRef = refMatch[1].trim().replace(/[\s\.]/g, '');
-                // Si accidentalmente capturó el monto (porque tiene decimales), buscamos si hay otro número
-                if (cleanRef.length > 5) {
-                    document.querySelector('[name="referencia_pago"]').value = cleanRef;
+                // Limpiar espacios y puntos internos
+                let cleanRef = refMatch[1].trim().replace(/[\s\.]/g, '').toUpperCase();
+                // Validar longitud mínima
+                if (cleanRef.length >= 6) {
+                    const refInput = document.getElementById('input_ref_generar_cobro');
+                    if (refInput) refInput.value = cleanRef;
                     foundRef = true;
                 }
             } 
             
             if (!foundRef) {
-                // Intento B (Ultra-Fallback): Buscar el bloque numérico más largo del texto
-                // Incluso si está roto por espacios
+                // Intento B (Fallback): Número largo (8-25 dígitos) que puede tener ceros iniciales
                 const flatText = text.replace(/\n/g, ' '); 
-                // Buscamos cualquier secuencia larga de dígitos que pueda tener espacios/puntos pero NO comas (el monto suele tener comas en Vzla)
                 const allNumbers = flatText.match(/(?:\d[\s\.]*){8,25}/g);
                 if (allNumbers && allNumbers.length > 0) {
                     const sortedNumbers = allNumbers
@@ -1190,7 +1189,8 @@ require_once '../includes/sidebar.php';
                         .sort((a,b) => b.length - a.length);
                         
                     if (sortedNumbers.length > 0) {
-                        document.querySelector('[name="referencia_pago"]').value = sortedNumbers[0];
+                        const refInput = document.getElementById('input_ref_generar_cobro');
+                        if (refInput) refInput.value = sortedNumbers[0];
                         foundRef = true;
                     }
                 }
