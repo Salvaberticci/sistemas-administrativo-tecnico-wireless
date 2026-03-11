@@ -174,19 +174,22 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 2. Cliente
     $row[] = htmlspecialchars($aRow['nombre_completo']);
 
-    // 3. Concepto
-    $concepto = $aRow['justificacion'] ?: $aRow['nombre_plan'];
-    $row[] = htmlspecialchars($concepto ?: 'N/A');
+    // 3. Plan
+    $row[] = htmlspecialchars($aRow['nombre_plan'] ?: 'N/A');
 
-    // 4. Monto
+    // 4. Concepto
+    $concepto = $aRow['justificacion'] ?: '-';
+    $row[] = htmlspecialchars($concepto);
+
+    // 5. Monto
     $row[] = '$' . number_format($aRow['monto_total'], 2, ',', '.');
 
-    // 5. Cuenta (JSON Map)
+    // 6. Cuenta (JSON Map)
     $id_bank = $aRow['id_banco'];
     $bank_name = isset($bancosMap[$id_bank]) ? $bancosMap[$id_bank] : ($id_bank ? 'Desconocido' : '-');
     $row[] = htmlspecialchars($bank_name);
 
-    // 6. Estado (Badge)
+    // 7. Estado (Badge)
     $badge_class = 'warning';
     if ($estado == 'PAGADO')
         $badge_class = 'success';
@@ -194,12 +197,12 @@ while ($aRow = $rResult->fetch_assoc()) {
         $badge_class = 'danger';
     $row[] = '<span class="badge bg-' . $badge_class . '">' . $estado . '</span>';
 
-    // 7. Origen (Badge)
+    // 8. Origen (Badge)
     $origen = $aRow['origen'] ?: 'SISTEMA';
     $orig_badge = ($origen == 'LINK') ? 'info' : 'secondary';
     $row[] = '<span class="badge bg-' . $orig_badge . '">' . $origen . '</span>';
 
-    // 8. Estado SAE Plus (Select Dropdown)
+    // 9. Estado SAE Plus (Select Dropdown)
     $sae_status = $aRow['estado_sae_plus'] ?: 'NO CARGADO';
     $sae_class = ($sae_status == 'CARGADO') ? 'text-success fw-bold' : 'text-danger';
     $sae_select = '<select class="form-select form-select-sm sae-status-select ' . $sae_class . '" data-id="' . $id_cobro . '">
@@ -208,17 +211,19 @@ while ($aRow = $rResult->fetch_assoc()) {
     </select>';
     $row[] = $sae_select;
 
-    // 9. Acciones
+    // 10. Acciones
     $acciones = '';
     // Modificar
     $acciones .= '<a href="javascript:void(0)" onclick="confirmarEdicionCobro(' . $id_cobro . ')" class="btn btn-sm btn-warning me-1" title="Modificar"><i class="fas fa-edit"></i></a>';
-    // Eliminar
-    if ($estado != 'PAGADO') {
+    
+    // Eliminar: Solo permitida si NO está Pagado, o si es un pago MANUAL (Capture Desglosado)
+    if ($estado != 'PAGADO' || $aRow['es_manual'] > 0) {
         $acciones .= '<button type="button" class="btn btn-sm btn-danger me-1" 
                         data-bs-toggle="modal" data-bs-target="#modalEliminar" 
-                        data-id="' . $id_cobro . '" data-nombre="' . htmlspecialchars($aRow['nombre_completo']) . '" title="Eliminar">
-                        <i class="fas fa-trash"></i></button>';
+                        data-id="' . $id_cobro . '" data-nombre="' . htmlspecialchars($aRow['nombre_completo']) . '" 
+                        title="Eliminar"><i class="fas fa-trash"></i></button>';
     }
+    
     // Historial
     $acciones .= '<a href="historial_pagos.php?id=' . $id_contrato . '" class="btn btn-sm btn-info me-1" title="Historial"><i class="fas fa-history"></i></a>';
     // Justificación (if manual)

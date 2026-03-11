@@ -10,12 +10,14 @@ $resultados = [];
 $search_query = isset($_GET['q']) ? $conn->real_escape_string($_GET['q']) : '';
 
 if (strlen($search_query) >= 3) {
-    // Buscamos contratos activos (o según su lógica de contratos)
-    $sql = "SELECT id, nombre_completo, cedula, direccion, ip_onu as ip, tipo_conexion as tipo_servicio 
-            FROM contratos 
-            WHERE nombre_completo LIKE '%" . $search_query . "%' 
-               OR id LIKE '%" . $search_query . "%'
-               OR cedula LIKE '%" . $search_query . "%'
+    // Buscamos contratos activos con su respectivo plan
+    $sql = "SELECT c.id, c.nombre_completo, c.cedula, c.direccion, c.ip_onu as ip, c.tipo_conexion as tipo_servicio, 
+                   p.nombre_plan, p.monto as monto_plan
+            FROM contratos c
+            LEFT JOIN planes p ON c.id_plan = p.id_plan
+            WHERE c.nombre_completo LIKE '%" . $search_query . "%' 
+               OR c.id LIKE '%" . $search_query . "%'
+               OR c.cedula LIKE '%" . $search_query . "%'
             LIMIT 10"; // Limitar a 10 resultados para no sobrecargar
 
     $resultado = $conn->query($sql);

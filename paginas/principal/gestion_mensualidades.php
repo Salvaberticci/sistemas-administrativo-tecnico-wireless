@@ -172,6 +172,7 @@ require_once '../includes/sidebar.php';
                                 <th>Fecha de registro</th>
                                 <th>Referencia</th>
                                 <th>Cliente</th>
+                                <th>Plan</th>
                                 <th>Concepto</th>
                                 <th>Monto</th>
                                 <th>Cuenta</th>
@@ -297,41 +298,137 @@ require_once '../includes/sidebar.php';
                             <div id="equiv_cobro" class="form-text fw-bold text-primary mt-1"></div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="check_pago_inmediato"
-                                name="pago_inmediato" value="1">
-                            <label class="form-check-label fw-bold text-success" for="check_pago_inmediato">¿Pagado
-                                Inmediatamente?</label>
+                    
+                    <!-- Escáner Inteligente OCR -->
+                    <div class="mb-3 p-3 border rounded bg-light border-primary border-opacity-25" style="border-style: dashed !important;">
+                        <label class="form-label fw-bold text-primary small mb-1"><i class="fas fa-camera"></i> Escaneo Automático de Comprobante (Opcional)</label>
+                        <p class="text-muted small mb-0" style="font-size: 0.8rem;">Sube el capture temporalmente para rellenar Monto, Referencia y Banco (BETA).</p>
+                        <input class="form-control form-control-sm mt-2" type="file" id="capture_upload" accept="image/*">
+                        <div id="ocr_status" class="mt-2 small text-info fw-bold d-none">
+                            <i class="fas fa-spinner fa-spin"></i> Analizando comprobante, por favor espera...
                         </div>
                     </div>
 
-                    <!-- Campos de Pago Directo (Ocultos por defecto) -->
-                    <div id="campos_pago_directo" class="border rounded p-3 bg-light mb-3" style="display:none;">
-                        <h6 class="fw-bold text-muted small mb-3">Detalles del Pago</h6>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">¿Cuánto paga hoy? ($)</label>
-                                <input type="number" step="0.01" min="0" class="form-control fw-bold text-success"
-                                    name="monto_pagado_hoy" id="monto_pagado_hoy">
-                                <div id="equiv_pago_hoy" class="form-text small fw-bold text-primary mt-1"></div>
+                    <!-- Datos Globales del Pago -->
+                    <div class="row bg-light rounded p-3 mb-3 border">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label fw-semibold text-secondary small">Referencia de Pago</label>
+                            <input type="text" class="form-control" name="referencia_pago" required placeholder="N° de Transferencia/Pago">
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label fw-semibold text-secondary small">Banco Destino (Dónde pagó el cliente)</label>
+                            <select class="form-select" name="id_banco_pago" id="select_banco_cobro" required>
+                                <option value="">Seleccione...</option>
+                                <!-- Llenado por JS -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- DESGLOSE DEL PAGO -->
+                    <h6 class="fw-bold text-muted small mb-3 border-bottom pb-2">Desglose del Pago (Debe coincidir con la sumatoria)</h6>
+                    
+                    <!-- Switch 1: Mensualidad -->
+                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
+                        <div class="form-check form-switch me-3 mb-0">
+                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_mensualidad" name="desglose_mensualidad_activado" value="1">
+                        </div>
+                        <label class="form-check-label fw-bold text-dark me-auto" for="switch_mensualidad" style="min-width: 100px;">Mensualidad</label>
+                        
+                        <div class="d-none desglose-fields d-flex gap-2 w-100" id="fields_mensualidad">
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_mensualidad" placeholder="Monto">
+                            <input type="number" step="1" min="1" class="form-control form-control-sm" name="meses_mensualidad" placeholder="Cant. Meses">
+                        </div>
+                    </div>
+
+                    <!-- Switch 2: Instalación -->
+                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
+                        <div class="form-check form-switch me-3 mb-0">
+                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_instalacion" name="desglose_instalacion_activado" value="1">
+                        </div>
+                        <label class="form-check-label fw-bold text-dark me-auto" for="switch_instalacion" style="min-width: 100px;">Instalación</label>
+                        
+                        <div class="d-none desglose-fields w-100" id="fields_instalacion">
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_instalacion" placeholder="Monto Instalación">
+                        </div>
+                    </div>
+
+                    <!-- Switch 3: Prorrateo -->
+                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
+                        <div class="form-check form-switch me-3 mb-0">
+                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_prorrateo" name="desglose_prorrateo_activado" value="1">
+                        </div>
+                        <label class="form-check-label fw-bold text-dark me-auto" for="switch_prorrateo" style="min-width: 100px;">Prorrateo</label>
+                        
+                        <div class="d-none desglose-fields w-100" id="fields_prorrateo">
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_prorrateo" placeholder="Monto Prorrateo">
+                        </div>
+                    </div>
+
+                    <!-- Switch 4: Abono -->
+                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
+                        <div class="form-check form-switch me-3 mb-0">
+                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_abono" name="desglose_abono_activado" value="1">
+                        </div>
+                        <label class="form-check-label fw-bold text-dark me-auto" for="switch_abono" style="min-width: 100px;">Abono</label>
+                        
+                        <div class="d-none desglose-fields w-100" id="fields_abono">
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_abono" placeholder="Monto Abono">
+                        </div>
+                    </div>
+
+                    <!-- Switch 5: Equipo -->
+                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
+                        <div class="form-check form-switch me-3 mb-0">
+                            <input class="form-check-input desglose-switch" type="checkbox" id="switch_equipo" name="desglose_equipo_activado" value="1">
+                        </div>
+                        <label class="form-check-label fw-bold text-dark me-auto" for="switch_equipo" style="min-width: 100px;">Equipo</label>
+                        
+                        <div class="d-none desglose-fields w-100" id="fields_equipo">
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_equipo" placeholder="Monto por Equipo">
+                        </div>
+                    </div>
+
+                    <!-- Switch 6: Mensualidad Extra (Otros Contratos) -->
+                    <div class="mb-4 bg-light p-2 rounded border border-info">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="form-check form-switch me-3 mb-0">
+                                <input class="form-check-input desglose-switch" type="checkbox" id="switch_extra" name="desglose_extra_activado" value="1">
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">Fecha de Registro</label>
-                                <input type="date" class="form-control" name="fecha_pago"
-                                    value="<?php echo date('Y-m-d'); ?>">
+                            <label class="form-check-label fw-bold text-info me-auto" for="switch_extra">Mensualidad Extra (Otros Usuarios)</label>
+                        </div>
+                        
+                        <div class="d-none desglose-fields w-100" id="fields_extra">
+                            <div id="contenedor_extras">
+                                <!-- Primera fila por defecto -->
+                                <div class="row g-2 mb-2 fila-extra align-items-end">
+                                    <div class="col-5 position-relative">
+                                        <input type="text" class="form-control form-control-sm extra-search" placeholder="ID, Nombre o CI" autocomplete="off">
+                                        <input type="hidden" name="extra_contrato[]" class="extra-hidden">
+                                        <div class="list-group shadow-sm position-absolute w-100 extra-results" style="z-index: 1050; max-height: 150px; overflow-y: auto;"></div>
+                                    </div>
+                                    <div class="col-3">
+                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="extra_monto[]" placeholder="Monto">
+                                    </div>
+                                    <div class="col-3">
+                                        <input type="number" step="1" min="1" class="form-control form-control-sm" name="extra_meses[]" placeholder="Meses">
+                                    </div>
+                                    <div class="col-1 text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-extra" disabled><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">Cuenta Bancaria</label>
-                                <select class="form-select" name="id_banco_pago" id="select_banco_cobro">
-                                    <option value="">Seleccione...</option>
-                                    <!-- Llenado por JS -->
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">Número de Referencia</label>
-                                <input type="text" class="form-control" name="referencia_pago">
-                            </div>
+                            <button type="button" class="btn btn-sm btn-info text-white mt-1 w-100" id="btn_add_extra">
+                                <i class="fas fa-plus"></i> Añadir otra Mensualidad Extra
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Totales y sumatoria Validación -->
+                    <div class="alert alert-secondary d-flex justify-content-between align-items-center py-2 mb-3">
+                        <span class="fw-bold small">Verificación de Desglose:</span>
+                        <div class="text-end">
+                            <span class="d-block small text-muted">Monto Superior Declarado: <strong id="val_monto_total">$0.00</strong></span>
+                            <span class="d-block small text-muted">Suma del Desglose: <strong id="val_suma_desglose" class="text-danger">$0.00</strong></span>
                         </div>
                     </div>
 
@@ -627,8 +724,8 @@ require_once '../includes/sidebar.php';
                 }
             },
             "columns": [
-                { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 }, { "data": 4 }, { "data": 5 }, { "data": 6 }, { "data": 7 }, { "data": 8 },
-                { "data": 9, "orderable": false, "searchable": false, "className": "text-end" }
+                { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 }, { "data": 4 }, { "data": 5 }, { "data": 6 }, { "data": 7 }, { "data": 8 }, { "data": 9 },
+                { "data": 10, "orderable": false, "searchable": false, "className": "text-end" }
             ],
             "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
         });
@@ -684,6 +781,159 @@ require_once '../includes/sidebar.php';
             setTimeout(calcPagar, 100);
         });
 
+        // === MODAL GENERAR COBRO (NUEVO DESGLOSE) LÓGICA ===
+        const btnSubmitCobro = document.querySelector('#modalGenerarCobro form button[type="submit"]');
+        const switchesDesglose = document.querySelectorAll('.desglose-switch');
+        const inputsMontoDesglose = document.querySelectorAll('.desglose-monto');
+        
+        function validarSumatoriaDesglose() {
+            let totalDeclarado = parseFloat(document.getElementById('monto_cobro_hidden').value) || 0;
+            let sumatoriaDesglose = 0;
+
+            // Recorrer todos los switches activados
+            switchesDesglose.forEach(sw => {
+                if (sw.checked) {
+                    // Buscar los inputs de monto dentro del contenedor hermano
+                    const container = sw.closest('.rounded').querySelector('.desglose-fields');
+                    if (container) {
+                        const montos = container.querySelectorAll('.desglose-monto');
+                        montos.forEach(m => {
+                            sumatoriaDesglose += parseFloat(m.value) || 0;
+                        });
+                    }
+                }
+            });
+
+            // Actualizar UI
+            document.getElementById('val_monto_total').textContent = `$${totalDeclarado.toFixed(2)}`;
+            const spanSumatoria = document.getElementById('val_suma_desglose');
+            spanSumatoria.textContent = `$${sumatoriaDesglose.toFixed(2)}`;
+
+            // Validar
+            // Usamos un pequeño epsilon para evitar problemas de precisión en JS (0.1 + 0.2 != 0.3)
+            if (Math.abs(totalDeclarado - sumatoriaDesglose) < 0.01 && totalDeclarado > 0) {
+                spanSumatoria.className = 'text-success';
+                btnSubmitCobro.disabled = false;
+            } else {
+                spanSumatoria.className = 'text-danger fw-bold';
+                btnSubmitCobro.disabled = true;
+            }
+        }
+
+        // Eventos para recalcular
+        switchesDesglose.forEach(sw => {
+            sw.addEventListener('change', function() {
+                const container = this.closest('.rounded').querySelector('.desglose-fields');
+                if (this.checked) {
+                    container.classList.remove('d-none');
+                    // Hacer inputs 'required'
+                    container.querySelectorAll('input').forEach(inp => {
+                        if (inp.type !== 'hidden' && !inp.classList.contains('extra-search')) {
+                          inp.setAttribute('required', 'required');
+                        }
+                    });
+                } else {
+                    container.classList.add('d-none');
+                    // Quitar 'required' y vaciar
+                    container.querySelectorAll('input').forEach(inp => {
+                        inp.removeAttribute('required');
+                        if (inp.type !== 'hidden') inp.value = '';
+                    });
+                }
+                validarSumatoriaDesglose();
+            });
+        });
+
+        // Recalcular cuando se escribe en los montos del desglose
+        document.addEventListener('input', function(e) {
+            if(e.target.classList.contains('desglose-monto') || e.target.id === 'input_monto_cobro') {
+                setTimeout(validarSumatoriaDesglose, 50); // Dar tiempo a que el hidden se asiente si es el principal
+            }
+        });
+
+        // Dinamismo "Mensualidades Extra"
+        const btnAddExtra = document.getElementById('btn_add_extra');
+        const containerExtras = document.getElementById('contenedor_extras');
+        if (btnAddExtra) {
+            btnAddExtra.addEventListener('click', function() {
+                const filaOriginal = containerExtras.querySelector('.fila-extra');
+                const nuevaFila = filaOriginal.cloneNode(true);
+                
+                // Limpiar valores
+                nuevaFila.querySelectorAll('input').forEach(inp => inp.value = '');
+                nuevaFila.querySelector('.extra-results').innerHTML = '';
+                
+                // Habilitar botón eliminar
+                const btnRemove = nuevaFila.querySelector('.btn-remove-extra');
+                btnRemove.disabled = false;
+                btnRemove.addEventListener('click', function() {
+                    nuevaFila.remove();
+                    validarSumatoriaDesglose();
+                });
+
+                // Attach autocomplete to new row
+                attachAutocompleteToRow(nuevaFila);
+
+                containerExtras.appendChild(nuevaFila);
+            });
+        }
+
+        // Attach autocomplete a la primera fila original
+        if (containerExtras) {
+            attachAutocompleteToRow(containerExtras.querySelector('.fila-extra'));
+        }
+
+        function attachAutocompleteToRow(row) {
+            const searchInput = row.querySelector('.extra-search');
+            const hiddenInput = row.querySelector('.extra-hidden');
+            const resultsContainer = row.querySelector('.extra-results');
+            const montoInput = row.querySelector('.desglose-monto');
+
+            let timer;
+            searchInput.addEventListener('input', function () {
+                clearTimeout(timer);
+                const q = this.value.trim();
+                if (q.length < 3) { resultsContainer.innerHTML = ''; return; }
+                timer = setTimeout(() => {
+                    fetch(`buscar_contratos.php?q=${encodeURIComponent(q)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            resultsContainer.innerHTML = '';
+                            if (data.length) {
+                                data.forEach(c => {
+                                    const a = document.createElement('a');
+                                    a.className = 'list-group-item list-group-item-action py-1 px-2 small';
+                                    let extraPlanInfo = c.nombre_plan ? ` | <span class="badge bg-success-subtle text-success">$${parseFloat(c.monto_plan).toFixed(2)}</span>` : '';
+                                    a.innerHTML = `<strong>ID ${c.id}</strong>: ${c.nombre_completo} <br><small class="text-muted">C.I.: ${c.cedula || 'N/A'}${extraPlanInfo}</small>`;
+                                    a.onclick = (e) => {
+                                        e.preventDefault();
+                                        searchInput.value = `ID ${c.id}: ${c.nombre_completo}`;
+                                        hiddenInput.value = c.id;
+                                        resultsContainer.innerHTML = '';
+                                        
+                                        // Auto-rellenar monto si se tiene precio de plan
+                                        if (c.monto_plan && parseFloat(c.monto_plan) > 0) {
+                                            montoInput.value = parseFloat(c.monto_plan).toFixed(2);
+                                            // Activar validacion
+                                            const eventInput = new Event('input', { bubbles: true });
+                                            montoInput.dispatchEvent(eventInput);
+                                        }
+                                    };
+                                    resultsContainer.appendChild(a);
+                                });
+                            } else {
+                                resultsContainer.innerHTML = '<div class="list-group-item disabled py-1 px-2 small">Sin resultados</div>';
+                            }
+                        });
+                }, 300);
+            });
+            document.addEventListener('click', function (e) {
+                if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+                    resultsContainer.innerHTML = '';
+                }
+            });
+        }
+
         // === MODAL ELIMINAR LÓGICA ===
         $('#modalEliminar').on('show.bs.modal', function (event) {
             var button = $(event.relatedTarget);
@@ -714,12 +964,28 @@ require_once '../includes/sidebar.php';
                                 data.forEach(c => {
                                     const a = document.createElement('a');
                                     a.className = 'list-group-item list-group-item-action';
-                                    a.innerHTML = `<strong>ID ${c.id}</strong>: ${c.nombre_completo} <br><small class="text-muted">C.I.: ${c.cedula || 'N/A'}</small>`;
+                                    let extraPlanInfo = c.nombre_plan ? ` | <span class="badge bg-success-subtle text-success">$${parseFloat(c.monto_plan).toFixed(2)}</span>` : '';
+                                    a.innerHTML = `<strong>ID ${c.id}</strong>: ${c.nombre_completo} <br><small class="text-muted">C.I.: ${c.cedula || 'N/A'}${extraPlanInfo}</small>`;
                                     a.onclick = (e) => {
                                         e.preventDefault();
                                         searchInput.value = `ID ${c.id}: ${c.nombre_completo}`;
                                         hiddenInput.value = c.id;
                                         resultsContainer.innerHTML = '';
+                                        
+                                        // Auto-seleccionar Mensualidad basado en el plan del cliente (Monto Sugerido)
+                                        if (c.monto_plan && parseFloat(c.monto_plan) > 0) {
+                                            const switchMensualidad = document.getElementById('switch_mensualidad');
+                                            if (!switchMensualidad.checked) {
+                                                switchMensualidad.checked = true;
+                                                switchMensualidad.dispatchEvent(new Event('change'));
+                                            }
+                                            document.querySelector('[name="monto_mensualidad"]').value = parseFloat(c.monto_plan).toFixed(2);
+                                            document.querySelector('[name="meses_mensualidad"]').value = 1;
+                                            
+                                            // Activar validacion de sumatoria
+                                            const eventInput = new Event('input', { bubbles: true });
+                                            document.querySelector('[name="monto_mensualidad"]').dispatchEvent(eventInput);
+                                        }
                                     };
                                     resultsContainer.appendChild(a);
                                 });
@@ -748,22 +1014,9 @@ require_once '../includes/sidebar.php';
             }
         }
 
-        // === TOGGLE PAGO INMEDIATO ===
-        const checkPago = document.getElementById('check_pago_inmediato');
-        const boxPago = document.getElementById('campos_pago_directo');
-        if (checkPago && boxPago) {
-            checkPago.addEventListener('change', function () {
-                if (this.checked) {
-                    boxPago.style.display = 'block';
-                    document.querySelector('[name="id_banco_pago"]').setAttribute('required', 'required');
-                    document.querySelector('[name="referencia_pago"]').setAttribute('required', 'required');
-                } else {
-                    boxPago.style.display = 'none';
-                    document.querySelector('[name="id_banco_pago"]').removeAttribute('required');
-                    document.querySelector('[name="referencia_pago"]').removeAttribute('required');
-                }
-            });
-        }
+        // Toggle Pago Inmediato ya no existe, se removió.
+        // Forzar validación inicial para que el botón arranque bloqueado
+        setTimeout(validarSumatoriaDesglose, 200);
 
         cargarBancos();
     });
@@ -784,9 +1037,10 @@ require_once '../includes/sidebar.php';
     }
 
     function cargarBancos() {
-        fetch('json_bancos_api.php?action=get')
+        fetch('json_bancos_api.php?action=get&limit=100') // Solicitar más límite para traer todos en el modal
             .then(r => r.json())
-            .then(data => {
+            .then(result => {
+                const bancosArray = result.data || [];
                 const filtro = document.getElementById('filtro_cuenta');
                 const modalSelect = document.getElementById('select_banco_modal');
                 const cobroSelect = document.getElementById('select_banco_cobro');
@@ -799,10 +1053,11 @@ require_once '../includes/sidebar.php';
                 if (modalSelect) modalSelect.innerHTML = '<option value="">Seleccione...</option>';
                 if (cobroSelect) cobroSelect.innerHTML = '<option value="">Seleccione...</option>';
 
-                data.forEach(b => {
-                    if (filtro) filtro.add(new Option(b.nombre_banco, b.id_banco));
-                    if (modalSelect) modalSelect.add(new Option(b.nombre_banco, b.id_banco));
-                    if (cobroSelect) cobroSelect.add(new Option(b.nombre_banco, b.id_banco));
+                bancosArray.forEach(b => {
+                    const nombreLabel = b.nombre_banco + (b.numero_cuenta ? ' (' + b.numero_cuenta.slice(-4) + ')' : '');
+                    if (filtro) filtro.add(new Option(nombreLabel, b.id_banco));
+                    if (modalSelect) modalSelect.add(new Option(nombreLabel, b.id_banco));
+                    if (cobroSelect) cobroSelect.add(new Option(nombreLabel, b.id_banco));
                 });
                 if (valFiltro && filtro) filtro.value = valFiltro;
                 if (valModal && modalSelect) modalSelect.value = valModal;
@@ -849,6 +1104,145 @@ require_once '../includes/sidebar.php';
         return false;
     }
 
+
+    // === OCR TESSERACT.JS LOGIC ===
+    const scriptTesseract = document.createElement('script');
+    scriptTesseract.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    document.head.appendChild(scriptTesseract);
+
+    document.getElementById('capture_upload').addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const statusDiv = document.getElementById('ocr_status');
+        statusDiv.classList.remove('d-none');
+        statusDiv.classList.replace('text-success', 'text-info');
+        statusDiv.classList.replace('text-danger', 'text-info');
+        statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analizando comprobante OCR, por favor espera...';
+
+        try {
+            const worker = await Tesseract.createWorker('spa'); 
+            const ret = await worker.recognize(file);
+            const text = ret.data.text;
+            console.log("OCR TEXT:", text);
+            
+            let foundMonto = false;
+            let foundRef = false;
+            let foundBanco = false;
+
+            // 1. Regex de Monto (Busca numero seguido o precedido de Bs)
+            const montoRegex = /([\d\.\,]+)\s*Bs/i;
+            const montoMatch = text.match(montoRegex);
+            if (montoMatch) {
+                let numStr = montoMatch[1].replace(/\./g, '').replace(',', '.');
+                let amt = parseFloat(numStr);
+                if (!isNaN(amt)) {
+                    document.getElementById('moneda_cobro_bs').checked = true;
+                    document.getElementById('moneda_cobro_bs').dispatchEvent(new Event('change'));
+                    
+                    document.getElementById('input_monto_cobro').value = amt;
+                    document.getElementById('input_monto_cobro').dispatchEvent(new Event('input', { bubbles: true }));
+                    foundMonto = true;
+                }
+            }
+
+            // 2. Regex de Referencia Avanzado (Ajustado según captures reales)
+            // Keywords prioritarias: Nro. de referencia, Número de operación, Referencia, Operación
+            const keywords = [
+                'Nro\\.?\\s+de\\s+referencia',
+                'N[uú]mero\\s+de\\s+referencia',
+                'Nro\\.?\\s+de\\s+operaci[oó]n',
+                'N[uú]mero\\s+de\\s+operaci[oó]n',
+                'Referencia',
+                'Operaci[oó]n',
+                'Operacion', // Sin tilde (común en OCR)
+                'Confirmaci[oó]n',
+                'Aprobaci[oó]n',
+                'Ref\\.',
+                'Ref\\s'
+            ].join('|');
+            
+            // Buscamos la keyword seguida de ":" o espacio, y luego el número (aceptando ceros a la izquierda)
+            // Agregamos [^0-9\n]* para saltar iconos de "copiar" o decoraciones antes del número
+            const refRegex = new RegExp(`(?:${keywords})(?:\\s*:)?\\s*[^0-9\\n]*(\\d{6,})`, 'i');
+            const refMatch = text.match(refRegex);
+            
+            if (refMatch) {
+                // Limpiar espacios y asegurar que capturamos ceros a la izquierda (Provincial usa 0000...)
+                let cleanRef = refMatch[1].trim().replace(/\s/g, '');
+                document.querySelector('[name="referencia_pago"]').value = cleanRef;
+                foundRef = true;
+            } else {
+                // Intento B: Buscar el número más largo que no sea el monto
+                const flatText = text.replace(/\n/g, ' '); 
+                const allNumbers = flatText.match(/\b\d{6,25}\b/g);
+                if (allNumbers && allNumbers.length > 0) {
+                    allNumbers.sort((a,b) => b.length - a.length);
+                    document.querySelector('[name="referencia_pago"]').value = allNumbers[0];
+                    foundRef = true;
+                }
+            }
+
+            // 3. Regex Banco Destino (Super Flexible)
+            const selectBanco = document.getElementById('select_banco_cobro');
+            
+            // a) Buscar por los últimos 4 dígitos de la cuenta que recibe
+            const destinoRegex = /Destino[^\d]*(\d{4})/i;
+            const destMatch = text.match(destinoRegex);
+            
+            if (destMatch && selectBanco) {
+                let codBanco = destMatch[1]; // ej. 9811
+                for (let i = 0; i < selectBanco.options.length; i++) {
+                    if (selectBanco.options[i].text.includes(codBanco)) {
+                        selectBanco.selectedIndex = i;
+                        foundBanco = true;
+                        break;
+                    }
+                }
+            }
+
+            // b) Buscar por nombre (Mapeo Inteligente ignorando espacios)
+            if (!foundBanco && selectBanco) {
+                let textLimpio = text.toUpperCase().replace(/\s+/g, ''); // Quitamos espacios al capture
+                
+                for (let i = 0; i < selectBanco.options.length; i++) {
+                    let optTarget = selectBanco.options[i].text.toUpperCase().replace(/\s+/g, ''); // Ej: BANCAAMIGA(0000)
+                    
+                    let targetKeywords = [];
+                    if (optTarget.includes('BANCAMIGA') || optTarget.includes('BANCAAMIGA') || optTarget.includes('AMIGA')) targetKeywords.push('BANCAMIGA', 'BANCAAMIGA');
+                    if (optTarget.includes('BANESCO')) targetKeywords.push('BANESCO');
+                    if (optTarget.includes('MERCANTIL')) targetKeywords.push('MERCANTIL');
+                    if (optTarget.includes('PROVINCIAL')) targetKeywords.push('PROVINCIAL');
+                    if (optTarget.includes('VENEZUELA')) targetKeywords.push('VENEZUELA', 'BDV');
+                    if (optTarget.includes('BNC') || optTarget.includes('CREDITO')) targetKeywords.push('BNC', 'NACIONALDECREDITO');
+                    
+                    for (let kw of targetKeywords) {
+                        if (textLimpio.includes(kw)) {
+                            selectBanco.selectedIndex = i;
+                            foundBanco = true;
+                            break; // Rompe búsqueda de keywords
+                        }
+                    }
+                    if (foundBanco) break; // Rompe loop de opciones
+                }
+            }
+
+            let resultMsg = "OCR Finalizado. ";
+            resultMsg += foundMonto ? "Monto OK. " : "";
+            resultMsg += foundRef ? "Ref OK. " : "";
+            resultMsg += foundBanco ? "Banco OK. " : "";
+
+            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + resultMsg;
+            statusDiv.classList.replace('text-info', 'text-success');
+
+            await worker.terminate();
+
+        } catch (err) {
+            console.error(err);
+            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error al analizar imagen.';
+            statusDiv.classList.replace('text-info', 'text-danger');
+        }
+    });
 
     window.confirmarEdicionCobro = async function (id) {
         const proceeds = await solicitarClaveAdmin('Modificar Cobro');

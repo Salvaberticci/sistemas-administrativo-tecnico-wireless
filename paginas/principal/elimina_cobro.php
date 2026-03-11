@@ -37,8 +37,8 @@ if (!$user || !password_verify($clave, $user['clave'])) {
     exit();
 }
 
-// 2. Obtener el estado del cobro antes de eliminar (para validación)
-$stmt_check = $conn->prepare("SELECT estado FROM cuentas_por_cobrar WHERE id_cobro = ?");
+// 2. Obtener el estado y Referencia del cobro antes de eliminar
+$stmt_check = $conn->prepare("SELECT estado, referencia_pago FROM cuentas_por_cobrar WHERE id_cobro = ?");
 $stmt_check->bind_param("i", $id_cobro);
 $stmt_check->execute();
 $result_check = $stmt_check->get_result();
@@ -50,26 +50,62 @@ if (!$cobro) {
     exit();
 }
 
-if ($cobro['estado'] == 'PAGADO') {
-    header("Location: gestion_mensualidades.php?maintenance_done=1&message=No se puede eliminar un cobro PAGADO&class=danger");
-    exit();
-}
+$referencia = $cobro['referencia_pago'];
+
+// NUEVA LÓGICA: Se permite eliminar cobros PAGADOS si provienen de un cobro manual (Tienen referencia común).
+// El botón en el Frontend (gestion_mensualidades) se activará para todos los cobros manuales.
 
 // 3. Eliminar registros
 $conn->begin_transaction();
 try {
-    // Eliminar historial
-    $stmt_hist = $conn->prepare("DELETE FROM cobros_manuales_historial WHERE id_cobro_cxc = ?");
-    $stmt_hist->bind_param("i", $id_cobro);
-    $stmt_hist->execute();
+    if (!empty($referencia)) {
+        // ES UN PAGO GLOBAL (Capture desglosado)
+        // Borrar todo el bloque basándonos en la referencia
+        
+        // 3.1 Obtener todos los IDs afectados
+        $stmt_ids = $conn->prepare("SELECT id_cobro FROM cuentas_por_cobrar WHERE referencia_pago = ?");
+        $stmt_ids->bind_param("s", $referencia);
+        $stmt_ids->execute();
+        $res_ids = $stmt_ids->get_result();
+        
+        $ids_a_borrar = [];
+        while($fila = $res_ids->fetch_assoc()) {
+            $ids_a_borrar[] = $fila['id_cobro'];
+        }
+        $stmt_ids->close();
 
-    // Eliminar CxC
-    $stmt_del = $conn->prepare("DELETE FROM cuentas_por_cobrar WHERE id_cobro = ?");
-    $stmt_del->bind_param("i", $id_cobro);
-    $stmt_del->execute();
+        if (count($ids_a_borrar) > 0) {
+            $in_clause = implode(',', $ids_a_borrar);
+            
+            // Eliminar historiales asociados
+            $conn->query("DELETE FROM cobros_manuales_historial WHERE id_cobro_cxc IN ($in_clause)");
+            
+            // Eliminar CxC asociados
+            $conn->query("DELETE FROM cuentas_por_cobrar WHERE id_cobro IN ($in_clause)");
+        }
+
+        $msg = "Se eliminó el capture completo (Referencia $referencia), afectando " . count($ids_a_borrar) . " registro(s).";
+
+    } else {
+        // ES UN COBRO AISLADO (Viejo sistema o sin referencia)
+        if ($cobro['estado'] == 'PAGADO') {
+            throw new Exception("No se puede eliminar un cobro PAGADO antiguo sin referencia vinculada.");
+        }
+        // Eliminar historial
+        $stmt_hist = $conn->prepare("DELETE FROM cobros_manuales_historial WHERE id_cobro_cxc = ?");
+        $stmt_hist->bind_param("i", $id_cobro);
+        $stmt_hist->execute();
+
+        // Eliminar CxC
+        $stmt_del = $conn->prepare("DELETE FROM cuentas_por_cobrar WHERE id_cobro = ?");
+        $stmt_del->bind_param("i", $id_cobro);
+        $stmt_del->execute();
+
+        $msg = "Cobro aislado eliminado correctamente.";
+    }
 
     $conn->commit();
-    header("Location: gestion_mensualidades.php?maintenance_done=1&message=Cobro eliminado correctamente&class=success");
+    header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode($msg) . "&class=success");
 } catch (Exception $e) {
     $conn->rollback();
     header("Location: gestion_mensualidades.php?maintenance_done=1&message=Error al eliminar: " . urlencode($e->getMessage()) . "&class=danger");
