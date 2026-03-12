@@ -257,7 +257,7 @@ require_once '../includes/sidebar.php';
                 <h5 class="modal-title fw-bold">Generar Cargo Manual</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form action="generar_cobro_manual.php" method="POST">
+            <form action="generar_cobro_manual.php" method="POST" enctype="multipart/form-data">
                 <div class="modal-body p-0">
                     <div class="row g-0">
                         <!-- COLUMNA IZQUIERDA: DATOS Y DESGLOSE -->
@@ -496,7 +496,7 @@ require_once '../includes/sidebar.php';
                         <div class="col-md-5 bg-light p-4 rounded-end d-flex flex-column" style="min-height: 520px;">
                             <h6 class="fw-bold text-primary mb-3"><i class="fas fa-camera-retro me-1"></i> 4. Comprobante de Pago</h6>
                             <div class="mb-4 bg-white p-3 rounded shadow-sm border">
-                                <input class="form-control form-control-sm mb-0 shadow-none border-0" type="file" id="capture_upload" accept="image/*">
+                                <input class="form-control form-control-sm mb-0 shadow-none border-0" type="file" id="capture_upload" name="capture_archivo" accept="image/*">
                                 <div id="ocr_status" class="mt-2 small text-info fw-bold d-none">
                                     <i class="fas fa-sync fa-spin"></i> Procesando OCR...
                                 </div>
@@ -627,9 +627,19 @@ require_once '../includes/sidebar.php';
                         </table>
                     </div>
 
-                    <h6 class="fw-bold small text-muted mb-2 text-uppercase" style="letter-spacing: 0.5px;">Nota Administrativa:</h6>
-                    <div class="alert alert-secondary border-0 bg-light p-3 small mb-0 scroll-premium" style="max-height: 120px; overflow-y: auto; line-height: 1.5;" id="justif_texto">
+                    <div class="alert alert-secondary border-0 bg-light p-3 small mb-3 scroll-premium" style="max-height: 120px; overflow-y: auto; line-height: 1.5;" id="justif_texto">
                         ---
+                    </div>
+
+                    <h6 class="fw-bold small text-muted mb-2 text-uppercase" style="letter-spacing: 0.5px;">Evidencia del Capture:</h6>
+                    <div id="justif_capture_container" class="border rounded bg-white text-center p-2 d-none shadow-sm">
+                        <a href="" target="_blank" id="justif_capture_link">
+                            <img src="" id="justif_capture_img" class="img-fluid rounded" style="max-height: 350px;" alt="Capture de pago">
+                        </a>
+                    </div>
+                    <div id="justif_no_capture" class="text-center py-3 bg-light rounded border border-dashed d-none">
+                        <i class="fas fa-image-slash fa-2x opacity-25 mb-2"></i>
+                        <p class="small text-muted mb-0">Sin comprobante digital disponible</p>
                     </div>
                 </div>
             </div>
@@ -1879,6 +1889,26 @@ require_once '../includes/sidebar.php';
                         });
                     }
                     document.getElementById('justif_total_pagado').textContent = '$' + totalAcumulado.toFixed(2);
+
+                    // Manejo del Capture
+                    const img = document.getElementById('justif_capture_img');
+                    const link = document.getElementById('justif_capture_link');
+                    const imgContainer = document.getElementById('justif_capture_container');
+                    const noCapContainer = document.getElementById('justif_no_capture');
+
+                    if (d.capture_pago) {
+                        // Limpiar ruta si empieza con ../../ (depende de donde se guarde)
+                        let path = d.capture_pago;
+                        if (path.startsWith('../../')) path = path.replace('../../', '');
+                        
+                        img.src = '../../' + path; // Ajustar relativo al root o carpeta actual
+                        link.href = '../../' + path;
+                        imgContainer.classList.remove('d-none');
+                        noCapContainer.classList.add('d-none');
+                    } else {
+                        imgContainer.classList.add('d-none');
+                        noCapContainer.classList.remove('d-none');
+                    }
 
                     content.classList.remove('d-none');
                 } else {

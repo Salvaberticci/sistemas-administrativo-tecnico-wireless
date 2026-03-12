@@ -16,6 +16,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $autorizado_por = isset($_POST['autorizado_por']) ? $conn->real_escape_string($_POST['autorizado_por']) : '';
     $justificacion = isset($_POST['justificacion']) ? $conn->real_escape_string($_POST['justificacion']) : 'No especificada.';
 
+    // 1.5 Manejo de archivo (Capture)
+    $capture_path = '';
+    if (isset($_FILES['capture_archivo']) && $_FILES['capture_archivo']['error'] === UPLOAD_ERR_OK) {
+        $upload_dir = '../../uploads/pagos/'; // Ajustamos ruta relativa al script actual
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        $file_extension = pathinfo($_FILES['capture_archivo']['name'], PATHINFO_EXTENSION);
+        $file_name = uniqid('pago_manual_') . '.' . $file_extension;
+        $target_file = $upload_dir . $file_name;
+
+        // Validar tipo de imagen
+        $check = getimagesize($_FILES['capture_archivo']['tmp_name']);
+        if ($check !== false) {
+            if (move_uploaded_file($_FILES['capture_archivo']['tmp_name'], $target_file)) {
+                $capture_path = 'uploads/pagos/' . $file_name; // Guardamos ruta relativa al ROOT del sistema
+            }
+        }
+    }
+
     // 2. Definir fechas y estados por defecto (Es un capture de pago)
     $fecha_emision = date('Y-m-d');
     $fecha_vencimiento = date('Y-m-d'); 
@@ -160,7 +181,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     fecha_pago,
                     referencia_pago,
                     id_banco,
-                    id_grupo_pago
+                    id_grupo_pago,
+                    capture_pago
                 ) VALUES (
                     '$c_id_contrato', 
                     '$fecha_emision', 
@@ -170,7 +192,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     '$fecha_pago',
                     '$referencia_pago',
                     '$id_banco_pago',
-                    '$id_grupo_pago'
+                    '$id_grupo_pago',
+                    '$capture_path'
                 )";
 
                 if ($conn->query($sql_cxc) === TRUE) {

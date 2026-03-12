@@ -35,6 +35,7 @@ $sql = "
         cxc.id_cobro,
         cxc.fecha_emision,
         cxc.referencia_pago,
+        cxc.capture_pago,
         cxc.id_contrato as id_contrato_unico,
         b.nombre_banco,
         co.nombre_completo AS nombre_cliente,
