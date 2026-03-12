@@ -584,9 +584,32 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         </div>
 
         <style>
-            #tablesTabs .nav-link { color: #555; border-bottom: 2px solid transparent; }
-            #tablesTabs .nav-link.active { border-bottom: 3px solid #0d6efd; color: #0d6efd !important; background-color: #f8f9fa !important; }
-            #tablesTabs #nav-criticas-tab.active { border-bottom: 3px solid #dc3545; color: #dc3545 !important; }
+            #tablesTabs .nav-link { 
+                color: #555; 
+                border-bottom: 2px solid transparent; 
+                transition: all 0.2s ease-in-out;
+            }
+            
+            /* Tab Nivel 1 (Amarillo / WhatsApp) */
+            #tablesTabs #nav-nivel1-tab.active { 
+                border-bottom: 3px solid #ffc107; 
+                color: #b18400 !important; /* Slightly darker yellow for text readability */
+                background-color: #fffbdf !important; 
+            }
+            
+            /* Tab Nivel 2 (Naranja / Visita Técnico) */
+            #tablesTabs #nav-nivel2-tab.active { 
+                border-bottom: 3px solid #fd7e14; 
+                color: #ca6510 !important; 
+                background-color: #fff4ea !important; 
+            }
+            
+            /* Tab Nivel 3 (Rojo / Críticas) */
+            #tablesTabs #nav-criticas-tab.active { 
+                border-bottom: 3px solid #dc3545; 
+                color: #dc3545 !important; 
+                background-color: #fff0f1 !important;
+            }
         </style>
 
 <!-- =============== MODAL: VER DETALLES NIVEL 3 =============== -->
@@ -1482,15 +1505,16 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         function renderizarControles(totalPaginas) {
             const contenedor = $(`#${pagId}`);
             contenedor.empty();
-            if (totalPaginas <= 1) return;
+            
+            const total = Math.max(1, totalPaginas);
 
-            const disAnt = paginaActual === 1 ? 'disabled' : '';
+            const disAnt = paginaActual <= 1 ? 'disabled' : '';
             contenedor.append(`<li class="page-item ${disAnt}"><a class="page-link" href="javascript:void(0)" data-page="${paginaActual - 1}">Anterior</a></li>`);
 
             let startPage = Math.max(1, paginaActual - 2);
             let endPage = startPage + 4;
-            if (endPage > totalPaginas) {
-                endPage = totalPaginas;
+            if (endPage > total) {
+                endPage = total;
                 startPage = Math.max(1, endPage - 4);
             }
 
@@ -1499,7 +1523,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 contenedor.append(`<li class="page-item ${activo}"><a class="page-link" href="javascript:void(0)" data-page="${i}">${i}</a></li>`);
             }
 
-            const disSig = paginaActual === totalPaginas ? 'disabled' : '';
+            const disSig = paginaActual >= total ? 'disabled' : '';
             contenedor.append(`<li class="page-item ${disSig}"><a class="page-link" href="javascript:void(0)" data-page="${paginaActual + 1}">Siguiente</a></li>`);
 
             contenedor.find('.page-link').on('click', function() {
