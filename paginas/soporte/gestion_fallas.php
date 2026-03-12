@@ -24,6 +24,11 @@ $filtro_hasta = isset($_GET['fecha_hasta']) ? $conn->real_escape_string($_GET['f
 $filtro_tipo = isset($_GET['tipo_falla']) ? $conn->real_escape_string($_GET['tipo_falla']) : '';
 $filtro_tecnico = isset($_GET['tecnico']) ? $conn->real_escape_string($_GET['tecnico']) : '';
 $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['estado_pago']) : '';
+
+// Conteo por nivel de prioridad (global, sin filtro de fecha para reflejar estado real)
+$cnt_n1 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 'NIVEL 1'")->fetch_assoc()['c'] ?? 0);
+$cnt_n2 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 'NIVEL 2'")->fetch_assoc()['c'] ?? 0);
+$cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 'NIVEL 3'")->fetch_assoc()['c'] ?? 0);
 ?>
 
 <!-- Include DataTables CSS inside head if not already included by layout_head.php (removing DT css) -->
@@ -113,39 +118,20 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
 
 
 
-        <!-- Nuevos KPIs Avanzados -->
+        <!-- KPIs por Nivel de Prioridad -->
         <div class="row g-3 mb-4" id="kpiCardsAvanzados">
-            <div class="col-md-6 col-lg-3">
-                <div class="card stat-card border-0 shadow-sm h-100" style="border-left-color: #17a2b8 !important;">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <p class="text-muted mb-1 small">Tiempo Promedio Respuesta</p>
-                                <h3 class="fw-bold mb-0 text-info" id="tiempo_promedio">
-                                    <span class="spinner-border spinner-border-sm"></span>
-                                </h3>
-                                <small class="text-muted">horas</small>
-                            </div>
-                            <div class="text-info">
-                                <i class="fa-solid fa-clock fa-2x opacity-75"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div class="col-md-6 col-lg-3">
-                <div class="card stat-card border-0 shadow-sm h-100" style="border-left-color: #dc3545 !important;">
+                <div class="card stat-card border-0 shadow-sm h-100" style="border-left-color: #ffc107 !important;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <p class="text-muted mb-1 small">Fallas Críticas Activas</p>
-                                <h3 class="fw-bold mb-0 text-danger" id="fallas_criticas_activas">
-                                    <span class="spinner-border spinner-border-sm"></span>
-                                </h3>
+                                <p class="text-muted mb-1 small">Fallas Nivel 1</p>
+                                <h3 class="fw-bold mb-0" style="color:#cc9a00;"><?php echo $cnt_n1; ?></h3>
+                                <small class="text-muted">reportes individuales bajos</small>
                             </div>
-                            <div class="text-danger">
-                                <i class="fa-solid fa-fire fa-2x opacity-75"></i>
+                            <div style="color:#ffc107;">
+                                <i class="fa-solid fa-circle-exclamation fa-2x opacity-75"></i>
                             </div>
                         </div>
                     </div>
@@ -157,14 +143,29 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <p class="text-muted mb-1 small">Clientes Recurrentes</p>
-                                <h3 class="fw-bold mb-0" style="color: #fd7e14;" id="clientes_recurrentes_count">
-                                    <span class="spinner-border spinner-border-sm"></span>
-                                </h3>
-                                <small class="text-muted">>3 fallas/mes</small>
+                                <p class="text-muted mb-1 small">Fallas Nivel 2</p>
+                                <h3 class="fw-bold mb-0" style="color:#fd7e14;"><?php echo $cnt_n2; ?></h3>
+                                <small class="text-muted">reportes de impacto medio</small>
                             </div>
-                            <div style="color: #fd7e14;">
-                                <i class="fa-solid fa-user-clock fa-2x opacity-75"></i>
+                            <div style="color:#fd7e14;">
+                                <i class="fa-solid fa-triangle-exclamation fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card border-0 shadow-sm h-100" style="border-left-color: #dc3545 !important;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Fallas Nivel 3 (Masivas)</p>
+                                <h3 class="fw-bold mb-0 text-danger"><?php echo $cnt_n3; ?></h3>
+                                <small class="text-muted">caídas críticas de red</small>
+                            </div>
+                            <div class="text-danger">
+                                <i class="fa-solid fa-fire fa-2x opacity-75"></i>
                             </div>
                         </div>
                     </div>
@@ -184,6 +185,7 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                     </div>
                 </div>
             </div>
+
         </div>
 
         <!-- Alerta de Caídas Críticas Activas -->
