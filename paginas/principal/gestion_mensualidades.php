@@ -452,19 +452,19 @@ require_once '../includes/sidebar.php';
                             </div>
 
                             <!-- Sección de Resumen Dinámico -->
-                            <div class="bg-dark bg-opacity-10 rounded p-3 mb-3 border shadow-sm mt-3 mx-0">
+                            <div class="bg-dark rounded p-3 mb-3 border-0 shadow-sm mt-3 mx-0 text-white">
                                 <div class="row g-2 text-center text-md-start">
-                                    <div class="col-4 border-end">
-                                        <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.6rem;">Capture</div>
-                                        <div class="fw-bold text-dark">$ <span id="val_monto_total">0.00</span></div>
+                                    <div class="col-4 border-end border-secondary">
+                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Monto Comprobante</div>
+                                        <div class="fw-bold text-white fs-5">$ <span id="val_monto_total">0.00</span></div>
                                     </div>
-                                    <div class="col-4 border-end">
-                                        <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.6rem;">Asignado</div>
-                                        <div class="fw-bold text-primary">$ <span id="val_suma_desglose">0.00</span></div>
+                                    <div class="col-4 border-end border-secondary">
+                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Asignado</div>
+                                        <div class="fw-bold text-info fs-5">$ <span id="val_suma_desglose">0.00</span></div>
                                     </div>
                                     <div class="col-4">
-                                        <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.6rem;">Restante</div>
-                                        <div class="fw-bold" id="container_restante">$ <span id="val_monto_restante">0.00</span></div>
+                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Pendiente de Asignar</div>
+                                        <div class="fw-bold fs-5" id="container_restante">$ <span id="val_monto_restante">0.00</span></div>
                                     </div>
                                 </div>
                             </div>
