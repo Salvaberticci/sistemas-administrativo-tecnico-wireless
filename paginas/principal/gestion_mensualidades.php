@@ -487,7 +487,7 @@ require_once '../includes/sidebar.php';
                         </div>
 
                         <!-- COLUMNA DERECHA: OCR Y CAPTURE -->
-                        <div class="col-md-5 bg-light p-4 rounded-end">
+                        <div class="col-md-5 bg-light p-4 rounded-end d-flex flex-column" style="min-height: 520px;">
                             <h6 class="fw-bold text-primary mb-3"><i class="fas fa-camera-retro me-1"></i> 4. Comprobante de Pago</h6>
                             <div class="mb-4 bg-white p-3 rounded shadow-sm border">
                                 <input class="form-control form-control-sm mb-0 shadow-none border-0" type="file" id="capture_upload" accept="image/*">
@@ -513,7 +513,7 @@ require_once '../includes/sidebar.php';
                             </div>
 
                             <!-- Placeholder -->
-                            <div id="capture_placeholder" class="text-center py-5 border rounded bg-white border-dashed h-100 d-flex flex-column justify-content-center align-items-center" style="border: 2px dashed #ccc !important; min-height: 480px; color: #ddd;">
+                            <div id="capture_placeholder" class="text-center py-5 border rounded bg-white border-dashed flex-grow-1 d-flex flex-column justify-content-center align-items-center" style="border: 2px dashed #dbdde0 !important; min-height: 400px; color: #adb5bd;">
                                 <i class="fas fa-file-invoice-dollar fa-5x mb-3 opacity-25"></i>
                                 <h6 class="fw-bold opacity-50">Esperando comprobante</h6>
                                 <p class="small opacity-50 px-4 text-center">Selecciona la imagen para visualizarla aquí.</p>
