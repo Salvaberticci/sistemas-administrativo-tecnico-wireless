@@ -24,10 +24,12 @@ $where = "WHERE s.fecha_soporte BETWEEN '$fecha_desde' AND '$fecha_hasta'";
 if (!empty($tipo_falla)) {
     $where .= " AND s.tipo_falla = '$tipo_falla'";
 }
-if (isset($_GET['excluir_nivel_3']) && $_GET['excluir_nivel_3'] == '1') {
+if (isset($_GET['filtro_prioridad']) && !empty($_GET['filtro_prioridad'])) {
+    $prioridad = $conn->real_escape_string($_GET['filtro_prioridad']);
+    $where .= " AND s.prioridad = '$prioridad'";
+} elseif (isset($_GET['excluir_nivel_3']) && $_GET['excluir_nivel_3'] == '1') {
     $where .= " AND s.prioridad != 'NIVEL 3'";
-}
-if (isset($_GET['solo_nivel_3']) && $_GET['solo_nivel_3'] == '1') {
+} elseif (isset($_GET['solo_nivel_3']) && $_GET['solo_nivel_3'] == '1') {
     $where .= " AND s.prioridad = 'NIVEL 3'";
 }
 
