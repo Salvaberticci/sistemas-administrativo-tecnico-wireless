@@ -35,15 +35,11 @@ if (isset($_GET['filtro_prioridad']) && !empty($_GET['filtro_prioridad'])) {
 
 // Estadísticas generales
 $sql_stats = "SELECT 
-                COUNT(*) as total_reportes,
-                SUM(s.monto_total) as total_facturado,
-                SUM(s.monto_pagado) as total_cobrado,
-                SUM(CASE WHEN (s.monto_total - s.monto_pagado) > 0.01 THEN 1 ELSE 0 END) as reportes_pendientes
+                COUNT(*) as total_reportes
               FROM soportes s $where";
 
 $result_stats = $conn->query($sql_stats);
 $stats = $result_stats->fetch_assoc();
-$saldo_total = $stats['total_facturado'] - $stats['total_cobrado'];
 
 // Reportes por tipo de falla
 $sql_tipos = "SELECT tipo_falla, COUNT(*) as cantidad 
@@ -62,11 +58,10 @@ $sql_reportes = "SELECT
                     c.nombre_completo,
                      s.tipo_falla,
                      s.tecnico_asignado,
-                     s.monto_total,
-                     s.monto_pagado,
-                     (s.monto_total - s.monto_pagado) as saldo,
                      s.clientes_afectados,
-                     s.zona_afectada
+                     s.zona_afectada,
+                     s.solucion_completada,
+                     s.tipo_servicio
                   FROM soportes s
                   INNER JOIN contratos c ON s.id_contrato = c.id
                   $where
@@ -190,20 +185,20 @@ $html = '
     <table>
         <thead>
             <tr>
-                <th style="width: 8%;">ID</th>
-                <th style="width: 12%;">Fecha</th>
-                <th style="width: 25%;">Cliente / Referencia</th>
-                <th style="width: 18%;">Tipo Falla</th>
+                <th style="width: 6%;">ID</th>
+                <th style="width: 10%;">Fecha</th>
+                <th style="width: 22%;">Cliente / Referencia</th>
+                <th style="width: 17%;">Tipo Falla</th>
                 <th style="width: 15%;">Técnico</th>';
 
 if (isset($_GET['filtro_prioridad']) && $_GET['filtro_prioridad'] == 'NIVEL 3') {
     $html .= '
                 <th style="width: 10%;">C. Afectados</th>
-                <th style="width: 12%;">Zona</th>';
+                <th style="width: 15%;">Zona</th>';
 } else {
     $html .= '
-                <th style="width: 10%;">Total</th>
-                <th style="width: 10%;">Pagado</th>';
+                <th style="width: 15%;">Zona</th>
+                <th style="width: 10%;">Servicio</th>';
 }
 
 $html .= '
@@ -213,7 +208,6 @@ $html .= '
         <tbody>';
 
 while ($rep = $result_reportes->fetch_assoc()) {
-    $estado_badge = ($rep['saldo'] <= 0.01) ? '<span class="badge badge-success">OK</span>' : '<span class="badge badge-danger">PEND</span>';
     $html .= '
             <tr>
                 <td class="text-center">' . $rep['id_soporte'] . '</td>
@@ -226,12 +220,12 @@ while ($rep = $result_reportes->fetch_assoc()) {
         $html .= '<td class="text-center"><strong>' . intval($rep['clientes_afectados']) . '</strong></td>';
         $html .= '<td>' . htmlspecialchars(substr($rep['zona_afectada'] ?? 'N/A', 0, 15)) . '</td>';
     } else {
-        $html .= '<td class="text-right">$' . number_format($rep['monto_total'], 2) . '</td>';
-        $html .= '<td class="text-right">$' . number_format($rep['monto_pagado'], 2) . '</td>';
+        $html .= '<td>' . htmlspecialchars(substr($rep['zona_afectada'] ?? 'N/A', 0, 15)) . '</td>';
+        $html .= '<td class="text-center">' . htmlspecialchars($rep['tipo_servicio'] ?? 'N/A') . '</td>';
     }
     
     $html .= '
-                <td class="text-center">' . $estado_badge . '</td>
+                <td class="text-center">' . ($rep['solucion_completada'] ? 'OK' : 'ACT') . '</td>
             </tr>';
 }
 

@@ -35,33 +35,8 @@ if ($result->num_rows == 0) {
 }
 
 $r = $result->fetch_assoc();
-$saldo = floatval($r['monto_total']) - floatval($r['monto_pagado']);
-$conn->close();
-
-// --- OBTENER TASA DEL DÓLAR PARA CONVERSIÓN ---
-$tasa_dolar = 1.0;
-try {
-    $url_tasa = "https://ve.dolarapi.com/v1/dolares/oficial";
-    $ch = curl_init($url_tasa);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-    $resp_tasa = curl_exec($ch);
-    curl_close($ch);
-
-    $data_tasa = json_decode($resp_tasa, true);
-    if ($data_tasa && isset($data_tasa['promedio'])) {
-        $tasa_dolar = floatval($data_tasa['promedio']);
-    }
-} catch (Exception $e) {
-    // Fallback silencioso
-}
-
-$saldo_bs = $saldo * $tasa_dolar;
-
 // Preparar variables
 $fecha = date('d/m/Y', strtotime($r['fecha_soporte']));
-$estado_pago = ($saldo <= 0.01) ? 'PAGADO' : 'PENDIENTE';
 
 // Codificar firmas a base64 si existen
 $firma_tecnico_b64 = '';
@@ -151,23 +126,6 @@ $html = '
         .badge-warning { background-color: #ffc107; color: #000; }
         .badge-danger { background-color: #dc3545; color: white; }
         .badge-info { background-color: #0dcaf0; color: #000; }
-        .financial-summary {
-            background-color: #f8f9fa;
-            border: 2px solid #0d6efd;
-            padding: 15px;
-            margin-top: 10px;
-        }
-        .financial-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px dashed #ccc;
-        }
-        .financial-row:last-child {
-            border-bottom: none;
-            font-weight: bold;
-            font-size: 11pt;
-        }
         .signature-section {
             margin-top: 40px;
             text-align: center;
@@ -356,33 +314,6 @@ if ($r['prioridad'] !== 'NIVEL 3') {
         </table>
     </div>';
 
-if ($r['prioridad'] !== 'NIVEL 3') {
-    $html .= '
-    <div class="section">
-        <div class="section-title">INFORMACIÓN FINANCIERA</div>
-        <div class="financial-summary">
-            <div class="financial-row">
-                <span>Costo de Visita:</span>
-                <span>$' . number_format($r['monto_total'], 2) . '</span>
-            </div>
-            <div class="financial-row">
-                <span>Monto Pagado:</span>
-                <span style="color: #198754;">$' . number_format($r['monto_pagado'], 2) . '</span>
-            </div>
-            <div class="financial-row">
-                <span>Saldo Pendiente (USD):</span>
-                <span style="color: ' . ($saldo > 0.01 ? '#dc3545' : '#198754') . ';">$' . number_format($saldo, 2) . '</span>
-            </div>
-            <div class="financial-row">
-                <span>Saldo Pendiente (VES):</span>
-                <span style="color: ' . ($saldo > 0.01 ? '#dc3545' : '#198754') . ';">' . number_format($saldo_bs, 2, ',', '.') . ' Bs.</span>
-            </div>
-        </div>
-        <p style="text-align: center; margin-top: 10px;">
-            <span class="badge ' . ($estado_pago == 'PAGADO' ? 'badge-success' : 'badge-danger') . '">' . $estado_pago . '</span>
-        </p>
-    </div>';
-}
 
 $html .= '
     <div class="signature-section">';

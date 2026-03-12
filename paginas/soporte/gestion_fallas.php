@@ -103,21 +103,21 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                         <h2 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-list-check me-2 text-primary"></i>Gestión de Fallas</h2>
                         <p class="text-muted mb-0">Monitorea y gestiona las solicitudes de soporte técnico</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary fw-bold px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaFalla">
-                            <i class="fa-solid fa-plus-circle me-2"></i>Nuevo Reporte
-                        </button>
-                        <button class="btn btn-dark fw-bold px-4 shadow-sm" onclick="exportarPDF(false, '')">
-                            <i class="fa-solid fa-file-export me-2"></i>Exportar Todo
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary shadow-sm px-4" data-bs-toggle="modal"
-                            data-bs-target="#configModal">
-                            <i class="fa-solid fa-cog me-1"></i>Configurar Opciones
-                        </button>
-                        <a href="registro_falla.php" class="btn btn-danger shadow px-4 fw-bold">
-                            <i class="fa-solid fa-triangle-exclamation me-1"></i>REGISTRAR FALLA MASIVA
-                        </a>
-                    </div>
+                     <div class="d-flex gap-2">
+                         <a href="registro_soporte.php" class="btn btn-primary fw-bold px-4 shadow-sm">
+                             <i class="fa-solid fa-plus-circle me-2"></i>Nuevo Reporte
+                         </a>
+                         <button class="btn btn-dark fw-bold px-4 shadow-sm" onclick="exportarPDF(false, '')">
+                             <i class="fa-solid fa-file-export me-2"></i>Exportar Todo
+                         </button>
+                         <a href="registro_falla.php" class="btn btn-danger shadow px-4 fw-bold">
+                             <i class="fa-solid fa-triangle-exclamation me-1"></i>REGISTRAR FALLA MASIVA
+                         </a>
+                         <button type="button" class="btn btn-outline-secondary shadow-sm px-4" data-bs-toggle="modal"
+                             data-bs-target="#configModal">
+                             <i class="fa-solid fa-cog me-1"></i>Configurar Opciones
+                         </button>
+                     </div>
                 </div>
             </div>
         </div>
