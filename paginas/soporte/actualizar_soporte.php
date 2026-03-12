@@ -70,7 +70,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $firma_cliente_b64 = isset($_POST['firma_cliente_data']) ? $_POST['firma_cliente_data'] : '';
 
     // Si todo está vacío, tal vez falló la captura POST
-    if ($id_soporte > 0 && !empty($descripcion) && $nuevo_total >= 0) {
+    // MOD: Permitir si es toggle_estado aunque falte descripción
+    if ($id_soporte > 0 && ($origen == 'toggle_estado' || (!empty($descripcion) && $nuevo_total >= 0))) {
 
         $conn->begin_transaction();
         try {

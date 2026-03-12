@@ -377,6 +377,9 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                         <button class="btn btn-sm btn-warning me-1" onclick="editarCritica(<?php echo $cr['id_soporte']; ?>)" title="Editar">
                                             <i class="fa-solid fa-pen"></i>
                                         </button>
+                                        <a href="generar_pdf_reporte.php?id=<?php echo $cr['id_soporte']; ?>" target="_blank" class="btn btn-sm btn-danger me-1" title="Exportar PDF">
+                                            <i class="fa-solid fa-file-pdf"></i>
+                                        </a>
                                         <button class="btn btn-sm <?php echo $cr['solucion_completada'] ? 'btn-secondary' : 'btn-success'; ?>" 
                                             onclick="toggleEstado(<?php echo $cr['id_soporte']; ?>, <?php echo $cr['solucion_completada'] ? 0 : 1; ?>, 'NIVEL 3')"
                                             title="<?php echo $cr['solucion_completada'] ? 'Marcar Activa' : 'Marcar Solucionada'; ?>">
