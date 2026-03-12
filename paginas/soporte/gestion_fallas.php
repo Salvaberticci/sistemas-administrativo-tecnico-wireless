@@ -378,7 +378,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                             <i class="fa-solid fa-pen"></i>
                                         </button>
                                         <button class="btn btn-sm <?php echo $cr['solucion_completada'] ? 'btn-secondary' : 'btn-success'; ?>" 
-                                            onclick="toggleEstado(<?php echo $cr['id_soporte']; ?>, <?php echo $cr['solucion_completada'] ? 0 : 1; ?>)"
+                                            onclick="toggleEstado(<?php echo $cr['id_soporte']; ?>, <?php echo $cr['solucion_completada'] ? 0 : 1; ?>, 'NIVEL 3')"
                                             title="<?php echo $cr['solucion_completada'] ? 'Marcar Activa' : 'Marcar Solucionada'; ?>">
                                             <i class="fa-solid fa-<?php echo $cr['solucion_completada'] ? 'rotate-left' : 'check'; ?>"></i>
                                         </button>
@@ -398,18 +398,21 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
 
         <!-- Tabla de Reportes -->
         <div class="card border-0 shadow-sm">
-            <div
-                class="card-header bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h6 class="mb-0 fw-bold">Listado de Reportes</h6>
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-list-check"></i>
+                    <h6 class="mb-0 fw-bold">Listado de Reportes (Niveles 1 y 2)</h6>
+                </div>
+                <div class="d-flex align-items-center gap-2 ms-auto">
                     <div class="input-group input-group-sm" style="width: 250px;">
-                        <span class="input-group-text bg-white"><i class="fa-solid fa-search text-muted"></i></span>
-                        <input type="text" id="buscadorNativo" class="form-control" placeholder="Buscar en la tabla...">
+                        <span class="input-group-text bg-dark border-dark text-white"><i class="fa-solid fa-search"></i></span>
+                        <input type="text" id="buscadorNativo" class="form-control" placeholder="Buscar reportes...">
                     </div>
-                    <button class="btn btn-sm btn-danger" onclick="exportarPDF(true)">
-                        <i class="fa-solid fa-file-pdf me-1"></i>Exportar PDF (Niveles 1 y 2)
+                    <button class="btn btn-sm btn-light fw-bold" onclick="exportarPDF(true)">
+                        <i class="fa-solid fa-file-pdf text-danger me-1"></i>Generar PDF
                     </button>
                 </div>
+            </div>
                 <div class="card-body p-0">
                     <div class="table-responsive p-3">
                         <table id="tablaReportes" class="display table table-striped table-bordered w-100">
@@ -424,6 +427,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                     <th>Técnico</th>
                                     <th>Nivel</th>
                                     <th>Pagado</th>
+                                    <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -451,7 +455,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                     FROM soportes s
                                     INNER JOIN contratos c ON s.id_contrato = c.id
                                     WHERE $sWhere
-                                    ORDER BY s.id_soporte DESC LIMIT 500";
+                                    ORDER BY s.id_soporte DESC";
                                 $result = $conn->query($sql);
 
                                 if ($result && $result->num_rows > 0) {
@@ -503,6 +507,12 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                         echo "<td>" . fix_utf8($row['tecnico']) . "</td>";
                                         echo "<td>{$badgePrioridad}</td>";
                                         echo "<td>{$badgePago}</td>";
+                                        $estadoBadge = $row['solucion_completada'] ? '<span class="badge bg-success">Solucionada</span>' : '<span class="badge bg-warning text-dark">Activa</span>';
+                                        $toggleEstado = $row['solucion_completada'] ? 0 : 1;
+                                        $toggleIcon = $row['solucion_completada'] ? 'rotate-left' : 'check';
+                                        $toggleClass = $row['solucion_completada'] ? 'btn-secondary' : 'btn-success';
+                                        $toggleTitle = $row['solucion_completada'] ? 'Marcar Activa' : 'Marcar Solucionada';
+                                        echo "<td>{$estadoBadge}</td>";
                                         echo "<td class='text-nowrap'>
                                             <button class='btn btn-sm btn-outline-info me-1' onclick='verDetalles({$id})' title='Ver Detalles'>
                                                 <i class='fa-solid fa-eye'></i>
@@ -510,9 +520,12 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                             <button class='btn btn-sm btn-warning me-1' onclick='abrirEditar({$id})' title='Editar'>
                                                 <i class='fa-solid fa-pen'></i>
                                             </button>
-                                            <a href='generar_pdf_reporte.php?id={$id}' target='_blank' class='btn btn-sm btn-danger' title='PDF'>
+                                            <a href='generar_pdf_reporte.php?id={$id}' target='_blank' class='btn btn-sm btn-danger me-1' title='PDF'>
                                                 <i class='fa-solid fa-file-pdf'></i>
                                             </a>
+                                            <button class='btn btn-sm {$toggleClass}' onclick='toggleEstado({$id}, {$toggleEstado}, \"{$prioridad}\")' title='{$toggleTitle}'>
+                                                <i class='fa-solid fa-{$toggleIcon}'></i>
+                                            </button>
                                           </td>";
                                         echo "</tr>";
                                     }
@@ -1839,11 +1852,13 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
     }
 
     // --- Toggle Estado ---
-    function toggleEstado(id, nuevoEstado) {
+    function toggleEstado(id, nuevoEstado, prioridad = 'NIVEL 3') {
         const texto = nuevoEstado === 1 ? 'marcar como Solucionada' : 'marcar como Activa';
+        const msg = prioridad === 'NIVEL 3' ? 'esta caída crítica' : 'este reporte';
+        
         Swal.fire({
             title: '¿Cambiar Estado?',
-            text: `¿Deseas ${texto} esta caída crítica?`,
+            text: `¿Deseas ${texto} ${msg}?`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Sí, cambiar',
@@ -1857,12 +1872,12 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                         id_soporte_edit: id,
                         origen: 'toggle_estado',
                         solucion_completada: nuevoEstado,
-                        prioridad_edit: 'NIVEL 3',
+                        prioridad_edit: prioridad,
                         monto_total_edit: 0,
                         fecha_edit: new Date().toISOString().split('T')[0],
                         tecnico_edit: '',
                         descripcion_edit: '',
-                        es_caida_critica_edit: 1
+                        es_caida_critica_edit: (prioridad === 'NIVEL 3' ? 1 : 0)
                     },
                     success: function () {
                         Swal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false })
