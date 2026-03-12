@@ -116,11 +116,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
 
-        // 4. Doble Verificación de Sumatoria (Seguridad BDD)
-        // Comparación flotante con epsilon
-        if (abs($monto_total_declarado - $sumatoria_backend) > 0.01) {
-             header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode("Error de Integridad: La sumatoria del desglose ($$sumatoria_backend) no coincide con el total declarado ($$monto_total_declarado).") . "&class=danger");
-             exit();
+        // 4. Verificación de integridad - RELAJADA
+        // Ahora permitimos que la sumatoria no sea exacta.
+        // Si falta dinero, se registrará una deuda.
+        // Si sobra, se notificará pero se procesará.
+        
+        if (count($cargos_a_procesar) === 0) {
+            header("Location: gestion_mensualidades.php?maintenance_done=1&message=" . urlencode("Error: No se seleccionó ningún concepto para cobrar.") . "&class=danger");
+            exit();
         }
 
         if (count($cargos_a_procesar) === 0) {
@@ -198,8 +201,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             } // Fin foreach
 
+            // 6. LÓGICA DE DEUDA AUTOMÁTICA
+            $saldo_deudor = round($sumatoria_backend - $monto_total_declarado, 2);
+            if ($saldo_deudor > 0) {
+                $notas_deuda = "Generado automáticamente desde Cobro Manual (Ref: $referencia_pago). Justificación: " . $justificacion;
+                $sql_deudor = "INSERT INTO clientes_deudores (
+                    id_contrato, 
+                    monto_total, 
+                    monto_pagado, 
+                    saldo_pendiente, 
+                    estado,
+                    notas
+                ) VALUES (
+                    '$id_contrato_principal', 
+                    '$sumatoria_backend', 
+                    '$monto_total_declarado', 
+                    '$saldo_deudor', 
+                    'PENDIENTE',
+                    '$notas_deuda'
+                )";
+                
+                if (!$conn->query($sql_deudor)) {
+                    throw new Exception("Error al registrar en lista de deudores: " . $conn->error);
+                }
+            }
+
             $conn->commit();
-            $message = "Capture recibido correctamente. Se generaron $registros_exitosos cobros (Ref: $referencia_pago) por un total de $$monto_total_declarado.";
+            
+            $status_msg = "";
+            if ($saldo_deudor > 0) {
+                $status_msg = " [SALDO PENDIENTE: $$saldo_deudor registrado en lista de deudores]";
+            } elseif ($saldo_deudor < 0) {
+                $status_msg = " [AVISO: Sobrante de $" . abs($saldo_deudor) . " no asignado]";
+            }
+
+            $message = "Capture procesado con éxito. Se generaron $registros_exitosos cobros (Ref: $referencia_pago) por un total de $$monto_total_declarado.$status_msg";
             $class = "success";
 
         } catch (Exception $e) {

@@ -455,15 +455,15 @@ require_once '../includes/sidebar.php';
                             <div class="bg-dark rounded p-3 mb-3 border-0 shadow-sm mt-3 mx-0 text-white">
                                 <div class="row g-2 text-center text-md-start">
                                     <div class="col-4 border-end border-secondary">
-                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Monto Comprobante</div>
+                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Monto Pagado</div>
                                         <div class="fw-bold text-white fs-5">$ <span id="val_monto_total">0.00</span></div>
                                     </div>
                                     <div class="col-4 border-end border-secondary">
-                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Asignado</div>
+                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Monto Total a Pagar</div>
                                         <div class="fw-bold text-info fs-5">$ <span id="val_suma_desglose">0.00</span></div>
                                     </div>
                                     <div class="col-4">
-                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Pendiente de Asignar</div>
+                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Saldo Pendiente</div>
                                         <div class="fw-bold fs-5" id="container_restante">$ <span id="val_monto_restante">0.00</span></div>
                                     </div>
                                 </div>
@@ -1065,7 +1065,7 @@ require_once '../includes/sidebar.php';
                 }
             });
 
-            let restante = totalDeclarado - sumatoriaDesglose;
+            let restante = sumatoriaDesglose - totalDeclarado; // Saldo deudor si > 0
 
             // Actualizar UI
             document.getElementById('val_monto_total').textContent = totalDeclarado.toFixed(2);
@@ -1077,21 +1077,36 @@ require_once '../includes/sidebar.php';
 
             // Validar
             const badgeIndicador = document.getElementById('badge_indicador_suma');
+            const hiddenIdContrato = document.getElementById('id_contrato_hidden_modal').value;
             
-            // Usamos un pequeño epsilon para evitar problemas de precisión en JS
-            if (Math.abs(restante) < 0.01 && totalDeclarado > 0) {
-                containerRestante.className = 'fw-bold text-success';
+            // Lógica de habilitación: Necesitamos un cliente y al menos un cargo
+            const tieneCliente = hiddenIdContrato && hiddenIdContrato !== "0";
+            const tieneCargos = sumatoriaDesglose > 0;
+
+            if (tieneCliente && tieneCargos) {
                 btnSubmitCobro.disabled = false;
+                
                 if (badgeIndicador) {
-                    badgeIndicador.textContent = 'LISTO';
-                    badgeIndicador.className = 'badge bg-success text-white border-0 py-1 px-3';
+                    if (Math.abs(restante) < 0.01) {
+                        badgeIndicador.textContent = 'PAGO EXACTO';
+                        badgeIndicador.className = 'badge bg-success text-white border-0 py-1 px-3';
+                        containerRestante.className = 'fw-bold text-success';
+                    } else if (restante > 0) {
+                        badgeIndicador.textContent = 'SALDO PENDIENTE';
+                        badgeIndicador.className = 'badge bg-danger text-white border-0 py-1 px-3';
+                        containerRestante.className = 'fw-bold text-danger';
+                    } else {
+                        badgeIndicador.textContent = 'SALDO A FAVOR';
+                        badgeIndicador.className = 'badge bg-info text-dark border-0 py-1 px-3';
+                        containerRestante.className = 'fw-bold text-info';
+                    }
                 }
             } else {
-                containerRestante.className = 'fw-bold text-danger';
                 btnSubmitCobro.disabled = true;
                 if (badgeIndicador) {
-                    badgeIndicador.textContent = 'PENDIENTE';
-                    badgeIndicador.className = 'badge bg-danger text-white border-0 py-1 px-3';
+                    badgeIndicador.textContent = 'ESPERANDO SELECCIÓN';
+                    badgeIndicador.className = 'badge bg-secondary text-white border-0 py-1 px-3';
+                    containerRestante.className = 'fw-bold text-muted';
                 }
             }
         }
