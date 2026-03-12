@@ -24,6 +24,9 @@ $where = "WHERE s.fecha_soporte BETWEEN '$fecha_desde' AND '$fecha_hasta'";
 if (!empty($tipo_falla)) {
     $where .= " AND s.tipo_falla = '$tipo_falla'";
 }
+if (isset($_GET['excluir_nivel_3']) && $_GET['excluir_nivel_3'] == '1') {
+    $where .= " AND s.prioridad != 'NIVEL 3'";
+}
 
 // Estadísticas generales
 $sql_stats = "SELECT 

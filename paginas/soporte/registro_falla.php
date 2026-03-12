@@ -181,20 +181,12 @@ while ($row = $res_olt->fetch_assoc()) {
                         <small class="text-muted">Deja en blanco si es caída total de la OLT</small>
                     </div>
                 </div>
-
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Tipo de Falla <span class="text-danger">*</span></label>
-                        <select class="form-select" id="tipo_falla" name="tipo_falla" required>
-                            <option value="">Cargando opciones...</option>
-                        </select>
-                        <div class="invalid-feedback">Debe seleccionar un tipo de falla</div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Tipo de Servicio</label>
-                        <input type="text" class="form-control" id="tipo_servicio" name="tipo_servicio" readonly
-                            placeholder="Se llena automáticamente">
+                    <div class="col-12">
+                        <label class="form-label">Tipo de Falla (Descriptivo) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="tipo_falla" name="tipo_falla" required 
+                            placeholder="Ej: Rama caída sobre fibra, OLT sin energía, etc.">
+                        <div class="invalid-feedback">Debe describir el tipo de falla</div>
                     </div>
                 </div>
                 <div class="row g-3 mt-3">
@@ -337,12 +329,32 @@ while ($row = $res_olt->fetch_assoc()) {
 
 <script>
     $(document).ready(function () {
-        // Cargar opciones al iniciar
-        cargarOpciones();
+        // Cargar PONs cuando cambie la OLT
+        $('#id_olt').change(function() {
+            const id_olt = $(this).val();
+            const ponSelect = $('#id_pon');
+            
+            ponSelect.empty().append('<option value="">Cargando...</option>');
+            
+            if (!id_olt) {
+                ponSelect.html('<option value="">Primero seleccione OLT...</option>');
+                return;
+            }
 
-        // Configurar botón modal para que al cerrar recargue los selects
-        $('#configModal').on('hidden.bs.modal', function () {
-            cargarOpciones();
+            $.ajax({
+                url: 'get_pons_ajax.php',
+                data: { id_olt: id_olt },
+                dataType: 'json',
+                success: function(data) {
+                    ponSelect.empty().append('<option value="">Toda la OLT / Seleccione PON...</option>');
+                    data.forEach(function(pon) {
+                        ponSelect.append(`<option value="${pon.id_pon}">${pon.nombre_pon}</option>`);
+                    });
+                },
+                error: function() {
+                    ponSelect.html('<option value="">Error al cargar PONs</option>');
+                }
+            });
         });
 
         // Buscador AJAX de clientes (igual que en reporte_tecnico.php)
@@ -380,24 +392,6 @@ while ($row = $res_olt->fetch_assoc()) {
                                 clienteData = item;
                                 $('#direccion').val(item.direccion || '');
                                 $('#sector').val(item.sector || '');
-
-                                // Mapear y auto-seleccionar tipo de servicio
-                                if (item.tipo_servicio) {
-                                    let tipoSelect = '';
-                                    const tipoDb = item.tipo_servicio.toUpperCase();
-
-                                    if (tipoDb === 'FTTH' || tipoDb.includes('FIBRA')) {
-                                        tipoSelect = 'Fibra Óptica';
-                                    } else if (tipoDb === 'RADIO MICROONDAS' || tipoDb.includes('RADIO') || tipoDb.includes('ANTENA')) {
-                                        tipoSelect = 'Radio Enlace';
-                                    }
-
-                                    if (tipoSelect) {
-                                        $('#tipo_servicio').val(tipoSelect);
-                                    } else {
-                                        $('#tipo_servicio').val(item.tipo_servicio);
-                                    }
-                                }
                             };
                             resultsDiv.appendChild(a);
                         });
@@ -421,29 +415,11 @@ while ($row = $res_olt->fetch_assoc()) {
             }
         });
 
-        // Manejo de selección de prioridad
+        // Manejo de selección de prioridad (kept for consistency, though fixed to NIVEL 3)
         $('.priority-badge').click(function () {
             $('.priority-badge').removeClass('active');
             $(this).addClass('active');
             $('#prioridad').val($(this).data('priority'));
-        });
-
-        // Mostrar/ocultar campo de clientes afectados
-        $('#es_caida_critica').change(function () {
-            if ($(this).is(':checked')) {
-                $('#clientesAfectadosContainer').show();
-                $('#criticalAlert').show();
-                $('#clientes_afectados').attr('required', true);
-                $('#clientes_afectados').val(2);
-
-                // Auto-seleccionar prioridad NIVEL 3
-                $('.priority-badge[data-priority="NIVEL 3"]').click();
-            } else {
-                $('#clientesAfectadosContainer').hide();
-                $('#criticalAlert').hide();
-                $('#clientes_afectados').attr('required', false);
-                $('#clientes_afectados').val(1);
-            }
         });
 
         // Validación y envío del formulario
@@ -468,34 +444,17 @@ while ($row = $res_olt->fetch_assoc()) {
                 id_contrato: $('#id_contrato').val(),
                 prioridad: $('#prioridad').val(),
                 tipo_falla: $('#tipo_falla').val(),
-                tipo_servicio: $('#tipo_servicio').val(),
-                es_caida_critica: $('#es_caida_critica').is(':checked') ? 1 : 0,
-                clientes_afectados: $('#clientes_afectados').val() || 1,
+                es_caida_critica: 1, // Siempre es crítica en este formulario
+                clientes_afectados: $('#clientes_afectados').val() || 50,
                 sector: $('#sector').val(),
                 zona_afectada: $('#zona_afectada').val(),
+                id_olt: $('#id_olt').val(),
+                id_pon: $('#id_pon').val(),
                 observaciones: $('#observaciones').val(),
                 equipos_afectados: equiposAfectados.join(', '),
                 tecnico_asignado: $('#tecnico_asignado').val(),
                 notas_internas: $('#notas_internas').val(),
-                fecha_reporte: $('#fecha_reporte').val(),
-
-                // Nuevos campos
-                ip: $('input[name="ip"]').val(),
-                estado_onu: $('select[name="estado_onu"]').val(),
-                estado_router: $('select[name="estado_router"]').val(),
-                modelo_router: $('input[name="modelo_router"]').val(),
-                num_dispositivos: $('input[name="num_dispositivos"]').val(),
-                bw_bajada: $('input[name="bw_bajada"]').val(),
-                bw_subida: $('input[name="bw_subida"]').val(),
-                bw_ping: $('input[name="bw_ping"]').val(),
-                estado_antena: $('input[name="estado_antena"]').val(),
-                valores_antena: $('input[name="valores_antena"]').val(),
-                sugerencias: $('textarea[name="sugerencias"]').val(),
-                solucion_completada: $('#solucion_completada').is(':checked') ? 1 : 0,
-                monto_total: $('#monto_total').val(),
-                monto_pagado: $('#monto_pagado').val(),
-                firma_tecnico_data: padTech.isEmpty() ? '' : padTech.toDataURL(),
-                firma_cliente_data: padCli.isEmpty() ? '' : padCli.toDataURL()
+                fecha_reporte: $('#fecha_reporte').val()
             };
 
             // Enviar datos
@@ -541,114 +500,6 @@ while ($row = $res_olt->fetch_assoc()) {
             });
         });
     });
-
-
-
-    // --- Funciones para Gestión de Opciones JSON ---
-
-    function cargarOpciones() {
-        $.ajax({
-            url: 'admin_opciones.php',
-            data: { action: 'read' },
-            dataType: 'json',
-            success: function (response) {
-                if (response.success) {
-                    const data = response.data;
-
-                    // Llenar Selects en Formulario Principal
-                    if (data.tipos_falla) {
-                        actualizarSelect('#tipo_falla', data.tipos_falla);
-                        actualizarListaModal('#listaFallas', 'tipos_falla', data.tipos_falla);
-                    }
-                }
-            }
-        });
-    }
-
-    function actualizarSelect(selector, opciones) {
-        const select = $(selector);
-        const valorActual = select.val();
-        select.empty();
-        select.append('<option value="">Seleccione...</option>');
-        opciones.forEach(op => {
-            select.append(`<option value="${op}">${op}</option>`);
-        });
-        if (valorActual && opciones.includes(valorActual)) {
-            select.val(valorActual);
-        }
-    }
-
-    function actualizarListaModal(selector, tipo, opciones) {
-        const lista = $(selector);
-        lista.empty();
-        opciones.forEach(op => {
-            lista.append(`
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    ${op}
-                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarOpcion('${tipo}', '${op}')">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </li>
-            `);
-        });
-    }
-
-    function agregarOpcion(tipo) {
-        const inputId = '#nuevoTipoFalla';
-        const valor = $(inputId).val().trim();
-
-        if (!valor) return;
-
-        $.post('admin_opciones.php', {
-            action: 'add',
-            type: tipo,
-            value: valor
-        }, function (response) {
-            if (response.success) {
-                $(inputId).val('');
-                cargarOpciones(); // Recarga todo
-                const toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000
-                });
-                toast.fire({
-                    icon: 'success',
-                    title: 'Agregado correctamente'
-                });
-            } else {
-                Swal.fire('Error', response.message, 'error');
-            }
-        }, 'json');
-    }
-
-    function eliminarOpcion(tipo, valor) {
-        Swal.fire({
-            title: '¿Eliminar opción?',
-            text: `Se eliminará "${valor}" de la lista`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Sí, eliminar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.post('admin_opciones.php', {
-                    action: 'delete',
-                    type: tipo,
-                    value: valor
-                }, function (response) {
-                    if (response.success) {
-                        cargarOpciones();
-                    } else {
-                        Swal.fire('Error', response.message, 'error');
-                    }
-                }, 'json');
-            }
-        });
-    }
-
-
 </script>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
 

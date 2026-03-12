@@ -321,7 +321,7 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
         $sql_criticas = "SELECT s.id_soporte, DATE_FORMAT(s.fecha_soporte, '%d/%m/%Y') as fecha, c.nombre_completo, s.tipo_falla, s.tecnico_asignado, s.clientes_afectados, s.zona_afectada, s.solucion_completada
             FROM soportes s
             INNER JOIN contratos c ON s.id_contrato = c.id
-            WHERE s.es_caida_critica = 1
+            WHERE s.prioridad = 'NIVEL 3'
             ORDER BY s.id_soporte DESC LIMIT 20";
         $res_criticas = $conn->query($sql_criticas);
         $num_criticas = $res_criticas ? $res_criticas->num_rows : 0;
@@ -335,7 +335,7 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                 </div>
                 <div class="table-responsive">
                     <table class="table table-bordered mb-0">
-                        <thead class="table-danger">
+                        <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Fecha</th>
@@ -350,18 +350,15 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                         </thead>
                         <tbody>
                             <?php while ($cr = $res_criticas->fetch_assoc()): ?>
-                                <tr class="<?php echo $cr['solucion_completada'] ? '' : 'table-warning'; ?>"
-                                    style="cursor:pointer;" ondblclick="verDetalles(<?php echo $cr['id_soporte']; ?>)">
+                                <tr class="<?php echo $cr['solucion_completada'] ? '' : 'table-warning'; ?>" style="cursor:pointer;" ondblclick="verDetalles(<?php echo $cr['id_soporte']; ?>)">
                                     <td><span class="badge bg-danger">#<?php echo $cr['id_soporte']; ?></span></td>
                                     <td><?php echo htmlspecialchars($cr['fecha']); ?></td>
                                     <td><?php echo htmlspecialchars($cr['nombre_completo']); ?></td>
                                     <td><?php echo htmlspecialchars($cr['tipo_falla'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($cr['tecnico_asignado'] ?? 'Sin asignar'); ?></td>
-                                    <td class="text-center fw-bold text-danger"><?php echo intval($cr['clientes_afectados']); ?>
-                                    </td>
+                                    <td class="text-center fw-bold text-danger"><?php echo intval($cr['clientes_afectados']); ?></td>
                                     <td><?php echo htmlspecialchars($cr['zona_afectada'] ?? '—'); ?></td>
-                                    <td><?php echo $cr['solucion_completada'] ? '<span class="badge bg-success">Solucionada</span>' : '<span class="badge bg-warning text-dark">Activa</span>'; ?>
-                                    </td>
+                                    <td><?php echo $cr['solucion_completada'] ? '<span class="badge bg-success">Solucionada</span>' : '<span class="badge bg-warning text-dark">Activa</span>'; ?></td>
                                     <td>
                                         <button class="btn btn-sm btn-outline-primary"
                                             onclick="verDetalles(<?php echo $cr['id_soporte']; ?>)" title="Ver Detalles">
@@ -390,8 +387,8 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                         <span class="input-group-text bg-white"><i class="fa-solid fa-search text-muted"></i></span>
                         <input type="text" id="buscadorNativo" class="form-control" placeholder="Buscar en la tabla...">
                     </div>
-                    <button class="btn btn-sm btn-danger" onclick="exportarPDF()">
-                        <i class="fa-solid fa-file-pdf me-1"></i>Exportar PDF
+                    <button class="btn btn-sm btn-danger" onclick="exportarPDF(true)">
+                        <i class="fa-solid fa-file-pdf me-1"></i>Exportar PDF (Niveles 1 y 2)
                     </button>
                 </div>
                 <div class="card-body p-0">
@@ -413,7 +410,7 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                             </thead>
                             <tbody>
                                 <?php
-                                $sWhere = "s.fecha_soporte BETWEEN '$filtro_desde' AND '$filtro_hasta'";
+                                $sWhere = "s.fecha_soporte BETWEEN '$filtro_desde' AND '$filtro_hasta' AND s.prioridad != 'NIVEL 3'";
 
                                 if (!empty($filtro_tipo))
                                     $sWhere .= " AND s.tipo_falla = '$filtro_tipo'";
@@ -612,24 +609,6 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                             <label class="form-check-label text-danger fw-bold" for="es_caida_critica_edit">¿Caída
                                 Crítica?</label>
                         </div>
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">OLT Afectada</label>
-                        <select class="form-select" name="id_olt_edit" id="id_olt_edit">
-                            <option value="">Seleccione OLT...</option>
-                            <?php foreach ($olts as $olt): ?>
-                                <option value="<?php echo $olt['id_olt']; ?>"><?php echo htmlspecialchars($olt['nombre_olt']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">PON Afectado</label>
-                        <select class="form-select" name="id_pon_edit" id="id_pon_edit">
-                            <option value="">Primero seleccione OLT...</option>
-                        </select>
                     </div>
                 </div>
 
@@ -1268,7 +1247,7 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
         // Si el usuario quiere que sea puramente AJAX sin recarga, usaríamos e.preventDefault().
     });
 
-    function exportarPDF() {
+    function exportarPDF(excluirNivel3 = false) {
         const params = new URLSearchParams({
             fecha_desde: $('#fecha_desde').val(),
             fecha_hasta: $('#fecha_hasta').val(),
@@ -1276,6 +1255,9 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
             tecnico: $('#filtro_tecnico').val(),
             estado_pago: $('#estado_pago').val()
         });
+        if (excluirNivel3) {
+            params.append('excluir_nivel_3', '1');
+        }
         window.open('generar_pdf_consolidado.php?' + params.toString(), '_blank');
     }
 
