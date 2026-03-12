@@ -477,15 +477,15 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                     if (count($rowsNivel1) > 0) {
                                         foreach ($rowsNivel1 as $r) renderRow($r);
                                     } else {
-                                        echo "<tr><td colspan='11' class='text-center text-muted py-4'>No se encontraron reportes de Nivel 1.</td></tr>";
+                                        echo "<tr class='empty-row'><td colspan='11' class='text-center text-muted py-4'>No se encontraron reportes de Nivel 1.</td></tr>";
                                     }
                                     ?>
                                 </tbody>
                             </table>
                         </div>
                         <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center py-3">
-                            <span id="infoPaginacionNivel1" class="text-muted small">Mostrando registros</span>
                             <nav><ul class="pagination pagination-sm mb-0" id="paginacionNivel1"></ul></nav>
+                            <span id="infoPaginacionNivel1" class="text-muted small">Mostrando registros</span>
                         </div>
                     </div>
 
@@ -515,15 +515,15 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                     if (count($rowsNivel2) > 0) {
                                         foreach ($rowsNivel2 as $r) renderRow($r);
                                     } else {
-                                        echo "<tr><td colspan='11' class='text-center text-muted py-4'>No se encontraron reportes de Nivel 2.</td></tr>";
+                                        echo "<tr class='empty-row'><td colspan='11' class='text-center text-muted py-4'>No se encontraron reportes de Nivel 2.</td></tr>";
                                     }
                                     ?>
                                 </tbody>
                             </table>
                         </div>
                         <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center py-3">
-                            <span id="infoPaginacionNivel2" class="text-muted small">Mostrando registros</span>
                             <nav><ul class="pagination pagination-sm mb-0" id="paginacionNivel2"></ul></nav>
+                            <span id="infoPaginacionNivel2" class="text-muted small">Mostrando registros</span>
                         </div>
                     </div>
 
@@ -567,15 +567,15 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                             renderRow($r, true);
                                         }
                                     } else {
-                                        echo "<tr><td colspan='9' class='text-center text-muted py-4'>No se encontraron caídas críticas activas.</td></tr>";
+                                        echo "<tr class='empty-row'><td colspan='9' class='text-center text-muted py-4'>No se encontraron caídas críticas activas.</td></tr>";
                                     }
                                     ?>
                                 </tbody>
                             </table>
                         </div>
                         <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center py-3">
-                            <span id="infoPaginacionNivel3" class="text-muted small">Mostrando registros</span>
                             <nav><ul class="pagination pagination-sm mb-0" id="paginacionNivel3"></ul></nav>
+                            <span id="infoPaginacionNivel3" class="text-muted small">Mostrando registros</span>
                         </div>
                     </div>
 
@@ -1468,7 +1468,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
             const todasLasFilas = $(`#${tablaId} tbody tr`);
             let filasFiltradas = [];
 
-            if (todasLasFilas.length === 1 && todasLasFilas.find('.text-center').length > 0) return;
+            if (todasLasFilas.length === 1 && todasLasFilas.hasClass('empty-row')) return;
 
             todasLasFilas.each(function () {
                 let fila = $(this);
@@ -1509,7 +1509,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
             const total = Math.max(1, totalPaginas);
 
             const disAnt = paginaActual <= 1 ? 'disabled' : '';
-            contenedor.append(`<li class="page-item ${disAnt}"><a class="page-link" href="javascript:void(0)" data-page="${paginaActual - 1}">Anterior</a></li>`);
+            contenedor.append(`<li class="page-item ${disAnt}"><a class="page-link" href="javascript:void(0)" data-page="${paginaActual - 1}"><i class="fa-solid fa-chevron-left"></i></a></li>`);
 
             let startPage = Math.max(1, paginaActual - 2);
             let endPage = startPage + 4;
@@ -1524,7 +1524,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
             }
 
             const disSig = paginaActual >= total ? 'disabled' : '';
-            contenedor.append(`<li class="page-item ${disSig}"><a class="page-link" href="javascript:void(0)" data-page="${paginaActual + 1}">Siguiente</a></li>`);
+            contenedor.append(`<li class="page-item ${disSig}"><a class="page-link" href="javascript:void(0)" data-page="${paginaActual + 1}"><i class="fa-solid fa-chevron-right"></i></a></li>`);
 
             contenedor.find('.page-link').on('click', function() {
                 const page = $(this).data('page');
@@ -1541,7 +1541,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         });
 
         // Init
-        if ($(`#${tablaId} tbody tr`).length > 0 && !$(`#${tablaId} tbody tr td`).hasClass('text-center')) {
+        if ($(`#${tablaId} tbody tr`).length > 0 && !$(`#${tablaId} tbody tr`).hasClass('empty-row')) {
             actualizarTabla();
         }
     }
