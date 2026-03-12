@@ -96,22 +96,26 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         <!-- Header -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
-                        <h2 class="h3 fw-bold text-primary mb-1">
-                            <i class="fa-solid fa-chart-line me-2"></i>Gestión de Fallas Técnicas
-                        </h2>
-                        <p class="text-muted">Dashboard de análisis y estadísticas de reportes técnicos</p>
+                        <h2 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-list-check me-2 text-primary"></i>Gestión de Fallas</h2>
+                        <p class="text-muted mb-0">Monitorea y gestiona las solicitudes de soporte técnico</p>
                     </div>
                     <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-outline-secondary shadow-sm px-4" data-bs-toggle="modal"
-                        data-bs-target="#configModal">
-                        <i class="fa-solid fa-cog me-1"></i>Configurar Opciones
-                    </button>
-                    <a href="registro_falla.php" class="btn btn-danger shadow px-4 fw-bold">
-                        <i class="fa-solid fa-triangle-exclamation me-1"></i>REGISTRAR FALLA MASIVA
-                    </a>
-                </div>
+                        <button class="btn btn-primary fw-bold px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaFalla">
+                            <i class="fa-solid fa-plus-circle me-2"></i>Nuevo Reporte
+                        </button>
+                        <button class="btn btn-dark fw-bold px-4 shadow-sm" onclick="exportarPDF(false, '')">
+                            <i class="fa-solid fa-file-export me-2"></i>Exportar Todo
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary shadow-sm px-4" data-bs-toggle="modal"
+                            data-bs-target="#configModal">
+                            <i class="fa-solid fa-cog me-1"></i>Configurar Opciones
+                        </button>
+                        <a href="registro_falla.php" class="btn btn-danger shadow px-4 fw-bold">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>REGISTRAR FALLA MASIVA
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -474,8 +478,8 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                     <span class="input-group-text bg-dark border-dark text-white"><i class="fa-solid fa-search"></i></span>
                                     <input type="text" id="buscadorNivel1" class="form-control" placeholder="Buscar Nivel 1...">
                                 </div>
-                                <button class="btn btn-sm btn-light fw-bold text-warning border" onclick="exportarPDF(false, 'NIVEL 1')">
-                                    <i class="fa-solid fa-file-pdf me-1"></i>Listado
+                                <button class="btn btn-sm btn-light fw-bold text-warning border" onclick="exportarPDF(true, 'NIVEL 1')">
+                                    <i class="fa-solid fa-file-pdf me-1"></i>Listado Nivel 1
                                 </button>
                             </div>
                         </div>
@@ -515,8 +519,8 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                     <span class="input-group-text bg-dark border-dark text-white"><i class="fa-solid fa-search"></i></span>
                                     <input type="text" id="buscadorNivel2" class="form-control" placeholder="Buscar Nivel 2...">
                                 </div>
-                                <button class="btn btn-sm btn-light fw-bold text-orange border" style="color: #fd7e14 !important;" onclick="exportarPDF(false, 'NIVEL 2')">
-                                    <i class="fa-solid fa-file-pdf me-1"></i>Listado
+                                <button class="btn btn-sm btn-light fw-bold text-orange border" style="color: #fd7e14 !important;" onclick="exportarPDF(true, 'NIVEL 2')">
+                                    <i class="fa-solid fa-file-pdf me-1"></i>Listado Nivel 2
                                 </button>
                             </div>
                         </div>
@@ -556,8 +560,8 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                     <span class="input-group-text bg-dark border-dark text-white"><i class="fa-solid fa-search"></i></span>
                                     <input type="text" id="buscadorNivel3" class="form-control" placeholder="Buscar Nivel 3...">
                                 </div>
-                                <button class="btn btn-sm btn-light fw-bold text-danger" onclick="exportarPDFCriticas()">
-                                    <i class="fa-solid fa-file-pdf me-1"></i>Listado
+                                <button class="btn btn-sm btn-light fw-bold text-danger border" onclick="exportarPDF(true, 'NIVEL 3')">
+                                    <i class="fa-solid fa-file-pdf me-1"></i>Listado Nivel 3
                                 </button>
                             </div>
                         </div>
@@ -1461,7 +1465,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         // Si el usuario quiere que sea puramente AJAX sin recarga, usaríamos e.preventDefault().
     });
 
-    function exportarPDF(excluirNivel3 = false) {
+    function exportarPDF(soloPrioridad = false, prioridadEspecifica = '') {
         const params = new URLSearchParams({
             fecha_desde: $('#fecha_desde').val(),
             fecha_hasta: $('#fecha_hasta').val(),
@@ -1469,9 +1473,11 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
             tecnico: $('#filtro_tecnico').val(),
             estado_pago: $('#estado_pago').val()
         });
-        if (excluirNivel3) {
-            params.append('excluir_nivel_3', '1');
+        
+        if (soloPrioridad && prioridadEspecifica) {
+            params.append('filtro_prioridad', prioridadEspecifica);
         }
+        
         window.open('generar_pdf_consolidado.php?' + params.toString(), '_blank');
     }
 

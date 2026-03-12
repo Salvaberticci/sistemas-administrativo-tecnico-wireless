@@ -184,51 +184,6 @@ $html = '
         ' . (!empty($tipo_falla) ? '<p>Filtro: ' . htmlspecialchars($tipo_falla) . '</p>' : '') . '
     </div>
 
-    <div class="section-title">RESUMEN EJECUTIVO</div>
-    <div class="stats-grid">
-        <div class="stat-box">
-            <div class="value">' . $stats['total_reportes'] . '</div>
-            <div class="label">Total Reportes</div>
-        </div>
-        <div class="stat-box">
-            <div class="value" style="color: #ffc107;">' . $stats['reportes_pendientes'] . '</div>
-            <div class="label">Pendientes Pago</div>
-        </div>
-        <div class="stat-box">
-            <div class="value" style="color: #198754;">$' . number_format($stats['total_facturado'], 2) . '</div>
-            <div class="label">Total Facturado</div>
-        </div>
-        <div class="stat-box">
-            <div class="value" style="color: #dc3545;">$' . number_format($saldo_total, 2) . '</div>
-            <div class="label">Saldo Pendiente</div>
-        </div>
-    </div>
-
-    <div class="section-title">TOP 10 TIPOS DE FALLA MÁS FRECUENTES</div>
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 10%;">#</th>
-                <th>Tipo de Falla</th>
-                <th style="width: 20%; text-align: right;">Cantidad</th>
-            </tr>
-        </thead>
-        <tbody>';
-
-$contador = 1;
-foreach ($tipos_falla as $tipo) {
-    $html .= '
-            <tr>
-                <td class="text-center">' . $contador++ . '</td>
-                <td>' . htmlspecialchars($tipo['tipo_falla']) . '</td>
-                <td class="text-right"><strong>' . $tipo['cantidad'] . '</strong></td>
-            </tr>';
-}
-
-$html .= '
-        </tbody>
-    </table>
-
     <div class="section-title">LISTADO DETALLADO DE REPORTES</div>
     <table>
         <thead>
