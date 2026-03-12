@@ -1076,13 +1076,23 @@ require_once '../includes/sidebar.php';
             spanRestante.textContent = Math.abs(restante).toFixed(2);
 
             // Validar
+            const badgeIndicador = document.getElementById('badge_indicador_suma');
+            
             // Usamos un pequeño epsilon para evitar problemas de precisión en JS
             if (Math.abs(restante) < 0.01 && totalDeclarado > 0) {
                 containerRestante.className = 'fw-bold text-success';
                 btnSubmitCobro.disabled = false;
+                if (badgeIndicador) {
+                    badgeIndicador.textContent = 'LISTO';
+                    badgeIndicador.className = 'badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-1 px-3';
+                }
             } else {
                 containerRestante.className = 'fw-bold text-danger';
                 btnSubmitCobro.disabled = true;
+                if (badgeIndicador) {
+                    badgeIndicador.textContent = 'PENDIENTE';
+                    badgeIndicador.className = 'badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 py-1 px-3';
+                }
             }
         }
 
