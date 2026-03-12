@@ -86,14 +86,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Generar token único
                 $token_firma = bin2hex(random_bytes(32));
                 $estado_firma = 'PENDIENTE';
-
-                // Si es link, no validamos firmas ni las intentamos guardar (podrían venir vacías)
-                $path_firma_tech = null;
-                $path_firma_cli = null;
-            } else {
-                // Guardado normal - Firmas obligatorias (validado en frontend, pero aquí guardamos)
-                $path_firma_tech = saveSignatureFromAdmin($firma_tecnico_b64, 'tech');
-                $path_firma_cli = saveSignatureFromAdmin($firma_cliente_b64, 'cli');
             }
 
             $sql_soporte = "INSERT INTO soportes (

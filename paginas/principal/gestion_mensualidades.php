@@ -684,46 +684,209 @@ require_once '../includes/sidebar.php';
     </div>
 </div>
 
-<!-- Modal Editar Cobro -->
+<!-- Modal Editar Cobro Potenciado -->
 <div class="modal fade" id="modalEditarCobro" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title fw-bold">Modificar Cobro #<span id="edit_id_cobro_display"></span></h5>
+                <h5 class="modal-title fw-bold">Modificar Pago #<span id="edit_id_cobro_display"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="formEditarCobro">
-                <div class="modal-body p-4">
-                    <input type="hidden" name="id_cobro" id="edit_id_cobro">
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">Cliente</label>
-                        <p class="form-control-static fw-bold" id="edit_cliente_nombre"></p>
+            <form id="formEditarCobro" enctype="multipart/form-data">
+                <div class="modal-body p-0">
+                    <div id="edit_modal_loader" class="text-center py-5 d-none">
+                        <i class="fas fa-spinner fa-spin fa-3x text-warning"></i>
+                        <p class="mt-2 fw-bold text-muted">Cargando datos del pago...</p>
                     </div>
+                    <div id="edit_modal_content" class="row g-0">
+                        <!-- COLUMNA IZQUIERDA: DESGLOSE -->
+                        <div class="col-md-7 border-end p-4">
+                            <input type="hidden" name="id_cobro" id="edit_id_cobro">
+                            <input type="hidden" name="id_grupo_pago" id="edit_id_grupo_pago">
+                            
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small mb-1">Cliente / Contrato</label>
+                                    <div class="p-2 bg-light border rounded fw-bold text-dark small" id="edit_cliente_info_static">
+                                        ---
+                                    </div>
+                                    <input type="hidden" name="id_contrato" id="edit_id_contrato_hidden">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small mb-1">Estado del Pago</label>
+                                    <select name="estado" id="edit_estado" class="form-select form-select-sm shadow-sm" required>
+                                        <option value="PENDIENTE">PENDIENTE</option>
+                                        <option value="PAGADO">PAGADO</option>
+                                        <option value="VENCIDO">VENCIDO</option>
+                                        <option value="CANCELADO">CANCELADO</option>
+                                    </select>
+                                </div>
+                            </div>
 
-                    <div class="mb-3">
-                        <label for="edit_monto_total" class="form-label fw-bold small text-muted">Monto Total ($)</label>
-                        <input type="number" step="0.01" class="form-control" name="monto_total" id="edit_monto_total" required>
-                    </div>
+                            <div class="mb-4 bg-light p-3 rounded border shadow-sm">
+                                <label class="form-label fw-bold text-dark small d-block mb-3">Monto Total Reportado</label>
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-md-7">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white text-muted fw-bold">$</span>
+                                            <input type="text" class="form-control form-control-lg fw-bold text-success border-0 shadow-none decimal-input" id="edit_input_monto_total" name="monto_total_visible" required placeholder="0,00" inputmode="decimal">
+                                        </div>
+                                        <input type="hidden" name="monto_total" id="edit_monto_total_hidden">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="small text-muted fw-bold d-block mb-1">Vencimiento</label>
+                                        <input type="date" class="form-control form-control-sm" name="fecha_vencimiento" id="edit_fecha_vencimiento" required>
+                                    </div>
+                                </div>
+                            </div>
 
-                    <div class="mb-3">
-                        <label for="edit_fecha_vencimiento" class="form-label fw-bold small text-muted">Fecha de Vencimiento</label>
-                        <input type="date" class="form-control" name="fecha_vencimiento" id="edit_fecha_vencimiento" required>
-                    </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-hashtag"></i> N° Referencia</label>
+                                    <input type="text" class="form-control form-control-sm shadow-sm" name="referencia_pago" id="edit_input_referencia" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-university"></i> Banco Receptor</label>
+                                    <select class="form-select form-select-sm shadow-sm" name="id_banco_pago" id="edit_select_banco" required>
+                                        <option value="">Seleccione banco...</option>
+                                    </select>
+                                </div>
+                            </div>
 
-                    <div class="mb-3">
-                        <label for="edit_estado" class="form-label fw-bold small text-muted">Estado</label>
-                        <select name="estado" id="edit_estado" class="form-select" required>
-                            <option value="PENDIENTE">PENDIENTE</option>
-                            <option value="PAGADO">PAGADO</option>
-                            <option value="VENCIDO">VENCIDO</option>
-                            <option value="CANCELADO">CANCELADO</option>
-                        </select>
+                            <h6 class="fw-bold text-warning small mb-3 border-bottom pb-2 d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-layer-group me-1"></i> Desglose Actual del Pago</span>
+                                <span id="edit_badge_indicador_suma" class="badge bg-success text-white border-0 py-1 px-3" style="font-size: 0.65rem;">CALCULANDO...</span>
+                            </h6>
+                            
+                            <div class="desglose-scroll pe-2" style="max-height: 250px; overflow-y: auto;">
+                                <!-- Se replicarán los campos del desglose pero con prefijo 'edit_' -->
+                                <!-- Mensualidad -->
+                                <div class="mb-2 bg-white border-start border-4 border-primary rounded p-2 shadow-sm">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="form-check form-switch me-3 mb-0">
+                                            <input class="form-check-input desglose-switch-edit" type="checkbox" id="edit_switch_mensualidad" name="desglose_mensualidad_activado" value="1">
+                                        </div>
+                                        <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_mensualidad">Mensualidad</label>
+                                    </div>
+                                    <div class="d-none desglose-fields-edit row g-2 mt-1">
+                                        <div class="col-4">
+                                            <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                            <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_mensualidad" placeholder="0,00">
+                                        </div>
+                                        <div class="col-3">
+                                            <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Cant.</label>
+                                            <input type="number" step="1" min="1" max="12" class="form-control form-control-sm meses-cantidad-edit" name="meses_mensualidad">
+                                        </div>
+                                        <div class="col-5 text-end">
+                                             <div class="small text-muted mt-3 fw-bold">Modo Edición</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Instalación -->
+                                <div class="mb-2 bg-white border-start border-4 border-info rounded p-2 shadow-sm">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="form-check form-switch me-3 mb-0">
+                                            <input class="form-check-input desglose-switch-edit" type="checkbox" id="edit_switch_instalacion" name="desglose_instalacion_activado" value="1">
+                                        </div>
+                                        <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_instalacion">Instalación</label>
+                                    </div>
+                                    <div class="d-none desglose-fields-edit mt-1">
+                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                        <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_instalacion" placeholder="0,00">
+                                    </div>
+                                </div>
+
+                                <!-- Equipos -->
+                                <div class="mb-2 bg-white border-start border-4 border-secondary rounded p-2 shadow-sm">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="form-check form-switch me-3 mb-0">
+                                            <input class="form-check-input desglose-switch-edit" type="checkbox" id="edit_switch_equipo" name="desglose_equipo_activado" value="1">
+                                        </div>
+                                        <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_equipo">Equipos/Materiales</label>
+                                    </div>
+                                    <div class="d-none desglose-fields-edit mt-1">
+                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                        <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_equipo" placeholder="0,00">
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <div class="bg-white border-start border-4 border-warning rounded p-2 shadow-sm h-100">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="form-check form-switch me-2 mb-0">
+                                                    <input class="form-check-input desglose-switch-edit" type="checkbox" id="edit_switch_abono" name="desglose_abono_activado" value="1">
+                                                </div>
+                                                <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_abono" style="font-size: 0.75rem;">Abono</label>
+                                            </div>
+                                            <div class="d-none desglose-fields-edit mt-1">
+                                                <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                                <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_abono" placeholder="0,00">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="bg-white border-start border-4 border-danger rounded p-2 shadow-sm h-100">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="form-check form-switch me-2 mb-0">
+                                                    <input class="form-check-input desglose-switch-edit" type="checkbox" id="edit_switch_prorrateo" name="desglose_prorrateo_activado" value="1">
+                                                </div>
+                                                <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_prorrateo" style="font-size: 0.75rem;">Prorrateo</label>
+                                            </div>
+                                            <div class="d-none desglose-fields-edit mt-1">
+                                                <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                                <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_prorrateo" placeholder="0,00">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-2 mt-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small mb-1">Autorizado por</label>
+                                    <input type="text" class="form-control form-control-sm" name="autorizado_por" id="edit_autorizado_por" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small mb-1">Justificación</label>
+                                    <textarea class="form-control form-control-sm" name="justificacion" id="edit_pago_justificacion" rows="1" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- COLUMNA DERECHA: CAPTURE -->
+                        <div class="col-md-5 bg-light p-4 rounded-end d-flex flex-column">
+                            <h6 class="fw-bold text-primary mb-3"><i class="fas fa-image me-1"></i> Evidencia del Pago</h6>
+                            
+                            <div class="mb-3 bg-white p-3 rounded shadow-sm border">
+                                <label class="small fw-bold text-muted mb-2 d-block">Actualizar/Subir Nuevo Capture</label>
+                                <input class="form-control form-control-sm" type="file" name="capture_archivo" id="edit_capture_upload" accept="image/*">
+                            </div>
+
+                            <!-- Previsualización Actual -->
+                            <div id="edit_capture_preview_container" class="flex-grow-1 overflow-hidden">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small fw-bold text-secondary">Imagen Actual/Nueva:</span>
+                                    <button type="button" class="btn btn-sm text-danger p-0 border-0 d-none" id="btn_clear_edit_capture">Limpiar Selección</button>
+                                </div>
+                                <div class="border rounded shadow-sm overflow-hidden bg-white" style="height: 400px; overflow-y: auto;">
+                                    <img id="edit_capture_preview_img" src="" alt="Capture" class="img-fluid" style="width: 100%;">
+                                    <div id="edit_capture_empty" class="h-100 d-flex flex-column justify-content-center align-items-center text-muted opacity-50">
+                                        <i class="fas fa-image fa-4x mb-2"></i>
+                                        <p class="small">Sin imagen registrada</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-top-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning">Guardar Cambios</button>
+                    <div class="me-auto">
+                         <span class="small text-muted fw-bold">Total Desglose: $<span id="edit_val_suma_desglose">0.00</span></span>
+                    </div>
+                    <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning shadow-sm border-0 fw-bold px-4">Guardar Cambios</button>
                 </div>
             </form>
         </div>
@@ -1780,29 +1943,231 @@ require_once '../includes/sidebar.php';
         }
     });
 
+    // === LÓGICA MODAL EDITAR POTENCIADO ===
+    const editSwitches = document.querySelectorAll('.desglose-switch-edit');
+    const editInputsMonto = document.querySelectorAll('.desglose-monto-edit');
+    const editBtnSubmit = document.querySelector('#modalEditarCobro form button[type="submit"]');
+
+    function editValidarSumatoria() {
+        let totalDeclarado = parseFloat(document.getElementById('edit_monto_total_hidden').value) || 0;
+        let sumatoria = 0;
+
+        editSwitches.forEach(sw => {
+            if (sw.checked) {
+                const row = sw.closest('.rounded, .row, .bg-white');
+                const montos = row.querySelectorAll('.desglose-monto-edit');
+                montos.forEach(m => {
+                    sumatoria += parseFloat(m.value.replace(',', '.')) || 0;
+                });
+            }
+        });
+
+        document.getElementById('edit_val_suma_desglose').textContent = sumatoria.toFixed(2);
+        const badge = document.getElementById('edit_badge_indicador_suma');
+        const spanRestante = document.getElementById('edit_val_suma_desglose'); // Reuse or add another
+
+        if (sumatoria > 0) {
+            editBtnSubmit.disabled = false;
+            let diff = Math.abs(sumatoria - totalDeclarado);
+            if (diff < 0.01) {
+                badge.textContent = 'PAGO CUADRADO';
+                badge.className = 'badge bg-success text-white border-0 py-1 px-3';
+            } else if (sumatoria > totalDeclarado) {
+                badge.textContent = 'SOBREGIRO DE DESGLOSE';
+                badge.className = 'badge bg-danger text-white border-0 py-1 px-3';
+            } else {
+                badge.textContent = 'FALTA DISTRIBUIR';
+                badge.className = 'badge bg-warning text-dark border-0 py-1 px-3';
+            }
+        } else {
+            editBtnSubmit.disabled = true;
+            badge.textContent = 'SIN CONCEPTOS';
+            badge.className = 'badge bg-secondary text-white border-0 py-1 px-3';
+        }
+    }
+
+    editSwitches.forEach(sw => {
+        sw.addEventListener('change', function() {
+            const container = this.closest('.rounded, .row').querySelector('.desglose-fields-edit');
+            if (this.checked) {
+                if(container) container.classList.remove('d-none');
+                const montoInput = this.closest('.rounded, .row').querySelector('.desglose-monto-edit');
+                if(montoInput) montoInput.classList.remove('d-none');
+            } else {
+                if(container) container.classList.add('d-none');
+                const montoInput = this.closest('.rounded, .row').querySelector('.desglose-monto-edit');
+                if(montoInput) {
+                    montoInput.classList.add('d-none');
+                    montoInput.value = '';
+                }
+            }
+            editValidarSumatoria();
+        });
+    });
+
+    document.getElementById('edit_input_monto_total').addEventListener('input', function() {
+        let val = parseFloat(this.value.replace(',', '.')) || 0;
+        document.getElementById('edit_monto_total_hidden').value = val.toFixed(2);
+        editValidarSumatoria();
+    });
+
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('desglose-monto-edit')) {
+            editValidarSumatoria();
+        }
+    });
+
+    // Capture Upload Edit Preview
+    document.getElementById('edit_capture_upload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('edit_capture_preview_img').src = event.target.result;
+                document.getElementById('edit_capture_preview_img').classList.remove('d-none');
+                document.getElementById('edit_capture_empty').classList.add('d-none');
+                document.getElementById('btn_clear_edit_capture').classList.remove('d-none');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('btn_clear_edit_capture').addEventListener('click', function() {
+        document.getElementById('edit_capture_upload').value = '';
+        this.classList.add('d-none');
+        // Restaurar imagen original si existe o dejar vacío
+        const originalPath = document.getElementById('edit_id_cobro').dataset.originalCapture;
+        if (originalPath) {
+            document.getElementById('edit_capture_preview_img').src = '../../' + originalPath;
+        } else {
+            document.getElementById('edit_capture_preview_img').src = '';
+            document.getElementById('edit_capture_preview_img').classList.add('d-none');
+            document.getElementById('edit_capture_empty').classList.remove('d-none');
+        }
+    });
+
     window.confirmarEdicionCobro = async function (id) {
         const proceeds = await solicitarClaveAdmin('Modificar Cobro');
-        if (proceeds) {
-            // Fetch data
-            fetch(`get_cobro_data.php?id=${id}`)
-                .then(r => r.json())
-                .then(res => {
-                    if (res.success) {
-                        const d = res.data;
-                        $('#edit_id_cobro').val(d.id_cobro);
-                        $('#edit_id_cobro_display').text(d.id_cobro);
-                        $('#edit_cliente_nombre').text(d.nombre_cliente);
-                        $('#edit_monto_total').val(d.monto_total);
-                        $('#edit_fecha_vencimiento').val(d.fecha_vencimiento);
-                        $('#edit_estado').val(d.estado);
-                        
-                        var modal = new bootstrap.Modal(document.getElementById('modalEditarCobro'));
-                        modal.show();
-                    } else {
-                        Swal.fire('Error', res.message, 'error');
-                    }
-                });
+        if (!proceeds) return;
+
+        const loader = document.getElementById('edit_modal_loader');
+        const content = document.getElementById('edit_modal_content');
+        
+        loader.classList.remove('d-none');
+        content.classList.add('d-none');
+
+        var modal = new bootstrap.Modal(document.getElementById('modalEditarCobro'));
+        modal.show();
+
+        // Reset inputs
+        const formEscapado = document.getElementById('formEditarCobro');
+        formEscapado.reset();
+        editSwitches.forEach(sw => {
+            sw.checked = false;
+            const row = sw.closest('.rounded, .row');
+            const container = row.querySelector('.desglose-fields-edit');
+            if(container) container.classList.add('d-none');
+            const montoInput = row.querySelector('.desglose-monto-edit');
+            if(montoInput) montoInput.classList.add('d-none');
+        });
+
+        // Poblar bancos si está vacío (aunque ya vienen en PHP, nos aseguramos)
+        const selectBanco = document.getElementById('edit_select_banco');
+        if (selectBanco.options.length <= 1) {
+            const bancosJson = <?php echo json_encode($bancos_data); ?>;
+            bancosJson.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id_banco;
+                opt.textContent = b.nombre_banco;
+                selectBanco.appendChild(opt);
+            });
         }
+
+        fetch(`get_cobro_data.php?id=${id}`)
+            .then(r => r.json())
+            .then(res => {
+                loader.classList.add('d-none');
+                if (res.success) {
+                    const d = res.data;
+                    const concepts = res.all_concepts || [];
+
+                    $('#edit_id_cobro').val(d.id_cobro);
+                    $('#edit_id_cobro').attr('data-original-capture', d.capture_pago || '');
+                    $('#edit_id_cobro_display').text(d.id_cobro);
+                    $('#edit_id_grupo_pago').val(d.id_grupo_pago || '');
+                    $('#edit_cliente_info_static').text(`${d.nombre_cliente} (Contrato #${d.id_contrato})`);
+                    $('#edit_id_contrato_hidden').val(d.id_contrato);
+                    $('#edit_estado').val(d.estado);
+                    $('#edit_input_monto_total').val(parseFloat(d.monto_total).toFixed(2));
+                    $('#edit_monto_total_hidden').val(d.monto_total);
+                    $('#edit_fecha_vencimiento').val(d.fecha_vencimiento);
+                    $('#edit_input_referencia').val(d.referencia_pago);
+                    $('#edit_select_banco').val(d.id_banco);
+                    $('#edit_autorizado_por').val(d.autorizado_por);
+                    $('#edit_pago_justificacion').val(d.justificacion);
+
+                    // Poblar Desglose
+                    concepts.forEach(c => {
+                        const desc = c.justificacion.toUpperCase();
+                        let switchEl = null;
+                        let montoEl = null;
+                        let cantEl = null;
+
+                        if (desc.includes('MENSUALIDAD')) {
+                            switchEl = document.getElementById('edit_switch_mensualidad');
+                            montoEl = document.getElementsByName('monto_mensualidad')[0];
+                            cantEl = document.getElementsByName('meses_mensualidad')[0];
+                            // Extraer cantidad de "MENSUALIDAD X MESES"
+                            const match = desc.match(/(\d+)\s*MESES/);
+                            if (match) cantEl.value = match[1];
+                        } else if (desc.includes('INSTALACION')) {
+                            switchEl = document.getElementById('edit_switch_instalacion');
+                            montoEl = document.getElementsByName('monto_instalacion')[0];
+                        } else if (desc.includes('ABONO')) {
+                            switchEl = document.getElementById('edit_switch_abono');
+                            montoEl = document.getElementsByName('monto_abono')[0];
+                        } else if (desc.includes('PRORRATEO')) {
+                            switchEl = document.getElementById('edit_switch_prorrateo');
+                            montoEl = document.getElementsByName('monto_prorrateo')[0];
+                        } else if (desc.includes('EQUIPO') || desc.includes('MATERIAL')) {
+                            switchEl = document.getElementById('edit_switch_equipo');
+                            montoEl = document.getElementsByName('monto_equipo')[0];
+                        }
+
+                        if (switchEl) {
+                            switchEl.checked = true;
+                            switchEl.dispatchEvent(new Event('change'));
+                            if (montoEl) montoEl.value = parseFloat(c.monto_total).toFixed(2);
+                        }
+                    });
+
+                    // Capture Preview
+                    const img = document.getElementById('edit_capture_preview_img');
+                    const empty = document.getElementById('edit_capture_empty');
+                    if (d.capture_pago) {
+                        let path = d.capture_pago;
+                        if (path.startsWith('../../')) path = path.replace('../../', '');
+                        img.src = '../../' + path;
+                        img.classList.remove('d-none');
+                        empty.classList.add('d-none');
+                    } else {
+                        img.src = '';
+                        img.classList.add('d-none');
+                        empty.classList.remove('d-none');
+                    }
+
+                    content.classList.remove('d-none');
+                    setTimeout(editValidarSumatoria, 100);
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                    modal.hide();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
+                modal.hide();
+            });
     };
 
     window.verHistorialPago = function(idContrato, nombreCliente) {
@@ -1923,32 +2288,53 @@ require_once '../includes/sidebar.php';
             });
     };
 
-    $('#formEditarCobro').on('submit', function(e) {
+    // === SUBMIT EDITAR COBRO POTENCIADO ===
+    document.getElementById('formEditarCobro').addEventListener('submit', function(e) {
         e.preventDefault();
-        const formData = new FormData(this);
         
+        const fd = new FormData(this);
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+
+        // Validar que el monto coincida (opcional, pero recomendado)
+        const total = parseFloat(document.getElementById('edit_monto_total_hidden').value) || 0;
+        const suma = parseFloat(document.getElementById('edit_val_suma_desglose').textContent) || 0;
+        
+        if (Math.abs(total - suma) > 0.01) {
+            Swal.fire('Atención', 'El desglose no coincide con el monto total reportado. Por favor ajuste los valores.', 'warning');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualizando...';
+
         fetch('actualizar_cobro.php', {
             method: 'POST',
-            body: new URLSearchParams(formData)
+            body: fd
         })
         .then(r => r.json())
         .then(res => {
             if (res.success) {
                 Swal.fire({
-                    title: '¡Guardado!',
+                    title: '¡Actualizado!',
                     text: res.message,
                     icon: 'success',
-                    timer: 1500,
+                    timer: 2000,
                     showConfirmButton: false
                 });
-
-                setTimeout(() => {
-                    bootstrap.Modal.getInstance(document.getElementById('modalEditarCobro')).hide();
-                    tablaUnica.ajax.reload(null, false);
-                }, 500);
+                bootstrap.Modal.getInstance(document.getElementById('modalEditarCobro')).hide();
+                if (typeof tablaUnica !== 'undefined') tablaUnica.ajax.reload(null, false);
             } else {
                 Swal.fire('Error', res.message, 'error');
             }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire('Error', 'Error técnico al actualizar el cobro.', 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         });
     });
 </script>

@@ -25,7 +25,32 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 1) {
     $data = $result->fetch_assoc();
-    echo json_encode(['success' => true, 'data' => $data]);
+    
+    // Si tiene un grupo, traemos todos los conceptos del grupo
+    $all_concepts = [];
+    if (!empty($data['id_grupo_pago'])) {
+        $sql_group = "
+            SELECT 
+                cxc.*,
+                co.nombre_completo AS nombre_cliente
+            FROM cuentas_por_cobrar cxc
+            JOIN contratos co ON cxc.id_contrato = co.id
+            WHERE cxc.id_grupo_pago = ?
+        ";
+        $stmt_g = $conn->prepare($sql_group);
+        $stmt_g->bind_param("s", $data['id_grupo_pago']);
+        $stmt_g->execute();
+        $res_g = $stmt_g->get_result();
+        while ($row = $res_g->fetch_assoc()) {
+            $all_concepts[] = $row;
+        }
+        $stmt_g->close();
+    } else {
+        // Si no tiene grupo, él mismo es el único concepto
+        $all_concepts[] = $data;
+    }
+
+    echo json_encode(['success' => true, 'data' => $data, 'all_concepts' => $all_concepts]);
 } else {
     echo json_encode(['success' => false, 'message' => 'Cobro no encontrado.']);
 }

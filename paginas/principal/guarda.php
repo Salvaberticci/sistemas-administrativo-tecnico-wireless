@@ -151,17 +151,14 @@ $generate_link = isset($_POST['generate_link']) && $_POST['generate_link'] === '
 $token_firma = null;
 $estado_firma = 'COMPLETADO';
 
+$firma_cliente_b64 = $_POST['firma_cliente_data'] ?? '';
+$firma_tecnico_b64 = $_POST['firma_tecnico_data'] ?? '';
+$firma_cliente = saveSignature($firma_cliente_b64, 'cliente');
+$firma_tecnico = saveSignature($firma_tecnico_b64, 'tecnico');
+
 if ($generate_link) {
     $token_firma = bin2hex(random_bytes(32));
     $estado_firma = 'PENDIENTE';
-    // En modo link, las firmas pueden venir vacías
-    $firma_cliente = null;
-    $firma_tecnico = null;
-} else {
-    $firma_cliente_b64 = $_POST['firma_cliente_data'] ?? '';
-    $firma_tecnico_b64 = $_POST['firma_tecnico_data'] ?? '';
-    $firma_cliente = saveSignature($firma_cliente_b64, 'cliente');
-    $firma_tecnico = saveSignature($firma_tecnico_b64, 'tecnico');
 }
 
 // Variable para manejar mensajes de error específicos
