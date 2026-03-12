@@ -933,6 +933,33 @@ require_once '../includes/sidebar.php';
                 { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 }, { "data": 4 }, { "data": 5 }, { "data": 6 }, { "data": 7 }, { "data": 8 }, { "data": 9 },
                 { "data": 10, "orderable": false, "searchable": false, "className": "text-end" }
             ],
+            "createdRow": function(row, data, dataIndex) {
+                // El UUID de grupo viene en el metadato (index id_grupo_pago del objeto)
+                const uuid = data.id_grupo_pago;
+                if (uuid) {
+                    $(row).attr('data-grupo', uuid);
+                    $(row).addClass('grupo-pago-row');
+                    // Añadir un pequeño indicador visual al inicio de la primera celda
+                    const indic = $('<span class="mt-1 d-inline-block rounded-circle me-1" style="width: 8px; height: 8px; background: #6c757d;" title="Pago Agrupado"></span>');
+                    $(row).find('td:first').prepend(indic);
+                }
+            },
+            "drawCallback": function(settings) {
+                // Lógica de colores para grupos al dibujar la tabla
+                const rows = $(this).find('tbody tr');
+                let lastUuid = null;
+                let colorClass = 'bg-light-group-1';
+                
+                rows.each(function() {
+                    const uuid = $(this).attr('data-grupo');
+                    if (uuid) {
+                        if (uuid === lastUuid) {
+                            $(row).find('td:first span').css('background', '#0d6efd'); // Color azul para vinculación
+                        }
+                        lastUuid = uuid;
+                    }
+                });
+            },
             "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
         });
 

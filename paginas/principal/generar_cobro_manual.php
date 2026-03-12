@@ -133,6 +133,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         try {
             $registros_exitosos = 0;
+            // Generar UUID para el grupo de cobros
+            $id_grupo_pago = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0x0fff) | 0x4000,
+                mt_rand(0, 0x3fff) | 0x8000,
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            );
 
             // 5. INSERTAR CADA CARGO EN EL BUCLE
             foreach ($cargos_a_procesar as $cargo) {
@@ -148,7 +156,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     estado,
                     fecha_pago,
                     referencia_pago,
-                    id_banco
+                    id_banco,
+                    id_grupo_pago
                 ) VALUES (
                     '$c_id_contrato', 
                     '$fecha_emision', 
@@ -157,7 +166,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     '$estado',
                     '$fecha_pago',
                     '$referencia_pago',
-                    '$id_banco_pago'
+                    '$id_banco_pago',
+                    '$id_grupo_pago'
                 )";
 
                 if ($conn->query($sql_cxc) === TRUE) {

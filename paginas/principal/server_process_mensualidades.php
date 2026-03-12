@@ -113,6 +113,7 @@ $sSelect = "
     cxc.estado_sae_plus,
     pl.nombre_plan,
     h.justificacion,
+    cxc.id_grupo_pago,
     (SELECT COUNT(h2.id) FROM cobros_manuales_historial h2 WHERE h2.id_cobro_cxc = cxc.id_cobro) AS es_manual
 ";
 
@@ -230,6 +231,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     $acciones .= '</div>';
 
     $row[] = $acciones;
+    $row['id_grupo_pago'] = $aRow['id_grupo_pago']; // Metadato para JS
     $output['aaData'][] = $row;
 }
 
