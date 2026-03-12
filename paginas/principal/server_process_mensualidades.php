@@ -63,6 +63,10 @@ if (isset($_POST['estado_sae']) && $_POST['estado_sae'] != '') {
     $whereConditions[] = "cxc.estado_sae_plus = '" . $conn->real_escape_string($_POST['estado_sae']) . "'";
 }
 
+if (isset($_POST['referencia']) && $_POST['referencia'] != '') {
+    $whereConditions[] = "cxc.referencia_pago LIKE '%" . $conn->real_escape_string($_POST['referencia']) . "%'";
+}
+
 // Global Search
 if ($searchVal != "") {
     $searchValue = $conn->real_escape_string($searchVal);
@@ -85,10 +89,11 @@ if ($length != -1) {
 $sOrder = "";
 // Use mapped sort parameters
 if (isset($aSearchColumns[$sortColIndex])) {
-    // Si se ordena por fecha (col 0), incluir id_cobro como desempate para garantizar cronicidad
     $direction = $conn->real_escape_string($sortDir);
     if ($sortColIndex == 0) {
-        $sOrder = "ORDER BY " . $aSearchColumns[0] . " $direction, cxc.id_cobro DESC";
+        // Para ordenar de más reciente a más antiguo, primero por fecha, luego agrupamos por referencia
+        // Usar COALESCE para que los que no tienen referencia se agrupen por sí mismos (su id_cobro)
+        $sOrder = "ORDER BY " . $aSearchColumns[0] . " $direction, COALESCE(NULLIF(cxc.referencia_pago, ''), cxc.id_cobro) DESC, cxc.id_cobro DESC";
     } else {
         $sOrder = "ORDER BY " . $aSearchColumns[$sortColIndex] . " $direction";
     }

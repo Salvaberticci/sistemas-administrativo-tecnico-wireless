@@ -8,6 +8,16 @@ $path_to_root = "../../";
 $page_title = "Clientes Deudores";
 $breadcrumb = ["Cobranzas"];
 $back_url = "../menu.php";
+
+// Obtener Bancos para Modal de Abonos
+$bancos = $conn->query("SELECT id_banco, nombre_banco FROM bancos ORDER BY nombre_banco ASC");
+$bancos_data = [];
+if ($bancos) {
+    while ($row = $bancos->fetch_assoc()) {
+        $bancos_data[] = $row;
+    }
+}
+
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 ?>
@@ -32,16 +42,16 @@ require_once '../includes/sidebar.php';
                     <table class="display table table-hover w-100" id="tabla_deudores">
                         <thead class="bg-light">
                             <tr>
-                                <th>ID</th>
-                                <th>Cliente</th>
-                                <th>Cédula</th>
-                                <th>IP</th>
-                                <th>Monto Total</th>
-                                <th>Monto Pagado</th>
-                                <th>Saldo Pendiente</th>
-                                <th>Fecha Registro</th>
-                                <th>Estado</th>
-                                <th width="15%">Acciones</th>
+                                <th class="text-center">ID</th>
+                                <th class="text-center">Cliente</th>
+                                <th class="text-center">Cédula</th>
+                                <th class="text-center">IP</th>
+                                <th class="text-center">Monto Total</th>
+                                <th class="text-center">Monto Pagado</th>
+                                <th class="text-center">Saldo Pendiente</th>
+                                <th class="text-center">Fecha Registro</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center" width="15%">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -57,19 +67,22 @@ require_once '../includes/sidebar.php';
                                 $estado_badge = '<span class="badge bg-danger">PENDIENTE</span>';
 
                                 echo "<tr>
-                                    <td>{$row['id']}</td>
-                                    <td class='fw-bold'>{$row['nombre_completo']}</td>
-                                    <td>{$row['cedula']}</td>
-                                    <td><code>{$row['ip_onu']}</code></td>
-                                    <td class='text-end'>\${$row['monto_total']}</td>
-                                    <td class='text-end'>\${$row['monto_pagado']}</td>
-                                    <td class='text-end text-danger fw-bold'>\${$row['saldo_pendiente']}</td>
-                                    <td>" . date('d/m/Y', strtotime($row['fecha_registro'])) . "</td>
-                                    <td>{$estado_badge}</td>
+                                    <td class='text-center'>{$row['id']}</td>
+                                    <td class='fw-bold text-center'>{$row['nombre_completo']}</td>
+                                    <td class='text-center'>{$row['cedula']}</td>
+                                    <td class='text-center'><code>{$row['ip_onu']}</code></td>
+                                    <td class='text-center'>\${$row['monto_total']}</td>
+                                    <td class='text-center'>\${$row['monto_pagado']}</td>
+                                    <td class='text-center text-danger fw-bold'>\${$row['saldo_pendiente']}</td>
+                                    <td class='text-center'>" . date('d/m/Y', strtotime($row['fecha_registro'])) . "</td>
+                                    <td class='text-center'>{$estado_badge}</td>
                                     <td>
-                                        <div class='d-flex gap-1'>
+                                        <div class='d-flex justify-content-center gap-1 flex-nowrap'>
                                             <button class='btn btn-sm btn-success' onclick='marcarPagado({$row['id']})' title='Marcar como Pagado'>
                                                 <i class='fa-solid fa-check'></i> Pagado
+                                            </button>
+                                            <button class='btn btn-sm btn-info text-white' onclick='abrirModalAbonos({$row['id']}, {$row['saldo_pendiente']})' title='Gestionar Abonos'>
+                                                <i class='fa-solid fa-coins'></i> Abonos
                                             </button>
                                             <button onclick='verContrato({$row['id_contrato']})' class='btn btn-sm btn-outline-primary' title='Ver Detalle del Contrato'>
                                                 <i class='fa-solid fa-eye'></i>
@@ -186,6 +199,127 @@ require_once '../includes/sidebar.php';
     </div>
 </div>
 
+<!-- Modal Gestionar Abonos -->
+<div class="modal fade" id="modalGestionarAbonos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-coins me-2"></i>Gestionar Abonos - Deuda #<span id="abono_id_deuda"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body p-0">
+                <!-- Info Banner -->
+                <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="small text-muted fw-bold d-block text-uppercase">Saldo Pendiente Actual</span>
+                        <h4 class="mb-0 text-danger fw-bold">$<span id="abono_saldo_pendiente_display">0.00</span></h4>
+                    </div>
+                </div>
+
+                <!-- Tabs Navbar -->
+                <ul class="nav nav-tabs px-3 pt-3 bg-white" id="abonoTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-bold" id="tab-registrar" data-bs-toggle="tab" data-bs-target="#pane-registrar" type="button" role="tab" aria-selected="true">
+                            <i class="fas fa-plus-circle me-1"></i>Ingresar Abono
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold" id="tab-historial" data-bs-toggle="tab" data-bs-target="#pane-historial" type="button" role="tab" aria-selected="false">
+                            <i class="fas fa-history me-1"></i>Historial de Pagos
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tabs Content -->
+                <div class="tab-content" id="abonoTabsContent">
+                    <!-- Tab 1: Registrar Abono -->
+                    <div class="tab-pane fade show active p-4" id="pane-registrar" role="tabpanel">
+                        <form id="formRegistrarAbono" enctype="multipart/form-data">
+                            <input type="hidden" name="id_deudor" id="abono_input_id_deudor">
+                            <input type="hidden" id="abono_input_max_monto">
+                            
+                            <div class="row g-3">
+                                <!-- Columna Izquierda: Datos del Pago -->
+                                <div class="col-md-7 border-end pe-4">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-muted small mb-1">Monto a Abonar ($)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light fw-bold text-success">$</span>
+                                            <input type="text" class="form-control form-control-lg fw-bold text-success decimal-input" id="abono_monto" name="monto_abono" required placeholder="0.00" inputmode="decimal" autocomplete="off">
+                                        </div>
+                                        <div class="form-text small text-danger d-none" id="abono_error_monto">El monto excede el saldo pendiente.</div>
+                                    </div>
+                                    
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-6">
+                                            <label class="form-label fw-bold text-muted small mb-1">Referencia</label>
+                                            <input type="text" class="form-control form-control-sm" name="referencia" required autocomplete="off">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label fw-bold text-muted small mb-1">Banco Receptor</label>
+                                            <select class="form-select form-select-sm" name="id_banco" id="abono_select_banco" required>
+                                                <option value="">Seleccione...</option>
+                                                <!-- Llenado vía JS/PHP -->
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-muted small mb-1">Justificación (Opcional)</label>
+                                        <input type="text" class="form-control form-control-sm" name="justificacion" placeholder="Ej: Transferencia parcial acordada...">
+                                    </div>
+                                </div>
+                                
+                                <!-- Columna Derecha: Capture -->
+                                <div class="col-md-5 ps-3">
+                                    <label class="form-label fw-bold text-muted small mb-2 d-block">Comprobante (Opcional)</label>
+                                    <div class="border rounded p-2 text-center bg-light mb-2">
+                                        <input type="file" class="form-control form-control-sm mb-2" id="abono_capture" name="capture_abono" accept="image/*">
+                                        <div class="rounded bg-white border" style="height: 150px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                            <img id="abono_preview_img" src="" class="img-fluid d-none" style="object-fit: contain; max-height: 100%;">
+                                            <i class="fas fa-image fa-3x text-muted opacity-25" id="abono_preview_icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-info text-white fw-bold px-4" id="btn_submit_abono">
+                                    <i class="fas fa-save me-1"></i>Registrar Abono
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab 2: Historial -->
+                    <div class="tab-pane fade p-3" id="pane-historial" role="tabpanel">
+                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                            <table class="table table-sm table-hover mb-0" style="font-size: 0.85rem;">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Ref / Banco</th>
+                                        <th>Justificación</th>
+                                        <th class="text-end">Monto ABONADO</th>
+                                        <th class="text-center">Capture</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="abono_historial_body">
+                                    <tr><td colspan="5" class="text-center text-muted py-4">Cargando historial...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="<?php echo $path_to_root; ?>js/datatables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -202,6 +336,18 @@ require_once '../includes/sidebar.php';
             },
             "order": [[7, "desc"]] // Ordenar por fecha descendente
         });
+
+        // Cargar bancos para el modal de abonos desde PHP
+        const bancosInfo = <?php echo json_encode($bancos_data); ?>;
+        const selectBanco = document.getElementById('abono_select_banco');
+        if (bancosInfo && bancosInfo.length > 0) {
+            bancosInfo.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id_banco;
+                opt.textContent = b.nombre_banco;
+                selectBanco.appendChild(opt);
+            });
+        }
     });
 
     async function solicitarClaveAdmin(titulo = 'Confirmar Acción') {
@@ -302,6 +448,180 @@ require_once '../includes/sidebar.php';
             }
         });
     }
+
+    /* =========================================
+       LÓGICA DE ABONOS (PAGOS PARCIALES)
+       ========================================= */
+
+    function abrirModalAbonos(idDeudor, montoPendiente) {
+        // Reset form e UI
+        document.getElementById('formRegistrarAbono').reset();
+        document.getElementById('abono_preview_img').classList.add('d-none');
+        document.getElementById('abono_preview_icon').classList.remove('d-none');
+        document.getElementById('abono_error_monto').classList.add('d-none');
+        
+        // Cargar datos al modal
+        document.getElementById('abono_id_deuda').textContent = idDeudor;
+        document.getElementById('abono_input_id_deudor').value = idDeudor;
+        document.getElementById('abono_saldo_pendiente_display').textContent = parseFloat(montoPendiente).toFixed(2);
+        document.getElementById('abono_input_max_monto').value = montoPendiente;
+        
+        // Activar la primera pestaña y limpiar tabla historial visualmente
+        const bsTab = new bootstrap.Tab(document.getElementById('tab-registrar'));
+        bsTab.show();
+        document.getElementById('abono_historial_body').innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i>Cargando historial...</td></tr>';
+
+        // Mostrar el modal
+        const modal = new bootstrap.Modal(document.getElementById('modalGestionarAbonos'));
+        modal.show();
+
+        // Cargar historial en background
+        cargarHistorialAbonos(idDeudor);
+    }
+
+    function cargarHistorialAbonos(idDeudor) {
+        fetch(`get_historial_abonos.php?id_deudor=${idDeudor}`)
+            .then(r => r.json())
+            .then(res => {
+                const tbody = document.getElementById('abono_historial_body');
+                tbody.innerHTML = '';
+                
+                if (!res.success) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-3">${res.message}</td></tr>`;
+                    return;
+                }
+
+                if (res.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No se han registrado abonos para esta deuda.</td></tr>';
+                } else {
+                    res.data.forEach(p => {
+                        let captureHtml = p.capture_pago 
+                            ? `<a href="../../${p.capture_pago}" target="_blank" class="btn btn-sm btn-light border" title="Ver Capture"><i class="fas fa-image text-primary"></i></a>`
+                            : '<span class="text-muted small">N/A</span>';
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${p.fecha_pago || p.fecha_creacion}</td>
+                            <td>
+                                <strong>Ref:</strong> ${p.referencia_pago || 'N/A'}<br>
+                                <span class="small text-muted">${p.nombre_banco || ''}</span>
+                            </td>
+                            <td>${p.justificacion}</td>
+                            <td class="text-end fw-bold text-success">+$${parseFloat(p.monto_cargado).toFixed(2)}</td>
+                            <td class="text-center">${captureHtml}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error("Error historial abonos:", err);
+                document.getElementById('abono_historial_body').innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Error técnico al cargar el historial.</td></tr>';
+            });
+    }
+
+    // Validación de entrada para el monto a abonar
+    document.getElementById('abono_monto').addEventListener('input', function() {
+        // Limpiar caracteres no numéricos excepto punto (o coma si se prefiere)
+        this.value = this.value.replace(/[^0-9.]/g, '');
+        
+        const val = parseFloat(this.value) || 0;
+        const max = parseFloat(document.getElementById('abono_input_max_monto').value) || 0;
+        const btnSubmit = document.getElementById('btn_submit_abono');
+        const errorMsg = document.getElementById('abono_error_monto');
+
+        if (val > max && max > 0) { // Permitir validación solo si hay max válido
+            errorMsg.classList.remove('d-none');
+            this.classList.add('is-invalid', 'border-danger');
+            btnSubmit.disabled = true;
+        } else {
+            errorMsg.classList.add('d-none');
+            this.classList.remove('is-invalid', 'border-danger');
+            btnSubmit.disabled = false;
+        }
+    });
+
+    // Vista previa de la imagen al subir
+    document.getElementById('abono_capture').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const previewImg = document.getElementById('abono_preview_img');
+        const previewIcon = document.getElementById('abono_preview_icon');
+        
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                previewImg.src = evt.target.result;
+                previewImg.classList.remove('d-none');
+                previewIcon.classList.add('d-none');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewImg.src = '';
+            previewImg.classList.add('d-none');
+            previewIcon.classList.remove('d-none');
+        }
+    });
+
+    // Enviar el formulario
+    document.getElementById('formRegistrarAbono').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const val = parseFloat(document.getElementById('abono_monto').value) || 0;
+        const max = parseFloat(document.getElementById('abono_input_max_monto').value) || 0;
+        
+        if (val <= 0 || val > max) {
+             Swal.fire('Error', 'El monto a abonar no es válido. Revise el saldo pendiente.', 'error');
+             return;
+        }
+
+        const proceeds = await solicitarClaveAdmin('Confirmar Abono');
+        if (!proceeds) return;
+
+        const btn = document.getElementById('btn_submit_abono');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Procesando...';
+
+        const fd = new FormData(this);
+
+        fetch('registrar_abono_deudor.php', {
+            method: 'POST',
+            body: fd
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                // Verificar si saldó la deuda completamente
+                if (res.saldado) {
+                    Swal.fire({
+                        title: '¡Deuda Saldada!',
+                        text: 'El abono ha cubierto la totalidad de la deuda. El cliente ya no es considerado deudor.',
+                        icon: 'success',
+                        confirmButtonColor: '#198754'
+                    }).then(() => location.reload());
+                } else {
+                    Swal.fire({
+                        title: '¡Abono Registrado!',
+                        text: res.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+                }
+            } else {
+                Swal.fire('Error', res.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire('Error Técnico', 'No se pudo comunicar con el servidor.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    });
+
     function verContrato(id) {
         // Mostrar modal de carga o simplemente reset
         $('#modalVerContrato').modal('show');

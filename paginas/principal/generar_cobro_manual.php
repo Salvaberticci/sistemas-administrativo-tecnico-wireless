@@ -89,19 +89,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
 
-        // --- Abono ---
-        if (isset($_POST['desglose_abono_activado']) && $_POST['desglose_abono_activado'] == '1') {
-            $monto = floatval(str_replace(',', '.', $_POST['monto_abono'] ?? 0));
-            if ($monto > 0) {
-                $cargos_a_procesar[] = [
-                    'id_contrato' => $id_contrato_principal,
-                    'monto' => $monto,
-                    'justificacion' => "Abono a Cuenta - " . $justificacion
-                ];
-                $sumatoria_backend += $monto;
-            }
-        }
-
         // --- Equipo ---
         if (isset($_POST['desglose_equipo_activado']) && $_POST['desglose_equipo_activado'] == '1') {
             $monto = floatval(str_replace(',', '.', $_POST['monto_equipo'] ?? 0));

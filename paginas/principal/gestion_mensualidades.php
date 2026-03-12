@@ -130,7 +130,7 @@ require_once '../includes/sidebar.php';
                             <option value="">Todas las Cuentas</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Estado SAE Plus</label>
                         <select class="form-select form-select-sm" id="filtro_sae">
                             <option value="">Cualquier Estado</option>
@@ -139,6 +139,10 @@ require_once '../includes/sidebar.php';
                         </select>
                     </div>
                     <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Buscar por Referencia</label>
+                        <input type="text" class="form-control form-control-sm" id="filtro_referencia" placeholder="Ej: 123456" autocomplete="off">
+                    </div>
+                    <div class="col-md-1">
                         <div class="btn-group w-100 shadow-sm">
                             <button class="btn btn-primary btn-sm" onclick="exportarExcel('filtrado')"
                                 title="Exportar con filtros actuales">
@@ -375,21 +379,7 @@ require_once '../includes/sidebar.php';
                                 </div>
 
                                 <div class="row g-2 mb-2">
-                                    <div class="col-6">
-                                        <div class="bg-white border-start border-4 border-warning rounded p-2 shadow-sm h-100">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <div class="form-check form-switch me-2 mb-0">
-                                                    <input class="form-check-input desglose-switch" type="checkbox" id="switch_abono" name="desglose_abono_activado" value="1">
-                                                </div>
-                                                <label class="form-check-label fw-bold text-dark small mb-0" for="switch_abono" style="font-size: 0.75rem;">Abono</label>
-                                            </div>
-                                            <div class="d-none desglose-fields mt-1" id="fields_abono">
-                                                <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                                <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_abono" placeholder="0,00" inputmode="decimal">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
+                                    <div class="col-12">
                                         <div class="bg-white border-start border-4 border-danger rounded p-2 shadow-sm h-100">
                                             <div class="d-flex align-items-center mb-2">
                                                 <div class="form-check form-switch me-2 mb-0">
@@ -812,21 +802,7 @@ require_once '../includes/sidebar.php';
                                 </div>
 
                                 <div class="row g-2 mb-2">
-                                    <div class="col-6">
-                                        <div class="bg-white border-start border-4 border-warning rounded p-2 shadow-sm h-100">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <div class="form-check form-switch me-2 mb-0">
-                                                    <input class="form-check-input desglose-switch-edit" type="checkbox" id="edit_switch_abono" name="desglose_abono_activado" value="1">
-                                                </div>
-                                                <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_abono" style="font-size: 0.75rem;">Abono</label>
-                                            </div>
-                                            <div class="d-none desglose-fields-edit mt-1">
-                                                <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                                <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_abono" placeholder="0,00">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
+                                    <div class="col-12">
                                         <div class="bg-white border-start border-4 border-danger rounded p-2 shadow-sm h-100">
                                             <div class="d-flex align-items-center mb-2">
                                                 <div class="form-check form-switch me-2 mb-0">
@@ -1127,6 +1103,7 @@ require_once '../includes/sidebar.php';
                     d.id_banco = $('#filtro_cuenta').val();
                     d.origen = $('#filtro_origen').val();
                     d.estado_sae = $('#filtro_sae').val();
+                    d.referencia = $('#filtro_referencia').val();
                     d.sSearch = d.search.value; // Map modern search to legacy param
                 }
             },
@@ -1149,15 +1126,39 @@ require_once '../includes/sidebar.php';
                 // Lógica de colores para grupos al dibujar la tabla
                 const rows = $(this).find('tbody tr');
                 let lastUuid = null;
-                let colorClass = 'bg-light-group-1';
+                let lastRef = null;
                 
                 rows.each(function() {
+                    // Group by UUID
                     const uuid = $(this).attr('data-grupo');
                     if (uuid) {
                         if (uuid === lastUuid) {
-                            $(row).find('td:first span').css('background', '#0d6efd'); // Color azul para vinculación
+                            $(this).find('td:first span').css('background', '#0d6efd'); // Color azul para vinculación
                         }
                         lastUuid = uuid;
+                    }
+                    
+                    // Group visually by Reference (col index 1)
+                    const refCell = $(this).find('td').eq(1);
+                    const currentRef = refCell.text().trim();
+                    
+                    if (currentRef && currentRef !== '-' && currentRef !== '') {
+                        if (currentRef === lastRef) {
+                            // Style the row to show it's grouped with the previous one
+                            $(this).css('border-top', 'none');
+                            $(this).prev('tr').css('border-bottom', 'none');
+                            // Add a subtle left border to indicate grouping
+                            $(this).find('td:first').css('border-left', '3px solid #6c757d');
+                            $(this).prev('tr').find('td:first').css('border-left', '3px solid #6c757d');
+                            
+                            // Make the repeated reference text lighter
+                            refCell.css('color', '#adb5bd');
+                        } else {
+                            // Reset style for new reference
+                        }
+                        lastRef = currentRef;
+                    } else {
+                        lastRef = null;
                     }
                 });
             },
@@ -1166,6 +1167,15 @@ require_once '../includes/sidebar.php';
 
         $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen, #filtro_sae').on('change', function () {
             tablaUnica.ajax.reload();
+        });
+
+        // Trigger reload on reference type with delay
+        let filterTimer;
+        $('#filtro_referencia').on('input', function() {
+            clearTimeout(filterTimer);
+            filterTimer = setTimeout(function() {
+                tablaUnica.ajax.reload();
+            }, 400); // 400ms delay to prevent too many requests
         });
 
         // Handler para cambio de estado SAE Plus
@@ -2108,8 +2118,9 @@ require_once '../includes/sidebar.php';
 
                     // Poblar Desglose
                     concepts.forEach(c => {
-                        const desc = c.justificacion.toUpperCase();
+                        const desc = (c.justificacion || '').toUpperCase();
                         let switchEl = null;
+
                         let montoEl = null;
                         let cantEl = null;
 
@@ -2247,7 +2258,7 @@ require_once '../includes/sidebar.php';
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
                                 <td>${c.id_cobro}</td>
-                                <td>${c.justificacion.split(' - ')[0]}</td>
+                                <td>${(c.justificacion || 'Sin justificación').split(' - ')[0]}</td>
                                 <td class="text-end fw-bold">$${montoVal.toFixed(2)}</td>
                             `;
                             tbody.appendChild(tr);

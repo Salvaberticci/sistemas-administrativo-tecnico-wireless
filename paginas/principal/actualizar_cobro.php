@@ -65,10 +65,6 @@ if (isset($_POST['desglose_prorrateo_activado']) && $_POST['desglose_prorrateo_a
     $monto = floatval(str_replace(',', '.', $_POST['monto_prorrateo'] ?? 0));
     if ($monto > 0) $cargos_a_procesar[] = ['monto' => $monto, 'just' => "Prorrateo - $justificacion_global"];
 }
-if (isset($_POST['desglose_abono_activado']) && $_POST['desglose_abono_activado'] == '1') {
-    $monto = floatval(str_replace(',', '.', $_POST['monto_abono'] ?? 0));
-    if ($monto > 0) $cargos_a_procesar[] = ['monto' => $monto, 'just' => "Abono a Cuenta - $justificacion_global"];
-}
 if (isset($_POST['desglose_equipo_activado']) && $_POST['desglose_equipo_activado'] == '1') {
     $monto = floatval(str_replace(',', '.', $_POST['monto_equipo'] ?? 0));
     if ($monto > 0) $cargos_a_procesar[] = ['monto' => $monto, 'just' => "Pago de Equipo - $justificacion_global"];
