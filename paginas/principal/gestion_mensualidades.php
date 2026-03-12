@@ -292,7 +292,7 @@ require_once '../includes/sidebar.php';
                                     <div class="col-md-7">
                                         <div class="input-group">
                                             <span class="input-group-text bg-white text-muted fw-bold">$</span>
-                                            <input type="number" step="0.01" min="0.01" class="form-control form-control-lg fw-bold text-success border-0 shadow-none" id="input_monto_cobro" required placeholder="0.00" style="background-color: transparent;">
+                                            <input type="text" class="form-control form-control-lg fw-bold text-success border-0 shadow-none decimal-input" id="input_monto_cobro" required placeholder="0,00" style="background-color: transparent;" inputmode="decimal">
                                         </div>
                                         <input type="hidden" name="monto" id="monto_cobro_hidden">
                                         <div id="equiv_cobro" class="form-text fw-bold text-primary mt-1 px-1" style="font-size: 0.8rem;"></div>
@@ -331,7 +331,7 @@ require_once '../includes/sidebar.php';
                                     <div class="d-none desglose-fields row g-2 mt-1" id="fields_mensualidad">
                                         <div class="col-4">
                                             <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_mensualidad" placeholder="0.00">
+                                            <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_mensualidad" placeholder="0,00" inputmode="decimal">
                                         </div>
                                         <div class="col-3">
                                             <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Cant.</label>
@@ -356,7 +356,7 @@ require_once '../includes/sidebar.php';
                                     </div>
                                     <div class="d-none desglose-fields mt-1" id="fields_instalacion">
                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_instalacion" placeholder="0.00">
+                                        <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_instalacion" placeholder="0,00" inputmode="decimal">
                                     </div>
                                 </div>
 
@@ -370,7 +370,7 @@ require_once '../includes/sidebar.php';
                                     </div>
                                     <div class="d-none desglose-fields mt-1" id="fields_equipo">
                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_equipo" placeholder="0.00">
+                                        <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_equipo" placeholder="0,00" inputmode="decimal">
                                     </div>
                                 </div>
 
@@ -385,7 +385,7 @@ require_once '../includes/sidebar.php';
                                             </div>
                                             <div class="d-none desglose-fields mt-1" id="fields_abono">
                                                 <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_abono" placeholder="0.00">
+                                                <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_abono" placeholder="0,00" inputmode="decimal">
                                             </div>
                                         </div>
                                     </div>
@@ -399,7 +399,7 @@ require_once '../includes/sidebar.php';
                                             </div>
                                             <div class="d-none desglose-fields mt-1" id="fields_prorrateo">
                                                 <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="monto_prorrateo" placeholder="0.00">
+                                                <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_prorrateo" placeholder="0,00" inputmode="decimal">
                                             </div>
                                         </div>
                                     </div>
@@ -428,7 +428,7 @@ require_once '../includes/sidebar.php';
                                                 <div class="row g-2 align-items-end">
                                                     <div class="col-3">
                                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm desglose-monto" name="extra_monto[]" placeholder="0.00">
+                                                        <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="extra_monto[]" placeholder="0,00" inputmode="decimal">
                                                     </div>
                                                     <div class="col-2">
                                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Cant.</label>
@@ -1141,7 +1141,22 @@ require_once '../includes/sidebar.php';
 
         // Recalcular cuando se escribe en los montos del desglose
         document.addEventListener('input', function(e) {
-            // Validación estricta para números (evitar negativos y caracteres no numéricos)
+            // Manejo de decimales con coma o punto
+            if (e.target.classList.contains('decimal-input')) {
+                // Permitir solo números, una coma o un punto
+                let val = e.target.value;
+                
+                // Si intenta poner más de una coma o punto, limpiar
+                const parts = val.split(/[.,]/);
+                if (parts.length > 2) {
+                    e.target.value = parts[0] + ',' + parts.slice(1).join('');
+                }
+                
+                // Remover cualquier carácter que no sea número, coma o punto
+                e.target.value = e.target.value.replace(/[^0-9.,]/g, '');
+            }
+
+            // Validación estricta para números enteros (meses)
             if (e.target.type === 'number' && e.target.classList.contains('form-control-sm')) {
                 // Si es un campo de meses (entero positivo)
                 if (e.target.step === '1') {
@@ -1400,9 +1415,9 @@ require_once '../includes/sidebar.php';
                                                 switchMensualidad.dispatchEvent(new Event('change'));
                                             }
                                             const inputMonto = document.querySelector('[name="monto_mensualidad"]');
-                                            inputMonto.value = parseFloat(c.monto_plan).toFixed(2);
+                                            inputMonto.value = parseFloat(c.monto_plan).toFixed(2).replace('.', ',');
                                             inputMonto.dataset.basePrice = c.monto_plan;
-                                            inputMonto.readOnly = true;
+                                            inputMonto.readOnly = false; // A petición del usuario: Editable
                                             const inputCant = document.querySelector('[name="meses_mensualidad"]');
                                             inputCant.value = 1;
                                             inputCant.dispatchEvent(new Event('input', { bubbles: true }));

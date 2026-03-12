@@ -7,7 +7,7 @@ require_once '../conexion.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // 1. Obtener y sanitizar datos del formulario (GLOBALES)
     $id_contrato_principal = isset($_POST['id_contrato']) ? intval($_POST['id_contrato']) : 0;
-    $monto_total_declarado = isset($_POST['monto']) ? floatval($_POST['monto']) : 0.0;
+    $monto_total_declarado = isset($_POST['monto']) ? floatval(str_replace(',', '.', $_POST['monto'])) : 0.0;
     
     $referencia_pago = isset($_POST['referencia_pago']) ? $conn->real_escape_string(trim($_POST['referencia_pago'])) : '';
     $id_banco_pago = isset($_POST['id_banco_pago']) ? intval($_POST['id_banco_pago']) : 0;
@@ -30,7 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // --- Mensualidad Principal ---
         if (isset($_POST['desglose_mensualidad_activado']) && $_POST['desglose_mensualidad_activado'] == '1') {
-            $monto = floatval($_POST['monto_mensualidad'] ?? 0);
+            $monto = floatval(str_replace(',', '.', $_POST['monto_mensualidad'] ?? 0));
             $meses = intval($_POST['meses_mensualidad'] ?? 1);
             if ($monto > 0) {
                 $cargos_a_procesar[] = [
@@ -44,7 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // --- Instalación ---
         if (isset($_POST['desglose_instalacion_activado']) && $_POST['desglose_instalacion_activado'] == '1') {
-            $monto = floatval($_POST['monto_instalacion'] ?? 0);
+            $monto = floatval(str_replace(',', '.', $_POST['monto_instalacion'] ?? 0));
             if ($monto > 0) {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
@@ -57,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // --- Prorrateo ---
         if (isset($_POST['desglose_prorrateo_activado']) && $_POST['desglose_prorrateo_activado'] == '1') {
-            $monto = floatval($_POST['monto_prorrateo'] ?? 0);
+            $monto = floatval(str_replace(',', '.', $_POST['monto_prorrateo'] ?? 0));
             if ($monto > 0) {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
@@ -70,7 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // --- Abono ---
         if (isset($_POST['desglose_abono_activado']) && $_POST['desglose_abono_activado'] == '1') {
-            $monto = floatval($_POST['monto_abono'] ?? 0);
+            $monto = floatval(str_replace(',', '.', $_POST['monto_abono'] ?? 0));
             if ($monto > 0) {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
@@ -83,7 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // --- Equipo ---
         if (isset($_POST['desglose_equipo_activado']) && $_POST['desglose_equipo_activado'] == '1') {
-            $monto = floatval($_POST['monto_equipo'] ?? 0);
+            $monto = floatval(str_replace(',', '.', $_POST['monto_equipo'] ?? 0));
             if ($monto > 0) {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
@@ -102,7 +102,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             for ($i = 0; $i < count($extras_contratos); $i++) {
                 $id_c_extra = intval($extras_contratos[$i] ?? 0);
-                $monto_extra = floatval($extras_montos[$i] ?? 0);
+                $monto_extra = floatval(str_replace(',', '.', $extras_montos[$i] ?? 0));
                 $meses_extra = intval($extras_meses[$i] ?? 1);
 
                 if ($id_c_extra > 0 && $monto_extra > 0) {
