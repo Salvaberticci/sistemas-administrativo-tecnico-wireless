@@ -451,8 +451,7 @@ require_once '../includes/sidebar.php';
                                 </div>
                             </div>
 
-                            <!-- Sección de Resumen Dinámico -->
-                            <div class="bg-dark rounded p-3 mb-3 border-0 shadow-sm mt-3 mx-0 text-white">
+                            <div class="bg-dark rounded p-3 mb-2 border-0 shadow-sm mt-3 mx-0 text-white">
                                 <div class="row g-2 text-center text-md-start">
                                     <div class="col-4 border-end border-secondary">
                                         <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Monto Pagado</div>
@@ -466,6 +465,13 @@ require_once '../includes/sidebar.php';
                                         <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Saldo Pendiente</div>
                                         <div class="fw-bold fs-5" id="container_restante">$ <span id="val_monto_restante">0.00</span></div>
                                     </div>
+                                </div>
+                            </div>
+                            <!-- Aviso de Saldo sin Asignar -->
+                            <div id="aviso_saldo_descuadrado" class="d-none alert alert-warning py-2 px-3 border-0 shadow-sm rounded mb-3 animate__animated animate__shakeX">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <span class="small fw-bold">Tienes <span id="val_monto_aviso">0.00</span> sin distribuir en el desglose.</span>
                                 </div>
                             </div>
 
@@ -599,8 +605,30 @@ require_once '../includes/sidebar.php';
                         </div>
                     </div>
 
-                    <h6 class="fw-bold small text-muted mb-2 text-uppercase" style="letter-spacing: 0.5px;">Justificación Redactada:</h6>
-                    <div class="alert alert-secondary border-0 bg-light p-3 small mb-0 scroll-premium" style="max-height: 150px; overflow-y: auto; line-height: 1.5;" id="justif_texto">
+                    <h6 class="fw-bold small text-muted mb-2 text-uppercase" style="letter-spacing: 0.5px;">Conceptos del Pago:</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-sm table-bordered bg-white small mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Factura #</th>
+                                    <th>Descripción / Concepto</th>
+                                    <th class="text-end">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="justif_conceptos_body">
+                                <!-- Dinámico -->
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold bg-light">
+                                    <td colspan="2" class="text-end">Total Pagado:</td>
+                                    <td class="text-end text-success" id="justif_total_pagado">$0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <h6 class="fw-bold small text-muted mb-2 text-uppercase" style="letter-spacing: 0.5px;">Nota Administrativa:</h6>
+                    <div class="alert alert-secondary border-0 bg-light p-3 small mb-0 scroll-premium" style="max-height: 120px; overflow-y: auto; line-height: 1.5;" id="justif_texto">
                         ---
                     </div>
                 </div>
@@ -1832,6 +1860,26 @@ require_once '../includes/sidebar.php';
                     document.getElementById('justif_autorizado').textContent = d.autorizado_por;
                     document.getElementById('justif_texto').innerHTML = d.justificacion.replace(/\n/g, '<br>');
                     
+                    // Renderizar tabla de conceptos
+                    const tbody = document.getElementById('justif_conceptos_body');
+                    tbody.innerHTML = '';
+                    let totalAcumulado = 0;
+                    
+                    if (res.all_concepts && res.all_concepts.length > 0) {
+                        res.all_concepts.forEach(c => {
+                            const montoVal = parseFloat(c.monto_cargado);
+                            totalAcumulado += montoVal;
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${c.id_cobro}</td>
+                                <td>${c.justificacion.split(' - ')[0]}</td>
+                                <td class="text-end fw-bold">$${montoVal.toFixed(2)}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+                    document.getElementById('justif_total_pagado').textContent = '$' + totalAcumulado.toFixed(2);
+
                     content.classList.remove('d-none');
                 } else {
                     Swal.fire('Error', res.message, 'error');
