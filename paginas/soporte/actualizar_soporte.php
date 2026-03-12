@@ -63,6 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id_olt = isset($_POST['id_olt_edit']) ? intval($_POST['id_olt_edit']) : NULL;
     $id_pon = isset($_POST['id_pon_edit']) ? intval($_POST['id_pon_edit']) : NULL;
     $clientes_afectados = isset($_POST['clientes_afectados_edit']) ? intval($_POST['clientes_afectados_edit']) : 0;
+    $zona_afectada = isset($_POST['zona_afectada_edit']) ? $conn->real_escape_string($_POST['zona_afectada_edit']) : '';
 
     // Firmas (base64)
     $firma_tecnico_b64 = isset($_POST['firma_tecnico_data']) ? $_POST['firma_tecnico_data'] : '';
@@ -121,6 +122,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                            tipo_falla = '$tipo_falla',
                            es_caida_critica = '$es_caida_critica',
                            clientes_afectados = '$clientes_afectados',
+                           zona_afectada = '$zona_afectada',
                            id_olt = " . ($id_olt ? $id_olt : "NULL") . ",
                            id_pon = " . ($id_pon ? $id_pon : "NULL") . ",
                            solucion_completada = '$solucion_completada',

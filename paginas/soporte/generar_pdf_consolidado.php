@@ -27,6 +27,9 @@ if (!empty($tipo_falla)) {
 if (isset($_GET['excluir_nivel_3']) && $_GET['excluir_nivel_3'] == '1') {
     $where .= " AND s.prioridad != 'NIVEL 3'";
 }
+if (isset($_GET['solo_nivel_3']) && $_GET['solo_nivel_3'] == '1') {
+    $where .= " AND s.prioridad = 'NIVEL 3'";
+}
 
 // Estadísticas generales
 $sql_stats = "SELECT 

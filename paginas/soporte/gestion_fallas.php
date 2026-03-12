@@ -330,13 +330,22 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         ?>
         <?php if ($num_criticas > 0): ?>
             <div class="card border-danger border-2 shadow mb-4">
-                <div class="card-header bg-danger text-white d-flex align-items-center gap-2">
+                <div class="card-header bg-danger text-white d-flex align-items-center gap-2 flex-wrap">
                     <i class="fa-solid fa-fire fa-shake"></i>
                     <span class="fw-bold">⚠️ Caídas Críticas (<?php echo $num_criticas; ?>)</span>
-                    <span class="ms-auto small">Fallas que afectan múltiples clientes o infraestructura crítica</span>
+                    <span class="ms-auto small d-none d-md-block">Fallas que afectan múltiples clientes o infraestructura crítica</span>
+                    <div class="d-flex gap-2 align-items-center ms-auto ms-md-0">
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <span class="input-group-text bg-dark border-dark"><i class="fa-solid fa-search text-white"></i></span>
+                            <input type="text" id="buscadorCriticas" class="form-control" placeholder="Buscar...">
+                        </div>
+                        <button class="btn btn-sm btn-light fw-bold" onclick="exportarPDFCriticas()">
+                            <i class="fa-solid fa-file-pdf text-danger me-1"></i>Exportar PDF
+                        </button>
+                    </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-bordered mb-0">
+                    <table id="tablaCriticas" class="table table-bordered mb-0">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -352,7 +361,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                         </thead>
                         <tbody>
                             <?php while ($cr = $res_criticas->fetch_assoc()): ?>
-                                <tr class="<?php echo $cr['solucion_completada'] ? '' : 'table-warning'; ?>" style="cursor:pointer;" ondblclick="verDetalles(<?php echo $cr['id_soporte']; ?>)">
+                                <tr style="cursor:pointer;" ondblclick="verDetalles(<?php echo $cr['id_soporte']; ?>)">
                                     <td><span class="badge bg-danger">#<?php echo $cr['id_soporte']; ?></span></td>
                                     <td><?php echo htmlspecialchars($cr['fecha']); ?></td>
                                     <td><?php echo htmlspecialchars($cr['nombre_completo']); ?></td>
@@ -361,20 +370,28 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                     <td class="text-center fw-bold text-danger"><?php echo intval($cr['clientes_afectados']); ?></td>
                                     <td><?php echo htmlspecialchars($cr['zona_afectada'] ?? '—'); ?></td>
                                     <td><?php echo $cr['solucion_completada'] ? '<span class="badge bg-success">Solucionada</span>' : '<span class="badge bg-warning text-dark">Activa</span>'; ?></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary"
-                                            onclick="verDetalles(<?php echo $cr['id_soporte']; ?>)" title="Ver Detalles">
+                                    <td class="text-nowrap">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="verDetallesCritica(<?php echo $cr['id_soporte']; ?>)" title="Ver Detalles">
                                             <i class="fa-solid fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-warning"
-                                            onclick="abrirEditar(<?php echo $cr['id_soporte']; ?>)" title="Editar">
+                                        <button class="btn btn-sm btn-warning me-1" onclick="editarCritica(<?php echo $cr['id_soporte']; ?>)" title="Editar">
                                             <i class="fa-solid fa-pen"></i>
+                                        </button>
+                                        <button class="btn btn-sm <?php echo $cr['solucion_completada'] ? 'btn-secondary' : 'btn-success'; ?>" 
+                                            onclick="toggleEstado(<?php echo $cr['id_soporte']; ?>, <?php echo $cr['solucion_completada'] ? 0 : 1; ?>)"
+                                            title="<?php echo $cr['solucion_completada'] ? 'Marcar Activa' : 'Marcar Solucionada'; ?>">
+                                            <i class="fa-solid fa-<?php echo $cr['solucion_completada'] ? 'rotate-left' : 'check'; ?>"></i>
                                         </button>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
                         </tbody>
                     </table>
+                </div>
+                <!-- Paginación Caídas Críticas -->
+                <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center py-3">
+                    <span id="infoPaginacionCriticas" class="text-muted small">Mostrando 0 a 0 de 0 registros</span>
+                    <nav><ul class="pagination pagination-sm mb-0" id="paginacionCriticas"></ul></nav>
                 </div>
             </div>
         <?php endif; ?>
@@ -520,6 +537,110 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
             </div>
 
 </main>
+
+<!-- =============== MODAL: VER DETALLES NIVEL 3 =============== -->
+<div class="modal fade" id="modalCriticaDetalles" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-fire me-2"></i>Caída Crítica #<span id="criticaDetalle_id"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="criticaDetalleBody">
+                <div class="text-center py-5"><span class="spinner-border text-danger"></span></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button id="btnCriticaEditar" class="btn btn-warning"><i class="fa-solid fa-pen me-1"></i>Editar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =============== MODAL: EDITAR CAÍDA CRÍTICA =============== -->
+<div class="modal fade" id="modalCriticaEditar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen me-2"></i>Editar Caída Crítica #<span id="criticaEdit_id"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="critica_edit_id_soporte">
+                <div class="alert alert-danger py-2 mb-3"><i class="fa-solid fa-fire me-1"></i><strong>Falla Masiva NIVEL 3</strong> — Afecta múltiples clientes o infraestructura de red.</div>
+
+                <!-- Infraestructura -->
+                <div class="p-2 mb-2 bg-light border-start border-danger border-4 fw-bold">Infraestructura Afectada</div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">OLT</label>
+                        <select class="form-select" id="critica_olt">
+                            <option value="">-- Seleccionar OLT --</option>
+                            <?php foreach ($olts as $olt): ?>
+                            <option value="<?php echo $olt['id_olt']; ?>"><?php echo htmlspecialchars($olt['nombre_olt']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Puerto PON (Opcional)</label>
+                        <select class="form-select" id="critica_pon">
+                            <option value="">Toda la OLT / Seleccione PON...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Datos principales -->
+                <div class="p-2 mb-2 bg-light border-start border-danger border-4 fw-bold">Datos del Incidente</div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Tipo de Falla (Descriptivo)</label>
+                        <input type="text" class="form-control" id="critica_tipo_falla" placeholder="Ej: Corte fibra óptica, Sin energía OLT...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Clientes Afectados</label>
+                        <input type="number" class="form-control" id="critica_clientes" min="1" value="50">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Fecha</label>
+                        <input type="date" class="form-control" id="critica_fecha">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Zona Afectada</label>
+                        <input type="text" class="form-control" id="critica_zona" placeholder="Ej: Sector Norte, Barrio X...">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Técnico Responsable</label>
+                        <input type="text" class="form-control" id="critica_tecnico" placeholder="Nombre del técnico...">
+                    </div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Descripción y Seguimiento</div>
+                <div class="row g-3 mb-3">
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Observaciones / Descripción del Problema</label>
+                        <textarea class="form-control" id="critica_observaciones" rows="3" placeholder="Describa el alcance de la falla..."></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Notas Internas</label>
+                        <textarea class="form-control" id="critica_notas" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="critica_solucionada">
+                    <label class="form-check-label fw-bold text-success" for="critica_solucionada">¿Falla Solucionada?</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning fw-bold" id="btnGuardarCriticaEdit" onclick="guardarEdicionCritica()">
+                    <i class="fa-solid fa-save me-1"></i>Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- =============== MODAL: VER DETALLES =============== -->
 <div class="modal fade" id="modalVerDetalles" tabindex="-1" aria-hidden="true">
@@ -1459,6 +1580,307 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
     $('#configModal').on('show.bs.modal', function () {
         cargarOpcionesJSON();
     });
+
+    // =========================================================
+    // === CAÍDAS CRÍTICAS: Búsqueda, Paginación, Funciones ====
+    // =========================================================
+    const filasPorPaginaCriticas = 10;
+    let paginaActualCriticas = 1;
+
+    $(document).ready(function () {
+        // Búsqueda en tabla de críticas
+        $('#buscadorCriticas').on('keyup', function () {
+            paginaActualCriticas = 1;
+            actualizarTablaCriticas();
+        });
+
+        // Inicializar paginación si hay filas
+        const filasCriticas = $('#tablaCriticas tbody tr');
+        if (filasCriticas.length > 0 && !filasCriticas.find('.text-center').length) {
+            actualizarTablaCriticas();
+        }
+
+        // Cargar PONs en modal editar crítica cuando cambia OLT
+        $('#critica_olt').on('change', function () {
+            const id_olt = $(this).val();
+            const ponSelect = $('#critica_pon');
+            ponSelect.html('<option value="">Cargando...</option>');
+            if (!id_olt) {
+                ponSelect.html('<option value="">Toda la OLT / Seleccione PON...</option>');
+                return;
+            }
+            $.ajax({
+                url: 'get_pons_ajax.php',
+                data: { id_olt: id_olt },
+                dataType: 'json',
+                success: function (data) {
+                    ponSelect.html('<option value="">Toda la OLT / Seleccione PON...</option>');
+                    data.forEach(function (pon) {
+                        ponSelect.append(`<option value="${pon.id_pon}">${pon.nombre_pon}</option>`);
+                    });
+                },
+                error: function () {
+                    ponSelect.html('<option value="">Error al cargar PONs</option>');
+                }
+            });
+        });
+    });
+
+    function actualizarTablaCriticas() {
+        const busqueda = $('#buscadorCriticas').val().toLowerCase();
+        const todasLasFilas = $('#tablaCriticas tbody tr');
+        let filasFiltradas = [];
+
+        if (todasLasFilas.length === 1 && todasLasFilas.find('.text-center').length > 0) return;
+
+        todasLasFilas.each(function () {
+            const textoFila = $(this).text().toLowerCase();
+            if (textoFila.includes(busqueda)) {
+                filasFiltradas.push($(this));
+                $(this).removeClass('d-none');
+            } else {
+                $(this).addClass('d-none');
+            }
+        });
+
+        const total = filasFiltradas.length;
+        const totalPaginas = Math.ceil(total / filasPorPaginaCriticas);
+
+        if (paginaActualCriticas > totalPaginas && totalPaginas > 0) paginaActualCriticas = totalPaginas;
+        if (paginaActualCriticas < 1) paginaActualCriticas = 1;
+
+        const inicio = (paginaActualCriticas - 1) * filasPorPaginaCriticas;
+        const fin = inicio + filasPorPaginaCriticas;
+
+        for (let i = 0; i < total; i++) {
+            if (i >= inicio && i < fin) {
+                filasFiltradas[i].removeClass('d-none');
+            } else {
+                filasFiltradas[i].addClass('d-none');
+            }
+        }
+
+        const numInicioDisp = total === 0 ? 0 : inicio + 1;
+        const numFinDisp = fin > total ? total : fin;
+        $('#infoPaginacionCriticas').text(`Mostrando ${numInicioDisp} a ${numFinDisp} de ${total} registros`);
+        renderizarPaginacionCriticas(totalPaginas);
+    }
+
+    function renderizarPaginacionCriticas(totalPaginas) {
+        const contenedor = $('#paginacionCriticas');
+        contenedor.empty();
+        if (totalPaginas <= 1) return;
+
+        const prevDis = paginaActualCriticas === 1 ? 'disabled' : '';
+        contenedor.append(`<li class="page-item ${prevDis}"><a class="page-link" href="javascript:void(0)" onclick="cambiarPaginaCriticas(${paginaActualCriticas - 1})">Anterior</a></li>`);
+
+        let startP = Math.max(1, paginaActualCriticas - 2);
+        let endP = Math.min(totalPaginas, startP + 4);
+        if (endP - startP < 4) startP = Math.max(1, endP - 4);
+
+        for (let i = startP; i <= endP; i++) {
+            const active = i === paginaActualCriticas ? 'active' : '';
+            contenedor.append(`<li class="page-item ${active}"><a class="page-link" href="javascript:void(0)" onclick="cambiarPaginaCriticas(${i})">${i}</a></li>`);
+        }
+
+        const nextDis = paginaActualCriticas === totalPaginas ? 'disabled' : '';
+        contenedor.append(`<li class="page-item ${nextDis}"><a class="page-link" href="javascript:void(0)" onclick="cambiarPaginaCriticas(${paginaActualCriticas + 1})">Siguiente</a></li>`);
+    }
+
+    function cambiarPaginaCriticas(nuevaPagina) {
+        paginaActualCriticas = nuevaPagina;
+        actualizarTablaCriticas();
+    }
+
+    // --- Ver Detalles Crítica ---
+    function verDetallesCritica(id) {
+        $('#criticaDetalle_id').text(id);
+        $('#criticaDetalleBody').html('<div class="text-center py-5"><span class="spinner-border text-danger"></span></div>');
+        $('#btnCriticaEditar').attr('onclick', `editarCriticaFromDetalle(${id})`);
+        new bootstrap.Modal(document.getElementById('modalCriticaDetalles')).show();
+
+        fetch('get_soporte_detalle.php?id=' + id)
+            .then(r => r.json())
+            .then(d => {
+                if (d.error) { $('#criticaDetalleBody').html(`<div class="alert alert-danger">${d.error}</div>`); return; }
+                const f = v => v || '—';
+                const html = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-primary text-white"><i class="fa-solid fa-user me-2"></i>Cliente de Referencia</div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Nombre:</strong> ${f(d.nombre_completo)}</p>
+                                <p class="mb-0"><strong>Cédula:</strong> ${f(d.cedula)}</p>
+                            </div>
+                        </div>
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-dark text-white"><i class="fa-solid fa-network-wired me-2"></i>Infraestructura</div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong>OLT:</strong> <span class="badge bg-dark">${f(d.nombre_olt)}</span></p>
+                                <p class="mb-1"><strong>PON:</strong> <span class="badge bg-secondary">${f(d.nombre_pon)}</span></p>
+                                <p class="mb-0"><strong>Clientes Afectados:</strong> <span class="badge bg-danger fs-6">${f(d.clientes_afectados)}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-danger text-white"><i class="fa-solid fa-fire me-2"></i>Datos del Incidente</div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Fecha:</strong> ${f(d.fecha_soporte_form)}</p>
+                                <p class="mb-1"><strong>Tipo de Falla:</strong> ${f(d.tipo_falla)}</p>
+                                <p class="mb-1"><strong>Zona Afectada:</strong> ${f(d.zona_afectada || d.sector)}</p>
+                                <p class="mb-1"><strong>Técnico:</strong> ${f(d.tecnico_asignado)}</p>
+                                <p class="mb-0"><strong>Estado:</strong> ${d.solucion_completada == 1 ? '<span class="badge bg-success">Solucionada</span>' : '<span class="badge bg-warning text-dark">Activa</span>'}</p>
+                            </div>
+                        </div>
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-warning"><i class="fa-solid fa-clipboard me-2"></i>Descripción</div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Observaciones:</strong> ${f(d.observaciones)}</p>
+                                <p class="mb-0"><strong>Notas Internas:</strong> ${f(d.notas_internas)}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+                $('#criticaDetalleBody').html(html);
+            })
+            .catch(() => $('#criticaDetalleBody').html('<div class="alert alert-danger">Error al cargar datos.</div>'));
+    }
+
+    function editarCriticaFromDetalle(id) {
+        bootstrap.Modal.getInstance(document.getElementById('modalCriticaDetalles'))?.hide();
+        setTimeout(() => editarCritica(id), 300);
+    }
+
+    // --- Editar Crítica ---
+    function editarCritica(id) {
+        $('#criticaEdit_id').text(id);
+        $('#critica_edit_id_soporte').val(id);
+        $('#critica_pon').html('<option value="">Cargando...</option>');
+        new bootstrap.Modal(document.getElementById('modalCriticaEditar')).show();
+
+        fetch('get_soporte_detalle.php?id=' + id)
+            .then(r => r.json())
+            .then(d => {
+                if (d.error) { alert('Error: ' + d.error); return; }
+                $('#critica_tipo_falla').val(d.tipo_falla || '');
+                $('#critica_clientes').val(d.clientes_afectados || 50);
+                $('#critica_fecha').val(d.fecha_soporte_form || '');
+                $('#critica_zona').val(d.zona_afectada || d.sector || '');
+                $('#critica_tecnico').val(d.tecnico_asignado || '');
+                $('#critica_observaciones').val(d.observaciones || '');
+                $('#critica_notas').val(d.notas_internas || '');
+                $('#critica_solucionada').prop('checked', d.solucion_completada == 1);
+
+                // Cargar OLT
+                $('#critica_olt').val(d.id_olt || '');
+
+                // Cargar PONs y pre-seleccionar
+                if (d.id_olt) {
+                    $.ajax({
+                        url: 'get_pons_ajax.php',
+                        data: { id_olt: d.id_olt },
+                        dataType: 'json',
+                        success: function (pons) {
+                            $('#critica_pon').html('<option value="">Toda la OLT / Seleccione PON...</option>');
+                            pons.forEach(p => {
+                                const selected = p.id_pon == d.id_pon ? 'selected' : '';
+                                $('#critica_pon').append(`<option value="${p.id_pon}" ${selected}>${p.nombre_pon}</option>`);
+                            });
+                        },
+                        error: function () {
+                            $('#critica_pon').html('<option value="">Error al cargar PONs</option>');
+                        }
+                    });
+                } else {
+                    $('#critica_pon').html('<option value="">Toda la OLT / Seleccione PON...</option>');
+                }
+            })
+            .catch(() => alert('Error al cargar datos.'));
+    }
+
+    function guardarEdicionCritica() {
+        const id = $('#critica_edit_id_soporte').val();
+        const btn = document.getElementById('btnGuardarCriticaEdit');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Guardando...';
+
+        $.ajax({
+            url: 'actualizar_soporte.php',
+            method: 'POST',
+            data: {
+                id_soporte_edit: id,
+                origen: 'gestion_fallas',
+                prioridad_edit: 'NIVEL 3',
+                tipo_falla_edit: $('#critica_tipo_falla').val(),
+                clientes_afectados_edit: $('#critica_clientes').val(),
+                fecha_edit: $('#critica_fecha').val(),
+                zona_afectada_edit: $('#critica_zona').val(),
+                tecnico_edit: $('#critica_tecnico').val(),
+                descripcion_edit: $('#critica_observaciones').val(),
+                notas_internas_edit: $('#critica_notas').val(),
+                solucion_completada: $('#critica_solucionada').is(':checked') ? 1 : 0,
+                id_olt_edit: $('#critica_olt').val(),
+                id_pon_edit: $('#critica_pon').val(),
+                es_caida_critica_edit: 1,
+                monto_total_edit: 0
+            },
+            success: function () {
+                Swal.fire({ icon: 'success', title: '¡Guardado!', text: 'Caída crítica actualizada.', timer: 1800, showConfirmButton: false })
+                    .then(() => location.reload());
+            },
+            error: function () {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-save me-1"></i>Guardar Cambios';
+                Swal.fire('Error', 'No se pudo guardar.', 'error');
+            }
+        });
+    }
+
+    // --- Toggle Estado ---
+    function toggleEstado(id, nuevoEstado) {
+        const texto = nuevoEstado === 1 ? 'marcar como Solucionada' : 'marcar como Activa';
+        Swal.fire({
+            title: '¿Cambiar Estado?',
+            text: `¿Deseas ${texto} esta caída crítica?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cambiar',
+            cancelButtonText: 'Cancelar'
+        }).then(result => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: 'actualizar_soporte.php',
+                    method: 'POST',
+                    data: {
+                        id_soporte_edit: id,
+                        origen: 'toggle_estado',
+                        solucion_completada: nuevoEstado,
+                        prioridad_edit: 'NIVEL 3',
+                        monto_total_edit: 0,
+                        fecha_edit: new Date().toISOString().split('T')[0],
+                        tecnico_edit: '',
+                        descripcion_edit: '',
+                        es_caida_critica_edit: 1
+                    },
+                    success: function () {
+                        Swal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false })
+                            .then(() => location.reload());
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'No se pudo actualizar el estado.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    // --- Exportar PDF Críticas ---
+    function exportarPDFCriticas() {
+        window.open('generar_pdf_consolidado.php?solo_nivel_3=1', '_blank');
+    }
+
 </script>
 
 <?php require_once $path_to_root . 'paginas/includes/layout_foot.php'; ?>
