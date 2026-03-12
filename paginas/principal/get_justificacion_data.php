@@ -40,8 +40,8 @@ $sql = "
         b.nombre_banco,
         co.nombre_completo AS nombre_cliente,
         co.id AS id_contrato
-    FROM cobros_manuales_historial h
-    JOIN cuentas_por_cobrar cxc ON h.id_cobro_cxc = cxc.id_cobro
+    FROM cuentas_por_cobrar cxc
+    LEFT JOIN cobros_manuales_historial h ON h.id_cobro_cxc = cxc.id_cobro
     JOIN contratos co ON cxc.id_contrato = co.id
     LEFT JOIN bancos b ON cxc.id_banco = b.id_banco
     WHERE $where_clause
@@ -56,12 +56,46 @@ $result = $stmt->get_result();
 if ($result && $result->num_rows > 0) {
     $rows = [];
     while ($r = $result->fetch_assoc()) {
+        // Fallback for non-manual charges
+        if (!$r['autorizado_por']) $r['autorizado_por'] = 'SISTEMA';
+        if (!$r['justificacion']) $r['justificacion'] = 'Cobro automático del sistema';
+        if (!$r['fecha_creacion']) $r['fecha_creacion'] = $r['fecha_emision'];
+        if (!$r['monto_cargado']) $r['monto_cargado'] = $r['monto_total']; // Wait, monto_total is in cxc
         $rows[] = $r;
     }
     // Devolvemos el primero como base y la lista completa
     echo json_encode(['success' => true, 'data' => $rows[0], 'all_concepts' => $rows]);
 } else {
-    echo json_encode(['success' => false, 'message' => 'No se encontró el detalle de la justificación.']);
+    // If it's not and manual but exists in cxc
+    $sql_basic = "
+        SELECT 
+            'SISTEMA' as autorizado_por, 
+            'Cobro automático del sistema' as justificacion, 
+            cxc.fecha_emision as fecha_creacion, 
+            cxc.monto_total as monto_cargado,
+            cxc.id_cobro,
+            cxc.fecha_emision,
+            cxc.referencia_pago,
+            cxc.capture_pago,
+            cxc.id_contrato as id_contrato_unico,
+            b.nombre_banco,
+            co.nombre_completo AS nombre_cliente,
+            co.id AS id_contrato
+        FROM cuentas_por_cobrar cxc
+        JOIN contratos co ON cxc.id_contrato = co.id
+        LEFT JOIN bancos b ON cxc.id_banco = b.id_banco
+        WHERE cxc.id_cobro = ?
+    ";
+    $stmt_b = $conn->prepare($sql_basic);
+    $stmt_b->bind_param("i", $id_cobro);
+    $stmt_b->execute();
+    $res_b = $stmt_b->get_result();
+    if ($res_b && $res_b->num_rows > 0) {
+        $row_b = $res_b->fetch_assoc();
+        echo json_encode(['success' => true, 'data' => $row_b, 'all_concepts' => [$row_b]]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'No se encontró el detalle de la justificación.']);
+    }
 }
 
 $conn->close();
