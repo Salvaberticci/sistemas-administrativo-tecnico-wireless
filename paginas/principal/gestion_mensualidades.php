@@ -313,9 +313,9 @@ require_once '../includes/sidebar.php';
                                 </div>
                             </div>
 
-                            <h6 class="fw-bold text-success small mb-3 border-bottom pb-2 d-flex justify-content-between">
+                            <h6 class="fw-bold text-success small mb-3 border-bottom pb-2 d-flex justify-content-between align-items-center">
                                 <span><i class="fas fa-layer-group me-1"></i> 3. Desglose del Pago</span>
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-1 px-2" style="font-size: 0.65rem;">Suma Dinámica</span>
+                                <span id="badge_indicador_suma" class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 py-1 px-3" style="font-size: 0.65rem;">PENDIENTE</span>
                             </h6>
                             
                             <!-- Área de Scroll para el Desglose -->
