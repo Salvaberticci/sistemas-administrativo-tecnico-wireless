@@ -60,15 +60,17 @@ $sql_reportes = "SELECT
                     s.id_soporte,
                     DATE_FORMAT(s.fecha_soporte, '%d/%m/%Y') as fecha,
                     c.nombre_completo,
-                    s.tipo_falla,
-                    s.tecnico_asignado,
-                    s.monto_total,
-                    s.monto_pagado,
-                    (s.monto_total - s.monto_pagado) as saldo
-                 FROM soportes s
-                 INNER JOIN contratos c ON s.id_contrato = c.id
-                 $where
-                 ORDER BY s.fecha_soporte DESC";
+                     s.tipo_falla,
+                     s.tecnico_asignado,
+                     s.monto_total,
+                     s.monto_pagado,
+                     (s.monto_total - s.monto_pagado) as saldo,
+                     s.clientes_afectados,
+                     s.zona_afectada
+                  FROM soportes s
+                  INNER JOIN contratos c ON s.id_contrato = c.id
+                  $where
+                  ORDER BY s.fecha_soporte DESC";
 
 $result_reportes = $conn->query($sql_reportes);
 $conn->close();
@@ -190,11 +192,21 @@ $html = '
             <tr>
                 <th style="width: 8%;">ID</th>
                 <th style="width: 12%;">Fecha</th>
-                <th style="width: 22%;">Cliente</th>
+                <th style="width: 25%;">Cliente / Referencia</th>
                 <th style="width: 18%;">Tipo Falla</th>
-                <th style="width: 15%;">Técnico</th>
+                <th style="width: 15%;">Técnico</th>';
+
+if (isset($_GET['filtro_prioridad']) && $_GET['filtro_prioridad'] == 'NIVEL 3') {
+    $html .= '
+                <th style="width: 10%;">C. Afectados</th>
+                <th style="width: 12%;">Zona</th>';
+} else {
+    $html .= '
                 <th style="width: 10%;">Total</th>
-                <th style="width: 10%;">Pagado</th>
+                <th style="width: 10%;">Pagado</th>';
+}
+
+$html .= '
                 <th style="width: 5%;">Estado</th>
             </tr>
         </thead>
@@ -206,11 +218,19 @@ while ($rep = $result_reportes->fetch_assoc()) {
             <tr>
                 <td class="text-center">' . $rep['id_soporte'] . '</td>
                 <td>' . $rep['fecha'] . '</td>
-                <td>' . htmlspecialchars(substr($rep['nombre_completo'], 0, 25)) . '</td>
+                <td>' . htmlspecialchars(substr($rep['nombre_completo'], 0, 30)) . '</td>
                 <td>' . htmlspecialchars(substr($rep['tipo_falla'], 0, 20)) . '</td>
-                <td>' . htmlspecialchars(substr($rep['tecnico_asignado'], 0, 15)) . '</td>
-                <td class="text-right">$' . number_format($rep['monto_total'], 2) . '</td>
-                <td class="text-right">$' . number_format($rep['monto_pagado'], 2) . '</td>
+                <td>' . htmlspecialchars(substr($rep['tecnico_asignado'], 0, 15)) . '</td>';
+    
+    if (isset($_GET['filtro_prioridad']) && $_GET['filtro_prioridad'] == 'NIVEL 3') {
+        $html .= '<td class="text-center"><strong>' . intval($rep['clientes_afectados']) . '</strong></td>';
+        $html .= '<td>' . htmlspecialchars(substr($rep['zona_afectada'] ?? 'N/A', 0, 15)) . '</td>';
+    } else {
+        $html .= '<td class="text-right">$' . number_format($rep['monto_total'], 2) . '</td>';
+        $html .= '<td class="text-right">$' . number_format($rep['monto_pagado'], 2) . '</td>';
+    }
+    
+    $html .= '
                 <td class="text-center">' . $estado_badge . '</td>
             </tr>';
 }

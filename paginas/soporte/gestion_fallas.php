@@ -16,6 +16,8 @@ while ($row = $res_olt->fetch_assoc()) {
     $olts[] = $row;
 }
 require_once $path_to_root . 'paginas/includes/layout_head.php';
+// Incluir SweetAlert2 para diálogos de confirmación
+echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
 require_once $path_to_root . 'paginas/includes/sidebar.php';
 
 // Leer filtros para PHP Table Rendering
@@ -392,14 +394,14 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 echo "<td>" . fix_utf8($row['zona_afectada'] ?? '—') . "</td>";
                 echo "<td>" . ($solucion_completada ? '<span class="badge bg-success">Solucionada</span>' : '<span class="badge bg-warning text-dark">Activa</span>') . "</td>";
                 echo "<td class='text-nowrap'>";
-                echo "<button class='btn btn-sm btn-outline-primary' onclick='verDetallesCritica({$id})' title='Ver Detalles'><i class='fa-solid fa-eye'></i></button> ";
-                echo "<button class='btn btn-sm btn-warning me-1' onclick='editarCritica({$id})' title='Editar'><i class='fa-solid fa-pen'></i></button> ";
-                echo "<a href='generar_pdf_reporte.php?id={$id}' target='_blank' class='btn btn-sm btn-danger me-1' title='Exportar PDF'><i class='fa-solid fa-file-pdf'></i></a> ";
-                $btnClass = $solucion_completada ? 'btn-secondary' : 'btn-success';
-                $btnIcon = $solucion_completada ? 'rotate-left' : 'check';
-                $btnTitle = $solucion_completada ? 'Marcar Activa' : 'Marcar Solucionada';
+                echo "<button class='btn btn-sm btn-outline-primary shadow-sm' onclick='verDetallesCritica({$id})' title='Ver Detalles'><i class='fa-solid fa-eye'></i> Ver</button> ";
+                echo "<button class='btn btn-sm btn-warning shadow-sm mx-1' onclick='editarCritica({$id})' title='Editar'><i class='fa-solid fa-pen'></i></button> ";
+                
+                $btnClass = $solucion_completada ? 'btn-outline-secondary' : 'btn-success';
+                $btnIcon = $solucion_completada ? 'rotate-left' : 'check-double';
+                $btnText = $solucion_completada ? 'Marcar Activa' : 'Solucionada';
                 $nuevoStatus = $solucion_completada ? 0 : 1;
-                echo "<button class='btn btn-sm {$btnClass}' onclick='toggleEstado({$id}, {$nuevoStatus}, \"NIVEL 3\")' title='{$btnTitle}'><i class='fa-solid fa-{$btnIcon}'></i></button>";
+                echo "<button class='btn btn-sm {$btnClass} shadow-sm' onclick='toggleEstado({$id}, {$nuevoStatus}, \"NIVEL 3\")' title='Cambiar Estado'><i class='fa-solid fa-{$btnIcon} me-1'></i>{$btnText}</button>";
                 echo "</td></tr>";
             } else {
                 $saldo = floatval($row['saldo_pendiente'] ?? 0);
@@ -430,14 +432,14 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 $estadoBadge = $solucion_completada ? '<span class="badge bg-success">Solucionada</span>' : '<span class="badge bg-warning text-dark">Activa</span>';
                 echo "<td>{$estadoBadge}</td>";
                 echo "<td class='text-nowrap'>";
-                echo "<button class='btn btn-sm btn-outline-info me-1' onclick='verDetalles({$id})' title='Ver Detalles'><i class='fa-solid fa-eye'></i></button> ";
-                echo "<button class='btn btn-sm btn-warning me-1' onclick='abrirEditar({$id})' title='Editar'><i class='fa-solid fa-pen'></i></button> ";
-                echo "<a href='generar_pdf_reporte.php?id={$id}' target='_blank' class='btn btn-sm btn-danger me-1' title='PDF'><i class='fa-solid fa-file-pdf'></i></a> ";
-                $btnClass = $solucion_completada ? 'btn-secondary' : 'btn-success';
-                $btnIcon = $solucion_completada ? 'rotate-left' : 'check';
-                $btnTitle = $solucion_completada ? 'Marcar Activa' : 'Marcar Solucionada';
+                echo "<button class='btn btn-sm btn-outline-info shadow-sm' onclick='verDetalles({$id})' title='Ver Detalles'><i class='fa-solid fa-eye'></i></button> ";
+                echo "<button class='btn btn-sm btn-warning shadow-sm mx-1' onclick='abrirEditar({$id})' title='Editar'><i class='fa-solid fa-pen'></i></button> ";
+                
+                $btnClass = $solucion_completada ? 'btn-outline-secondary' : 'btn-success';
+                $btnIcon = $solucion_completada ? 'rotate-left' : 'check-double';
+                $btnText = $solucion_completada ? 'Reactivar' : 'Solucionar';
                 $nuevoStatus = $solucion_completada ? 0 : 1;
-                echo "<button class='btn btn-sm {$btnClass}' onclick='toggleEstado({$id}, {$nuevoStatus}, \"{$prioridad}\")' title='{$btnTitle}'><i class='fa-solid fa-{$btnIcon}'></i></button>";
+                echo "<button class='btn btn-sm {$btnClass} shadow-sm' onclick='toggleEstado({$id}, {$nuevoStatus}, \"{$prioridad}\")' title='Cambiar Estado'><i class='fa-solid fa-{$btnIcon} me-1'></i>{$btnText}</button>";
                 echo "</td></tr>";
             }
         }
