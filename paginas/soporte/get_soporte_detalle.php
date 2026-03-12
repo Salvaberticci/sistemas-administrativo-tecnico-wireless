@@ -11,9 +11,11 @@ if ($id <= 0) {
     exit;
 }
 
-$sql = "SELECT s.*, c.nombre_completo, c.cedula
+$sql = "SELECT s.*, c.nombre_completo, c.cedula, o.nombre_olt, p.nombre_pon
         FROM soportes s
         INNER JOIN contratos c ON s.id_contrato = c.id
+        LEFT JOIN olt o ON s.id_olt = o.id_olt
+        LEFT JOIN pon p ON s.id_pon = p.id_pon
         WHERE s.id_soporte = ?";
 
 $stmt = $conn->prepare($sql);

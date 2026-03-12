@@ -93,12 +93,21 @@
 
                             <!-- 1. Encabezado -->
                             <div class="row mb-3">
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-3 mb-2">
                                     <label class="form-label fw-bold">Fecha</label>
                                     <input type="date" class="form-control" name="fecha"
                                         value="<?php echo date('Y-m-d'); ?>" required>
                                 </div>
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-3 mb-2">
+                                    <label class="form-label fw-bold">Hora Solución</label>
+                                    <input type="time" class="form-control" name="hora_solucion"
+                                        value="<?php echo date('H:i'); ?>" required>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <label class="form-label fw-bold">Tiempo (Hrs/Min)</label>
+                                    <input type="text" class="form-control" name="tiempo_transcurrido" placeholder="Ej. 1h 30m">
+                                </div>
+                                <div class="col-md-3 mb-2">
                                     <label class="form-label fw-bold">Sector</label>
                                     <input type="text" class="form-control" name="sector" placeholder="Ej. Las Malvinas"
                                         readonly style="background-color: #e9ecef;">
@@ -125,8 +134,7 @@
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <label class="form-label fw-bold">Tipo Servicio</label>
-                                    <select class="form-select" name="tipo_servicio"
-                                        style="pointer-events: none; background-color: #e9ecef;">
+                                    <select class="form-select" name="tipo_servicio" id="tipo_servicio" onchange="actualizarVisibilidadServicio()">
                                         <option value="FTTH">FTTH (Fibra)</option>
                                         <option value="RADIO">Radio/Antena</option>
                                     </select>
@@ -140,7 +148,7 @@
                             </div>
 
                             <div class="row mb-3">
-                                <div class="col-md-4">
+                                <div class="col-md-4" id="seccion_onu">
                                     <label class="form-label text-muted small">Estado ONU</label>
                                     <select class="form-select" name="estado_onu">
                                         <option value="ON">ON (Encendido)</option>
@@ -189,17 +197,19 @@
                             </div>
 
                             <!-- 5. Antena (Caso Radio) -->
-                            <div class="section-title">Estado Antena (Solo Radio)</div>
-                            <div class="row">
-                                <div class="col-6">
-                                    <label class="form-label">Estado</label>
-                                    <input type="text" class="form-control" name="estado_antena"
-                                        placeholder="Ej. Alineada">
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">Valores (dBm)</label>
-                                    <input type="text" class="form-control" id="valores_antena" name="valores_antena"
-                                        placeholder="Ej. -55" pattern="-?[0-9.]+">
+                            <div id="seccion_antena">
+                                <div class="section-title">Estado Antena (Solo Radio)</div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label class="form-label">Estado</label>
+                                        <input type="text" class="form-control" name="estado_antena"
+                                            placeholder="Ej. Alineada">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Valores (dBm)</label>
+                                        <input type="text" class="form-control" id="valores_antena" name="valores_antena"
+                                            placeholder="Ej. -55" pattern="-?[0-9.]+">
+                                    </div>
                                 </div>
                             </div>
 
@@ -214,9 +224,6 @@
                                     </span>
                                     <span class="priority-badge priority-nivel2" data-priority="NIVEL 2">
                                         <i class="fa-solid fa-house-chimney-user me-1"></i>NIVEL 2 (Visita Técnico)
-                                    </span>
-                                    <span class="priority-badge priority-nivel3" data-priority="NIVEL 3">
-                                        <i class="fa-solid fa-network-wired me-1"></i>NIVEL 3 (Red Afectada)
                                     </span>
                                 </div>
                                 <input type="hidden" id="prioridad" name="prioridad" value="NIVEL 1">
@@ -353,6 +360,23 @@
         // =================================================================
         // VALIDACIÓN Y RESTRICCIÓN DE CAMPOS EN TIEMPO REAL
         // =================================================================
+
+        function actualizarVisibilidadServicio() {
+            const tipo = document.getElementById('tipo_servicio').value;
+            const seccionAntena = document.getElementById('seccion_antena');
+            const seccionOnu = document.getElementById('seccion_onu');
+
+            if (tipo === 'RADIO') {
+                seccionAntena.classList.remove('d-none');
+                seccionOnu.classList.add('d-none');
+            } else {
+                seccionAntena.classList.add('d-none');
+                seccionOnu.classList.remove('d-none');
+            }
+        }
+
+        // Ejecutar al cargar para establecer estado inicial
+        document.addEventListener('DOMContentLoaded', actualizarVisibilidadServicio);
 
         // IP: solo dígitos y puntos
         document.getElementById('rt_ip')?.addEventListener('input', function () {
@@ -634,6 +658,9 @@
                                             toast: true,
                                             position: 'top-end'
                                         });
+
+                                        // Actualizar visibilidad después de importar
+                                        actualizarVisibilidadServicio();
                                     })
                                     .catch(err => console.error('Error fetching contract details:', err));
                             };

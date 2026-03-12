@@ -31,6 +31,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $id_contrato = isset($_POST['id_contrato']) ? intval($_POST['id_contrato']) : 0;
     $fecha = isset($_POST['fecha']) ? $conn->real_escape_string($_POST['fecha']) : date('Y-m-d');
+    $hora_solucion = isset($_POST['hora_solucion']) ? $conn->real_escape_string($_POST['hora_solucion']) : date('H:i:s');
+    $tiempo_transcurrido = isset($_POST['tiempo_transcurrido']) ? $conn->real_escape_string($_POST['tiempo_transcurrido']) : '';
 
     // Datos Técnicos
     $sector = isset($_POST['sector']) ? $conn->real_escape_string($_POST['sector']) : '';
@@ -75,13 +77,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $tecnico_nombre = "Reporte Digital"; // O pedir nombre en form
 
             $sql = "INSERT INTO soportes (
-                id_contrato, descripcion, monto_total, monto_pagado, fecha_soporte, tecnico_asignado, observaciones, tipo_falla,
+                id_contrato, descripcion, monto_total, monto_pagado, fecha_soporte, hora_solucion, tiempo_transcurrido, tecnico_asignado, observaciones, tipo_falla,
                 sector, tipo_servicio, ip_address, estado_onu, estado_router, modelo_router,
                 bw_bajada, bw_subida, bw_ping, num_dispositivos,
                 estado_antena, valores_antena, sugerencias, solucion_completada,
                 firma_tecnico, firma_cliente, prioridad
             ) VALUES (
-                '$id_contrato', '$descripcion_corta', '$monto_total', '$monto_pagado', '$fecha', '$tecnico_nombre', '$observaciones', '$tipo_falla',
+                '$id_contrato', '$descripcion_corta', '$monto_total', '$monto_pagado', '$fecha', '$hora_solucion', '$tiempo_transcurrido', '$tecnico_nombre', '$observaciones', '$tipo_falla',
                 '$sector', '$tipo_servicio', '$ip', '$estado_onu', '$estado_router', '$modelo_router',
                 '$bw_bajada', '$bw_subida', '$bw_ping', '$num_dispositivos',
                 '$estado_antena', '$valores_antena', '$sugerencias', '$solucion_completada',

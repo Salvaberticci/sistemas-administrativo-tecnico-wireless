@@ -4,11 +4,18 @@
  * Formulario simplificado para registrar fallas antes de la visita técnica
  */
 $path_to_root = "../../";
-$page_title = "Registro Rápido de Falla";
-$breadcrumb = ["Soporte", "Gestión de Fallas"];
+$page_title = "Registro de Falla Masiva (NIVEL 3)";
+$breadcrumb = ["Soporte", "Falla Masiva"];
 $back_url = "gestion_fallas.php";
 require_once $path_to_root . 'paginas/conexion.php';
 require_once $path_to_root . 'paginas/includes/layout_head.php';
+
+// Obtener OLTs
+$olts = [];
+$res_olt = $conn->query("SELECT id_olt, nombre_olt FROM olt ORDER BY nombre_olt ASC");
+while ($row = $res_olt->fetch_assoc()) {
+    $olts[] = $row;
+}
 ?>
 
 <style>
@@ -109,9 +116,9 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h2 class="h3 fw-bold text-danger mb-1">
-                            <i class="fa-solid fa-bolt me-2"></i>Registro Rápido de Falla
+                            <i class="fa-solid fa-network-wired me-2"></i>Registro de Falla Masiva (NIVEL 3)
                         </h2>
-                        <p class="text-muted">Registra incidencias antes de la visita técnica</p>
+                        <p class="text-muted">Reporte de caídas de red, OLTs o zonas completas</p>
                     </div>
                     <a href="gestion_fallas.php" class="btn btn-outline-secondary">
                         <i class="fa-solid fa-arrow-left me-1"></i>Volver
@@ -121,22 +128,22 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
         </div>
 
         <form id="formRegistroFalla" class="needs-validation" novalidate>
-            <!-- Sección 1: Información del Cliente -->
+            <!-- Sección 1: Información de Referencia -->
             <div class="form-section">
-                <h5 class="fw-bold mb-3"><i class="fa-solid fa-user me-2"></i>Información del Cliente</h5>
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-user me-2"></i>Cliente Reportante (Referencia)</h5>
                 <div class="row g-3">
                     <div class="col-12">
-                        <label class="form-label">Buscar Cliente <span class="text-danger">*</span></label>
+                        <label class="form-label">Buscar un cliente afectado como referencia <span class="text-danger">*</span></label>
                         <div class="input-group position-relative">
                             <span class="input-group-text"><i class="fa-solid fa-search"></i></span>
                             <input type="text" class="form-control" id="cliente_search"
-                                placeholder="Buscar por Nombre, ID o Cédula..." autocomplete="off">
+                                placeholder="Nombre, ID o Cédula..." autocomplete="off">
                         </div>
                         <input type="hidden" name="id_contrato" id="id_contrato" required>
                         <div id="search_results" class="list-group position-absolute w-100 shadow mt-1"
                             style="z-index: 1000; display: none; max-height: 300px; overflow-y: auto;"></div>
                         <div id="cliente_seleccionado" class="form-text text-success fw-bold mt-2"></div>
-                        <div class="invalid-feedback">Debe seleccionar un cliente</div>
+                        <div class="invalid-feedback">Debe seleccionar al menos un cliente de referencia</div>
                     </div>
                 </div>
             </div>
@@ -146,27 +153,32 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
             <div class="form-section">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="fw-bold mb-0"><i class="fa-solid fa-tag me-2"></i>Clasificación de la Falla</h5>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
-                        data-bs-target="#configModal">
-                        <i class="fa-solid fa-cog me-1"></i>Configurar Opciones
-                    </button>
                 </div>
 
                 <div class="row g-3 mb-3">
-                    <div class="col-12">
-                        <label class="form-label">Prioridad <span class="text-danger">*</span></label>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <span class="priority-badge priority-nivel1 active" data-priority="NIVEL 1">
-                                <i class="fa-brands fa-whatsapp me-1"></i>NIVEL 1 (WhatsApp)
-                            </span>
-                            <span class="priority-badge priority-nivel2" data-priority="NIVEL 2">
-                                <i class="fa-solid fa-house-chimney-user me-1"></i>NIVEL 2 (Visita Técnico)
-                            </span>
-                            <span class="priority-badge priority-nivel3" data-priority="NIVEL 3">
-                                <i class="fa-solid fa-network-wired me-1"></i>NIVEL 3 (Red Afectada)
-                            </span>
-                        </div>
-                        <input type="hidden" id="prioridad" name="prioridad" value="NIVEL 1" required>
+                    <div class="col-12 text-center py-2 bg-danger text-white rounded shadow-sm">
+                        <h4 class="fw-bold mb-0"><i class="fa-solid fa-triangle-exclamation me-2"></i>PRIORIDAD: NIVEL 3 (FALLA MASIVA)</h4>
+                        <input type="hidden" id="prioridad" name="prioridad" value="NIVEL 3" required>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">OLT Afectada <span class="text-danger">*</span></label>
+                        <select class="form-select border-primary" id="id_olt" name="id_olt" required>
+                            <option value="">Seleccione OLT...</option>
+                            <?php foreach ($olts as $olt): ?>
+                                <option value="<?php echo $olt['id_olt']; ?>"><?php echo htmlspecialchars($olt['nombre_olt']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="invalid-feedback">Debe seleccionar la OLT afectada</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">PON Afectado (Opcional)</label>
+                        <select class="form-select border-primary" id="id_pon" name="id_pon">
+                            <option value="">Primero seleccione OLT...</option>
+                        </select>
+                        <small class="text-muted">Deja en blanco si es caída total de la OLT</small>
                     </div>
                 </div>
 
@@ -185,36 +197,28 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                             placeholder="Se llena automáticamente">
                     </div>
                 </div>
-
-                <div class="row g-3 mt-2">
+                <div class="row g-3 mt-3">
                     <div class="col-md-6">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="es_caida_critica"
-                                name="es_caida_critica">
-                            <label class="form-check-label fw-bold text-danger" for="es_caida_critica">
-                                <i class="fa-solid fa-exclamation-triangle me-1"></i>¿Es una caída crítica?
-                            </label>
-                            <small class="d-block text-muted">Marca si afecta a múltiples clientes o infraestructura
-                                crítica</small>
+                        <div class="p-3 border rounded bg-white shadow-sm h-100">
+                            <label class="form-label fw-bold text-danger"><i class="fa-solid fa-users me-2"></i>Estimación de Clientes Afectados</label>
+                            <input type="number" class="form-control form-control-lg border-danger" id="clientes_afectados" name="clientes_afectados"
+                                min="1" value="50">
+                            <small class="text-muted">Introduce una cifra estimada (Ej. 100, 200...)</small>
+                        </div>
+                        <input type="hidden" name="es_caida_critica" value="1">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="critical-alert h-100 mb-0 shadow-sm border-danger" style="display: block;">
+                            <h6 class="fw-bold mb-2">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>Reporte de Gravedad
+                            </h6>
+                            <p class="mb-0 small">
+                                Las fallas de Nivel 3 activan alertas inmediatas para el equipo de infraestructura.
+                                Asegúrese de que la OLT esté correctamente seleccionada.
+                            </p>
                         </div>
                     </div>
-                    <div class="col-md-6" id="clientesAfectadosContainer" style="display: none;">
-                        <label class="form-label">Clientes Afectados</label>
-                        <input type="number" class="form-control" id="clientes_afectados" name="clientes_afectados"
-                            min="1" value="1">
-                    </div>
                 </div>
-            </div>
-
-            <!-- Alerta de Caída Crítica -->
-            <div class="critical-alert" id="criticalAlert" style="display: none;">
-                <h6 class="fw-bold mb-2">
-                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Caída Crítica Detectada
-                </h6>
-                <p class="mb-0 small">
-                    Esta falla afecta a múltiples clientes. Se notificará al equipo de gestión y se priorizará su
-                    atención.
-                </p>
             </div>
 
             <!-- Sección 3: Ubicación -->
@@ -308,126 +312,15 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
                 </div>
             </div>
 
-            <!-- Sección 7: Detalles Técnicos Avanzados -->
-            <div class="form-section">
-                <h5 class="fw-bold mb-3"><i class="fa-solid fa-microchip me-2"></i>Parámetros Técnicos</h5>
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">IP Asignada</label>
-                        <input type="text" class="form-control" name="ip" placeholder="0.0.0.0">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Estado ONU</label>
-                        <select class="form-select" name="estado_onu">
-                            <option value="ON">ON</option>
-                            <option value="OFF">OFF</option>
-                            <option value="LOS">LOS</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Estado Router</label>
-                        <select class="form-select" name="estado_router">
-                            <option value="ON">ON</option>
-                            <option value="OFF">OFF</option>
-                            <option value="RESET">Reset</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Modelo Router</label>
-                        <input type="text" class="form-control" name="modelo_router" placeholder="Ej. TPLink">
-                    </div>
-                </div>
-                <div class="row g-3 mt-2">
-                    <div class="col-md-2">
-                        <label class="form-label">Dispositivos</label>
-                        <input type="number" class="form-control" name="num_dispositivos" placeholder="Cant.">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Bajada (MB)</label>
-                        <input type="text" class="form-control" name="bw_bajada" placeholder="MB">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Subida (MB)</label>
-                        <input type="text" class="form-control" name="bw_subida" placeholder="MB">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Ping (ms)</label>
-                        <input type="text" class="form-control" name="bw_ping" placeholder="ms">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Solucionada?</label>
-                        <div class="form-check form-switch mt-2">
-                            <input class="form-check-input" type="checkbox" name="solucion_completada"
-                                id="solucion_completada">
-                        </div>
-                    </div>
-                </div>
-                <div class="row g-3 mt-2 bg-light p-2 rounded">
-                    <div class="col-md-6">
-                        <label class="form-label">Estado Antena</label>
-                        <input type="text" class="form-control" name="estado_antena" placeholder="Solo Radio">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Valores dBm</label>
-                        <input type="text" class="form-control" name="valores_antena" placeholder="Ej. -55">
-                    </div>
-                </div>
-                <div class="col-12 mt-3">
-                    <label class="form-label">Sugerencias al Cliente</label>
-                    <textarea class="form-control" name="sugerencias" rows="2"
-                        placeholder="Recomendaciones..."></textarea>
-                </div>
-            </div>
-
-            <!-- Sección 8: Costos y Firmas -->
-            <div class="form-section">
-                <h5 class="fw-bold mb-3"><i class="fa-solid fa-money-bill-wave me-2"></i>Costos y Firmas</h5>
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Costo Total ($)</label>
-                        <input type="number" step="0.01" class="form-control" name="monto_total" id="monto_total"
-                            value="0.00" oninput="calcularDeuda()">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Monto Pagado ($)</label>
-                        <input type="number" step="0.01" class="form-control" name="monto_pagado" id="monto_pagado"
-                            value="0.00" oninput="calcularDeuda()">
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <div class="alert alert-info py-2 mb-0">
-                            <small>Saldo:</small><br>
-                            <span class="fs-4 fw-bold" id="deuda_pendiente">$0.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row g-3 mt-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Firma Técnico</label>
-                        <canvas id="sigTech" class="signature-pad"></canvas>
-                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
-                            onclick="clearPad('tech')">Limpiar</button>
-                        <input type="hidden" name="firma_tecnico_data" id="firma_tecnico_data">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Firma Cliente</label>
-                        <canvas id="sigCli" class="signature-pad"></canvas>
-                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
-                            onclick="clearPad('cli')">Limpiar</button>
-                        <input type="hidden" name="firma_cliente_data" id="firma_cliente_data">
-                    </div>
-                </div>
-            </div>
-
             <!-- Botones -->
-            <div class="row">
+            <div class="row mt-4">
                 <div class="col-12">
-                    <div class="d-flex gap-2 justify-content-end">
-                        <a href="gestion_fallas.php" class="btn btn-cancel-custom">
+                    <div class="d-flex gap-2 justify-content-end p-3 bg-light rounded shadow-sm">
+                        <a href="gestion_fallas.php" class="btn btn-cancel-custom px-4">
                             <i class="fa-solid fa-times me-1"></i>Cancelar
                         </a>
-                        <button type="submit" class="btn btn-danger btn-lg">
-                            <i class="fa-solid fa-save me-1"></i>Registrar Falla
+                        <button type="submit" class="btn btn-danger btn-lg px-5 fw-bold shadow">
+                            <i class="fa-solid fa-save me-1"></i>REGISTRAR FALLA MASIVA
                         </button>
                     </div>
                 </div>
@@ -435,39 +328,6 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
         </form>
     </div>
 </main>
-
-<!-- Modal Configuración de Opciones -->
-<div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-md">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-cog me-2"></i>Gestión de Tipos de Falla</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <!-- Columna Tipos de Falla -->
-                    <div class="col-12">
-                        <h6 class="fw-bold text-danger mb-3">Listado de Fallas</h6>
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="nuevoTipoFalla"
-                                placeholder="Nuevo tipo de falla...">
-                            <button class="btn btn-primary" type="button" onclick="agregarOpcion('tipos_falla')">
-                                <i class="fa-solid fa-plus"></i>
-                            </button>
-                        </div>
-                        <ul class="list-group" id="listaFallas" style="max-height: 400px; overflow-y: auto;">
-                            <!-- Items cargados dinámicamente -->
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 
 
@@ -682,46 +542,7 @@ require_once $path_to_root . 'paginas/includes/layout_head.php';
         });
     });
 
-    // --- Lógica de Firmas y Costos ---
-    let padTech, padCli;
 
-    $(document).ready(function () {
-        // Inicializar SignaturePad
-        const canvasTech = document.getElementById('sigTech');
-        const canvasCli = document.getElementById('sigCli');
-
-        if (canvasTech && canvasCli) {
-            padTech = new SignaturePad(canvasTech);
-            padCli = new SignaturePad(canvasCli);
-
-            // Ajustar tamaño del canvas
-            function resizeCanvas() {
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                [canvasTech, canvasCli].forEach(canvas => {
-                    canvas.width = canvas.offsetWidth * ratio;
-                    canvas.height = canvas.offsetHeight * ratio;
-                    canvas.getContext("2d").scale(ratio, ratio);
-                });
-                padTech.clear();
-                padCli.clear();
-            }
-
-            window.addEventListener("resize", resizeCanvas);
-            resizeCanvas();
-        }
-    });
-
-    function clearPad(type) {
-        if (type === 'tech') padTech.clear();
-        if (type === 'cli') padCli.clear();
-    }
-
-    function calcularDeuda() {
-        const total = parseFloat($('#monto_total').val()) || 0;
-        const pagado = parseFloat($('#monto_pagado').val()) || 0;
-        const deuda = total - pagado;
-        $('#deuda_pendiente').text('$' + deuda.toFixed(2));
-    }
 
     // --- Funciones para Gestión de Opciones JSON ---
 

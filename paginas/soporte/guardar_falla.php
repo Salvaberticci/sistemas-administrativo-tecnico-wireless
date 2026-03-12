@@ -30,48 +30,48 @@ require_once '../conexion.php';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Método no permitido']);
     exit;
-}
-
-// Recibir datos
+}// Recibir datos
 $id_contrato = isset($_POST['id_contrato']) ? intval($_POST['id_contrato']) : 0;
-$prioridad = isset($_POST['prioridad']) ? $_POST['prioridad'] : 'MEDIA';
+$prioridad = 'NIVEL 3'; // Forzar Nivel 3 para este formulario refactorizado
+$id_olt = isset($_POST['id_olt']) ? intval($_POST['id_olt']) : NULL;
+$id_pon = isset($_POST['id_pon']) ? intval($_POST['id_pon']) : NULL;
 $tipo_falla = isset($_POST['tipo_falla']) ? trim($_POST['tipo_falla']) : '';
 $tipo_servicio = isset($_POST['tipo_servicio']) ? trim($_POST['tipo_servicio']) : 'Fibra Óptica';
-$es_caida_critica = isset($_POST['es_caida_critica']) ? intval($_POST['es_caida_critica']) : 0;
-$clientes_afectados = isset($_POST['clientes_afectados']) ? intval($_POST['clientes_afectados']) : 1;
+$es_caida_critica = 1; // Siempre crítica en nivel 3
+$clientes_afectados = isset($_POST['clientes_afectados']) ? intval($_POST['clientes_afectados']) : 50;
 $sector = isset($_POST['sector']) ? trim($_POST['sector']) : '';
 $zona_afectada = isset($_POST['zona_afectada']) ? trim($_POST['zona_afectada']) : '';
 $observaciones = isset($_POST['observaciones']) ? trim($_POST['observaciones']) : '';
-$equipos_afectados = isset($_POST['equipos_afectados']) ? trim($_POST['equipos_afectados']) : '';
 $tecnico_asignado = isset($_POST['tecnico_asignado']) ? trim($_POST['tecnico_asignado']) : '';
 $notas_internas = isset($_POST['notas_internas']) ? trim($_POST['notas_internas']) : '';
 $fecha_reporte = isset($_POST['fecha_reporte']) ? $_POST['fecha_reporte'] : date('Y-m-d H:i:s');
 
-// Nuevos campos unificados
-$ip = isset($_POST['ip']) ? trim($_POST['ip']) : '';
-$estado_onu = isset($_POST['estado_onu']) ? trim($_POST['estado_onu']) : '';
-$estado_router = isset($_POST['estado_router']) ? trim($_POST['estado_router']) : '';
-$modelo_router = isset($_POST['modelo_router']) ? trim($_POST['modelo_router']) : '';
-$num_dispositivos = isset($_POST['num_dispositivos']) ? intval($_POST['num_dispositivos']) : 0;
-$bw_bajada = isset($_POST['bw_bajada']) ? trim($_POST['bw_bajada']) : '';
-$bw_subida = isset($_POST['bw_subida']) ? trim($_POST['bw_subida']) : '';
-$bw_ping = isset($_POST['bw_ping']) ? trim($_POST['bw_ping']) : '';
-$estado_antena = isset($_POST['estado_antena']) ? trim($_POST['estado_antena']) : '';
-$valores_antena = isset($_POST['valores_antena']) ? trim($_POST['valores_antena']) : '';
-$sugerencias = isset($_POST['sugerencias']) ? trim($_POST['sugerencias']) : '';
-$solucion_completada = isset($_POST['solucion_completada']) ? intval($_POST['solucion_completada']) : 0;
-$monto_total = isset($_POST['monto_total']) ? floatval($_POST['monto_total']) : 0.00;
-$monto_pagado = isset($_POST['monto_pagado']) ? floatval($_POST['monto_pagado']) : 0.00;
+// Campos por defecto (estos ya no vienen del formulario de nivel 3)
+$ip = '';
+$estado_onu = '';
+$estado_router = '';
+$modelo_router = '';
+$num_dispositivos = 0;
+$bw_bajada = '';
+$bw_subida = '';
+$bw_ping = '';
+$estado_antena = '';
+$valores_antena = '';
+$sugerencias = '';
+$solucion_completada = 0;
+$monto_total = 0.00;
+$monto_pagado = 0.00;
 
-// Firmas
-$firma_tecnico_data = isset($_POST['firma_tecnico_data']) ? $_POST['firma_tecnico_data'] : '';
-$firma_cliente_data = isset($_POST['firma_cliente_data']) ? $_POST['firma_cliente_data'] : '';
 
 // Validaciones
 $errores = [];
 
 if ($id_contrato <= 0) {
-    $errores[] = 'Debe seleccionar un cliente';
+    $errores[] = 'Debe seleccionar un cliente de referencia';
+}
+
+if (!$id_olt) {
+    $errores[] = 'Debe seleccionar la OLT afectada';
 }
 
 if (empty($tipo_falla)) {
@@ -79,21 +79,11 @@ if (empty($tipo_falla)) {
 }
 
 if (empty($tecnico_asignado)) {
-    $errores[] = 'Debe asignar un técnico';
+    $errores[] = 'Debe asignar un técnico responsable';
 }
 
 if (strlen($observaciones) < 10) {
     $errores[] = 'La descripción debe tener al menos 10 caracteres';
-}
-
-if ($es_caida_critica && $clientes_afectados < 2) {
-    $errores[] = 'Una caída crítica debe afectar al menos 2 clientes';
-}
-
-// Validar prioridad
-$prioridades_validas = ['NIVEL 1', 'NIVEL 2', 'NIVEL 3'];
-if (!in_array($prioridad, $prioridades_validas)) {
-    $prioridad = 'NIVEL 1';
 }
 
 if (!empty($errores)) {
@@ -106,22 +96,14 @@ $sql_cliente = "SELECT nombre_completo, cedula, ip_onu as ip, direccion FROM con
 $result_cliente = $conn->query($sql_cliente);
 
 if ($result_cliente->num_rows == 0) {
-    echo json_encode(['success' => false, 'message' => 'Cliente no encontrado']);
+    echo json_encode(['success' => false, 'message' => 'Cliente de referencia no encontrado']);
     exit;
 }
 
 $cliente = $result_cliente->fetch_assoc();
 
 // Generar descripción corta automática
-$descripcion_corta = $tipo_falla . ' - ' . $cliente['nombre_completo'];
-if ($es_caida_critica) {
-    $descripcion_corta = '[CRÍTICA] ' . $descripcion_corta;
-}
-
-// Agregar equipos afectados a observaciones si existen
-if (!empty($equipos_afectados)) {
-    $observaciones .= "\n\nEquipos potencialmente afectados: " . $equipos_afectados;
-}
+$descripcion_corta = "[MASIVA] " . $tipo_falla . ' - ' . $cliente['nombre_completo'];
 
 // Preparar fecha de soporte (para compatibilidad)
 $fecha_soporte = date('Y-m-d', strtotime($fecha_reporte));
@@ -136,22 +118,6 @@ $observaciones = $conn->real_escape_string($observaciones);
 $tecnico_asignado = $conn->real_escape_string($tecnico_asignado);
 $notas_internas = $conn->real_escape_string($notas_internas);
 $fecha_reporte_sql = $conn->real_escape_string($fecha_reporte);
-
-// Escapar nuevos campos
-$ip = $conn->real_escape_string($ip);
-$estado_onu = $conn->real_escape_string($estado_onu);
-$estado_router = $conn->real_escape_string($estado_router);
-$modelo_router = $conn->real_escape_string($modelo_router);
-$bw_bajada = $conn->real_escape_string($bw_bajada);
-$bw_subida = $conn->real_escape_string($bw_subida);
-$bw_ping = $conn->real_escape_string($bw_ping);
-$estado_antena = $conn->real_escape_string($estado_antena);
-$valores_antena = $conn->real_escape_string($valores_antena);
-$sugerencias = $conn->real_escape_string($sugerencias);
-
-// Procesar firmas
-$path_tech = saveSignature($firma_tecnico_data, 'tech_falla');
-$path_cli = saveSignature($firma_cliente_data, 'cli_falla');
 
 // Insertar en base de datos
 $sql = "INSERT INTO soportes (
@@ -169,22 +135,11 @@ $sql = "INSERT INTO soportes (
     observaciones,
     notas_internas,
     tecnico_asignado,
+    id_olt,
+    id_pon,
     solucion_completada,
     monto_total,
     monto_pagado,
-    ip_address,
-    estado_onu,
-    estado_router,
-    modelo_router,
-    num_dispositivos,
-    bw_bajada,
-    bw_subida,
-    bw_ping,
-    estado_antena,
-    valores_antena,
-    sugerencias,
-    firma_tecnico,
-    firma_cliente,
     estado_firma
 ) VALUES (
     $id_contrato,
@@ -192,8 +147,8 @@ $sql = "INSERT INTO soportes (
     '$fecha_reporte_sql',
     '$descripcion_corta',
     '$tipo_falla',
-    '$prioridad',
-    $es_caida_critica,
+    'NIVEL 3',
+    1,
     $clientes_afectados,
     '$tipo_servicio',
     '$sector',
@@ -201,23 +156,12 @@ $sql = "INSERT INTO soportes (
     '$observaciones',
     '$notas_internas',
     '$tecnico_asignado',
-    $solucion_completada,
-    $monto_total,
-    $monto_pagado,
-    '$ip',
-    '$estado_onu',
-    '$estado_router',
-    '$modelo_router',
-    $num_dispositivos,
-    '$bw_bajada',
-    '$bw_subida',
-    '$bw_ping',
-    '$estado_antena',
-    '$valores_antena',
-    '$sugerencias',
-    '$path_tech',
-    '$path_cli',
-    'COMPLETADO'
+    " . ($id_olt ? $id_olt : "NULL") . ",
+    " . ($id_pon ? $id_pon : "NULL") . ",
+    0,
+    0,
+    0,
+    'PENDIENTE'
 )";
 
 if ($conn->query($sql)) {

@@ -34,6 +34,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Campos básicos
     $fecha = isset($_POST['fecha_edit']) ? $conn->real_escape_string($_POST['fecha_edit']) : '';
+    $hora_solucion = isset($_POST['hora_edit']) ? $conn->real_escape_string($_POST['hora_edit']) : '';
+    $tiempo_transcurrido = isset($_POST['tiempo_edit']) ? $conn->real_escape_string($_POST['tiempo_edit']) : '';
     $tecnico = isset($_POST['tecnico_edit']) ? $conn->real_escape_string($_POST['tecnico_edit']) : '';
     $sector = isset($_POST['sector']) ? $conn->real_escape_string($_POST['sector']) : '';
     $descripcion = isset($_POST['descripcion_edit']) ? $conn->real_escape_string($_POST['descripcion_edit']) : '';
@@ -58,6 +60,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $bw_ping = isset($_POST['bw_ping']) ? $conn->real_escape_string($_POST['bw_ping']) : '';
     $estado_antena = isset($_POST['estado_antena']) ? $conn->real_escape_string($_POST['estado_antena']) : '';
     $valores_antena = isset($_POST['valores_antena']) ? $conn->real_escape_string($_POST['valores_antena']) : '';
+    $id_olt = isset($_POST['id_olt_edit']) ? intval($_POST['id_olt_edit']) : NULL;
+    $id_pon = isset($_POST['id_pon_edit']) ? intval($_POST['id_pon_edit']) : NULL;
+    $clientes_afectados = isset($_POST['clientes_afectados_edit']) ? intval($_POST['clientes_afectados_edit']) : 0;
 
     // Firmas (base64)
     $firma_tecnico_b64 = isset($_POST['firma_tecnico_data']) ? $_POST['firma_tecnico_data'] : '';
@@ -115,10 +120,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                            prioridad = '$prioridad',
                            tipo_falla = '$tipo_falla',
                            es_caida_critica = '$es_caida_critica',
+                           clientes_afectados = '$clientes_afectados',
+                           id_olt = " . ($id_olt ? $id_olt : "NULL") . ",
+                           id_pon = " . ($id_pon ? $id_pon : "NULL") . ",
                            solucion_completada = '$solucion_completada',
                            monto_total = '$nuevo_total' 
                            $update_firmas
                            WHERE id_soporte = '$id_soporte'";
+            
+            // New fields update
+            $conn->query("UPDATE soportes SET hora_solucion = '$hora_solucion', tiempo_transcurrido = '$tiempo_transcurrido' WHERE id_soporte = '$id_soporte'");
 
             if (!$conn->query($sql_update)) {
                 throw new Exception("Error al actualizar soporte: " . $conn->error);

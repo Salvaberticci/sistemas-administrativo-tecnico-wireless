@@ -22,9 +22,11 @@ use Dompdf\Options;
 require_once __DIR__ . '/../conexion.php';
 
 // Consultar datos completos del reporte
-$sql = "SELECT s.*, c.nombre_completo, c.cedula, c.ip_onu as ip, c.direccion, c.telefono
+$sql = "SELECT s.*, c.nombre_completo, c.cedula, c.ip_onu as ip, c.direccion, c.telefono, o.nombre_olt, p.nombre_pon
         FROM soportes s
         INNER JOIN contratos c ON s.id_contrato = c.id
+        LEFT JOIN olt o ON s.id_olt = o.id_olt
+        LEFT JOIN pon p ON s.id_pon = p.id_pon
         WHERE s.id_soporte = $id_soporte";
 
 $result = $conn->query($sql);
@@ -250,8 +252,24 @@ $html = '
                 <td class="value"><span style="background:#17a2b8;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">' . htmlspecialchars($r['tipo_servicio'] ?? 'N/A') . '</span></td>
             </tr>
             <tr>
+                <td class="label">Punto de Acceso (OLT):</td>
+                <td class="value">' . htmlspecialchars($r['nombre_olt'] ?: 'N/A') . '</td>
+            </tr>
+            <tr>
+                <td class="label">Puerto (PON):</td>
+                <td class="value">' . htmlspecialchars($r['nombre_pon'] ?: 'N/A') . '</td>
+            </tr>
+            <tr>
                 <td class="label">Tipo de Falla:</td>
                 <td class="value"><span style="background:#ffc107;color:#333;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">' . htmlspecialchars($r['tipo_falla'] ?? 'N/A') . '</span></td>
+            </tr>
+            <tr>
+                <td class="label">Hora de Solución:</td>
+                <td class="value">' . (substr($r['hora_solucion'], 0, 5) ?: '—') . '</td>
+            </tr>
+            <tr>
+                <td class="label">Tiempo Transcurrido:</td>
+                <td class="value">' . htmlspecialchars($r['tiempo_transcurrido'] ?: '—') . '</td>
             </tr>
             <tr>
                 <td class="label">Solución Completada:</td>

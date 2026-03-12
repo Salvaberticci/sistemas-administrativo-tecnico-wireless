@@ -149,7 +149,7 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
                                     class="fa-solid fa-chart-line w-20 me-2 text-muted"></i> Gestión de Fallas</a></li>
                         <li><a class="dropdown-item"
                                 href="<?php echo $path_fix; ?>paginas/soporte/registro_falla.php"><i
-                                    class="fa-solid fa-bolt w-20 me-2 text-danger"></i> Registrar Falla Rápida</a></li>
+                                    class="fa-solid fa-triangle-exclamation w-20 me-2 text-danger"></i> Registrar Falla Masiva</a></li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>

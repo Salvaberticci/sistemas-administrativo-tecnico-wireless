@@ -8,6 +8,13 @@ $page_title = "Gestión de Fallas";
 $breadcrumb = ["Soporte", "Gestión de Fallas"];
 $back_url = "../menu.php";
 require_once $path_to_root . 'paginas/conexion.php';
+
+// Obtener OLTs para el modal de edición
+$olts = [];
+$res_olt = $conn->query("SELECT id_olt, nombre_olt FROM olt ORDER BY nombre_olt ASC");
+while ($row = $res_olt->fetch_assoc()) {
+    $olts[] = $row;
+}
 require_once $path_to_root . 'paginas/includes/layout_head.php';
 require_once $path_to_root . 'paginas/includes/sidebar.php';
 
@@ -91,9 +98,15 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                         </h2>
                         <p class="text-muted">Dashboard de análisis y estadísticas de reportes técnicos</p>
                     </div>
-                    <a href="registro_falla.php" class="btn btn-danger">
-                        <i class="fa-solid fa-bolt me-1"></i>Registrar Falla
+                    <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary shadow-sm px-4" data-bs-toggle="modal"
+                        data-bs-target="#configModal">
+                        <i class="fa-solid fa-cog me-1"></i>Configurar Opciones
+                    </button>
+                    <a href="registro_falla.php" class="btn btn-danger shadow px-4 fw-bold">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>REGISTRAR FALLA MASIVA
                     </a>
+                </div>
                 </div>
             </div>
         </div>
@@ -388,6 +401,8 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                                 <tr>
                                     <th>ID</th>
                                     <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Tiempo</th>
                                     <th>Cliente</th>
                                     <th>Tipo Falla</th>
                                     <th>Técnico</th>
@@ -412,6 +427,7 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                                 }
 
                                 $sql = "SELECT s.id_soporte, DATE_FORMAT(s.fecha_soporte, '%d/%m/%Y') as fecha_formateada,
+                                           s.hora_solucion, s.tiempo_transcurrido,
                                            c.nombre_completo, COALESCE(s.tipo_falla, 'No especificado') as tipo_falla,
                                            COALESCE(s.tecnico_asignado, 'Sin asignar') as tecnico, s.prioridad,
                                            s.monto_total, s.monto_pagado, (s.monto_total - s.monto_pagado) as saldo_pendiente,
@@ -464,6 +480,8 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                                         echo "<tr class='{$rowClass}' style='cursor:pointer;' ondblclick='verDetalles({$id})'" . ">";
                                         echo "<td>{$id}</td>";
                                         echo "<td>{$row['fecha_formateada']}</td>";
+                                        echo "<td>" . (substr($row['hora_solucion'], 0, 5) ?: '—') . "</td>";
+                                        echo "<td>" . fix_utf8($row['tiempo_transcurrido'] ?: '—') . "</td>";
                                         echo "<td>" . fix_utf8($row['nombre_completo']) . "</td>";
                                         echo "<td>" . fix_utf8($row['tipo_falla']) . "</td>";
                                         echo "<td>" . fix_utf8($row['tecnico']) . "</td>";
@@ -555,13 +573,20 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                         <input type="text" class="form-control" name="sector" id="sector_edit">
                     </div>
                     <div class="col-md-3 mb-3">
-                        <label class="form-label fw-bold">Prioridad</label>
-                        <select class="form-select" name="prioridad_edit" id="prioridad_edit">
-                            <option value="NIVEL 1">NIVEL 1 (WhatsApp)</option>
-                            <option value="NIVEL 2">NIVEL 2 (Visita)</option>
-                            <option value="NIVEL 3">NIVEL 3 (Red)</option>
-                        </select>
-                    </div>
+                                        <label class="form-label fw-bold">Prioridad</label>
+                                        <select class="form-select" name="prioridad_edit" id="prioridad_edit">
+                                            <option value="NIVEL 1">NIVEL 1 (WhatsApp)</option>
+                                            <option value="NIVEL 2">NIVEL 2 (Visita)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label fw-bold">Hora Solución</label>
+                                        <input type="time" class="form-control" name="hora_edit" id="hora_edit">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label fw-bold">Tiempo Transcurrido</label>
+                                        <input type="text" class="form-control" name="tiempo_edit" id="tiempo_edit" placeholder="Ej. 1h 20m">
+                                    </div>
                 </div>
 
                 <!-- Falla -->
@@ -587,6 +612,31 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                             <label class="form-check-label text-danger fw-bold" for="es_caida_critica_edit">¿Caída
                                 Crítica?</label>
                         </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">OLT Afectada</label>
+                        <select class="form-select" name="id_olt_edit" id="id_olt_edit">
+                            <option value="">Seleccione OLT...</option>
+                            <?php foreach ($olts as $olt): ?>
+                                <option value="<?php echo $olt['id_olt']; ?>"><?php echo htmlspecialchars($olt['nombre_olt']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">PON Afectado</label>
+                        <select class="form-select" name="id_pon_edit" id="id_pon_edit">
+                            <option value="">Primero seleccione OLT...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6" id="clientesAfectadosEditContainer">
+                        <label class="form-label fw-bold">Clientes Afectados</label>
+                        <input type="number" class="form-control" name="clientes_afectados_edit" id="clientes_afectados_edit" min="1">
                     </div>
                 </div>
 
@@ -719,6 +769,38 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
     </div>
 </div>
 
+<!-- Modal Configuración de Opciones -->
+<div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-cog me-2"></i>Gestión de Tipos de Falla</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="p-3 bg-light rounded mb-3">
+                    <h6 class="fw-bold text-danger mb-3 font-heading small text-uppercase tracking-wider">Añadir Nuevo Tipo</h6>
+                    <div class="input-group">
+                        <input type="text" class="form-control border-danger" id="nuevoTipoFalla"
+                            placeholder="Ej. Fibra Rota, Equipo Quemado...">
+                        <button class="btn btn-danger" type="button" onclick="agregarOpcion('tipos_falla')">
+                            <i class="fa-solid fa-plus me-1"></i>Añadir
+                        </button>
+                    </div>
+                </div>
+                
+                <h6 class="fw-bold mb-2 font-heading small text-uppercase tracking-wider opacity-75">Listado Actual</h6>
+                <ul class="list-group list-group-flush border rounded overflow-hidden" id="listaFallas" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Items cargados dinámicamente -->
+                </ul>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="<?php echo $path_to_root; ?>js/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
@@ -765,8 +847,12 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                             <div class="card-header bg-info text-white"><i class="fa-solid fa-calendar-check me-2"></i>Visita</div>
                             <div class="card-body">
                                 <p class="mb-1"><strong>Fecha:</strong> ${f(d.fecha_soporte_form)}</p>
+                                <p class="mb-1"><strong>Hora:</strong> ${f(d.hora_solucion ? d.hora_solucion.substring(0,5) : '')}</p>
+                                <p class="mb-1"><strong>Tiempo:</strong> ${f(d.tiempo_transcurrido)}</p>
                                 <p class="mb-1"><strong>Técnico:</strong> ${f(d.tecnico_asignado)}</p>
                                 <p class="mb-1"><strong>Sector:</strong> ${f(d.sector)}</p>
+                                <p class="mb-1"><strong>OLT:</strong> <span class="badge bg-dark">${f(d.nombre_olt)}</span></p>
+                                <p class="mb-1"><strong>PON:</strong> <span class="badge bg-secondary">${f(d.nombre_pon)}</span></p>
                                 <p class="mb-1"><strong>Tipo Falla:</strong> ${f(d.tipo_falla)}</p>
                                 <p class="mb-1"><strong>Prioridad:</strong> ${badge(d.prioridad)}</p>
                                 <p class="mb-0"><strong>Caída Crítica:</strong> ${d.es_caida_critica == 1 ? '<span class=\"badge bg-danger\">Sí (' + f(d.clientes_afectados) + ' clientes)</span>' : 'No'}</p>
@@ -818,6 +904,9 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
         $('#id_soporte_edit').val(id);
         // Reset firmas
         $('#container_firma_tech_edit, #container_firma_cli_edit').addClass('d-none');
+        // Hide clientes afectados by default
+        $('#clientesAfectadosEditContainer').hide();
+
 
         // Cargar opciones de falla antes de mostrar
         cargarOpcionesFallaEdit(() => {
@@ -826,12 +915,30 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
                 .then(d => {
                     if (d.error) { alert('Error: ' + d.error); return; }
                     $('#fecha_edit').val(d.fecha_soporte_form);
+                    $('#hora_edit').val(d.hora_solucion || '');
+                    $('#tiempo_edit').val(d.tiempo_transcurrido || '');
                     $('#tecnico_edit').val(d.tecnico_asignado || '');
                     $('#sector_edit').val(d.sector || '');
                     $('#prioridad_edit').val(d.prioridad || 'NIVEL 1');
                     $('#tipo_falla_edit').val(d.tipo_falla || '');
                     $('#tipo_servicio_edit').val(d.tipo_servicio || 'FTTH');
                     $('#es_caida_critica_edit').prop('checked', d.es_caida_critica == 1);
+                    if (d.es_caida_critica == 1) {
+                        $('#clientesAfectadosEditContainer').show();
+                        $('#clientes_afectados_edit').val(d.clientes_afectados);
+                    } else {
+                        $('#clientesAfectadosEditContainer').hide();
+                        $('#clientes_afectados_edit').val('');
+                    }
+
+                    // Poblado de OLT y PON
+                    $('#id_olt_edit').val(d.id_olt);
+                    if (d.id_olt) {
+                       cargarPonsEdit(d.id_olt, d.id_pon);
+                    } else {
+                       $('#id_pon_edit').html('<option value="">Primero seleccione OLT...</option>');
+                    }
+
                     $('#ip_edit').val(d.ip_address || '');
                     $('#estado_onu_edit').val(d.estado_onu || '');
                     $('#estado_router_edit').val(d.estado_router || '');
@@ -1157,9 +1264,8 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
     document.getElementById('formFiltros').addEventListener('submit', function (e) {
         // Permitimos el submit normal para recargar la tabla (Datatables Server Side)
         // Pero también llamamos a cargarEstadisticas() si es necesario.
-        // Como la tabla usa GET y recarga la página, cargarEstadisticas se llamará en el document.ready.
-        // Si el usuario quiere que sea puramente AJAX sin recarga, usaríamos e.preventDefault().
         // Dado el estado actual, el document.ready ya maneja la carga inicial con los params de la URL.
+        // Si el usuario quiere que sea puramente AJAX sin recarga, usaríamos e.preventDefault().
     });
 
     function exportarPDF() {
@@ -1299,6 +1405,76 @@ $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['es
         paginaActual = nuevaPagina;
         actualizarTabla();
     }
+
+    // --- Funciones para Gestión de Opciones JSON ---
+    function cargarOpcionesJSON() {
+        $.ajax({
+            url: 'admin_opciones.php',
+            data: { action: 'read' },
+            dataType: 'json',
+            success: function (response) {
+                if (response.success && response.data.tipos_falla) {
+                    const lista = $('#listaFallas');
+                    lista.empty();
+                    response.data.tipos_falla.forEach(op => {
+                        lista.append(`
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                <span class="fw-medium">${op}</span>
+                                <button class="btn btn-sm btn-outline-danger border-0" onclick="eliminarOpcion('tipos_falla', '${op}')">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </li>
+                        `);
+                    });
+                }
+            }
+        });
+    }
+
+    function agregarOpcion(tipo) {
+        const inputId = '#nuevoTipoFalla';
+        const valor = $(inputId).val().trim();
+        if (!valor) return;
+
+        $.post('admin_opciones.php', { action: 'add', type: tipo, value: valor }, function (response) {
+            if (response.success) {
+                $(inputId).val('');
+                cargarOpcionesJSON();
+                Swal.fire({
+                    icon: 'success', title: 'Agregado', text: 'Opción añadida correctamente',
+                    toast: true, position: 'top-end', showConfirmButton: false, timer: 2000
+                });
+            } else {
+                Swal.fire('Error', response.message, 'error');
+            }
+        }, 'json');
+    }
+
+    function eliminarOpcion(tipo, valor) {
+        Swal.fire({
+            title: '¿Eliminar opción?',
+            text: `Se eliminará "${valor}" de la lista`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('admin_opciones.php', { action: 'delete', type: tipo, value: valor }, function (response) {
+                    if (response.success) {
+                        cargarOpcionesJSON();
+                    } else {
+                        Swal.fire('Error', response.message, 'error');
+                    }
+                }, 'json');
+            }
+        });
+    }
+
+    // Cargar al abrir el modal
+    $('#configModal').on('show.bs.modal', function () {
+        cargarOpcionesJSON();
+    });
 </script>
 
 <?php require_once $path_to_root . 'paginas/includes/layout_foot.php'; ?>
