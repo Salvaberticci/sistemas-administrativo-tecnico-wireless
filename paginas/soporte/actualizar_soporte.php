@@ -101,45 +101,53 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
             // 2. Actualizar tabla Soportes
-            $sql_update = "UPDATE soportes SET 
-                           fecha_soporte = '$fecha',
-                           tecnico_asignado = '$tecnico', 
-                           sector = '$sector',
-                           tipo_servicio = '$tipo_servicio',
-                           ip_address = '$ip',
-                           estado_onu = '$estado_onu',
-                           estado_router = '$estado_router',
-                           modelo_router = '$modelo_router',
-                           num_dispositivos = '$num_dispositivos',
-                           bw_bajada = '$bw_bajada',
-                           bw_subida = '$bw_subida',
-                           bw_ping = '$bw_ping',
-                           estado_antena = '$estado_antena',
-                           valores_antena = '$valores_antena',
-                           descripcion = '$descripcion', 
-                           sugerencias = '$sugerencias',
-                           notas_internas = '$notas_internas',
-                           prioridad = '$prioridad',
-                           tipo_falla = '$tipo_falla',
-                           es_caida_critica = '$es_caida_critica',
-                           clientes_afectados = '$clientes_afectados',
-                           zona_afectada = '$zona_afectada',
-                           id_olt = " . ($id_olt ? $id_olt : "NULL") . ",
-                           id_pon = " . ($id_pon ? $id_pon : "NULL") . ",
-                           solucion_completada = '$solucion_completada',
-                           monto_total = '$nuevo_total' 
-                           $update_firmas
-                           WHERE id_soporte = '$id_soporte'";
-            
-            // New fields update
-            $conn->query("UPDATE soportes SET hora_solucion = '$hora_solucion', tiempo_transcurrido = '$tiempo_transcurrido' WHERE id_soporte = '$id_soporte'");
-
-            if (!$conn->query($sql_update)) {
-                throw new Exception("Error al actualizar soporte: " . $conn->error);
+            if ($origen == 'toggle_estado') {
+                $sql_update = "UPDATE soportes SET solucion_completada = '$solucion_completada' WHERE id_soporte = '$id_soporte'";
+                
+                if (!$conn->query($sql_update)) {
+                    throw new Exception("Error al actualizar estado: " . $conn->error);
+                }
+            } else {
+                $sql_update = "UPDATE soportes SET 
+                               fecha_soporte = '$fecha',
+                               tecnico_asignado = '$tecnico', 
+                               sector = '$sector',
+                               tipo_servicio = '$tipo_servicio',
+                               ip_address = '$ip',
+                               estado_onu = '$estado_onu',
+                               estado_router = '$estado_router',
+                               modelo_router = '$modelo_router',
+                               num_dispositivos = '$num_dispositivos',
+                               bw_bajada = '$bw_bajada',
+                               bw_subida = '$bw_subida',
+                               bw_ping = '$bw_ping',
+                               estado_antena = '$estado_antena',
+                               valores_antena = '$valores_antena',
+                               descripcion = '$descripcion', 
+                               sugerencias = '$sugerencias',
+                               notas_internas = '$notas_internas',
+                               prioridad = '$prioridad',
+                               tipo_falla = '$tipo_falla',
+                               es_caida_critica = '$es_caida_critica',
+                               clientes_afectados = '$clientes_afectados',
+                               zona_afectada = '$zona_afectada',
+                               id_olt = " . ($id_olt ? $id_olt : "NULL") . ",
+                               id_pon = " . ($id_pon ? $id_pon : "NULL") . ",
+                               solucion_completada = '$solucion_completada',
+                               monto_total = '$nuevo_total' 
+                               $update_firmas
+                               WHERE id_soporte = '$id_soporte'";
+                
+                if (!$conn->query($sql_update)) {
+                    throw new Exception("Error al actualizar soporte: " . $conn->error);
+                }
+                
+                $hora_sql = !empty($hora_solucion) ? "'$hora_solucion'" : "NULL";
+                $conn->query("UPDATE soportes SET hora_solucion = $hora_sql, tiempo_transcurrido = '$tiempo_transcurrido' WHERE id_soporte = '$id_soporte'");
             }
 
-            // 3. Recalcular y Actualizar Deuda (si existe un cobro asociado)
-            if ($id_cobro) {
+            // 3. Recalcular y Actualizar Deuda (si existe un cobro asociado y no es toggle_estado)
+            if ($origen != 'toggle_estado' && $id_cobro) {
                 // Nueva deuda pendiente = Nuevo Total - Lo que ya pagó
                 $nueva_deuda_pendiente = $nuevo_total - $monto_pagado;
 
@@ -159,7 +167,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 if (!$stmt_cxc->execute()) {
                     throw new Exception("Error al actualizar la deuda asociada.");
                 }
-            } else if (!empty($id_cobro) == false && ($nuevo_total - $monto_pagado) > 0) {
+            } else if ($origen != 'toggle_estado' && empty($id_cobro) && ($nuevo_total - $monto_pagado) > 0) {
                 // CASO ESPECIAL: No tenía deuda (quizás se creó pagado), pero ahora se subió el precio y DEBE tener deuda.
                 // Generar nueva cuenta por cobrar.
                 $deuda_pendiente = $nuevo_total - $monto_pagado;
@@ -181,12 +189,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
             $conn->commit();
+            
+            // Si es peticion AJAX (toggle_estado) responder JSON
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                echo json_encode(['status' => 'success', 'msg' => 'Actualizado']);
+                exit();
+            }
+
             $redirect_page = ($origen === 'gestion_fallas') ? 'gestion_fallas.php' : 'historial_soportes.php';
             header("Location: {$redirect_page}?status=success&msg=Soporte actualizado correctamente.");
             exit();
 
         } catch (Exception $e) {
             $conn->rollback();
+            
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                http_response_code(500);
+                echo json_encode(['status' => 'error', 'msg' => $e->getMessage()]);
+                exit();
+            }
+
             header("Location: historial_soportes.php?status=error&msg=Error: " . urlencode($e->getMessage()));
             exit();
         }
