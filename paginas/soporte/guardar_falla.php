@@ -42,6 +42,10 @@ $clientes_afectados = isset($_POST['clientes_afectados']) ? intval($_POST['clien
 $sector = isset($_POST['sector']) ? trim($_POST['sector']) : '';
 $zona_afectada = isset($_POST['zona_afectada']) ? trim($_POST['zona_afectada']) : '';
 $observaciones = isset($_POST['observaciones']) ? trim($_POST['observaciones']) : '';
+$equipos_afectados = isset($_POST['equipos_afectados']) ? trim($_POST['equipos_afectados']) : '';
+if (!empty($equipos_afectados)) {
+    $observaciones .= "\n\nEquipos Potencialmente Afectados: " . $equipos_afectados;
+}
 $tecnico_asignado = isset($_POST['tecnico_asignado']) ? trim($_POST['tecnico_asignado']) : '';
 $notas_internas = isset($_POST['notas_internas']) ? trim($_POST['notas_internas']) : '';
 $fecha_reporte = isset($_POST['fecha_reporte']) ? $_POST['fecha_reporte'] : date('Y-m-d H:i:s');

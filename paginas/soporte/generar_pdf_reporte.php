@@ -237,7 +237,7 @@ $html = '
     </div>
 
     <div class="section">
-        <div class="section-title">DETALLES DE LA VISITA</div>
+        <div class="section-title">DETALLES DE LA ' . ($r['prioridad'] === 'NIVEL 3' ? 'FALLA MASIVA' : 'VISITA') . '</div>
         <table class="info-table">
             <tr>
                 <td class="label">Técnico Asignado:</td>
@@ -246,7 +246,21 @@ $html = '
             <tr>
                 <td class="label">Sector:</td>
                 <td class="value">' . htmlspecialchars($r['sector']) . '</td>
+            </tr>';
+
+if ($r['prioridad'] === 'NIVEL 3') {
+    $html .= '
+            <tr>
+                <td class="label">Zona Afectada:</td>
+                <td class="value text-danger fw-bold">' . htmlspecialchars($r['zona_afectada'] ?? '—') . '</td>
             </tr>
+            <tr>
+                <td class="label text-danger">Clientes Afectados (Est.):</td>
+                <td class="value fw-bold text-danger">' . intval($r['clientes_afectados']) . '</td>
+            </tr>';
+}
+
+$html .= '
             <tr>
                 <td class="label">Tipo de Servicio:</td>
                 <td class="value"><span style="background:#17a2b8;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">' . htmlspecialchars($r['tipo_servicio'] ?? 'N/A') . '</span></td>
@@ -262,7 +276,10 @@ $html = '
             <tr>
                 <td class="label">Tipo de Falla:</td>
                 <td class="value"><span style="background:#ffc107;color:#333;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">' . htmlspecialchars($r['tipo_falla'] ?? 'N/A') . '</span></td>
-            </tr>
+            </tr>';
+
+if ($r['prioridad'] !== 'NIVEL 3') {
+    $html .= '
             <tr>
                 <td class="label">Hora de Solución:</td>
                 <td class="value">' . (substr($r['hora_solucion'], 0, 5) ?: '—') . '</td>
@@ -270,14 +287,19 @@ $html = '
             <tr>
                 <td class="label">Tiempo Transcurrido:</td>
                 <td class="value">' . htmlspecialchars($r['tiempo_transcurrido'] ?: '—') . '</td>
-            </tr>
+            </tr>';
+}
+
+$html .= '
             <tr>
-                <td class="label">Solución Completada:</td>
-                <td class="value">' . ($r['solucion_completada'] ? '<span style="background:#28a745;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">SÍ</span>' : '<span style="background:#dc3545;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">NO</span>') . '</td>
+                <td class="label">Estado Actual:</td>
+                <td class="value">' . ($r['solucion_completada'] ? '<span style="background:#28a745;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">SOLUCIONADA</span>' : '<span style="background:#dc3545;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;">ACTIVA</span>') . '</td>
             </tr>
         </table>
-    </div>
+    </div>';
 
+if ($r['prioridad'] !== 'NIVEL 3') {
+    $html .= '
     <div class="section">
         <div class="section-title">DIAGNÓSTICO TÉCNICO</div>
         <table class="info-table">
@@ -302,8 +324,8 @@ $html = '
                 <td class="value">' . htmlspecialchars($r['num_dispositivos']) . '</td>
             </tr>';
 
-if (!empty($r['estado_antena'])) {
-    $html .= '
+    if (!empty($r['estado_antena'])) {
+        $html .= '
             <tr>
                 <td class="label">Estado Antena:</td>
                 <td class="value">' . htmlspecialchars($r['estado_antena']) . '</td>
@@ -312,12 +334,14 @@ if (!empty($r['estado_antena'])) {
                 <td class="label">Valores Antena:</td>
                 <td class="value">' . htmlspecialchars($r['valores_antena']) . ' dBm</td>
             </tr>';
+    }
+
+    $html .= '
+        </table>
+    </div>';
 }
 
-$html .= '
-        </table>
-    </div>
-
+    $html .= '
     <div class="section">
         <div class="section-title">OBSERVACIONES Y SUGERENCIAS</div>
         <table class="info-table">
@@ -330,8 +354,10 @@ $html .= '
                 <td class="value">' . nl2br(htmlspecialchars($r['sugerencias'])) . '</td>
             </tr>
         </table>
-    </div>
+    </div>';
 
+if ($r['prioridad'] !== 'NIVEL 3') {
+    $html .= '
     <div class="section">
         <div class="section-title">INFORMACIÓN FINANCIERA</div>
         <div class="financial-summary">
@@ -355,33 +381,44 @@ $html .= '
         <p style="text-align: center; margin-top: 10px;">
             <span class="badge ' . ($estado_pago == 'PAGADO' ? 'badge-success' : 'badge-danger') . '">' . $estado_pago . '</span>
         </p>
-    </div>
-
-    <div class="signature-section">
-        <div class="signature-box">
-            <p style="border-top: none; font-weight: bold; margin-bottom: 5px;">Firma del Técnico</p>';
-
-if (!empty($firma_tecnico_b64)) {
-    $html .= '<img src="' . $firma_tecnico_b64 . '" alt="Firma Técnico">';
-} else {
-    $html .= '<div style="border: 1px dashed #ccc; padding: 40px; color: #999;">Sin firma</div>';
+    </div>';
 }
 
 $html .= '
+    <div class="signature-section">';
+if ($r['prioridad'] !== 'NIVEL 3') {
+    $html .= '
+        <div class="signature-box">
+            <p style="border-top: none; font-weight: bold; margin-bottom: 5px;">Firma del Técnico</p>';
+
+    if (!empty($firma_tecnico_b64)) {
+        $html .= '<img src="' . $firma_tecnico_b64 . '" alt="Firma Técnico">';
+    } else {
+        $html .= '<div style="border: 1px dashed #ccc; padding: 40px; color: #999;">Sin firma</div>';
+    }
+
+    $html .= '
             <p>' . htmlspecialchars($r['tecnico_asignado']) . '</p>
         </div>
         <div class="signature-box">
             <p style="border-top: none; font-weight: bold; margin-bottom: 5px;">Firma del Cliente</p>';
 
-if (!empty($firma_cliente_b64)) {
-    $html .= '<img src="' . $firma_cliente_b64 . '" alt="Firma Cliente">';
-} else {
-    $html .= '<div style="border: 1px dashed #ccc; padding: 40px; color: #999;">Sin firma</div>';
-}
+    if (!empty($firma_cliente_b64)) {
+        $html .= '<img src="' . $firma_cliente_b64 . '" alt="Firma Cliente">';
+    } else {
+        $html .= '<div style="border: 1px dashed #ccc; padding: 40px; color: #999;">Sin firma</div>';
+    }
 
-$html .= '
+    $html .= '
             <p>' . htmlspecialchars($r['nombre_completo']) . '</p>
-        </div>
+        </div>';
+} else {
+    $html .= '
+        <div style="text-align: center; color: #666; font-style: italic; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
+            Este documento representa un reporte de falla masiva de nivel de infraestructura. No requiere firma de cliente final.
+        </div>';
+}
+$html .= '
     </div>
 
     <div class="footer">
