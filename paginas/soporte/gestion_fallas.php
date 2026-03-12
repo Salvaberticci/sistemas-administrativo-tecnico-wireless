@@ -392,7 +392,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 echo "<td>{$tecnico}</td>";
                 echo "<td class='text-center fw-bold text-danger'>" . intval($row['clientes_afectados'] ?? 0) . "</td>";
                 echo "<td>" . fix_utf8($row['zona_afectada'] ?? '—') . "</td>";
-                echo "<td>" . ($solucion_completada ? '<span class="badge bg-success">Solucionada</span>' : '<span class="badge bg-warning text-dark">Activa</span>') . "</td>";
+                echo "<td id='badge-estado-{$id}'>" . ($solucion_completada ? '<span class="badge bg-success">Solucionada</span>' : '<span class="badge bg-warning text-dark">Activa</span>') . "</td>";
                 echo "<td class='text-nowrap'>";
                 echo "<button class='btn btn-sm btn-outline-primary shadow-sm' onclick='verDetallesCritica({$id})' title='Ver Detalles'><i class='fa-solid fa-eye'></i> Ver</button> ";
                 echo "<button class='btn btn-sm btn-warning shadow-sm mx-1' onclick='editarCritica({$id})' title='Editar'><i class='fa-solid fa-pen'></i></button> ";
@@ -401,7 +401,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 $btnIcon = $solucion_completada ? 'rotate-left' : 'check-double';
                 $btnText = $solucion_completada ? 'Marcar Activa' : 'Solucionada';
                 $nuevoStatus = $solucion_completada ? 0 : 1;
-                echo "<button class='btn btn-sm {$btnClass} shadow-sm' onclick='toggleEstado({$id}, {$nuevoStatus}, \"NIVEL 3\")' title='Cambiar Estado'><i class='fa-solid fa-{$btnIcon} me-1'></i>{$btnText}</button>";
+                echo "<button id='btn-toggle-{$id}' class='btn btn-sm {$btnClass} shadow-sm' onclick='toggleEstado({$id}, {$nuevoStatus}, \"NIVEL 3\")' title='Cambiar Estado'><i class='fa-solid fa-{$btnIcon} me-1'></i>{$btnText}</button>";
                 echo "</td></tr>";
             } else {
                 $saldo = floatval($row['saldo_pendiente'] ?? 0);
@@ -430,7 +430,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 echo "<td>{$badgePrioridad}</td>";
                 echo "<td>{$badgePago}</td>";
                 $estadoBadge = $solucion_completada ? '<span class="badge bg-success">Solucionada</span>' : '<span class="badge bg-warning text-dark">Activa</span>';
-                echo "<td>{$estadoBadge}</td>";
+                echo "<td id='badge-estado-{$id}'>{$estadoBadge}</td>";
                 echo "<td class='text-nowrap'>";
                 echo "<button class='btn btn-sm btn-outline-info shadow-sm' onclick='verDetalles({$id})' title='Ver Detalles'><i class='fa-solid fa-eye'></i></button> ";
                 echo "<button class='btn btn-sm btn-warning shadow-sm mx-1' onclick='abrirEditar({$id})' title='Editar'><i class='fa-solid fa-pen'></i></button> ";
@@ -439,7 +439,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 $btnIcon = $solucion_completada ? 'rotate-left' : 'check-double';
                 $btnText = $solucion_completada ? 'Reactivar' : 'Solucionar';
                 $nuevoStatus = $solucion_completada ? 0 : 1;
-                echo "<button class='btn btn-sm {$btnClass} shadow-sm' onclick='toggleEstado({$id}, {$nuevoStatus}, \"{$prioridad}\")' title='Cambiar Estado'><i class='fa-solid fa-{$btnIcon} me-1'></i>{$btnText}</button>";
+                echo "<button id='btn-toggle-{$id}' class='btn btn-sm {$btnClass} shadow-sm' onclick='toggleEstado({$id}, {$nuevoStatus}, \"{$prioridad}\")' title='Cambiar Estado'><i class='fa-solid fa-{$btnIcon} me-1'></i>{$btnText}</button>";
                 echo "</td></tr>";
             }
         }
@@ -1836,8 +1836,30 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                         es_caida_critica_edit: (prioridad === 'NIVEL 3' ? 1 : 0)
                     },
                     success: function () {
-                        Swal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false })
-                            .then(() => location.reload());
+                        // Actualizar UI sin recargar la página
+                        const btn = document.getElementById('btn-toggle-' + id);
+                        const badge = document.getElementById('badge-estado-' + id);
+                        const isNivel3 = (prioridad === 'NIVEL 3');
+
+                        if (nuevoEstado === 1) {
+                            // Cambió a Solucionada
+                            if (badge) badge.innerHTML = '<span class="badge bg-success">Solucionada</span>';
+                            if (btn) {
+                                btn.className = 'btn btn-sm btn-outline-secondary shadow-sm';
+                                btn.innerHTML = '<i class="fa-solid fa-rotate-left me-1"></i>' + (isNivel3 ? 'Marcar Activa' : 'Reactivar');
+                                btn.setAttribute('onclick', `toggleEstado(${id}, 0, "${prioridad}")`);
+                            }
+                        } else {
+                            // Cambió a Activa
+                            if (badge) badge.innerHTML = '<span class="badge bg-warning text-dark">Activa</span>';
+                            if (btn) {
+                                btn.className = 'btn btn-sm btn-success shadow-sm';
+                                btn.innerHTML = '<i class="fa-solid fa-check-double me-1"></i>' + (isNivel3 ? 'Solucionada' : 'Solucionar');
+                                btn.setAttribute('onclick', `toggleEstado(${id}, 1, "${prioridad}")`);
+                            }
+                        }
+                        
+                        Swal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
                     },
                     error: function () {
                         Swal.fire('Error', 'No se pudo actualizar el estado.', 'error');

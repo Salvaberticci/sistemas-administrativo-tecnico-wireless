@@ -45,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $tipo_falla = isset($_POST['tipo_falla_edit']) ? $conn->real_escape_string($_POST['tipo_falla_edit']) : '';
     $es_caida_critica = isset($_POST['es_caida_critica_edit']) ? 1 : 0;
     $nuevo_total = isset($_POST['monto_total_edit']) ? floatval($_POST['monto_total_edit']) : -1;
-    $solucion_completada = isset($_POST['solucion_completada']) ? 1 : 0;
+    $solucion_completada = (isset($_POST['solucion_completada']) && filter_var($_POST['solucion_completada'], FILTER_VALIDATE_BOOLEAN)) ? 1 : 0;
     $origen = isset($_POST['origen']) ? $conn->real_escape_string($_POST['origen']) : 'historial_soportes';
 
     // Campos técnicos
