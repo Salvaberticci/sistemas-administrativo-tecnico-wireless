@@ -400,10 +400,21 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
             } else {
                 $saldo = floatval($row['saldo_pendiente'] ?? 0);
                 $badgePago = $saldo <= 0.01 ? '<span class="badge bg-success">Pagado</span>' : '<span class="badge bg-warning text-dark">Pendiente</span>';
-                $badgePrioridad = ($prioridad == 'NIVEL 1') ? '<span class="badge" style="background-color: #ffff00; color: #000;">Nivel 1</span>' : '<span class="badge bg-warning text-dark">Nivel 2</span>';
+                
+                // Tema por nivel
+                $idBadge = '';
+                $badgePrioridad = '';
+                if ($prioridad == 'NIVEL 1') {
+                    $idBadge = "<span class='badge' style='background-color: #ffc107; color: #000;'>#{$id}</span>";
+                    $badgePrioridad = '<span class="badge" style="background-color: #ffff00; color: #000;">Nivel 1</span>';
+                } else {
+                    $idBadge = "<span class='badge' style='background-color: #fd7e14; color: #fff;'>#{$id}</span>";
+                    $badgePrioridad = '<span class="badge bg-warning text-dark">Nivel 2</span>';
+                }
+
                 $rowClass = !empty($row['es_caida_critica']) ? 'table-warning' : '';
                 echo "<tr class='{$rowClass}' style='cursor:pointer;' ondblclick='verDetalles({$id})'>";
-                echo "<td>{$id}</td>";
+                echo "<td>{$idBadge}</td>";
                 echo "<td>{$fecha}</td>";
                 echo "<td>" . (substr($row['hora_solucion'] ?? '', 0, 5) ?: '—') . "</td>";
                 echo "<td>" . fix_utf8($row['tiempo_transcurrido'] ?: '—') . "</td>";
@@ -453,21 +464,24 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     
                     <!-- TAB NIVEL 1 -->
                     <div class="tab-pane fade show active" id="nav-nivel1" role="tabpanel">
-                        <div class="bg-light border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <span class="fw-bold text-muted"><i class="fa-solid fa-info-circle me-1"></i>Fallas de Configuración o Red Interna</span>
+                        <div class="bg-warning text-dark p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <i class="fa-solid fa-screwdriver-wrench"></i>
+                                <span class="fw-bold ms-1">Reportes Nivel 1 WhatsApp</span>
+                            </div>
                             <div class="d-flex align-items-center gap-2">
                                 <div class="input-group input-group-sm" style="width: 250px;">
                                     <span class="input-group-text bg-dark border-dark text-white"><i class="fa-solid fa-search"></i></span>
                                     <input type="text" id="buscadorNivel1" class="form-control" placeholder="Buscar Nivel 1...">
                                 </div>
-                                <button class="btn btn-sm btn-outline-danger fw-bold bg-white" onclick="exportarPDF(false, 'NIVEL 1')">
+                                <button class="btn btn-sm btn-light fw-bold text-warning border" onclick="exportarPDF(false, 'NIVEL 1')">
                                     <i class="fa-solid fa-file-pdf me-1"></i>Listado
                                 </button>
                             </div>
                         </div>
                         <div class="table-responsive p-3">
                             <table class="display table table-striped table-bordered w-100 mb-0" id="tablaNivel1">
-                                <thead>
+                                <thead class="table-warning">
                                     <tr>
                                         <th>ID</th><th>Fecha</th><th>Hora</th><th>Tiempo</th><th>Cliente</th><th>Tipo Falla</th><th>Técnico</th><th>Nivel</th><th>Pagado</th><th>Estado</th><th>Acciones</th>
                                     </tr>
@@ -491,21 +505,24 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
 
                     <!-- TAB NIVEL 2 -->
                     <div class="tab-pane fade" id="nav-nivel2" role="tabpanel">
-                        <div class="bg-light border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <span class="fw-bold text-muted"><i class="fa-solid fa-info-circle me-1"></i>Averías Físicas (Corte Fibra/Equipos)</span>
+                        <div style="background-color: #fd7e14;" class="text-white p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span class="fw-bold ms-1">Reportes Nivel 2 Visita Técnica</span>
+                            </div>
                             <div class="d-flex align-items-center gap-2">
                                 <div class="input-group input-group-sm" style="width: 250px;">
                                     <span class="input-group-text bg-dark border-dark text-white"><i class="fa-solid fa-search"></i></span>
                                     <input type="text" id="buscadorNivel2" class="form-control" placeholder="Buscar Nivel 2...">
                                 </div>
-                                <button class="btn btn-sm btn-outline-danger fw-bold bg-white" onclick="exportarPDF(false, 'NIVEL 2')">
+                                <button class="btn btn-sm btn-light fw-bold text-orange border" style="color: #fd7e14 !important;" onclick="exportarPDF(false, 'NIVEL 2')">
                                     <i class="fa-solid fa-file-pdf me-1"></i>Listado
                                 </button>
                             </div>
                         </div>
                         <div class="table-responsive p-3">
                             <table class="display table table-striped table-bordered w-100 mb-0" id="tablaNivel2">
-                                <thead>
+                                <thead style="background-color: #fff4ea; color: #ca6510;">
                                     <tr>
                                         <th>ID</th><th>Fecha</th><th>Hora</th><th>Tiempo</th><th>Cliente</th><th>Tipo Falla</th><th>Técnico</th><th>Nivel</th><th>Pagado</th><th>Estado</th><th>Acciones</th>
                                     </tr>
