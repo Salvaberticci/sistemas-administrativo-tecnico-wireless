@@ -108,8 +108,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $ip_onu = trim($conn->real_escape_string($_POST['ip_onu'] ?? ''));
 
         // Manejar duplicidad de campos Nap/Puerto
-        $ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap_tecnico'] ?: ($_POST['ident_caja_nap'] ?? ''));
-        $puerto_nap = $conn->real_escape_string($_POST['puerto_nap_tecnico'] ?: ($_POST['puerto_nap'] ?? ''));
+        $ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap_tecnico'] ?? $_POST['ident_caja_nap'] ?? '');
+        $puerto_nap = $conn->real_escape_string($_POST['puerto_nap_tecnico'] ?? $_POST['puerto_nap'] ?? '');
 
         $nap_tx_power = $conn->real_escape_string($_POST['nap_tx_power'] ?? '');
         $onu_rx_power = $conn->real_escape_string($_POST['onu_rx_power'] ?? '');
