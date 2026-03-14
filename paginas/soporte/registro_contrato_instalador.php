@@ -234,15 +234,6 @@ if (file_exists($jsonFileTypes)) {
                                 </select>
                             </div>
 
-                            <div class="col-md-6">
-                                <label for="ident_caja_nap" class="form-label">Identificación Caja Nap</label>
-                                <input type="text" class="form-control" id="ident_caja_nap" name="ident_caja_nap">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="puerto_nap" class="form-label">Puerto NAP</label>
-                                <input type="text" class="form-control" id="puerto_nap" name="puerto_nap">
-                            </div>
 
                             <div class="col-md-6">
                                 <label for="id_olt" class="form-label">OLT</label>

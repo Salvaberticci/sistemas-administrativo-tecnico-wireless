@@ -221,15 +221,6 @@ require_once '../includes/sidebar.php';
                         </select>
                     </div>
 
-                    <div class="col-md-6">
-                        <label for="ident_caja_nap" class="form-label">Identificacion Caja Nap</label>
-                        <input type="text" class="form-control" id="ident_caja_nap" name="ident_caja_nap">
-                    </div>
-
-                    <div class="col-md-6">
-                        <label for="puerto_nap" class="form-label">Puerto_Nap</label>
-                        <input type="text" class="form-control" id="puerto_nap" name="puerto_nap">
-                    </div>
 
 
 

@@ -248,17 +248,6 @@ require_once '../includes/sidebar.php';
 						</select>
 					</div>
 
-					<div class="col-md-6">
-						<label for="ident_caja_nap" class="form-label">Identificacion Caja Nap</label>
-						<input type="text" class="form-control" id="ident_caja_nap" name="ident_caja_nap"
-							value="<?php echo $row['ident_caja_nap']; ?>">
-					</div>
-
-					<div class="col-md-6">
-						<label for="puerto_nap" class="form-label">Puerto_Nap</label>
-						<input type="text" class="form-control" id="puerto_nap" name="puerto_nap"
-							value="<?php echo $row['puerto_nap']; ?>">
-					</div>
 
 					<div class="col-md-6">
 						<label for="num_presinto_odn" class="form-label">Numero_Presinto_ODN</label>
@@ -338,6 +327,16 @@ require_once '../includes/sidebar.php';
 						<label for="ip_onu" class="form-label">IP ONU</label>
 						<input type="text" class="form-control" id="ip_onu" name="ip_onu"
 							value="<?php echo $row['ip_onu']; ?>">
+					</div>
+					<div class="col-md-6 campo-ftth">
+						<label for="ident_caja_nap" class="form-label">Identificación Caja NAP</label>
+						<input type="text" class="form-control" id="ident_caja_nap" name="ident_caja_nap"
+							value="<?php echo htmlspecialchars($row['ident_caja_nap'] ?? ''); ?>">
+					</div>
+					<div class="col-md-6 campo-ftth">
+						<label for="puerto_nap" class="form-label">Puerto NAP</label>
+						<input type="text" class="form-control" id="puerto_nap" name="puerto_nap"
+							value="<?php echo htmlspecialchars($row['puerto_nap'] ?? ''); ?>">
 					</div>
 					<div class="col-md-6 campo-ftth">
 						<label for="nap_tx_power" class="form-label">NAP TX Power</label>
