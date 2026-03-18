@@ -50,6 +50,7 @@ if ($action === 'add') {
     $numero = isset($_POST['numero_cuenta']) ? trim($_POST['numero_cuenta']) : '';
     $titular = isset($_POST['titular_cuenta']) ? trim($_POST['titular_cuenta']) : '';
     $cedula = isset($_POST['cedula_propietario']) ? trim($_POST['cedula_propietario']) : '';
+    $metodos = isset($_POST['metodos_pago']) ? $_POST['metodos_pago'] : []; // Esperamos un array
 
     if (empty($nombre)) {
         echo json_encode(['success' => false, 'message' => 'Nombre requerido']);
@@ -70,7 +71,8 @@ if ($action === 'add') {
         'nombre_banco' => $nombre,
         'numero_cuenta' => $numero,
         'cedula_propietario' => $cedula,
-        'nombre_propietario' => $titular
+        'nombre_propietario' => $titular,
+        'metodos_pago' => $metodos
     ];
 
     $bancos[] = $nuevo;
@@ -85,6 +87,7 @@ if ($action === 'update') {
     $numero = isset($_POST['numero_cuenta']) ? trim($_POST['numero_cuenta']) : '';
     $titular = isset($_POST['titular_cuenta']) ? trim($_POST['titular_cuenta']) : '';
     $cedula = isset($_POST['cedula_propietario']) ? trim($_POST['cedula_propietario']) : '';
+    $metodos = isset($_POST['metodos_pago']) ? $_POST['metodos_pago'] : []; // Esperamos un array
 
     if (empty($id) || empty($nombre)) {
         echo json_encode(['success' => false, 'message' => 'ID y Nombre requeridos']);
@@ -98,6 +101,7 @@ if ($action === 'update') {
             $b['numero_cuenta'] = $numero;
             $b['cedula_propietario'] = $cedula;
             $b['nombre_propietario'] = $titular;
+            $b['metodos_pago'] = $metodos;
             $found = true;
             break;
         }

@@ -4,6 +4,20 @@
         "nombre_banco": "Banca amiga",
         "numero_cuenta": "0102-0000-0000-0000-0000",
         "cedula_propietario": "v12722373",
-        "nombre_propietario": "galanet solutions,c.a"
+        "nombre_propietario": "galanet solutions,c.a",
+        "metodos_pago": [
+            "Pago Móvil",
+            "Transferencia"
+        ]
+    },
+    {
+        "id_banco": "5",
+        "nombre_banco": "Zelle",
+        "numero_cuenta": "zelle@gmail.com",
+        "cedula_propietario": "30236536",
+        "nombre_propietario": "Zelle",
+        "metodos_pago": [
+            "Zelle"
+        ]
     }
 ]

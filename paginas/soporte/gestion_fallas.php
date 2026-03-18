@@ -104,7 +104,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                         <p class="text-muted mb-0">Monitorea y gestiona las solicitudes de soporte técnico</p>
                     </div>
                      <div class="d-flex gap-2">
-                         <a href="registro_soporte.php" class="btn btn-primary fw-bold px-4 shadow-sm">
+                         <a href="reporte_tecnico.php" target="_blank" class="btn btn-primary fw-bold px-4 shadow-sm">
                              <i class="fa-solid fa-plus-circle me-2"></i>Nuevo Reporte
                          </a>
                          <button class="btn btn-dark fw-bold px-4 shadow-sm" onclick="exportarPDF(false, '')">
@@ -115,7 +115,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                          </a>
                          <button type="button" class="btn btn-outline-secondary shadow-sm px-4" data-bs-toggle="modal"
                              data-bs-target="#configModal">
-                             <i class="fa-solid fa-cog me-1"></i>Configurar Opciones
+                             <i class="fa-solid fa-cog me-1"></i>Configurar Tipos de Falla
                          </button>
                      </div>
                 </div>
@@ -132,9 +132,9 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <p class="text-muted mb-1 small">Fallas Nivel 1</p>
+                                <p class="text-muted mb-1 small">Fallas Nivel 1 (Baja Prioridad)</p>
                                 <h3 class="fw-bold mb-0" style="color:#cc9a00;"><?php echo $cnt_n1; ?></h3>
-                                <small class="text-muted">reportes individuales bajos</small>
+                                <small class="text-muted">guía remota / atención inmediata</small>
                             </div>
                             <div style="color:#ffc107;">
                                 <i class="fa-solid fa-circle-exclamation fa-2x opacity-75"></i>
@@ -149,9 +149,9 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <p class="text-muted mb-1 small">Fallas Nivel 2</p>
+                                <p class="text-muted mb-1 small">Fallas Nivel 2 (Prioridad Media)</p>
                                 <h3 class="fw-bold mb-0" style="color:#fd7e14;"><?php echo $cnt_n2; ?></h3>
-                                <small class="text-muted">reportes de impacto medio</small>
+                                <small class="text-muted">soporte técnico en campo / visita domicilio</small>
                             </div>
                             <div style="color:#fd7e14;">
                                 <i class="fa-solid fa-triangle-exclamation fa-2x opacity-75"></i>
@@ -166,9 +166,9 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <p class="text-muted mb-1 small">Fallas Nivel 3 (Masivas)</p>
+                                <p class="text-muted mb-1 small">Fallas Nivel 3 (Alta Prioridad / Masiva)</p>
                                 <h3 class="fw-bold mb-0 text-danger"><?php echo $cnt_n3; ?></h3>
-                                <small class="text-muted">caídas críticas de red</small>
+                                <small class="text-muted">caídas críticas de red / zona afectada</small>
                             </div>
                             <div class="text-danger">
                                 <i class="fa-solid fa-fire fa-2x opacity-75"></i>
@@ -401,7 +401,8 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 $btnIcon = $solucion_completada ? 'rotate-left' : 'check-double';
                 $btnText = $solucion_completada ? 'Marcar Activa' : 'Solucionada';
                 $nuevoStatus = $solucion_completada ? 0 : 1;
-                echo "<button id='btn-toggle-{$id}' class='btn btn-sm {$btnClass} shadow-sm' onclick='toggleEstado({$id}, {$nuevoStatus}, \"NIVEL 3\")' title='Cambiar Estado'><i class='fa-solid fa-{$btnIcon} me-1'></i>{$btnText}</button>";
+                echo "<button id='btn-toggle-{$id}' class='btn btn-sm {$btnClass} shadow-sm' onclick='toggleEstado({$id}, {$nuevoStatus}, \"NIVEL 3\")' title='Cambiar Estado'><i class='fa-solid fa-{$btnIcon} me-1'></i>{$btnText}</button> ";
+                echo "<button class='btn btn-sm btn-outline-danger shadow-sm' onclick='eliminarSoporte({$id})' title='Eliminar'><i class='fa-solid fa-trash'></i></button>";
                 echo "</td></tr>";
             } else {
                 $saldo = floatval($row['saldo_pendiente'] ?? 0);
@@ -439,7 +440,8 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 $btnIcon = $solucion_completada ? 'rotate-left' : 'check-double';
                 $btnText = $solucion_completada ? 'Reactivar' : 'Solucionar';
                 $nuevoStatus = $solucion_completada ? 0 : 1;
-                echo "<button id='btn-toggle-{$id}' class='btn btn-sm {$btnClass} shadow-sm' onclick='toggleEstado({$id}, {$nuevoStatus}, \"{$prioridad}\")' title='Cambiar Estado'><i class='fa-solid fa-{$btnIcon} me-1'></i>{$btnText}</button>";
+                echo "<button id='btn-toggle-{$id}' class='btn btn-sm {$btnClass} shadow-sm' onclick='toggleEstado({$id}, {$nuevoStatus}, \"{$prioridad}\")' title='Cambiar Estado'><i class='fa-solid fa-{$btnIcon} me-1'></i>{$btnText}</button> ";
+                echo "<button class='btn btn-sm btn-outline-danger shadow-sm' onclick='eliminarSoporte({$id})' title='Eliminar'><i class='fa-solid fa-trash'></i></button>";
                 echo "</td></tr>";
             }
         }
@@ -970,28 +972,44 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
 
 <!-- Modal Configuración de Opciones -->
 <div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-md">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-cog me-2"></i>Gestión de Tipos de Falla</h5>
+                <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-cog me-2"></i>Gestión de Tipos de Falla</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="p-3 bg-light rounded mb-3">
-                    <h6 class="fw-bold text-danger mb-3 font-heading small text-uppercase tracking-wider">Añadir Nuevo Tipo</h6>
-                    <div class="input-group">
-                        <input type="text" class="form-control border-danger" id="nuevoTipoFalla"
-                            placeholder="Ej. Fibra Rota, Equipo Quemado...">
-                        <button class="btn btn-danger" type="button" onclick="agregarOpcion('tipos_falla')">
-                            <i class="fa-solid fa-plus me-1"></i>Añadir
-                        </button>
+            <div class="modal-body p-0">
+                <ul class="nav nav-tabs nav-fill bg-light border-bottom" id="configTabs" role="tablist">
+                    <li class="nav-item"><button class="nav-link active py-2 small fw-bold text-uppercase" data-bs-toggle="tab" data-bs-target="#config-n1">Nivel 1 (Baja)</button></li>
+                    <li class="nav-item"><button class="nav-link py-2 small fw-bold text-uppercase" data-bs-toggle="tab" data-bs-target="#config-n2">Nivel 2 (Media)</button></li>
+                    <li class="nav-item"><button class="nav-link py-2 small fw-bold text-uppercase" data-bs-toggle="tab" data-bs-target="#config-n3">Nivel 3 (Alta)</button></li>
+                </ul>
+                <div class="tab-content p-3">
+                    <!-- NIVEL 1 -->
+                    <div class="tab-pane fade show active" id="config-n1">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="nuevoTipoFallaN1" placeholder="Nuevo tipo Nivel 1...">
+                            <button class="btn btn-warning" type="button" onclick="agregarOpcion('NIVEL 1')"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <ul class="list-group list-group-flush border rounded" id="listaFallasN1" style="max-height: 300px; overflow-y: auto;"></ul>
+                    </div>
+                    <!-- NIVEL 2 -->
+                    <div class="tab-pane fade" id="config-n2">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="nuevoTipoFallaN2" placeholder="Nuevo tipo Nivel 2...">
+                            <button class="btn btn-warning" type="button" style="background-color: #fd7e14; border-color: #fd7e14; color: white;" onclick="agregarOpcion('NIVEL 2')"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <ul class="list-group list-group-flush border rounded" id="listaFallasN2" style="max-height: 300px; overflow-y: auto;"></ul>
+                    </div>
+                    <!-- NIVEL 3 -->
+                    <div class="tab-pane fade" id="config-n3">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="nuevoTipoFallaN3" placeholder="Nuevo tipo Nivel 3...">
+                            <button class="btn btn-danger" type="button" onclick="agregarOpcion('NIVEL 3')"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <ul class="list-group list-group-flush border rounded" id="listaFallasN3" style="max-height: 300px; overflow-y: auto;"></ul>
                     </div>
                 </div>
-                
-                <h6 class="fw-bold mb-2 font-heading small text-uppercase tracking-wider opacity-75">Listado Actual</h6>
-                <ul class="list-group list-group-flush border rounded overflow-hidden" id="listaFallas" style="max-height: 400px; overflow-y: auto;">
-                    <!-- Items cargados dinámicamente -->
-                </ul>
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
@@ -1107,18 +1125,20 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         $('#clientesAfectadosEditContainer').hide();
 
 
-        // Cargar opciones de falla antes de mostrar
-        cargarOpcionesFallaEdit(() => {
-            fetch('get_soporte_detalle.php?id=' + id)
-                .then(r => r.json())
-                .then(d => {
-                    if (d.error) { alert('Error: ' + d.error); return; }
+        fetch('get_soporte_detalle.php?id=' + id)
+            .then(r => r.json())
+            .then(d => {
+                if (d.error) { alert('Error: ' + d.error); return; }
+                
+                const prioridad = d.prioridad || 'NIVEL 1';
+                $('#prioridad_edit').val(prioridad);
+                
+                cargarOpcionesFallaEdit(prioridad, () => {
                     $('#fecha_edit').val(d.fecha_soporte_form);
                     $('#hora_edit').val(d.hora_solucion || '');
                     $('#tiempo_edit').val(d.tiempo_transcurrido || '');
                     $('#tecnico_edit').val(d.tecnico_asignado || '');
                     $('#sector_edit').val(d.sector || '');
-                    $('#prioridad_edit').val(d.prioridad || 'NIVEL 1');
                     $('#tipo_falla_edit').val(d.tipo_falla || '');
                     $('#tipo_servicio_edit').val(d.tipo_servicio || 'FTTH');
                     $('#es_caida_critica_edit').prop('checked', d.es_caida_critica == 1);
@@ -1166,29 +1186,38 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     }
 
                     new bootstrap.Modal(document.getElementById('modalEditar')).show();
-                })
-                .catch(() => alert('Error al cargar datos del soporte.'));
-        });
+                }); // End cargarOpcionesFallaEdit callback
+            })
+            .catch(() => alert('Error al cargar datos del soporte.'));
     }
 
     // ---- Cargar opciones de falla ----
-    function cargarOpcionesFallaEdit(callback) {
-        fetch('admin_opciones.php?accion=listar&tipo=tipos_falla')
+    function cargarOpcionesFallaEdit(nivel, callback) {
+        if (!nivel) nivel = $('#prioridad_edit').val() || 'NIVEL 1';
+        fetch('admin_opciones.php?action=read')
             .then(r => r.json())
             .then(data => {
                 const sel = document.getElementById('tipo_falla_edit');
                 const current = sel.value;
                 sel.innerHTML = '<option value="">-- Seleccionar --</option>';
-                (data.tipos_falla || []).forEach(op => {
-                    const o = document.createElement('option');
-                    o.value = op; o.textContent = op;
-                    sel.appendChild(o);
-                });
+                if (data.success && data.data[nivel]) {
+                    data.data[nivel].forEach(op => {
+                        const o = document.createElement('option');
+                        o.value = op; o.textContent = op;
+                        sel.appendChild(o);
+                    });
+                }
                 if (current) sel.value = current;
                 if (callback) callback();
             })
             .catch(() => { if (callback) callback(); });
     }
+
+    // Actualizar opciones al cambiar prioridad en modal
+    $('#prioridad_edit').change(function() {
+        $('#tipo_falla_edit').val(''); 
+        cargarOpcionesFallaEdit($(this).val());
+    });
 
     // ---- SignaturePad para modal de edición ----
     $('#modalEditar').on('shown.bs.modal', function () {
@@ -1597,35 +1626,60 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
             data: { action: 'read' },
             dataType: 'json',
             success: function (response) {
-                if (response.success && response.data.tipos_falla) {
-                    const lista = $('#listaFallas');
-                    lista.empty();
-                    response.data.tipos_falla.forEach(op => {
-                        lista.append(`
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span class="fw-medium">${op}</span>
-                                <button class="btn btn-sm btn-outline-danger border-0" onclick="eliminarOpcion('tipos_falla', '${op}')">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </li>
-                        `);
+                if (response.success) {
+                    // Limpiar listas
+                    $('#listaFallasN1, #listaFallasN2, #listaFallasN3').empty();
+                    
+                    // Nivel 1
+                    (response.data['NIVEL 1'] || []).forEach(op => {
+                        $('#listaFallasN1').append(renderOptionRow('NIVEL 1', op));
+                    });
+                    
+                    // Nivel 2
+                    (response.data['NIVEL 2'] || []).forEach(op => {
+                        $('#listaFallasN2').append(renderOptionRow('NIVEL 2', op));
+                    });
+                    
+                    // Nivel 3
+                    (response.data['NIVEL 3'] || []).forEach(op => {
+                        $('#listaFallasN3').append(renderOptionRow('NIVEL 3', op));
                     });
                 }
             }
         });
     }
 
-    function agregarOpcion(tipo) {
-        const inputId = '#nuevoTipoFalla';
+    function renderOptionRow(level, op) {
+        return `
+            <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                <span class="fw-medium small me-3">${op}</span>
+                <div class="d-flex align-items-center text-nowrap">
+                    <button class="btn btn-sm btn-outline-primary border-0 p-1 me-1" onclick="editarOpcion('${level}', '${op}')">
+                        <i class="fa-solid fa-pen fa-sm"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger border-0 p-1" onclick="eliminarOpcion('${level}', '${op}')">
+                        <i class="fa-solid fa-trash-can fa-sm"></i>
+                    </button>
+                </div>
+            </li>
+        `;
+    }
+
+    function agregarOpcion(level) {
+        let inputId = '';
+        if (level === 'NIVEL 1') inputId = '#nuevoTipoFallaN1';
+        else if (level === 'NIVEL 2') inputId = '#nuevoTipoFallaN2';
+        else if (level === 'NIVEL 3') inputId = '#nuevoTipoFallaN3';
+
         const valor = $(inputId).val().trim();
         if (!valor) return;
 
-        $.post('admin_opciones.php', { action: 'add', type: tipo, value: valor }, function (response) {
+        $.post('admin_opciones.php', { action: 'add', level: level, value: valor }, function (response) {
             if (response.success) {
                 $(inputId).val('');
                 cargarOpcionesJSON();
                 Swal.fire({
-                    icon: 'success', title: 'Agregado', text: 'Opción añadida correctamente',
+                    icon: 'success', title: 'Agregado', text: 'Opción añadida a ' + level,
                     toast: true, position: 'top-end', showConfirmButton: false, timer: 2000
                 });
             } else {
@@ -1634,21 +1688,67 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         }, 'json');
     }
 
-    function eliminarOpcion(tipo, valor) {
+    function eliminarOpcion(level, valor) {
         Swal.fire({
             title: '¿Eliminar opción?',
-            text: `Se eliminará "${valor}" de la lista`,
+            text: `Se eliminará "${valor}" de ${level}`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
-            confirmButtonText: 'Sí, eliminar'
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                $.post('admin_opciones.php', { action: 'delete', type: tipo, value: valor }, function (response) {
+                $.post('admin_opciones.php', { action: 'delete', level: level, value: valor }, function (response) {
                     if (response.success) {
                         cargarOpcionesJSON();
                     } else {
                         Swal.fire('Error', response.message, 'error');
+                    }
+                }, 'json');
+            }
+        });
+    }
+
+    function editarOpcion(level, oldValor) {
+        Swal.fire({
+            title: 'Editar opción',
+            input: 'text',
+            inputValue: oldValor,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar',
+            cancelButtonText: 'Cancelar',
+            target: document.getElementById('configModal'), // Fix modal focus conflict
+            customClass: {
+                container: 'swal2-modal-container'
+            },
+            inputValidator: (value) => {
+                if (!value || value.trim() === '') {
+                    return 'El valor no puede estar vacío'
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('admin_opciones.php', { 
+                    action: 'edit', 
+                    level: level, 
+                    old_value: oldValor,
+                    new_value: result.value.trim()
+                }, function (response) {
+                    if (response.success) {
+                        cargarOpcionesJSON();
+                        Swal.fire({
+                            icon: 'success', title: 'Actualizado', text: 'Opción editada correctamente',
+                            toast: true, position: 'top-end', showConfirmButton: false, timer: 2000,
+                            target: document.getElementById('configModal')
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: response.message,
+                            icon: 'error',
+                            target: document.getElementById('configModal')
+                        });
                     }
                 }, 'json');
             }
@@ -1872,6 +1972,48 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
     // --- Exportar PDF Críticas ---
     function exportarPDFCriticas() {
         window.open('generar_pdf_consolidado.php?solo_nivel_3=1', '_blank');
+    }
+
+    // --- Eliminar Reporte ---
+    function eliminarSoporte(id) {
+        Swal.fire({
+            title: '¿Eliminar Reporte?',
+            text: "Esta acción eliminará el soporte y cualquier deuda asociada de forma permanente.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: 'eliminar_soporte.php',
+                    method: 'POST',
+                    data: { id_soporte_eliminar: id, json: 1 },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Eliminado!',
+                                text: response.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                // Recargar la página para actualizar tablas y estadísticas
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Error', response.message, 'error');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'No se pudo procesar la solicitud de eliminación.', 'error');
+                    }
+                });
+            }
+        });
     }
 
 </script>

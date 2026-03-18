@@ -67,6 +67,23 @@ if (isset($_POST['referencia']) && $_POST['referencia'] != '') {
     $whereConditions[] = "cxc.referencia_pago LIKE '%" . $conn->real_escape_string($_POST['referencia']) . "%'";
 }
 
+if (isset($_POST['filtro_tipo']) && $_POST['filtro_tipo'] != '') {
+    $tipo = $_POST['filtro_tipo'];
+    if ($tipo === 'Mensualidad') {
+        $whereConditions[] = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL) OR h.justificacion LIKE '%mensualidad%')";
+    } elseif ($tipo === 'Instalacion') {
+        $whereConditions[] = "(h.justificacion LIKE '%[INSTALACION]%' OR h.justificacion LIKE '%instalación%' OR h.justificacion LIKE '%instalacion%')";
+    } elseif ($tipo === 'Equipos') {
+        $whereConditions[] = "(h.justificacion LIKE '%[EQUIPOS]%' OR h.justificacion LIKE '%equipo%' OR h.justificacion LIKE '%material%')";
+    } elseif ($tipo === 'Prorrateo') {
+        $whereConditions[] = "(h.justificacion LIKE '%[PRORRATEO]%' OR h.justificacion LIKE '%prorrateo%')";
+    } elseif ($tipo === 'Abono') {
+        $whereConditions[] = "(h.justificacion LIKE '%[ABONO]%' OR h.justificacion LIKE '%abono%' OR h.justificacion LIKE '%saldo a favor%')";
+    } elseif ($tipo === 'Extra') {
+        $whereConditions[] = "(h.justificacion LIKE '%[EXTRA]%' OR h.justificacion LIKE '%terceros%' OR h.justificacion LIKE '%extra%')";
+    }
+}
+
 // Global Search
 if ($searchVal != "") {
     $searchValue = $conn->real_escape_string($searchVal);
@@ -180,12 +197,47 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 2. Cliente
     $row[] = htmlspecialchars($aRow['nombre_completo']);
 
-    // 3. Plan
-    $row[] = htmlspecialchars($aRow['nombre_plan'] ?: 'N/A');
+    // 3. Plan / Concepto Principal
+    $justif = $aRow['justificacion'] ?: '';
+    $conceptosArr = [];
 
-    // 4. Concepto
-    $concepto = $aRow['justificacion'] ?: '-';
-    $row[] = htmlspecialchars($concepto);
+    if (strpos($justif, '[MENSUALIDAD]') !== false) $conceptosArr[] = 'Mensualidad';
+    if (strpos($justif, '[INSTALACION]') !== false) $conceptosArr[] = 'Instalación';
+    if (strpos($justif, '[EQUIPOS]') !== false) $conceptosArr[] = 'Equipos / Materiales';
+    if (strpos($justif, '[PRORRATEO]') !== false) $conceptosArr[] = 'Prorrateo';
+    if (strpos($justif, '[ABONO]') !== false) $conceptosArr[] = 'Abono / Saldo a Favor';
+    if (strpos($justif, '[EXTRA]') !== false) $conceptosArr[] = 'Pago de Terceros';
+
+    $es_mensualidad = false;
+    if (strpos($justif, '[MENSUALIDAD]') !== false) {
+        $es_mensualidad = true;
+    }
+
+    $concepto = '';
+    if (count($conceptosArr) > 0) {
+        $concepto = implode(' + ', $conceptosArr);
+    } elseif ($justif && strpos($justif, '||') === false) {
+        // Si no tiene tags pero tiene texto, es un cargo manual genérico
+        $concepto = 'Cargo Manual / Otro';
+        // Caso borde: Si el texto manual contiene la palabra mensualidad sin el tag []
+        if (stripos($justif, 'mensualidad') !== false) $es_mensualidad = true;
+    } elseif ($aRow['nombre_plan']) {
+        $concepto = 'Mensualidad / ' . $aRow['nombre_plan'];
+        $es_mensualidad = true;
+    } else {
+        $concepto = 'Varios / Otros';
+    }
+
+    $row[] = '<span class="fw-bold">' . htmlspecialchars($concepto) . '</span>';
+
+    // 4. Detalle / Justificación Extendida
+    $justifHtml = str_replace(' || ', ' | ', $justif);
+    if (strlen($justifHtml) > 55) {
+        $justifHtml = '<span title="' . htmlspecialchars($justifHtml) . '" style="cursor:help">' . htmlspecialchars(substr($justifHtml, 0, 52)) . '...</span>';
+    } else {
+        $justifHtml = htmlspecialchars($justifHtml ?: '-');
+    }
+    $row[] = '<span class="small text-muted">' . $justifHtml . '</span>';
 
     // 5. Monto
     $row[] = '$' . number_format($aRow['monto_total'], 2, ',', '.');
@@ -208,14 +260,18 @@ while ($aRow = $rResult->fetch_assoc()) {
     $orig_badge = ($origen == 'LINK') ? 'info' : 'secondary';
     $row[] = '<span class="badge bg-' . $orig_badge . '">' . $origen . '</span>';
 
-    // 9. Estado SAE Plus (Select Dropdown)
-    $sae_status = $aRow['estado_sae_plus'] ?: 'NO CARGADO';
-    $sae_class = ($sae_status == 'CARGADO') ? 'text-success fw-bold' : 'text-danger';
-    $sae_select = '<select class="form-select form-select-sm sae-status-select ' . $sae_class . '" data-id="' . $id_cobro . '">
-        <option value="NO CARGADO" ' . ($sae_status == 'NO CARGADO' ? 'selected' : '') . '>No Cargado</option>
-        <option value="CARGADO" ' . ($sae_status == 'CARGADO' ? 'selected' : '') . '>Cargado</option>
-    </select>';
-    $row[] = $sae_select;
+    // 9. Estado SAE Plus (Solo si es mensualidad)
+    if ($es_mensualidad) {
+        $sae_status = $aRow['estado_sae_plus'] ?: 'NO CARGADO';
+        $sae_class = ($sae_status == 'CARGADO') ? 'text-success fw-bold' : 'text-danger';
+        $sae_select = '<select class="form-select form-select-sm sae-status-select ' . $sae_class . '" data-id="' . $id_cobro . '">
+            <option value="NO CARGADO" ' . ($sae_status == 'NO CARGADO' ? 'selected' : '') . '>No Cargado</option>
+            <option value="CARGADO" ' . ($sae_status == 'CARGADO' ? 'selected' : '') . '>Cargado</option>
+        </select>';
+        $row[] = $sae_select;
+    } else {
+        $row[] = '<span class="badge bg-light text-secondary border w-100 d-block py-2"><i class="fas fa-minus me-1"></i> N/A</span>';
+    }
 
     // 10. Acciones
     $acciones = '<div class="d-flex justify-content-end gap-1">';

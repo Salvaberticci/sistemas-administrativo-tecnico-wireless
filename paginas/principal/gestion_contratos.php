@@ -354,7 +354,7 @@ require_once '../includes/sidebar.php';
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
-                    <small class="text-muted me-auto">Cambios guardados en JSON.</small>
+                    <small class="text-muted me-auto">Los cambios se guardan automáticamente.</small>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
@@ -444,8 +444,7 @@ require_once '../includes/sidebar.php';
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-map-location-dot me-2"></i>Gestionar
-                        Ubicaciones (JSON)</h5>
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-map-location-dot me-2"></i>Gestionar Ubicaciones</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -496,7 +495,7 @@ require_once '../includes/sidebar.php';
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
-                    <small class="text-muted me-auto">Los cambios se guardan automáticamente en el archivo JSON.</small>
+                    <small class="text-muted me-auto">Los cambios se guardan automáticamente.</small>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
@@ -1608,7 +1607,8 @@ require_once '../includes/sidebar.php';
             "fixedColumns": {     // Si se quisiera fijar columnas (requiere extension FixedColumns, probalo basico primero)
                 // leftColumns: 2 
             },
-            "order": [[1, "desc"]], // Ordenar por SAR (Fecha Registro) descendente por defecto
+            "order": [[0, "desc"]], // Ordenar por ID descendente por defecto
+            // (más recientes primero)
             "language": {
                 "lengthMenu": "Ver _MENU_",
                 "zeroRecords": "No hay datos",
@@ -2171,9 +2171,21 @@ require_once '../includes/sidebar.php';
     let editInstaladorIndex = -1;
 
     function loadInstaladores() {
-        $.get('json_personal_api.php?action=get_instaladores', function (data) {
-            instaladoresData = data || [];
-            renderInstaladoresList();
+        console.log("Cargando instaladores...");
+        $.ajax({
+            url: 'json_personal_api.php?action=get_instaladores',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                console.log("Instaladores recibidos:", data);
+                instaladoresData = Array.isArray(data) ? data : [];
+                renderInstaladoresList();
+            },
+            error: function (xhr, status, error) {
+                console.error("Error cargando instaladores:", error);
+                instaladoresData = [];
+                renderInstaladoresList();
+            }
         });
     }
 
@@ -2200,6 +2212,13 @@ require_once '../includes/sidebar.php';
     window.addInstalador = async function () {
         const nombre = $('#newInstalador').val().trim().toUpperCase();
         if (!nombre) return;
+
+        // Validar que instaladoresData sea un array antes de usar .includes
+        if (!Array.isArray(instaladoresData)) {
+            console.error("instaladoresData no es un array, reintentando carga...");
+            loadInstaladores();
+            return;
+        }
 
         if (editInstaladorIndex === -1 && instaladoresData.includes(nombre)) {
             Swal.fire({ target: document.getElementById('modalInstaladores'), title: 'Atención', text: 'Este instalador ya existe', icon: 'warning' });
@@ -2280,9 +2299,21 @@ require_once '../includes/sidebar.php';
     let editVendedorIndex = -1;
 
     function loadVendedores() {
-        $.get('json_personal_api.php?action=get_vendedores', function (data) {
-            vendedoresData = data || [];
-            renderVendedoresList();
+        console.log("Cargando vendedores...");
+        $.ajax({
+            url: 'json_personal_api.php?action=get_vendedores',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                console.log("Vendedores recibidos:", data);
+                vendedoresData = Array.isArray(data) ? data : [];
+                renderVendedoresList();
+            },
+            error: function (xhr, status, error) {
+                console.error("Error cargando vendedores:", error);
+                vendedoresData = [];
+                renderVendedoresList();
+            }
         });
     }
 
@@ -2309,6 +2340,12 @@ require_once '../includes/sidebar.php';
     window.addVendedor = async function () {
         const nombre = $('#newVendedor').val().trim().toUpperCase();
         if (!nombre) return;
+
+        if (!Array.isArray(vendedoresData)) {
+            console.error("vendedoresData no es un array, reintentando carga...");
+            loadVendedores();
+            return;
+        }
 
         if (editVendedorIndex === -1 && vendedoresData.includes(nombre)) {
             Swal.fire({ target: document.getElementById('modalVendedores'), title: 'Atención', text: 'Este vendedor ya existe', icon: 'warning' });
@@ -2390,9 +2427,21 @@ require_once '../includes/sidebar.php';
     let _pageNeedsReload = false; // Flag: recarga si hubo cambios en vendedores/prorrateo
 
     function loadPlanesProrrateo() {
-        $.get('json_personal_api.php?action=get_planes_prorrateo', function (data) {
-            prorrateoData = data || [];
-            renderProrrateoList();
+        console.log("Cargando planes prorrateo...");
+        $.ajax({
+            url: 'json_personal_api.php?action=get_planes_prorrateo',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                console.log("Planes prorrateo recibidos:", data);
+                prorrateoData = Array.isArray(data) ? data : [];
+                renderProrrateoList();
+            },
+            error: function (xhr, status, error) {
+                console.error("Error cargando planes prorrateo:", error);
+                prorrateoData = [];
+                renderProrrateoList();
+            }
         });
     }
 
@@ -2516,9 +2565,21 @@ require_once '../includes/sidebar.php';
     let editTipoIndex = -1;
 
     function loadTipos() {
-        $.get('api_tipos_instalacion.php', function (data) {
-            tiposData = data || [];
-            renderTipos();
+        console.log("Cargando tipos de instalación...");
+        $.ajax({
+            url: 'api_tipos_instalacion.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                console.log("Tipos de instalación recibidos:", data);
+                tiposData = Array.isArray(data) ? data : [];
+                renderTipos();
+            },
+            error: function (xhr, status, error) {
+                console.error("Error cargando tipos de instalación:", error);
+                tiposData = [];
+                renderTipos();
+            }
         });
     }
 
@@ -2967,10 +3028,13 @@ require_once '../includes/sidebar.php';
 
             if (editMunicipioIndex > -1) {
                 // Modo Edición
+                const oldNombre = ubicacionesData[editMunicipioIndex].municipio;
                 const ok = await verificarClave('Actualizar Municipio: ' + nombre, document.getElementById('modalUbicaciones'));
                 if (!ok) return;
                 ubicacionesData[editMunicipioIndex].municipio = nombre;
                 cancelEditMun();
+                // Cascada: actualizar contratos en la BD
+                await actualizarEnCascada('municipio', oldNombre, nombre);
             } else {
                 // Modo Agregar
                 if (ubicacionesData.some(m => m.municipio.toLowerCase() === nombre.toLowerCase())) {
@@ -2994,15 +3058,18 @@ require_once '../includes/sidebar.php';
 
             if (editParroquiaIndex > -1) {
                 // Modo Edición
+                const pDataPrev = ubicacionesData[selectedMunicipioIndex].parroquias[editParroquiaIndex];
+                const oldNombrePar = typeof pDataPrev === 'object' ? pDataPrev.nombre : pDataPrev;
                 const ok = await verificarClave('Actualizar Parroquia: ' + nombre, document.getElementById('modalUbicaciones'));
                 if (!ok) return;
-                const pData = ubicacionesData[selectedMunicipioIndex].parroquias[editParroquiaIndex];
-                if (typeof pData === 'object') {
-                    pData.nombre = nombre;
+                if (typeof pDataPrev === 'object') {
+                    pDataPrev.nombre = nombre;
                 } else {
                     ubicacionesData[selectedMunicipioIndex].parroquias[editParroquiaIndex] = { nombre: nombre, comunidades: [] };
                 }
                 cancelEditPar();
+                // Cascada: actualizar contratos en la BD
+                await actualizarEnCascada('parroquia', oldNombrePar, nombre);
             } else {
                 // Modo Agregar
                 if (ubicacionesData[selectedMunicipioIndex].parroquias.some(p => (typeof p === 'object' ? p.nombre : p).toLowerCase() === nombre.toLowerCase())) {
@@ -3020,4 +3087,32 @@ require_once '../includes/sidebar.php';
 
         $('#btnCancelEditPar').click(function () { cancelEditPar(); });
     });
+
+    // Helper: Actualización en cascada de ubicaciones en contratos
+    async function actualizarEnCascada(tipo, oldValue, newValue) {
+        if (oldValue === newValue) return;
+        try {
+            const resp = await fetch('actualizar_ubicacion_contratos.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `tipo=${encodeURIComponent(tipo)}&old_value=${encodeURIComponent(oldValue)}&new_value=${encodeURIComponent(newValue)}`
+            });
+            const data = await resp.json();
+            if (data.success && data.updated > 0) {
+                Swal.fire({
+                    target: document.getElementById('modalUbicaciones'),
+                    icon: 'info',
+                    title: 'Actualización en Cascada',
+                    text: `Se actualizaron ${data.updated} contrato(s) con el nuevo nombre.`,
+                    timer: 3000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+                _pageNeedsReload = true;
+            }
+        } catch (err) {
+            console.error('Error en cascada:', err);
+        }
+    }
 </script>

@@ -183,10 +183,11 @@ while ($row = $res_olt->fetch_assoc()) {
                 </div>
                 <div class="row g-3">
                     <div class="col-12">
-                        <label class="form-label">Tipo de Falla (Descriptivo) <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="tipo_falla" name="tipo_falla" required 
-                            placeholder="Ej: Rama caída sobre fibra, OLT sin energía, etc.">
-                        <div class="invalid-feedback">Debe describir el tipo de falla</div>
+                        <label class="form-label">Tipo de Falla <span class="text-danger">*</span></label>
+                        <select class="form-select border-primary" id="tipo_falla" name="tipo_falla" required>
+                            <option value="">Cargando opciones...</option>
+                        </select>
+                        <div class="invalid-feedback">Debe seleccionar un tipo de falla</div>
                     </div>
                 </div>
                 <div class="row g-3 mt-3">
@@ -421,6 +422,28 @@ while ($row = $res_olt->fetch_assoc()) {
             $(this).addClass('active');
             $('#prioridad').val($(this).data('priority'));
         });
+
+        // Cargar opciones de falla Nivel 3
+        function cargarOpcionesFalla() {
+            fetch('admin_opciones.php?action=read')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const select = document.getElementById('tipo_falla');
+                        select.innerHTML = '<option value="">-- Seleccionar tipo de falla Nivel 3 --</option>';
+                        
+                        const opciones = data.data['NIVEL 3'] || [];
+                        opciones.forEach(opcion => {
+                            const option = document.createElement('option');
+                            option.value = opcion;
+                            option.textContent = opcion;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error cargando opciones:', error));
+        }
+        cargarOpcionesFalla();
 
         // Validación y envío del formulario
         $('#formRegistroFalla').submit(function (e) {

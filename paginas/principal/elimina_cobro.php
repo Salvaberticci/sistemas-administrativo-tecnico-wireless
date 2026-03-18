@@ -53,11 +53,6 @@ if (!$cobro) {
     exit;
 }
 
-if ($cobro['contrato_estado'] === 'ACTIVO') {
-    echo json_encode(['success' => false, 'message' => "No se puede eliminar porque el cliente {$cobro['nombre_completo']} tiene un contrato ACTIVO."]);
-    exit;
-}
-
 $referencia = $cobro['referencia_pago'];
 
 // 3. Eliminar registros

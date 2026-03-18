@@ -57,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
                     'monto' => $monto,
-                    'justificacion' => "Mensualidad ($meses mes/es) - " . $justificacion
+                    'justificacion' => "[MENSUALIDAD] Mensualidad ($meses mes/es) - " . $justificacion
                 ];
                 $sumatoria_backend += $monto;
             }
@@ -70,7 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
                     'monto' => $monto,
-                    'justificacion' => "Instalación - " . $justificacion
+                    'justificacion' => "[INSTALACION] Instalación - " . $justificacion
                 ];
                 $sumatoria_backend += $monto;
             }
@@ -83,7 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
                     'monto' => $monto,
-                    'justificacion' => "Prorrateo - " . $justificacion
+                    'justificacion' => "[PRORRATEO] Prorrateo - " . $justificacion
                 ];
                 $sumatoria_backend += $monto;
             }
@@ -96,7 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
                     'monto' => $monto,
-                    'justificacion' => "Pago de Equipo - " . $justificacion
+                    'justificacion' => "[EQUIPOS] Pago de Equipo - " . $justificacion
                 ];
                 $sumatoria_backend += $monto;
             }
@@ -117,7 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $cargos_a_procesar[] = [
                         'id_contrato' => $id_c_extra, // OJO: Va al contrato extra, no al principal
                         'monto' => $monto_extra,
-                        'justificacion' => "Mens. Extra (Pagado en Ref $referencia_pago) - " . $justificacion
+                        'justificacion' => "[EXTRA] Mens. Extra (Pagado en Ref $referencia_pago) - " . $justificacion
                     ];
                     $sumatoria_backend += $monto_extra;
                 }

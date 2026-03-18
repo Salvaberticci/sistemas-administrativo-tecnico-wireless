@@ -14,6 +14,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $meses = isset($_POST['meses']) ? implode(', ', $_POST['meses']) : '';
     $concepto = isset($_POST['concepto']) ? $conn->real_escape_string($_POST['concepto']) : '';
 
+    // VALIDACIÓN BACKEND: Campos Obligatorios
+    if (empty($metodo_pago) || empty($referencia) || ($metodo_pago !== 'Efectivo' && $metodo_pago !== 'Divisas' && empty($id_banco_destino))) {
+        // En realidad el usuario pidió que banco sea obligatorio también.
+    }
+    
+    if (empty($metodo_pago) || empty($referencia) || empty($id_banco_destino)) {
+         die("Error: El Método de Pago, el Banco y el Número de Referencia son obligatorios.");
+    }
+
     // 1. Intentar vincular con un contrato existente por cédula (Opcional, ayuda al admin)
     $id_contrato_asociado = null;
     $sql_check = "SELECT id FROM contratos WHERE cedula = '$cedula' LIMIT 1";

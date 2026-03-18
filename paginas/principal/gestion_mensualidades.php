@@ -139,6 +139,18 @@ require_once '../includes/sidebar.php';
                         </select>
                     </div>
                     <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Tipo de Pago</label>
+                        <select class="form-select form-select-sm" id="filtro_tipo">
+                            <option value="">Todos los Tipos</option>
+                            <option value="Mensualidad">Mensualidad</option>
+                            <option value="Instalacion">Instalación</option>
+                            <option value="Equipos">Equipos / Materiales</option>
+                            <option value="Prorrateo">Prorrateo</option>
+                            <option value="Abono">Abono / Saldo a Favor</option>
+                            <option value="Extra">Pago de Terceros</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Buscar por Referencia</label>
                         <input type="text" class="form-control form-control-sm" id="filtro_referencia" placeholder="Ej: 123456" autocomplete="off">
                     </div>
@@ -171,8 +183,8 @@ require_once '../includes/sidebar.php';
                                 <th>Fecha de registro</th>
                                 <th>Referencia</th>
                                 <th>Cliente</th>
-                                <th>Plan</th>
                                 <th>Concepto</th>
+                                <th>Detalle/Justificación</th>
                                 <th>Monto</th>
                                 <th>Cuenta</th>
                                 <th>Estado</th>
@@ -307,7 +319,7 @@ require_once '../includes/sidebar.php';
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-hashtag"></i> N° Referencia</label>
-                                    <input type="text" class="form-control form-control-sm shadow-sm" name="referencia_pago" id="input_ref_generar_cobro" required placeholder="Nro de operación">
+                                    <input type="text" class="form-control form-control-sm shadow-sm numeric-input" name="referencia_pago" id="input_ref_generar_cobro" required placeholder="Nro de operación">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-university"></i> Banco Recepto</label>
@@ -657,8 +669,10 @@ require_once '../includes/sidebar.php';
                                 <th>Emisión</th>
                                 <th>Vencimiento</th>
                                 <th>Fecha Pago</th>
+                                <th>Concepto</th>
                                 <th>Monto</th>
                                 <th>Referencia</th>
+                                <th>Detalle/Justificación</th>
                             </tr>
                         </thead>
                         <tbody id="hist_table_body">
@@ -733,7 +747,7 @@ require_once '../includes/sidebar.php';
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-hashtag"></i> N° Referencia</label>
-                                    <input type="text" class="form-control form-control-sm shadow-sm" name="referencia_pago" id="edit_input_referencia" required>
+                                    <input type="text" class="form-control form-control-sm shadow-sm numeric-input" name="referencia_pago" id="edit_input_referencia" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-university"></i> Banco Receptor</label>
@@ -748,8 +762,7 @@ require_once '../includes/sidebar.php';
                                 <span id="edit_badge_indicador_suma" class="badge bg-success text-white border-0 py-1 px-3" style="font-size: 0.65rem;">CALCULANDO...</span>
                             </h6>
                             
-                            <div class="desglose-scroll pe-2" style="max-height: 250px; overflow-y: auto;">
-                                <!-- Se replicarán los campos del desglose pero con prefijo 'edit_' -->
+                            <div class="desglose-scroll pe-2" style="max-height: 280px; overflow-y: auto;">
                                 <!-- Mensualidad -->
                                 <div class="mb-2 bg-white border-start border-4 border-primary rounded p-2 shadow-sm">
                                     <div class="d-flex align-items-center mb-2">
@@ -758,17 +771,20 @@ require_once '../includes/sidebar.php';
                                         </div>
                                         <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_mensualidad">Mensualidad</label>
                                     </div>
-                                    <div class="d-none desglose-fields-edit row g-2 mt-1">
+                                    <div class="d-none desglose-fields-edit row g-2 mt-1" id="edit_fields_mensualidad">
                                         <div class="col-4">
                                             <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                            <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_mensualidad" placeholder="0,00">
+                                            <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_mensualidad" placeholder="0,00" inputmode="decimal">
                                         </div>
                                         <div class="col-3">
                                             <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Cant.</label>
-                                            <input type="number" step="1" min="1" max="12" class="form-control form-control-sm meses-cantidad-edit" name="meses_mensualidad">
+                                            <input type="number" step="1" min="1" max="12" class="form-control form-control-sm meses-cantidad-edit" name="meses_mensualidad" value="1">
                                         </div>
-                                        <div class="col-5 text-end">
-                                             <div class="small text-muted mt-3 fw-bold">Modo Edición</div>
+                                        <div class="col-5">
+                                             <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Meses a Pagar</label>
+                                             <div id="edit_container_meses_mensualidad" class="container-meses-dinamicos d-flex flex-wrap gap-1">
+                                                 <!-- Se genera vía JS -->
+                                             </div>
                                         </div>
                                     </div>
                                 </div>
@@ -781,9 +797,9 @@ require_once '../includes/sidebar.php';
                                         </div>
                                         <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_instalacion">Instalación</label>
                                     </div>
-                                    <div class="d-none desglose-fields-edit mt-1">
+                                    <div class="d-none desglose-fields-edit mt-1" id="edit_fields_instalacion">
                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                        <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_instalacion" placeholder="0,00">
+                                        <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_instalacion" placeholder="0,00" inputmode="decimal">
                                     </div>
                                 </div>
 
@@ -795,9 +811,9 @@ require_once '../includes/sidebar.php';
                                         </div>
                                         <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_equipo">Equipos/Materiales</label>
                                     </div>
-                                    <div class="d-none desglose-fields-edit mt-1">
+                                    <div class="d-none desglose-fields-edit mt-1" id="edit_fields_equipo">
                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                        <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_equipo" placeholder="0,00">
+                                        <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_equipo" placeholder="0,00" inputmode="decimal">
                                     </div>
                                 </div>
 
@@ -810,25 +826,79 @@ require_once '../includes/sidebar.php';
                                                 </div>
                                                 <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_prorrateo" style="font-size: 0.75rem;">Prorrateo</label>
                                             </div>
-                                            <div class="d-none desglose-fields-edit mt-1">
+                                            <div class="d-none desglose-fields-edit mt-1" id="edit_fields_prorrateo">
                                                 <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                                <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_prorrateo" placeholder="0,00">
+                                                <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_prorrateo" placeholder="0,00" inputmode="decimal">
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Abono / Saldo a Favor -->
+                                <div class="mb-2 bg-white border-start border-4 border-warning rounded p-2 shadow-sm">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="form-check form-switch me-3 mb-0">
+                                            <input class="form-check-input desglose-switch-edit" type="checkbox" id="edit_switch_abono" name="desglose_abono_activado" value="1">
+                                        </div>
+                                        <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_abono">Abono / Saldo a Favor</label>
+                                    </div>
+                                    <div class="d-none desglose-fields-edit mt-1" id="edit_fields_abono">
+                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                        <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_abono" placeholder="0,00" inputmode="decimal">
+                                    </div>
+                                </div>
+
+                                <!-- Mensualidad Extra -->
+                                <div class="mb-3 bg-white border rounded p-3 shadow-sm border-info mt-3">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="form-check form-switch me-3 mb-0">
+                                            <input class="form-check-input desglose-switch-edit" type="checkbox" id="edit_switch_extra" name="desglose_extra_activado" value="1">
+                                        </div>
+                                        <label class="form-check-label fw-bold text-info me-auto small mb-0" for="edit_switch_extra">Pago de Terceros</label>
+                                    </div>
+                                    <div class="d-none desglose-fields-edit" id="edit_fields_extra">
+                                        <div id="edit_contenedor_extras">
+                                            <!-- Se genera vía JS -->
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-link text-info p-0 mt-1" id="edit_btn_add_extra"><i class="fas fa-plus-circle"></i> Añadir otro Usuario</button>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div class="row g-2 mt-3">
-                                <div class="col-md-6">
+
+                            <!-- Caja de Resumen Económico -->
+                            <div class="bg-dark rounded p-3 mb-2 border-0 shadow-sm mt-3 mx-0 text-white">
+                                <div class="row g-2 text-center text-md-start">
+                                    <div class="col-4 border-end border-secondary">
+                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Monto Pagado</div>
+                                        <div class="fw-bold text-white fs-5">$ <span id="edit_val_monto_total">0.00</span></div>
+                                    </div>
+                                    <div class="col-4 border-end border-secondary">
+                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Monto Total a Pagar</div>
+                                        <div class="fw-bold text-info fs-5">$ <span id="edit_val_suma_desglose">0.00</span></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Saldo Pendiente</div>
+                                        <div class="fw-bold fs-5" id="edit_container_restante">$ <span id="edit_val_monto_restante">0.00</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mt-2">
+                                <div class="col-md-12">
                                     <label class="form-label fw-bold text-muted small mb-1">Autorizado por</label>
-                                    <input type="text" class="form-control form-control-sm" name="autorizado_por" id="edit_autorizado_por" required>
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="text" class="form-control shadow-sm" name="autorizado_por" id="edit_autorizado_por" required placeholder="Firma administrativa">
+                                        <button class="btn btn-outline-primary" type="button" onclick="document.getElementById('edit_autorizado_por').value = '<?php echo addslashes($user_name); ?>'">
+                                            <i class="fas fa-user-check"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold text-muted small mb-1">Justificación</label>
-                                    <textarea class="form-control form-control-sm" name="justificacion" id="edit_pago_justificacion" rows="1" required></textarea>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold text-muted small mb-1">Justificación del Cargo</label>
+                                    <textarea class="form-control form-control-sm shadow-sm" name="justificacion" id="edit_pago_justificacion" rows="2" placeholder="Explique el motivo del cambio..." required></textarea>
                                 </div>
                             </div>
+
                         </div>
 
                         <!-- COLUMNA DERECHA: CAPTURE -->
@@ -1103,6 +1173,7 @@ require_once '../includes/sidebar.php';
                     d.id_banco = $('#filtro_cuenta').val();
                     d.origen = $('#filtro_origen').val();
                     d.estado_sae = $('#filtro_sae').val();
+                    d.filtro_tipo = $('#filtro_tipo').val();
                     d.referencia = $('#filtro_referencia').val();
                     d.sSearch = d.search.value; // Map modern search to legacy param
                 }
@@ -1165,7 +1236,7 @@ require_once '../includes/sidebar.php';
             "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
         });
 
-        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen, #filtro_sae').on('change', function () {
+        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen, #filtro_sae, #filtro_tipo').on('change', function () {
             tablaUnica.ajax.reload();
         });
 
@@ -1365,6 +1436,11 @@ require_once '../includes/sidebar.php';
                 
                 // Remover cualquier carácter que no sea número, coma o punto
                 e.target.value = e.target.value.replace(/[^0-9.,]/g, '');
+            }
+
+            // Validación solo para números (ej: referencia_pago)
+            if (e.target.classList.contains('numeric-input')) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
             }
 
             // Validación estricta para números enteros (meses)
@@ -1691,12 +1767,14 @@ require_once '../includes/sidebar.php';
         var fecha_inicio = $('#fecha_inicio').val();
         var fecha_fin = $('#fecha_fin').val();
         var id_banco = $('#filtro_cuenta').val();
+        var filtro_tipo = $('#filtro_tipo').val();
         var url = 'exportar_mensualidades.php?tipo=' + tipo;
         if (fecha_inicio && fecha_fin) {
             url += '&fecha_inicio=' + encodeURIComponent(fecha_inicio) + '&fecha_fin=' + encodeURIComponent(fecha_fin);
         }
-        if (tipo === 'filtrado' && id_banco) {
-            url += '&id_banco=' + encodeURIComponent(id_banco);
+        if (tipo === 'filtrado') {
+            if (id_banco) url += '&id_banco=' + encodeURIComponent(id_banco);
+            if (filtro_tipo) url += '&filtro_tipo=' + encodeURIComponent(filtro_tipo);
         }
         window.open(url, '_blank');
     }
@@ -1954,17 +2032,43 @@ require_once '../includes/sidebar.php';
     });
 
     // === LÓGICA MODAL EDITAR POTENCIADO ===
+    const NOMBRES_MESES_EDIT = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     const editSwitches = document.querySelectorAll('.desglose-switch-edit');
     const editInputsMonto = document.querySelectorAll('.desglose-monto-edit');
     const editBtnSubmit = document.querySelector('#modalEditarCobro form button[type="submit"]');
+
+    function editActualizarMesesDinamicos(input) {
+        const row = input.closest('.rounded, .row, .bg-white, .fila-extra-edit');
+        const container = row.querySelector('.container-meses-dinamicos');
+        if (!container) return;
+        
+        const cant = parseInt(input.value) || 0;
+        const isExtra = row.classList.contains('fila-extra-edit');
+        const name = isExtra ? 'extra_meses_seleccionados[]' : 'meses_seleccionados_mensualidad[]';
+        
+        let html = '';
+        const mesBaseIndex = new Date().getMonth();
+
+        for (let i = 0; i < cant; i++) {
+            const mesSugeridoIndex = (mesBaseIndex + i) % 12;
+            html += `<select class="form-select form-select-sm mb-1" name="${name}" style="flex: 1 1 80px; min-width: 80px;">`;
+            NOMBRES_MESES_EDIT.forEach((m, idx) => {
+                const selected = (idx === mesSugeridoIndex) ? 'selected' : '';
+                html += `<option value="${m}" ${selected}>${m}</option>`;
+            });
+            html += `</select>`;
+        }
+        container.innerHTML = html;
+    }
 
     function editValidarSumatoria() {
         let totalDeclarado = parseFloat(document.getElementById('edit_monto_total_hidden').value) || 0;
         let sumatoria = 0;
 
-        editSwitches.forEach(sw => {
+        const allEditSwitches = document.querySelectorAll('.desglose-switch-edit');
+        allEditSwitches.forEach(sw => {
             if (sw.checked) {
-                const row = sw.closest('.rounded, .row, .bg-white');
+                const row = sw.closest('.rounded, .row, .bg-white, .fila-extra-edit');
                 const montos = row.querySelectorAll('.desglose-monto-edit');
                 montos.forEach(m => {
                     sumatoria += parseFloat(m.value.replace(',', '.')) || 0;
@@ -1972,57 +2076,200 @@ require_once '../includes/sidebar.php';
             }
         });
 
-        document.getElementById('edit_val_suma_desglose').textContent = sumatoria.toFixed(2);
-        const badge = document.getElementById('edit_badge_indicador_suma');
-        const spanRestante = document.getElementById('edit_val_suma_desglose'); // Reuse or add another
+        let restante = sumatoria - totalDeclarado;
 
+        document.getElementById('edit_val_monto_total').textContent = totalDeclarado.toFixed(2);
+        document.getElementById('edit_val_suma_desglose').textContent = sumatoria.toFixed(2);
+        
+        const spanRestante = document.getElementById('edit_val_monto_restante');
+        const containerRestante = document.getElementById('edit_container_restante');
+        spanRestante.textContent = Math.abs(restante).toFixed(2);
+
+        const badge = document.getElementById('edit_badge_indicador_suma');
+        
         if (sumatoria > 0) {
             editBtnSubmit.disabled = false;
-            let diff = Math.abs(sumatoria - totalDeclarado);
-            if (diff < 0.01) {
+            if (Math.abs(restante) < 0.01) {
                 badge.textContent = 'PAGO CUADRADO';
                 badge.className = 'badge bg-success text-white border-0 py-1 px-3';
-            } else if (sumatoria > totalDeclarado) {
+                containerRestante.className = 'fw-bold text-success fs-5';
+            } else if (restante > 0) {
                 badge.textContent = 'SOBREGIRO DE DESGLOSE';
                 badge.className = 'badge bg-danger text-white border-0 py-1 px-3';
+                containerRestante.className = 'fw-bold text-danger fs-5';
             } else {
                 badge.textContent = 'FALTA DISTRIBUIR';
                 badge.className = 'badge bg-warning text-dark border-0 py-1 px-3';
+                containerRestante.className = 'fw-bold text-warning fs-5';
             }
         } else {
             editBtnSubmit.disabled = true;
             badge.textContent = 'SIN CONCEPTOS';
             badge.className = 'badge bg-secondary text-white border-0 py-1 px-3';
+            containerRestante.className = 'fw-bold text-muted fs-5';
         }
     }
 
-    editSwitches.forEach(sw => {
+    // --- Lógica Extras Edit ---
+    const editBtnAddExtra = document.getElementById('edit_btn_add_extra');
+    const editContainerExtras = document.getElementById('edit_contenedor_extras');
+    
+    function editAttachAutocompleteToRow(row) {
+        const searchInput = row.querySelector('.extra-search');
+        const hiddenInput = row.querySelector('.extra-hidden');
+        const resultsContainer = row.querySelector('.extra-results');
+        const montoInput = row.querySelector('.desglose-monto-edit');
+
+        let timer;
+        searchInput.addEventListener('input', function () {
+            clearTimeout(timer);
+            const q = this.value.trim();
+            if (q.length < 3) { resultsContainer.innerHTML = ''; return; }
+            timer = setTimeout(() => {
+                fetch(`buscar_contratos.php?q=${encodeURIComponent(q)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        resultsContainer.innerHTML = '';
+                        data.forEach(c => {
+                            const a = document.createElement('a');
+                            a.className = 'list-group-item list-group-item-action py-1 px-2 small';
+                            a.innerHTML = `<strong>ID ${c.id}</strong>: ${c.nombre_completo}`;
+                            a.onclick = (e) => {
+                                e.preventDefault();
+                                searchInput.value = `ID ${c.id}: ${c.nombre_completo}`;
+                                hiddenInput.value = c.id;
+                                resultsContainer.innerHTML = '';
+                                if (c.monto_plan) montoInput.value = parseFloat(c.monto_plan).toFixed(2);
+                                editValidarSumatoria();
+                            };
+                            resultsContainer.appendChild(a);
+                        });
+                    });
+            }, 300);
+        });
+    }
+
+    if (editBtnAddExtra) {
+        editBtnAddExtra.addEventListener('click', function() {
+            crearFilaExtraEdit();
+        });
+    }
+
+    function crearFilaExtraEdit(data = null) {
+        const div = document.createElement('div');
+        div.className = 'fila-extra-edit mb-3 border-bottom pb-3';
+        div.innerHTML = `
+            <div class="position-relative mb-2">
+                <label class="small text-muted fw-bold mb-1">Usuario / Contrato</label>
+                <input type="text" class="form-control form-control-sm extra-search" placeholder="ID, Nombre..." autocomplete="off" value="${data ? 'ID '+data.id_contrato+': '+data.nombre_cliente : ''}">
+                <input type="hidden" name="extra_contrato[]" class="extra-hidden" value="${data ? data.id_contrato : ''}">
+                <div class="list-group shadow-lg position-absolute w-100 extra-results" style="z-index: 1080;"></div>
+            </div>
+            <div class="row g-2 align-items-end">
+                <div class="col-3">
+                    <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                    <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="extra_monto[]" placeholder="0,00" value="${data ? parseFloat(data.monto_total).toFixed(2) : ''}">
+                </div>
+                <div class="col-2">
+                    <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Cant.</label>
+                    <input type="number" step="1" min="1" max="12" class="form-control form-control-sm meses-cantidad-edit" name="extra_meses[]" value="${data ? 1 : 1}">
+                </div>
+                <div class="col-5">
+                     <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Meses</label>
+                     <div class="container-meses-dinamicos d-flex flex-wrap gap-1"></div>
+                </div>
+                <div class="col-2 text-end">
+                    <button type="button" class="btn btn-sm text-danger border-0 btn-remove-extra-edit"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        `;
+        div.querySelector('.btn-remove-extra-edit').addEventListener('click', function() {
+            div.remove();
+            editValidarSumatoria();
+        });
+        const cantInp = div.querySelector('.meses-cantidad-edit');
+        cantInp.addEventListener('input', function() {
+            editActualizarMesesDinamicos(this);
+        });
+        
+        editAttachAutocompleteToRow(div);
+        editContainerExtras.appendChild(div);
+
+        // Si hay data, intentar poblar meses
+        if (data && data.justificacion) {
+            const desc = data.justificacion.toUpperCase();
+            const match = desc.match(/(\d+)\s*MESES/);
+            if (match) {
+                cantInp.value = match[1];
+                editActualizarMesesDinamicos(cantInp);
+                // Mapear meses seleccionados
+                const selects = div.querySelectorAll('select[name="extra_meses_seleccionados[]"]');
+                const foundMonths = NOMBRES_MESES_EDIT.filter(m => desc.includes(m.toUpperCase()));
+                selects.forEach((sel, idx) => {
+                    if (foundMonths[idx]) sel.value = foundMonths[idx];
+                });
+            } else {
+                editActualizarMesesDinamicos(cantInp);
+            }
+        } else {
+            editActualizarMesesDinamicos(cantInp);
+        }
+
+        editValidarSumatoria();
+    }
+
+    document.getElementById('edit_switch_extra').addEventListener('change', function() {
+        const container = document.getElementById('edit_fields_extra');
+        if (this.checked) {
+            container.classList.remove('d-none');
+            if (editContainerExtras.children.length === 0) crearFilaExtraEdit();
+        } else {
+            container.classList.add('d-none');
+            editContainerExtras.innerHTML = '';
+        }
+        editValidarSumatoria();
+    });
+
+    const editSwListener = (sw) => {
         sw.addEventListener('change', function() {
-            const container = this.closest('.rounded, .row').querySelector('.desglose-fields-edit');
+            // No procesar extra aquí, tiene su propio listener para manejar el contenedor de filas
+            if (this.id === 'edit_switch_extra') return;
+
+            const row = this.closest('.rounded, .row, .bg-white');
+            if (!row) return;
+            const container = row.querySelector('.desglose-fields-edit');
             if (this.checked) {
                 if(container) container.classList.remove('d-none');
-                const montoInput = this.closest('.rounded, .row').querySelector('.desglose-monto-edit');
-                if(montoInput) montoInput.classList.remove('d-none');
             } else {
                 if(container) container.classList.add('d-none');
-                const montoInput = this.closest('.rounded, .row').querySelector('.desglose-monto-edit');
+                const montoInput = row.querySelector('.desglose-monto-edit');
                 if(montoInput) {
-                    montoInput.classList.add('d-none');
                     montoInput.value = '';
                 }
             }
             editValidarSumatoria();
         });
+    };
+    document.querySelectorAll('.desglose-switch-edit').forEach(editSwListener);
+
+    // --- Listener global para inputs de monto y cantidad en edición ---
+    document.getElementById('modalEditarCobro').addEventListener('input', function(e) {
+        if (e.target.classList.contains('desglose-monto-edit') || e.target.id === 'edit_input_monto_total') {
+            if (e.target.id === 'edit_input_monto_total') {
+                let val = parseFloat(e.target.value.replace(',', '.')) || 0;
+                document.getElementById('edit_monto_total_hidden').value = val.toFixed(2);
+            }
+            editValidarSumatoria();
+        }
+        if (e.target.classList.contains('meses-cantidad-edit')) {
+            editActualizarMesesDinamicos(e.target);
+            editValidarSumatoria();
+        }
     });
 
-    document.getElementById('edit_input_monto_total').addEventListener('input', function() {
-        let val = parseFloat(this.value.replace(',', '.')) || 0;
-        document.getElementById('edit_monto_total_hidden').value = val.toFixed(2);
-        editValidarSumatoria();
-    });
-
-    document.addEventListener('input', function(e) {
-        if (e.target.classList.contains('desglose-monto-edit')) {
+    // Delegación para cambios en selects de meses para recalcular si fuera necesario
+    document.getElementById('modalEditarCobro').addEventListener('change', function(e) {
+        if (e.target.name === 'meses_seleccionados_mensualidad[]' || e.target.name === 'extra_meses_seleccionados[]') {
             editValidarSumatoria();
         }
     });
@@ -2072,13 +2319,23 @@ require_once '../includes/sidebar.php';
         // Reset inputs
         const formEscapado = document.getElementById('formEditarCobro');
         formEscapado.reset();
-        editSwitches.forEach(sw => {
+        editContainerExtras.innerHTML = ''; // Limpiar extras
+        document.getElementById('edit_switch_extra').checked = false;
+        document.getElementById('edit_fields_extra').classList.add('d-none');
+
+        const allEditSw = document.querySelectorAll('.desglose-switch-edit');
+        allEditSw.forEach(sw => {
             sw.checked = false;
-            const row = sw.closest('.rounded, .row');
+            const row = sw.closest('.rounded, .row, .bg-white, .fila-extra-edit');
+            if (!row) return;
             const container = row.querySelector('.desglose-fields-edit');
             if(container) container.classList.add('d-none');
             const montoInput = row.querySelector('.desglose-monto-edit');
-            if(montoInput) montoInput.classList.add('d-none');
+            if(montoInput) {
+                montoInput.value = '';
+            }
+            const mesesCont = row.querySelector('.container-meses-dinamicos');
+            if(mesesCont) mesesCont.innerHTML = '';
         });
 
         // Poblar bancos si está vacío (aunque ya vienen en PHP, nos aseguramos)
@@ -2093,7 +2350,7 @@ require_once '../includes/sidebar.php';
             });
         }
 
-        fetch(`get_cobro_data.php?id=${id}`)
+        fetch(`get_cobro_data.php?id=${id}&t=${new Date().getTime()}`)
             .then(r => r.json())
             .then(res => {
                 loader.classList.add('d-none');
@@ -2117,44 +2374,78 @@ require_once '../includes/sidebar.php';
                     $('#edit_pago_justificacion').val(d.justificacion);
 
                     // Poblar Desglose
+                    const editForm = document.getElementById('formEditarCobro');
                     concepts.forEach(c => {
                         const desc = (c.justificacion || '').toUpperCase();
-                        let switchEl = null;
+                        let switchId = '';
+                        let montoName = '';
+                        let cantName = '';
 
-                        let montoEl = null;
-                        let cantEl = null;
-
-                        if (desc.includes('MENSUALIDAD')) {
-                            switchEl = document.getElementById('edit_switch_mensualidad');
-                            montoEl = document.getElementsByName('monto_mensualidad')[0];
-                            cantEl = document.getElementsByName('meses_mensualidad')[0];
-                            // Extraer cantidad de "MENSUALIDAD X MESES"
-                            const match = desc.match(/(\d+)\s*MESES/);
-                            if (match) cantEl.value = match[1];
-                        } else if (desc.includes('INSTALACION')) {
-                            switchEl = document.getElementById('edit_switch_instalacion');
-                            montoEl = document.getElementsByName('monto_instalacion')[0];
+                        // Detección mejorada por palabras clave
+                        if (desc.includes('MENSUALIDAD') || desc.includes('MENSUAL') || desc.match(/\bMES\b/)) {
+                            switchId = 'edit_switch_mensualidad';
+                            montoName = 'monto_mensualidad';
+                            cantName = 'meses_mensualidad';
+                        } else if (desc.includes('INSTALACION') || desc.includes('INSTALACIÓN')) {
+                            switchId = 'edit_switch_instalacion';
+                            montoName = 'monto_instalacion';
                         } else if (desc.includes('ABONO')) {
-                            switchEl = document.getElementById('edit_switch_abono');
-                            montoEl = document.getElementsByName('monto_abono')[0];
+                            switchId = 'edit_switch_abono';
+                            montoName = 'monto_abono';
                         } else if (desc.includes('PRORRATEO')) {
-                            switchEl = document.getElementById('edit_switch_prorrateo');
-                            montoEl = document.getElementsByName('monto_prorrateo')[0];
-                        } else if (desc.includes('EQUIPO') || desc.includes('MATERIAL')) {
-                            switchEl = document.getElementById('edit_switch_equipo');
-                            montoEl = document.getElementsByName('monto_equipo')[0];
+                            switchId = 'edit_switch_prorrateo';
+                            montoName = 'monto_prorrateo';
+                        } else if (desc.includes('EQUIPO') || desc.includes('MATERIAL') || desc.includes('EQUIPOS')) {
+                            switchId = 'edit_switch_equipo';
+                            montoName = 'monto_equipo';
+                        } else {
+                            // Si no es ninguno de los básicos y es un grupo, puede ser un extra
+                            if (d.id_grupo_pago && c.id_contrato != d.id_contrato) {
+                                document.getElementById('edit_switch_extra').checked = true;
+                                document.getElementById('edit_fields_extra').classList.remove('d-none');
+                                crearFilaExtraEdit(c);
+                                return; // Ya se procesó como extra
+                            }
                         }
 
-                        if (switchEl) {
-                            switchEl.checked = true;
-                            switchEl.dispatchEvent(new Event('change'));
-                            if (montoEl) montoEl.value = parseFloat(c.monto_total).toFixed(2);
+                        if (switchId) {
+                            const switchEl = document.getElementById(switchId);
+                            if (switchEl) {
+                                switchEl.checked = true;
+                                const row = switchEl.closest('.rounded, .row, .bg-white');
+                                const container = row.querySelector('.desglose-fields-edit');
+                                if(container) container.classList.remove('d-none');
+                                const montoInp = row.querySelector('.desglose-monto-edit');
+                                if(montoInp) montoInp.classList.remove('d-none');
+
+                                const montoEl = editForm.querySelector(`[name="${montoName}"]`);
+                                if (montoEl) montoEl.value = parseFloat(c.monto_total).toFixed(2);
+                                
+                                if (cantName) {
+                                    const cantEl = editForm.querySelector(`[name="${cantName}"]`);
+                                    if (cantEl) {
+                                        const match = desc.match(/(\d+)\s*MESES/);
+                                        if (match) cantEl.value = match[1];
+                                        
+                                        editActualizarMesesDinamicos(cantEl);
+                                        // Intentar marcar los meses correctos si están en desc
+                                        const selects = row.querySelectorAll('select[name="meses_seleccionados_mensualidad[]"]');
+                                        const foundMonths = NOMBRES_MESES_EDIT.filter(m => desc.includes(m.toUpperCase()));
+                                        selects.forEach((sel, idx) => {
+                                            if (foundMonths[idx]) sel.value = foundMonths[idx];
+                                        });
+                                    }
+                                }
+                            }
                         }
                     });
 
                     // Capture Preview
                     const img = document.getElementById('edit_capture_preview_img');
                     const empty = document.getElementById('edit_capture_empty');
+                    
+                    // Actualizar cuadro resumen
+                    document.getElementById('edit_val_monto_total').textContent = parseFloat(d.monto_total).toFixed(2);
                     if (d.capture_pago) {
                         let path = d.capture_pago;
                         if (path.startsWith('../../')) path = path.replace('../../', '');
@@ -2184,7 +2475,7 @@ require_once '../includes/sidebar.php';
     window.verHistorialPago = function(idContrato, nombreCliente) {
         document.getElementById('hist_cliente_nombre').textContent = nombreCliente;
         const tbody = document.getElementById('hist_table_body');
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando historial...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando historial...</td></tr>';
         
         var modal = new bootstrap.Modal(document.getElementById('modalHistorial'));
         modal.show();
@@ -2195,17 +2486,45 @@ require_once '../includes/sidebar.php';
                 if (res.success) {
                     tbody.innerHTML = '';
                     if (res.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No se encontraron pagos registrados.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-3">No se encontraron pagos registrados.</td></tr>';
                     } else {
                         res.data.forEach(p => {
+                            const justif = p.justificacion || '';
+                            let conceptosArr = [];
+
+                            if (justif.includes('[MENSUALIDAD]')) conceptosArr.push('Mensualidad');
+                            if (justif.includes('[INSTALACION]')) conceptosArr.push('Instalación');
+                            if (justif.includes('[EQUIPOS]')) conceptosArr.push('Equipos');
+                            if (justif.includes('[ABONO]')) conceptosArr.push('Abono');
+                            if (justif.includes('[PRORRATEO]')) conceptosArr.push('Prorrateo');
+
+                            let concepto = '';
+                            if (conceptosArr.length > 0) {
+                                concepto = conceptosArr.join(' + ');
+                            } else if (justif && !justif.includes('||')) {
+                                concepto = 'Cargo Manual / Otro';
+                            } else if (p.nombre_plan) {
+                                concepto = 'Mensualidad / ' + p.nombre_plan;
+                            } else {
+                                concepto = 'Varios / Otros';
+                            }
+
+                            let displayJustif = justif.split(' || ').join(' | ');
+                            let justifHtml = displayJustif || '-';
+                            if (justifHtml.length > 55) {
+                                justifHtml = `<span title="${justifHtml}" style="cursor:help">${justifHtml.substring(0, 52)}...</span>`;
+                            }
+
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
                                 <td>${p.id_cobro}</td>
                                 <td>${p.fecha_emision}</td>
                                 <td>${p.fecha_vencimiento}</td>
                                 <td>${p.fecha_pago}</td>
+                                <td><span class="badge bg-secondary opacity-75">${concepto}</span></td>
                                 <td class="fw-bold text-success">$${parseFloat(p.monto_total).toFixed(2)}</td>
                                 <td>${p.referencia_pago || '-'}</td>
+                                <td class="small text-muted" style="max-width: 250px; white-space: normal;">${justifHtml}</td>
                             `;
                             tbody.appendChild(tr);
                         });

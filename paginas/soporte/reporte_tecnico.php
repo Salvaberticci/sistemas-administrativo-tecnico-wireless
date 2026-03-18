@@ -369,9 +369,17 @@
             if (tipo === 'RADIO') {
                 seccionAntena.classList.remove('d-none');
                 seccionOnu.classList.add('d-none');
+                
+                // Habilitar inputs de antena, deshabilitar ONU
+                seccionAntena.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+                seccionOnu.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
             } else {
                 seccionAntena.classList.add('d-none');
                 seccionOnu.classList.remove('d-none');
+                
+                // Deshabilitar inputs de antena, habilitar ONU
+                seccionAntena.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+                seccionOnu.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
             }
         }
 
@@ -560,13 +568,19 @@
 
         // Cargar opciones de falla dinámicamente
         function cargarOpcionesFalla() {
+            const nivel = $('#prioridad').val(); // NIVEL 1 o NIVEL 2
+            
             fetch('admin_opciones.php?action=read')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         const select = document.getElementById('tipo_falla');
                         select.innerHTML = '<option value="">-- Seleccionar tipo de falla --</option>';
-                        data.data.tipos_falla.forEach(opcion => {
+                        
+                        // Filtrar por el nivel actual
+                        const opciones = data.data[nivel] || [];
+                        
+                        opciones.forEach(opcion => {
                             const option = document.createElement('option');
                             option.value = opcion;
                             option.textContent = opcion;
@@ -576,6 +590,14 @@
                 })
                 .catch(error => console.error('Error cargando opciones:', error));
         }
+
+        // Recargar opciones cuando cambie el nivel
+        $('.priority-badge').click(function () {
+            $('.priority-badge').removeClass('active');
+            $(this).addClass('active');
+            $('#prioridad').val($(this).data('priority'));
+            cargarOpcionesFalla(); // Recargar al cambiar nivel
+        });
 
         // Iniciar carga
         cargarOpcionesFalla();
@@ -671,12 +693,6 @@
                 });
         });
 
-        // Manejo de selección de prioridad
-        $('.priority-badge').click(function () {
-            $('.priority-badge').removeClass('active');
-            $(this).addClass('active');
-            $('#prioridad').val($(this).data('priority'));
-        });
 
         // Enviar Formulario
         document.getElementById('formReporte').addEventListener('submit', function (e) {

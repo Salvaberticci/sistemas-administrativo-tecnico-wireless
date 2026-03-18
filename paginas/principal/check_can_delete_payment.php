@@ -25,18 +25,11 @@ $result = $stmt->get_result();
 $data = $result->fetch_assoc();
 
 if (!$data) {
-    // If no contract is found, we assume it can be deleted (though logic holds they should have one)
+    // If no contract is found, we assume it can be deleted
     echo json_encode(['success' => true, 'can_delete' => true]);
 } else {
-    if ($data['estado'] === 'ACTIVO') {
-        echo json_encode([
-            'success' => true, 
-            'can_delete' => false, 
-            'message' => "No se puede eliminar porque el cliente {$data['nombre_completo']} tiene un contrato ACTIVO."
-        ]);
-    } else {
-        echo json_encode(['success' => true, 'can_delete' => true]);
-    }
+    // Always allow deletion regardless of contract status
+    echo json_encode(['success' => true, 'can_delete' => true]);
 }
 
 $conn->close();

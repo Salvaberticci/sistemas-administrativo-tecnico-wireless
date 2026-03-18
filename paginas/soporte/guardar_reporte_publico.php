@@ -55,6 +55,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $tipo_falla = isset($_POST['tipo_falla']) ? $conn->real_escape_string($_POST['tipo_falla']) : '';
     $sugerencias = isset($_POST['sugerencias']) ? $conn->real_escape_string($_POST['sugerencias']) : '';
     $solucion_completada = isset($_POST['solucion_completada']) ? 1 : 0;
+    $id_olt = (isset($_POST['id_olt']) && !empty($_POST['id_olt'])) ? intval($_POST['id_olt']) : 'NULL';
+    $id_pon = (isset($_POST['id_pon']) && !empty($_POST['id_pon'])) ? intval($_POST['id_pon']) : 'NULL';
 
     // Monto (Costo de visita)
     $monto_total = isset($_POST['monto_total']) ? floatval($_POST['monto_total']) : 0.00;
@@ -81,13 +83,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 sector, tipo_servicio, ip_address, estado_onu, estado_router, modelo_router,
                 bw_bajada, bw_subida, bw_ping, num_dispositivos,
                 estado_antena, valores_antena, sugerencias, solucion_completada,
-                firma_tecnico, firma_cliente, prioridad
+                firma_tecnico, firma_cliente, prioridad, id_olt, id_pon
             ) VALUES (
                 '$id_contrato', '$descripcion_corta', '$monto_total', '$monto_pagado', '$fecha', '$hora_solucion', '$tiempo_transcurrido', '$tecnico_nombre', '$observaciones', '$tipo_falla',
                 '$sector', '$tipo_servicio', '$ip', '$estado_onu', '$estado_router', '$modelo_router',
                 '$bw_bajada', '$bw_subida', '$bw_ping', '$num_dispositivos',
                 '$estado_antena', '$valores_antena', '$sugerencias', '$solucion_completada',
-                '$path_firma_tecnico', '$path_firma_cliente', 'NIVEL 2'
+                '$path_firma_tecnico', '$path_firma_cliente', 'NIVEL 2', $id_olt, $id_pon
             )";
 
             if (!$conn->query($sql)) {

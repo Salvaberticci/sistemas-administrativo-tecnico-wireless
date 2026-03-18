@@ -104,6 +104,31 @@ require_once 'includes/sidebar.php';
                                 required>
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-bold text-uppercase">Métodos de Pago Soportados</label>
+                        <div class="d-flex flex-wrap gap-3 p-2 border rounded bg-light">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="metodos_pago[]" value="Pago Móvil" id="reg_pago_movil">
+                                <label class="form-check-label small" for="reg_pago_movil">Pago Móvil</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="metodos_pago[]" value="Transferencia" id="reg_transferencia">
+                                <label class="form-check-label small" for="reg_transferencia">Transferencia</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="metodos_pago[]" value="Zelle" id="reg_zelle">
+                                <label class="form-check-label small" for="reg_zelle">Zelle</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="metodos_pago[]" value="Efectivo" id="reg_efectivo">
+                                <label class="form-check-label small" for="reg_efectivo">Efectivo</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="metodos_pago[]" value="Divisas" id="reg_divisas">
+                                <label class="form-check-label small" for="reg_divisas">Divisas</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer border-top-0">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
@@ -144,6 +169,31 @@ require_once 'includes/sidebar.php';
                             <label class="form-label small text-muted fw-bold text-uppercase">Titular</label>
                             <input type="text" name="titular_cuenta" id="edit_titular_cuenta" class="form-control"
                                 placeholder="Nombre completo" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-bold text-uppercase">Métodos de Pago Soportados</label>
+                        <div class="d-flex flex-wrap gap-3 p-2 border rounded bg-light">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="metodos_pago[]" value="Pago Móvil" id="edit_pago_movil">
+                                <label class="form-check-label small" for="edit_pago_movil">Pago Móvil</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="metodos_pago[]" value="Transferencia" id="edit_transferencia">
+                                <label class="form-check-label small" for="edit_transferencia">Transferencia</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="metodos_pago[]" value="Zelle" id="edit_zelle">
+                                <label class="form-check-label small" for="edit_zelle">Zelle</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="metodos_pago[]" value="Efectivo" id="edit_efectivo">
+                                <label class="form-check-label small" for="edit_efectivo">Efectivo</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="metodos_pago[]" value="Divisas" id="edit_divisas">
+                                <label class="form-check-label small" for="edit_divisas">Divisas</label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -211,9 +261,15 @@ require_once 'includes/sidebar.php';
 
             data.forEach(b => {
                 const tr = document.createElement('tr');
+                const metodos = b.metodos_pago || [];
+                const metodosHtml = metodos.map(m => `<span class="badge bg-info-subtle text-info border border-info-subtle me-1" style="font-size: 0.65rem;">${m}</span>`).join('');
+
                 tr.innerHTML = `
                     <td class="ps-4 text-muted">#${b.id_banco}</td>
-                    <td class="fw-bold">${b.nombre_banco}</td>
+                    <td>
+                        <div class="fw-bold">${b.nombre_banco}</div>
+                        <div class="mt-1">${metodosHtml || '<small class="text-muted italic">Sin métodos</small>'}</div>
+                    </td>
                     <td class="font-monospace text-muted">${b.numero_cuenta || 'N/A'}</td>
                     <td>
                         <div class="fw-semibold">${b.nombre_propietario || 'Sin titular'}</div>
@@ -278,6 +334,13 @@ require_once 'includes/sidebar.php';
         document.getElementById('edit_numero_cuenta').value = banco.numero_cuenta || '';
         document.getElementById('edit_cedula_propietario').value = banco.cedula_propietario || '';
         document.getElementById('edit_titular_cuenta').value = banco.nombre_propietario || '';
+
+        // Limpiar y marcar métodos de pago
+        const metodos = banco.metodos_pago || [];
+        $('#modalEditBanco input[name="metodos_pago[]"]').prop('checked', false);
+        metodos.forEach(m => {
+            $(`#modalEditBanco input[name="metodos_pago[]"][value="${m}"]`).prop('checked', true);
+        });
 
         const modal = new bootstrap.Modal(document.getElementById('modalEditBanco'));
         modal.show();

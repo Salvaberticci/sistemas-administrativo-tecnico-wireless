@@ -55,19 +55,19 @@ $cargos_a_procesar = [];
 if (isset($_POST['desglose_mensualidad_activado']) && $_POST['desglose_mensualidad_activado'] == '1') {
     $monto = floatval(str_replace(',', '.', $_POST['monto_mensualidad'] ?? 0));
     $meses = intval($_POST['meses_mensualidad'] ?? 1);
-    if ($monto > 0) $cargos_a_procesar[] = ['monto' => $monto, 'just' => "Mensualidad ($meses mes/es) - $justificacion_global"];
+    if ($monto > 0) $cargos_a_procesar[] = ['monto' => $monto, 'just' => "[MENSUALIDAD] Mensualidad ($meses mes/es) - $justificacion_global"];
 }
 if (isset($_POST['desglose_instalacion_activado']) && $_POST['desglose_instalacion_activado'] == '1') {
     $monto = floatval(str_replace(',', '.', $_POST['monto_instalacion'] ?? 0));
-    if ($monto > 0) $cargos_a_procesar[] = ['monto' => $monto, 'just' => "Instalación - $justificacion_global"];
+    if ($monto > 0) $cargos_a_procesar[] = ['monto' => $monto, 'just' => "[INSTALACION] Instalación - $justificacion_global"];
 }
 if (isset($_POST['desglose_prorrateo_activado']) && $_POST['desglose_prorrateo_activado'] == '1') {
     $monto = floatval(str_replace(',', '.', $_POST['monto_prorrateo'] ?? 0));
-    if ($monto > 0) $cargos_a_procesar[] = ['monto' => $monto, 'just' => "Prorrateo - $justificacion_global"];
+    if ($monto > 0) $cargos_a_procesar[] = ['monto' => $monto, 'just' => "[PRORRATEO] Prorrateo - $justificacion_global"];
 }
 if (isset($_POST['desglose_equipo_activado']) && $_POST['desglose_equipo_activado'] == '1') {
     $monto = floatval(str_replace(',', '.', $_POST['monto_equipo'] ?? 0));
-    if ($monto > 0) $cargos_a_procesar[] = ['monto' => $monto, 'just' => "Pago de Equipo - $justificacion_global"];
+    if ($monto > 0) $cargos_a_procesar[] = ['monto' => $monto, 'just' => "[EQUIPOS] Pago de Equipo - $justificacion_global"];
 }
 
 if (empty($cargos_a_procesar)) {

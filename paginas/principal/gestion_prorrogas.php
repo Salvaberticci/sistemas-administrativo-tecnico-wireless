@@ -8,10 +8,23 @@ $back_url = "../menu.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
 
-// Obtener planes para el select
+// Automated Maintenance: Avanzar Mes (Permanentes) y Limpiar Temporales Procesadas
+// Se ejecuta silenciosamente al cargar la página para mantener la lista al día.
+
+// 1. Avanzar mes para permanentes cuya fecha de corte ya pasó
+$conn->query("UPDATE prorrogas 
+              SET fecha_corte = DATE_ADD(fecha_corte, INTERVAL 1 MONTH) 
+              WHERE prorroga_regular = 'SI' 
+                AND fecha_corte < CURRENT_DATE");
+
+// 2. Limpiar temporales que ya pasaron Y fueron procesadas (o simplemente ignorarlas en el SELECT si se prefiere)
+// Por ahora borramos las que el cliente ya pagó y son temporales para no saturar.
+$conn->query("DELETE FROM prorrogas 
+              WHERE prorroga_regular = 'NO' 
+                AND fecha_corte < DATE_SUB(CURRENT_DATE, INTERVAL 10 DAY) 
+                AND estado = 'PROCESADO'");
+
 $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan ASC");
-$municipios = $conn->query("SELECT id_municipio, nombre_municipio FROM municipio ORDER BY nombre_municipio ASC");
-$metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO (BOLIVARES)", "ZELLE", "RESERVE", "BINANCE"];
 ?>
 
 <link href="<?php echo $path_to_root; ?>css/datatables.min.css" rel="stylesheet">
@@ -24,10 +37,6 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
         margin-bottom: 20px;
         color: #6c757d;
         border-left: 4px solid #0d6efd;
-    }
-
-    .modal-header-sales {
-        background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);
     }
 
     .modal-header-internal {
@@ -64,6 +73,14 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
                     <i class="fa-solid fa-user-clock me-1"></i> Nueva Prórroga
                 </button>
                 <div class="vr mx-1"></div>
+                <!-- Botones manuales opcionales (se mantienen por si el usuario quiere forzar la acción) -->
+                <button type="button" class="btn btn-outline-danger btn-sm shadow-sm" onclick="limpiarTemporales()">
+                    <i class="fa-solid fa-broom me-1"></i> Forzar Limpieza
+                </button>
+                <button type="button" class="btn btn-info btn-sm text-white shadow-sm" onclick="avanzarMesPermanentes()">
+                    <i class="fa-solid fa-rotate me-1"></i> Forzar Avance
+                </button>
+                <div class="vr mx-1"></div>
                 <button type="button" class="btn btn-success shadow-sm" onclick="exportExcel()">
                     <i class="fa-solid fa-file-excel me-1"></i> Exportar
                 </button>
@@ -80,11 +97,11 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
                     <table id="tabla_prorrogas" class="table table-hover align-middle w-100">
                         <thead class="bg-light">
                             <tr>
-                                <th>Fecha</th>
-                                <th>Tipo</th>
-                                <th>Cédula</th>
-                                <th>Nombre</th>
-                                <th>Estado</th>
+                                <th>Fecha Reg.</th>
+                                <th>Cliente / Titular</th>
+                                <th>Regular?</th>
+                                <th>Corte</th>
+                                <th>Estado / Pago</th>
                                 <th class="text-end">Acciones</th>
                             </tr>
                         </thead>
@@ -172,9 +189,45 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
         </div>
     </div>
 </div>
-
-
-
+<!-- Modal Editar Prórroga -->
+<div class="modal fade" id="modalEditarProrroga" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Editar Prórroga</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditar" action="editar_prorroga.php" method="POST">
+                <input type="hidden" name="id_prorroga" id="edit_id_prorroga">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre del Titular</label>
+                        <input type="text" name="nombre_titular" id="edit_nombre_titular" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Cédula</label>
+                        <input type="text" name="cedula_titular" id="edit_cedula_titular" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Fecha de Corte</label>
+                        <input type="date" name="fecha_corte" id="edit_fecha_corte" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">¿Es Permanente (Regular)?</label>
+                        <select name="prorroga_regular" id="edit_prorroga_regular" class="form-select" required>
+                            <option value="SI">SÍ (Permanente)</option>
+                            <option value="NO">NO (Temporal)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary px-4">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 </div>
 
 <!-- Modal Procesar Pago -->
@@ -280,25 +333,36 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
             },
             "columns": [
                 { "data": "fecha_registro" },
-                {
-                    "data": "tipo_solicitud", "render": function (data) {
-                        return data == 'PRORROGA' ? '<span class="badge bg-dark">Prórroga</span>' : '<span class="badge bg-primary">Venta</span>';
+                { 
+                    "data": "nombre_titular", "render": function (data, type, row) {
+                        return `<div><span class="fw-bold">${data}</span><br><small class="text-muted">${row.cedula_titular}</small></div>`;
                     }
                 },
-                { "data": "cedula_titular" },
-                { "data": "nombre_titular" },
                 {
-                    "data": "estado", "render": function (data) {
+                    "data": "prorroga_regular", "render": function (data) {
+                        return data == 'SI' ? '<span class="badge bg-info">Permanente</span>' : '<span class="badge bg-secondary">Temporal</span>';
+                    }
+                },
+                { "data": "fecha_corte" },
+                {
+                    "data": "estado", "render": function (data, type, row) {
+                        let html = '';
                         let badge = 'bg-warning';
                         if (data == 'PROCESADO') badge = 'bg-success';
                         if (data == 'RECHAZADO') badge = 'bg-danger';
-                        return `<span class="badge ${badge}">${data}</span>`;
+                        html += `<span class="badge ${badge}">${data}</span>`;
+                        
+                        // Nuevo: Indicator de pago detectado
+                        if (row.pagos_mes_actual > 0) {
+                            html += `<br><span class="badge bg-success-subtle text-success border border-success mt-1"><i class="fa-solid fa-check-double me-1"></i>Pago Detectado</span>`;
+                        }
+                        return html;
                     }
                 },
                 {
                     "data": "id_prorroga", "className": "text-end", "render": function (id, type, row) {
                         return `<div class="btn-group">
-                            ${row.estado == 'PENDIENTE' ? `<button class="btn btn-sm btn-outline-success" title="Procesar Pago" onclick="procesarPago(${id})"><i class="fa-solid fa-dollar-sign"></i></button>` : ''}
+                            <button class="btn btn-sm btn-outline-primary" title="Editar" onclick='abrirModalEditar(${JSON.stringify(row)})'><i class="fa-solid fa-edit"></i></button>
                             <button class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="eliminarProrroga(${id})"><i class="fa-solid fa-trash"></i></button>
                         </div>`;
                     }
@@ -306,15 +370,6 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
             ],
             "order": [[0, "desc"]],
             "language": { "url": "<?php echo $path_to_root; ?>js/es-ES.json" }
-        });
-
-        $('select[name="id_municipio"]').change(function () {
-            let id = $(this).val();
-            if (id) {
-                $.get('get_parroquias.php?id_municipio=' + id, function (data) {
-                    $('select[name="id_parroquia"]').html(data);
-                });
-            }
         });
 
         // Autocomplete para el Modal Interno
@@ -388,16 +443,79 @@ $metodos_pago = ["TRANSFERENCIA", "PAGO MOVIL", "EFECTIVO (DOLARES)", "EFECTIVO 
         });
     }
 
-    function procesarPago(id) {
-        // Abrir modal de pago con los datos de la prórroga
-        fetch(`get_prorroga_detalle.php?id=${id}`)
-            .then(r => r.json())
-            .then(data => {
-                $('#pago_id_prorroga').val(data.id_prorroga);
-                $('#pago_nombre_titular').text(data.nombre_titular);
-                $('#pago_tipo').text(data.tipo_solicitud);
-                $('#modalProcesarPago').modal('show');
-            });
+    function abrirModalEditar(data) {
+        document.getElementById('edit_id_prorroga').value = data.id_prorroga;
+        document.getElementById('edit_nombre_titular').value = data.nombre_titular;
+        document.getElementById('edit_cedula_titular').value = data.cedula_titular;
+        document.getElementById('edit_fecha_corte').value = data.fecha_corte;
+        document.getElementById('edit_prorroga_regular').value = data.prorroga_regular;
+        $('#modalEditarProrroga').modal('show');
+    }
+
+    $("#formEditar").on("submit", function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch('editar_prorroga.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                Swal.fire('Éxito', res.message, 'success');
+                $('#modalEditarProrroga').modal('hide');
+                $('#tabla_prorrogas').DataTable().ajax.reload();
+            } else {
+                Swal.fire('Error', res.message, 'error');
+            }
+        });
+    });
+
+    function limpiarTemporales() {
+        Swal.fire({
+            title: '¿Limpiar Prórrogas Temporales?',
+            text: "Se eliminarán las prórrogas temporales ya procesadas para limpiar tu listado.",
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, limpiar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                ejecutarAccionBulk('limpiar_temporales');
+            }
+        });
+    }
+
+    function avanzarMesPermanentes() {
+        Swal.fire({
+            title: '¿Avanzar Mes a Permanentes?',
+            text: "Se sumará 1 mes a la fecha de corte de todos los clientes con prórroga regular/permanente.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, avanzar fecha',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                ejecutarAccionBulk('avanzar_mes');
+            }
+        });
+    }
+
+    function ejecutarAccionBulk(action) {
+        fetch('acciones_bulk_prorrogas.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: action })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                Swal.fire('Completado', res.message, 'success');
+                $('#tabla_prorrogas').DataTable().ajax.reload();
+            } else {
+                Swal.fire('Error', res.message, 'error');
+            }
+        });
     }
 
     async function exportExcel() {

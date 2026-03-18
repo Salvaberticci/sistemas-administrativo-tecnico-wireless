@@ -2,7 +2,6 @@
 require_once '../conexion.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $tipo = $_POST['tipo_solicitud'];
     $cedula = $_POST['cedula_titular'];
     $nombre = $_POST['nombre_titular'];
     $fecha_corte = !empty($_POST['fecha_corte']) ? $_POST['fecha_corte'] : null;
@@ -10,19 +9,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Prórroga Interna
     $existe_saeplus = $_POST['existe_saeplus'] ?? 'NO';
     $prorroga_regular = $_POST['prorroga_regular'] ?? 'SI';
-
-    // Ventas
-    $telefono = $_POST['telefono'] ?? null;
-    $telefono_extra = $_POST['telefono_extra'] ?? null;
-    $email = $_POST['email'] ?? null;
-    $id_municipio = !empty($_POST['id_municipio']) ? (int) $_POST['id_municipio'] : null;
-    $id_parroquia = !empty($_POST['id_parroquia']) ? (int) $_POST['id_parroquia'] : null;
-    $direccion = $_POST['direccion'] ?? null;
-    $id_plan = !empty($_POST['id_plan']) ? (int) $_POST['id_plan'] : null;
-    $fecha_firma = !empty($_POST['fecha_firma']) ? $_POST['fecha_firma'] : null;
-    $prorateo = $_POST['prorateo'] ?? null;
-    $metodo_pago = $_POST['metodo_pago'] ?? null;
-    $fecha_instalacion = !empty($_POST['fecha_instalacion']) ? $_POST['fecha_instalacion'] : null;
     $estado_venta = $_POST['estado_venta'] ?? null;
 
     $path_contrato = null;

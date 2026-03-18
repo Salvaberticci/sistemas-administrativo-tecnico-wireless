@@ -6,6 +6,7 @@ require_once '../conexion.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id_soporte = isset($_POST['id_soporte_eliminar']) ? intval($_POST['id_soporte_eliminar']) : 0;
+    $is_json = isset($_POST['json']) && $_POST['json'] == 1;
 
     if ($id_soporte > 0) {
         $conn->begin_transaction();
@@ -36,13 +37,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
             $conn->commit();
+            
+            if ($is_json) {
+                echo json_encode(["success" => true, "message" => "Registro eliminado correctamente."]);
+                exit;
+            }
             header("Location: historial_soportes.php?status=success&msg=Registro eliminado correctamente.");
 
         } catch (Exception $e) {
             $conn->rollback();
+            if ($is_json) {
+                echo json_encode(["success" => false, "message" => $e->getMessage()]);
+                exit;
+            }
             header("Location: historial_soportes.php?status=error&msg=Error: " . urlencode($e->getMessage()));
         }
     } else {
+        if ($is_json) {
+            echo json_encode(["success" => false, "message" => "ID inválido."]);
+            exit;
+        }
         header("Location: historial_soportes.php?status=error&msg=ID inválido.");
     }
 }

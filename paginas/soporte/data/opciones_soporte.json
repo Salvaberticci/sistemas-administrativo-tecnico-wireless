@@ -1,19 +1,46 @@
 {
-    "tipos_falla": [
-        "Sin Señal / LOS",
-        "Internet Lento",
-        "Cortes Intermitentes",
-        "Router Dañado",
-        "ONU Apagada/Dañada",
-        "Antena Desalineada",
-        "Cable Dañado",
-        "Fibra Cortada",
-        "Problema Eléctrico",
-        "Configuración Incorrecta",
-        "Dispositivo del Cliente",
-        "Saturación de Red",
-        "Mantenimiento Preventivo",
-        "Cambio de Equipo",
-        "Otro"
+    "NIVEL 1": [
+        "Red WiFi desactivada en el equipo",
+        "Nombre de red (SSID) no visible",
+        "Cliente conectado a la red incorrecta",
+        "Interferencias WiFi (muchos dispositivos conectados)",
+        "Configuración incorrecta de dispositivos (TV, celular, PC)",
+        "Aplicaciones que no cargan por configuración del dispositivo",
+        "Lentitud por exceso de usuarios conectados",
+        "Modo avión activado o WiFi desactivado en el dispositivo",
+        "Router sobrecalentado (requiere apagado y encendido)",
+        "Problemas por ubicación del router (muy lejos o con obstáculos)",
+        "Fallas temporales del sistema que se solucionan con reinicio",
+        "Actualización pendiente del equipo del cliente"
+    ],
+    "NIVEL 2": [
+        "Cableado interno deteriorado o mal instalado",
+        "Conectores sueltos o mal ponchados",
+        "Daño en el patch cord (cable de fibra del equipo)",
+        "Router o ONT que no enciende",
+        "Luces de alarma (LOS en rojo, sin señal óptica)",
+        "Baja potencia de señal de fibra",
+        "Instalación defectuosa inicial",
+        "Cambio de equipo dañado",
+        "Reubicación del punto de conexión dentro del hogar",
+        "Problemas con la fuente de poder del equipo",
+        "Antena mal orientada (servicios inalámbricos)",
+        "Interferencia externa que requiere ajuste técnico",
+        "Caídas frecuentes del servicio por falla física"
+    ],
+    "NIVEL 3": [
+        "Corte total de fibra troncal",
+        "Daño en cajas de distribución (NAP o CTO)",
+        "Caída de nodos o centrales de red",
+        "Fallas en equipos principales del proveedor",
+        "Mantenimiento no programado que afecta el servicio",
+        "Robo o vandalismo de infraestructura",
+        "Incendios que afectan la red",
+        "Fallas eléctricas masivas en la zona",
+        "Saturación de red en horas pico (congestión severa)",
+        "Problemas en enlaces principales de transporte de datos",
+        "Actualizaciones de red fallidas",
+        "Caída de servidores o sistemas del proveedor",
+        "Desastres naturales (huracanes, tormentas, inundaciones, etc.)"
     ]
 }

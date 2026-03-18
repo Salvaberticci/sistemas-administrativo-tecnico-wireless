@@ -61,6 +61,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $estado_antena = isset($_POST['estado_antena']) ? $conn->real_escape_string($_POST['estado_antena']) : '';
     $valores_antena = isset($_POST['valores_antena']) ? $conn->real_escape_string($_POST['valores_antena']) : '';
     $solucion_completada = isset($_POST['solucion_completada']) ? 1 : 0;
+    $id_olt = (isset($_POST['id_olt']) && !empty($_POST['id_olt'])) ? intval($_POST['id_olt']) : 'NULL';
+    $id_pon = (isset($_POST['id_pon']) && !empty($_POST['id_pon'])) ? intval($_POST['id_pon']) : 'NULL';
 
     // Firmas
     $firma_tecnico_b64 = isset($_POST['firma_tecnico_data']) ? $_POST['firma_tecnico_data'] : '';
@@ -93,13 +95,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 sector, tipo_servicio, ip_address, estado_onu, estado_router, modelo_router,
                 bw_bajada, bw_subida, bw_ping, num_dispositivos,
                 estado_antena, valores_antena, sugerencias, solucion_completada,
-                firma_tecnico, firma_cliente, token_firma, estado_firma, prioridad
+                firma_tecnico, firma_cliente, token_firma, estado_firma, prioridad, id_olt, id_pon
             ) VALUES (
                 '$id_contrato', '$descripcion_problema', '$monto_total', '$monto_pagado', '$fecha_soporte', '$tecnico', '$descripcion_problema',
                 '$sector', '$tipo_servicio', '$ip', '$estado_onu', '$estado_router', '$modelo_router',
                 '$bw_bajada', '$bw_subida', '$bw_ping', '$num_dispositivos',
                 '$estado_antena', '$valores_antena', '$sugerencias', '$solucion_completada',
-                '$path_firma_tech', '$path_firma_cli', " . ($token_firma ? "'$token_firma'" : "NULL") . ", '$estado_firma', '$prioridad'
+                '$path_firma_tech', '$path_firma_cli', " . ($token_firma ? "'$token_firma'" : "NULL") . ", '$estado_firma', '$prioridad', $id_olt, $id_pon
             )";
 
             if (!$conn->query($sql_soporte)) {

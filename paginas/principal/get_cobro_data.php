@@ -12,9 +12,12 @@ if ($id_cobro <= 0) {
 $sql = "
     SELECT 
         cxc.*,
-        co.nombre_completo AS nombre_cliente
+        co.nombre_completo AS nombre_cliente,
+        h.justificacion,
+        h.autorizado_por
     FROM cuentas_por_cobrar cxc
     JOIN contratos co ON cxc.id_contrato = co.id
+    LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc
     WHERE cxc.id_cobro = ?
 ";
 
@@ -32,9 +35,12 @@ if ($result->num_rows === 1) {
         $sql_group = "
             SELECT 
                 cxc.*,
-                co.nombre_completo AS nombre_cliente
+                co.nombre_completo AS nombre_cliente,
+                h.justificacion,
+                h.autorizado_por
             FROM cuentas_por_cobrar cxc
             JOIN contratos co ON cxc.id_contrato = co.id
+            LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc
             WHERE cxc.id_grupo_pago = ?
         ";
         $stmt_g = $conn->prepare($sql_group);
@@ -50,7 +56,7 @@ if ($result->num_rows === 1) {
         $all_concepts[] = $data;
     }
 
-    echo json_encode(['success' => true, 'data' => $data, 'all_concepts' => $all_concepts]);
+    echo json_encode(['success' => true, 'is_updated' => true, 'data' => $data, 'all_concepts' => $all_concepts]);
 } else {
     echo json_encode(['success' => false, 'message' => 'Cobro no encontrado.']);
 }

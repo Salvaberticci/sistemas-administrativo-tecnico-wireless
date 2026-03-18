@@ -9,6 +9,7 @@ $tipo = isset($_GET['tipo']) ? $_GET['tipo'] : 'todos';
 $fecha_inicio = isset($_GET['fecha_inicio']) ? $_GET['fecha_inicio'] : '';
 $fecha_fin = isset($_GET['fecha_fin']) ? $_GET['fecha_fin'] : '';
 $id_banco = isset($_GET['id_banco']) ? $_GET['id_banco'] : '';
+$filtro_tipo = isset($_GET['filtro_tipo']) ? $_GET['filtro_tipo'] : '';
 
 // Construir consulta
 $sWhere = "WHERE 1=1";
@@ -19,6 +20,22 @@ if (!empty($fecha_inicio) && !empty($fecha_fin)) {
 
 if ($tipo === 'filtrado' && !empty($id_banco)) {
     $sWhere .= " AND cxc.id_banco = '" . $conn->real_escape_string($id_banco) . "'";
+}
+
+if (!empty($filtro_tipo)) {
+    if ($filtro_tipo === 'Mensualidad') {
+        $sWhere .= " AND (h.justificacion LIKE '%[MENSUALIDAD]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL) OR h.justificacion LIKE '%mensualidad%')";
+    } elseif ($filtro_tipo === 'Instalacion') {
+        $sWhere .= " AND (h.justificacion LIKE '%[INSTALACION]%' OR h.justificacion LIKE '%instalación%' OR h.justificacion LIKE '%instalacion%')";
+    } elseif ($filtro_tipo === 'Equipos') {
+        $sWhere .= " AND (h.justificacion LIKE '%[EQUIPOS]%' OR h.justificacion LIKE '%equipo%' OR h.justificacion LIKE '%material%')";
+    } elseif ($filtro_tipo === 'Prorrateo') {
+        $sWhere .= " AND (h.justificacion LIKE '%[PRORRATEO]%' OR h.justificacion LIKE '%prorrateo%')";
+    } elseif ($filtro_tipo === 'Abono') {
+        $sWhere .= " AND (h.justificacion LIKE '%[ABONO]%' OR h.justificacion LIKE '%abono%' OR h.justificacion LIKE '%saldo a favor%')";
+    } elseif ($filtro_tipo === 'Extra') {
+        $sWhere .= " AND (h.justificacion LIKE '%[EXTRA]%' OR h.justificacion LIKE '%terceros%' OR h.justificacion LIKE '%extra%')";
+    }
 }
 // Si es 'todos' (global), NO aplicamos el filtro de banco, pero sí el de fechas si existen.
 
@@ -70,10 +87,11 @@ echo "\xEF\xBB\xBF";
 echo "<table border='1'>";
 echo "<thead>
         <tr style='background-color: #0d6efd; color: white;'>
-            <th>Fecha de registro</th>
-            <th>Numero de Referencia</th>
+            <th>Fecha</th>
+            <th>Referencia</th>
             <th>Cliente</th>
             <th>Concepto</th>
+            <th>Detalle</th>
             <th>Monto</th>
             <th>Cuenta</th>
             <th>Estado</th>
@@ -86,8 +104,28 @@ while ($row = $result->fetch_assoc()) {
     $fecha_display = $row['fecha_pago'] ? $row['fecha_pago'] : $row['fecha_emision'];
     $fecha_fmt = date('d/m/Y', strtotime($fecha_display));
     
-    // Concepto
-    $concepto = !empty($row['justificacion']) ? htmlspecialchars($row['justificacion']) : htmlspecialchars($row['nombre_plan']);
+    // Concepto Parsing (Sync with Table)
+    $justif = $row['justificacion'] ?: '';
+    $conceptosArr = [];
+    if (strpos($justif, '[MENSUALIDAD]') !== false) $conceptosArr[] = 'Mensualidad';
+    if (strpos($justif, '[INSTALACION]') !== false) $conceptosArr[] = 'Instalación';
+    if (strpos($justif, '[EQUIPOS]') !== false) $conceptosArr[] = 'Equipos / Materiales';
+    if (strpos($justif, '[PRORRATEO]') !== false) $conceptosArr[] = 'Prorrateo';
+    if (strpos($justif, '[ABONO]') !== false) $conceptosArr[] = 'Abono / Saldo a Favor';
+    if (strpos($justif, '[EXTRA]') !== false) $conceptosArr[] = 'Pago de Terceros';
+
+    if (count($conceptosArr) > 0) {
+        $concepto_main = implode(' + ', $conceptosArr);
+    } elseif ($justif && strpos($justif, '||') === false) {
+        $concepto_main = 'Cargo Manual / Otro';
+    } elseif ($row['nombre_plan']) {
+        $concepto_main = 'Mensualidad / ' . $row['nombre_plan'];
+    } else {
+        $concepto_main = 'Varios / Otros';
+    }
+    
+    $detalle = str_replace(' || ', ' | ', $justif);
+    if (empty($detalle)) $detalle = '-';
     
     $monto = number_format($row['monto_total'], 2, ',', '.');
     
@@ -99,7 +137,8 @@ while ($row = $result->fetch_assoc()) {
     echo "<td>" . $fecha_fmt . "</td>";
     echo "<td>" . ($row['referencia_pago'] ?? '-') . "</td>";
     echo "<td>" . htmlspecialchars($row['nombre_completo']) . "</td>";
-    echo "<td>" . $concepto . "</td>";
+    echo "<td>" . htmlspecialchars($concepto_main) . "</td>";
+    echo "<td>" . htmlspecialchars($detalle) . "</td>";
     echo "<td>" . $monto . "</td>";
     echo "<td>" . htmlspecialchars($nombre_banco) . "</td>";
     echo "<td>" . htmlspecialchars($row['estado']) . "</td>";

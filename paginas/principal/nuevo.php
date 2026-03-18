@@ -1054,6 +1054,40 @@ require_once '../includes/sidebar.php';
             }
         }
 
+        // ======================================================
+        // LÓGICA DE VERIFICACIÓN DE CÉDULA DUPLICADA
+        // ======================================================
+        $('#cedula').on('blur', function () {
+            const cedula = $(this).val().trim();
+            const tipoCedula = $('#tipo_cedula').val();
+
+            if (cedula.length > 0) {
+                $.ajax({
+                    url: 'check_cedula_api.php',
+                    type: 'GET',
+                    data: {
+                        cedula: cedula,
+                        tipo_cedula: tipoCedula
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.exists) {
+                            Swal.fire({
+                                title: '¡Cédula Detectada!',
+                                html: `Ya existe un contrato registrado con esta cédula (<b>${tipoCedula}-${cedula}</b>) a nombre de:<br><b>${response.nombre_completo}</b>`,
+                                icon: 'warning',
+                                confirmButtonColor: '#3085d6',
+                                confirmButtonText: 'Entendido'
+                            });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error al verificar cédula:", error);
+                    }
+                });
+            }
+        });
+
     });
 </script>
 

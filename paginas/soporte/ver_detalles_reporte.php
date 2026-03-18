@@ -16,11 +16,13 @@ if ($id_soporte == 0) {
     header('Location: gestion_fallas.php');
     exit;
 }
-
 // Consultar datos completos del reporte
-$sql = "SELECT s.*, c.nombre_completo, c.cedula, c.ip_onu as ip, c.direccion, c.telefono
-        FROM soporte_tecnico s 
+$sql = "SELECT s.*, c.nombre_completo, c.cedula, c.ip_onu as ip, c.direccion, c.telefono,
+               o.nombre_olt, p.nombre_pon
+        FROM soportes s 
         LEFT JOIN contratos c ON s.id_contrato = c.id 
+        LEFT JOIN olt o ON s.id_olt = o.id_olt
+        LEFT JOIN pon p ON s.id_pon = p.id_pon
         WHERE s.id_soporte = $id_soporte";
 
 $result = $conn->query($sql);
@@ -123,30 +125,30 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
                         <div class="row mb-3">
                             <div class="col-4 detail-label">Nombre:</div>
                             <div class="col-8 detail-value">
-                                <?php echo htmlspecialchars($reporte['nombre_completo']); ?>
+                                <?php echo htmlspecialchars($reporte['nombre_completo'] ?? '—'); ?>
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-4 detail-label">Cédula:</div>
                             <div class="col-8 detail-value">
-                                <?php echo htmlspecialchars($reporte['cedula']); ?>
+                                <?php echo htmlspecialchars($reporte['cedula'] ?? '—'); ?>
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-4 detail-label">IP Asignada:</div>
-                            <div class="col-8 detail-value"><code><?php echo htmlspecialchars($reporte['ip']); ?></code>
+                            <div class="col-8 detail-value"><code class="text-pink"><?php echo htmlspecialchars($reporte['ip_address'] ?? '—'); ?></code>
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-4 detail-label">Teléfono:</div>
                             <div class="col-8 detail-value">
-                                <?php echo htmlspecialchars($reporte['telefono']); ?>
+                                <?php echo htmlspecialchars($reporte['telefono'] ?? '—'); ?>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-4 detail-label">Dirección:</div>
                             <div class="col-8 detail-value">
-                                <?php echo htmlspecialchars($reporte['direccion']); ?>
+                                <?php echo htmlspecialchars($reporte['direccion'] ?? '—'); ?>
                             </div>
                         </div>
                     </div>
@@ -161,31 +163,53 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
                         <div class="row mb-3">
                             <div class="col-4 detail-label">Fecha:</div>
                             <div class="col-8 detail-value">
-                                <?php echo date('d/m/Y', strtotime($reporte['fecha_soporte'])); ?>
+                                <?php echo $reporte['fecha_soporte'] ? date('d/m/Y', strtotime($reporte['fecha_soporte'])) : '—'; ?>
                             </div>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-4 detail-label">Sector:</div>
+                            <div class="col-4 detail-label">Hora:</div>
                             <div class="col-8 detail-value">
-                                <?php echo htmlspecialchars($reporte['sector']); ?>
+                                <?php echo $reporte['hora_solucion'] ? date('h:i A', strtotime($reporte['hora_solucion'])) : '—'; ?>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4 detail-label">Tiempo:</div>
+                            <div class="col-8 detail-value">
+                                <?php echo htmlspecialchars($reporte['tiempo_transcurrido'] ?? '—'); ?>
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-4 detail-label">Técnico:</div>
                             <div class="col-8 detail-value">
-                                <?php echo htmlspecialchars($reporte['tecnico_asignado']); ?>
+                                <?php echo htmlspecialchars($reporte['tecnico_asignado'] ?? '—'); ?>
                             </div>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-4 detail-label">Tipo Servicio:</div>
+                            <div class="col-4 detail-label">Sector:</div>
                             <div class="col-8 detail-value">
-                                <span class="badge bg-secondary">
-                                    <?php echo htmlspecialchars($reporte['tipo_servicio']); ?>
-                                </span>
+                                <?php echo htmlspecialchars($reporte['sector'] ?? '—'); ?>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-4 detail-label">Nivel de Prioridad:</div>
+                        <div class="row mb-3">
+                            <div class="col-4 detail-label">OLT:</div>
+                            <div class="col-8 detail-value">
+                                <span class="badge bg-dark"><?php echo htmlspecialchars($reporte['nombre_olt'] ?? '—'); ?></span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4 detail-label">PON:</div>
+                            <div class="col-8 detail-value">
+                                <span class="badge bg-secondary"><?php echo htmlspecialchars($reporte['nombre_pon'] ?? '—'); ?></span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4 detail-label">Tipo Falla:</div>
+                            <div class="col-8 detail-value">
+                                <?php echo htmlspecialchars($reporte['tipo_falla'] ?? '—'); ?>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4 detail-label">Prioridad:</div>
                             <div class="col-8 detail-value">
                                 <?php
                                 $p = strtoupper($reporte['prioridad'] ?? 'NIVEL 1');
@@ -200,6 +224,12 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
                                 ?>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-4 detail-label">Caída Crítica:</div>
+                            <div class="col-8 detail-value">
+                                <?php echo ($reporte['es_caida_critica'] == 1) ? '<span class="text-danger fw-bold">Sí</span>' : 'No'; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -210,7 +240,7 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
                     </div>
                     <div class="card-body">
                         <div class="row mb-3">
-                            <div class="col-6 detail-label">Costo de Visita:</div>
+                            <div class="col-6 detail-label">Total:</div>
                             <div class="col-6 detail-value text-end">
                                 <strong class="text-primary">$
                                     <?php echo number_format($reporte['monto_total'], 2); ?>
@@ -218,7 +248,7 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
                             </div>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-6 detail-label">Monto Pagado:</div>
+                            <div class="col-6 detail-label">Pagado:</div>
                             <div class="col-6 detail-value text-end">
                                 <strong class="text-success">$
                                     <?php echo number_format($reporte['monto_pagado'], 2); ?>
@@ -227,7 +257,7 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
                         </div>
                         <hr>
                         <div class="row">
-                            <div class="col-6 detail-label">Saldo Pendiente:</div>
+                            <div class="col-6 detail-label">Saldo:</div>
                             <div class="col-6 detail-value text-end">
                                 <strong class="<?php echo $saldo > 0.01 ? 'text-danger' : 'text-success'; ?>">
                                     $
@@ -235,15 +265,6 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
                                 </strong>
                             </div>
                         </div>
-                        <?php if ($saldo <= 0.01): ?>
-                            <div class="alert alert-success mt-3 mb-0">
-                                <i class="fa-solid fa-check-circle me-2"></i>Pago completado
-                            </div>
-                        <?php else: ?>
-                            <div class="alert alert-warning mt-3 mb-0">
-                                <i class="fa-solid fa-exclamation-triangle me-2"></i>Pago pendiente
-                            </div>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -253,69 +274,52 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
                 <!-- Diagnóstico Técnico -->
                 <div class="card mb-3 border-0 shadow-sm">
                     <div class="card-header bg-warning">
-                        <h6 class="mb-0"><i class="fa-solid fa-tools me-2"></i>Diagnóstico Técnico</h6>
+                        <h6 class="mb-0"><i class="fa-solid fa-tools me-2"></i>Diagnóstico</h6>
                     </div>
                     <div class="card-body">
-                        <h6 class="text-muted mb-3">Estado de Equipos</h6>
                         <div class="row mb-2">
-                            <div class="col-6 detail-label">Estado ONU:</div>
+                            <div class="col-6 detail-label">ONU:</div>
                             <div class="col-6 detail-value"><span class="badge bg-info">
-                                    <?php echo htmlspecialchars($reporte['estado_onu']); ?>
+                                    <?php echo htmlspecialchars($reporte['estado_onu'] ?? '—'); ?>
                                 </span></div>
                         </div>
                         <div class="row mb-2">
-                            <div class="col-6 detail-label">Estado Router:</div>
+                            <div class="col-6 detail-label">Router:</div>
                             <div class="col-6 detail-value"><span class="badge bg-info">
-                                    <?php echo htmlspecialchars($reporte['estado_router']); ?>
+                                    <?php echo htmlspecialchars($reporte['estado_router'] ?? '—'); ?>
                                 </span></div>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-6 detail-label">Modelo Router:</div>
+                            <div class="col-6 detail-label">Modelo:</div>
                             <div class="col-6 detail-value">
-                                <?php echo htmlspecialchars($reporte['modelo_router']); ?>
+                                <?php echo htmlspecialchars($reporte['modelo_router'] ?? '—'); ?>
                             </div>
                         </div>
 
                         <hr>
-                        <h6 class="text-muted mb-3">Medición de Ancho de Banda</h6>
                         <div class="row mb-2">
-                            <div class="col-6 detail-label">Bajada:</div>
-                            <div class="col-6 detail-value">
-                                <?php echo htmlspecialchars($reporte['bw_bajada']); ?> MB
-                            </div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-6 detail-label">Subida:</div>
-                            <div class="col-6 detail-value">
-                                <?php echo htmlspecialchars($reporte['bw_subida']); ?> MB
-                            </div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-6 detail-label">Ping:</div>
-                            <div class="col-6 detail-value">
-                                <?php echo htmlspecialchars($reporte['bw_ping']); ?> ms
-                            </div>
+                            <div class="col-12 detail-label">BW: <span class="text-dark">↓<?php echo htmlspecialchars($reporte['bw_bajada'] ?? '0'); ?> / ↑<?php echo htmlspecialchars($reporte['bw_subida'] ?? '0'); ?> / Ping:<?php echo htmlspecialchars($reporte['bw_ping'] ?? '0'); ?></span></div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-6 detail-label">Dispositivos:</div>
                             <div class="col-6 detail-value">
-                                <?php echo htmlspecialchars($reporte['num_dispositivos']); ?>
+                                <?php echo htmlspecialchars($reporte['num_dispositivos'] ?? '0'); ?>
                             </div>
                         </div>
 
-                        <?php if (!empty($reporte['estado_antena'])): ?>
+                        <?php if ($reporte['tipo_servicio'] === 'RADIO' || !empty($reporte['estado_antena'])): ?>
                             <hr>
                             <h6 class="text-muted mb-3">Antena (Solo Radio)</h6>
                             <div class="row mb-2">
                                 <div class="col-6 detail-label">Estado:</div>
                                 <div class="col-6 detail-value">
-                                    <?php echo htmlspecialchars($reporte['estado_antena']); ?>
+                                    <?php echo htmlspecialchars($reporte['estado_antena'] ?? '—'); ?>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-6 detail-label">Valores:</div>
                                 <div class="col-6 detail-value">
-                                    <?php echo htmlspecialchars($reporte['valores_antena']); ?> dBm
+                                    <?php echo htmlspecialchars($reporte['valores_antena'] ?? '—'); ?> dBm
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -325,23 +329,19 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
                 <!-- Observaciones -->
                 <div class="card mb-3 border-0 shadow-sm">
                     <div class="card-header bg-secondary text-white">
-                        <h6 class="mb-0"><i class="fa-solid fa-clipboard me-2"></i>Observaciones y Sugerencias</h6>
+                        <h6 class="mb-0"><i class="fa-solid fa-clipboard me-2"></i>Observaciones</h6>
                     </div>
                     <div class="card-body">
-                        <h6 class="detail-label">Observaciones:</h6>
-                        <p class="detail-value mb-3">
-                            <?php echo nl2br(htmlspecialchars($reporte['observaciones'])); ?>
-                        </p>
-
-                        <h6 class="detail-label">Sugerencias al Cliente:</h6>
-                        <p class="detail-value mb-3">
-                            <?php echo nl2br(htmlspecialchars($reporte['sugerencias'])); ?>
-                        </p>
+                        <div class="mb-3">
+                            <p class="detail-value">
+                                <?php echo !empty($reporte['observaciones']) ? nl2br(htmlspecialchars($reporte['observaciones'])) : '—'; ?>
+                            </p>
+                        </div>
 
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" <?php echo $reporte['solucion_completada'] ? 'checked' : ''; ?> disabled>
                             <label class="form-check-label fw-bold">
-                                Solución de Falla Completada
+                                Solucionada: <span class="badge <?php echo $reporte['solucion_completada'] ? 'bg-success' : 'bg-danger'; ?>"><?php echo $reporte['solucion_completada'] ? 'SÍ' : 'NO'; ?></span>
                             </label>
                         </div>
                     </div>
@@ -385,3 +385,4 @@ $saldo = $reporte['monto_total'] - $reporte['monto_pagado'];
 </main>
 
 <?php require_once $path_to_root . 'paginas/includes/layout_foot.php'; ?>
+/layout_foot.php'; ?>

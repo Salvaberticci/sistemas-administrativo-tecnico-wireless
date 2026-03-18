@@ -142,11 +142,11 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
                                     </select>
                                 </div>
 
-                                <!-- Campos condicionales para Banco y Referencia -->
-                                <div class="col-md-6 d-none" id="div_banco">
+                                <!-- Campos obligatorios para Banco y Referencia -->
+                                <div class="col-md-6" id="div_banco">
                                     <label class="form-label">¿A qué banco pagó? <span
                                             class="text-danger">*</span></label>
-                                    <select class="form-select" name="id_banco_destino" id="id_banco_destino">
+                                    <select class="form-select" name="id_banco_destino" id="id_banco_destino" required>
                                         <option value="">Seleccione el banco receptor...</option>
                                         <?php foreach ($bancosArr as $b): ?>
                                             <option value="<?php echo $b['id_banco']; ?>">
@@ -155,10 +155,12 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
-                                <label class="form-label">Número de Referencia <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="referencia" id="referencia"
-                                    placeholder="Últimos 4 o 6 dígitos" inputmode="numeric" pattern="[0-9]{4,20}">
+                                <div class="col-md-6" id="div_referencia">
+                                    <label class="form-label">Número de Referencia <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="referencia" id="referencia"
+                                        placeholder="Últimos 4 o 6 dígitos" inputmode="numeric" pattern="[0-9]{4,20}" required>
+                                </div>
                             </div>
 
                             <div class="col-md-6">
@@ -238,19 +240,38 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
         const divRef = document.getElementById('div_referencia');
         const inputBanco = document.getElementById('id_banco_destino');
         const inputRef = document.getElementById('referencia');
-
+ 
+        // Datos de bancos para filtrado dinámico
+        const todosLosBancos = <?php echo json_encode($bancosArr); ?>;
+ 
         metodoPago.addEventListener('change', function () {
-            const val = this.value;
-            if (val === 'Pago Móvil' || val === 'Transferencia' || val === 'Zelle') {
-                divBanco.classList.remove('d-none');
-                divRef.classList.remove('d-none');
-                inputBanco.required = true;
-                inputRef.required = true;
-            } else {
-                divBanco.classList.add('d-none');
-                divRef.classList.add('d-none');
-                inputBanco.required = false;
-                inputRef.required = false;
+            const selectedMetodo = this.value;
+            
+            // Limpiar opciones actuales
+            inputBanco.innerHTML = '<option value="">Seleccione el banco receptor...</option>';
+            
+            if (selectedMetodo) {
+                // Filtrar bancos que soportan el método seleccionado
+                const bancosFiltrados = todosLosBancos.filter(b => {
+                    const metodos = b.metodos_pago || [];
+                    return metodos.includes(selectedMetodo);
+                });
+                
+                // Poblar el select con los bancos filtrados
+                bancosFiltrados.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b.id_banco;
+                    opt.textContent = b.nombre_banco;
+                    inputBanco.appendChild(opt);
+                });
+                
+                if (bancosFiltrados.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.value = "";
+                    opt.disabled = true;
+                    opt.textContent = "No hay bancos registrados para este método";
+                    inputBanco.appendChild(opt);
+                }
             }
         });
 

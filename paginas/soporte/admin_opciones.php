@@ -40,32 +40,68 @@ try {
             break;
 
         case 'add':
-            $type = 'tipos_falla';
+            $level = $_POST['level'] ?? '';
             $value = trim($_POST['value'] ?? '');
 
+            if (empty($level) || !isset($data[$level])) {
+                throw new Exception("Nivel no válido: " . $level);
+            }
             if (empty($value)) {
                 throw new Exception("El valor no puede estar vacío");
             }
-            if (in_array($value, $data[$type])) {
-                throw new Exception("Esta opción ya existe");
+            if (in_array($value, $data[$level])) {
+                throw new Exception("Esta opción ya existe en $level");
             }
 
-            $data[$type][] = $value;
+            $data[$level][] = $value;
             saveData($json_file, $data);
             echo json_encode(['success' => true, 'data' => $data]);
             break;
 
         case 'delete':
-            $type = 'tipos_falla';
+            $level = $_POST['level'] ?? '';
             $value = $_POST['value'] ?? '';
 
-            $key = array_search($value, $data[$type]);
+            if (empty($level) || !isset($data[$level])) {
+                throw new Exception("Nivel no válido");
+            }
+
+            $key = array_search($value, $data[$level]);
             if ($key !== false) {
-                array_splice($data[$type], $key, 1);
+                array_splice($data[$level], $key, 1);
                 saveData($json_file, $data);
                 echo json_encode(['success' => true, 'data' => $data]);
             } else {
                 throw new Exception("Opción no encontrada");
+            }
+            break;
+
+        case 'edit':
+            $level = $_POST['level'] ?? '';
+            $old_value = $_POST['old_value'] ?? '';
+            $new_value = trim($_POST['new_value'] ?? '');
+
+            if (empty($level) || !isset($data[$level])) {
+                throw new Exception("Nivel no válido");
+            }
+            if (empty($new_value)) {
+                throw new Exception("El nuevo valor no puede estar vacío");
+            }
+            if ($old_value === $new_value) {
+                echo json_encode(['success' => true, 'data' => $data]);
+                break;
+            }
+            if (in_array($new_value, $data[$level])) {
+                throw new Exception("El nuevo valor ya existe en $level");
+            }
+
+            $key = array_search($old_value, $data[$level]);
+            if ($key !== false) {
+                $data[$level][$key] = $new_value;
+                saveData($json_file, $data);
+                echo json_encode(['success' => true, 'data' => $data]);
+            } else {
+                throw new Exception("Opción original no encontrada");
             }
             break;
 
