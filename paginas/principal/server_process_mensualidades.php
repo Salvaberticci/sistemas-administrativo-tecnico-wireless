@@ -59,6 +59,10 @@ if (isset($_POST['id_banco']) && $_POST['id_banco'] != '') {
     $whereConditions[] = "cxc.id_banco = '" . $conn->real_escape_string($_POST['id_banco']) . "'";
 }
 
+if (isset($_POST['estado_pago']) && $_POST['estado_pago'] != '') {
+    $whereConditions[] = "cxc.estado = '" . $conn->real_escape_string($_POST['estado_pago']) . "'";
+}
+
 if (isset($_POST['estado_sae']) && $_POST['estado_sae'] != '') {
     $whereConditions[] = "cxc.estado_sae_plus = '" . $conn->real_escape_string($_POST['estado_sae']) . "'";
 }
@@ -301,4 +305,4 @@ $conn->close();
 if (ob_get_length())
     ob_clean();
 echo json_encode($output);
-exit;
+// exit;

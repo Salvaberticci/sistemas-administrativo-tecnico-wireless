@@ -139,6 +139,16 @@ require_once '../includes/sidebar.php';
                         </select>
                     </div>
                     <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Estado de Pago</label>
+                        <select class="form-select form-select-sm" id="filtro_estado">
+                            <option value="">Cualquier Estado</option>
+                            <option value="PAGADO">Pagado</option>
+                            <option value="PENDIENTE">Pendiente</option>
+                            <option value="VENCIDO">Vencido</option>
+                            <option value="CANCELADO">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Tipo de Pago</label>
                         <select class="form-select form-select-sm" id="filtro_tipo">
                             <option value="">Todos los Tipos</option>
@@ -1173,6 +1183,7 @@ require_once '../includes/sidebar.php';
                     d.id_banco = $('#filtro_cuenta').val();
                     d.origen = $('#filtro_origen').val();
                     d.estado_sae = $('#filtro_sae').val();
+                    d.estado_pago = $('#filtro_estado').val(); // Nuevo filtro
                     d.filtro_tipo = $('#filtro_tipo').val();
                     d.referencia = $('#filtro_referencia').val();
                     d.sSearch = d.search.value; // Map modern search to legacy param
@@ -1236,7 +1247,7 @@ require_once '../includes/sidebar.php';
             "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
         });
 
-        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen, #filtro_sae, #filtro_tipo').on('change', function () {
+        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen, #filtro_sae, #filtro_estado, #filtro_tipo').on('change', function () {
             tablaUnica.ajax.reload();
         });
 
@@ -1767,6 +1778,7 @@ require_once '../includes/sidebar.php';
         var fecha_inicio = $('#fecha_inicio').val();
         var fecha_fin = $('#fecha_fin').val();
         var id_banco = $('#filtro_cuenta').val();
+        var filtro_estado = $('#filtro_estado').val(); // Nuevo
         var filtro_tipo = $('#filtro_tipo').val();
         var url = 'exportar_mensualidades.php?tipo=' + tipo;
         if (fecha_inicio && fecha_fin) {
@@ -1774,6 +1786,7 @@ require_once '../includes/sidebar.php';
         }
         if (tipo === 'filtrado') {
             if (id_banco) url += '&id_banco=' + encodeURIComponent(id_banco);
+            if (filtro_estado) url += '&estado_pago=' + encodeURIComponent(filtro_estado);
             if (filtro_tipo) url += '&filtro_tipo=' + encodeURIComponent(filtro_tipo);
         }
         window.open(url, '_blank');
