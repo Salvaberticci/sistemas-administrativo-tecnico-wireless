@@ -157,57 +157,81 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             foreach ($cargos_a_procesar as $cargo) {
                 $c_id_contrato = $cargo['id_contrato'];
                 $c_monto = $cargo['monto'];
-                $c_justificacion = $conn->real_escape_string($cargo['justificacion']);
+                $c_justificacion_base = $cargo['justificacion'];
+                $is_mensualidad = (strpos($c_justificacion_base, '[MENSUALIDAD]') !== false);
+                $num_meses = 1;
+                
+                // Extraer número de meses si es mensualidad para el bucle
+                if ($is_mensualidad) {
+                    if (preg_match('/\((\d+) mes\/es\)/', $c_justificacion_base, $matches)) {
+                        $num_meses = intval($matches[1]);
+                    }
+                }
 
-                $sql_cxc = "INSERT INTO cuentas_por_cobrar (
-                    id_contrato, 
-                    fecha_emision, 
-                    fecha_vencimiento, 
-                    monto_total, 
-                    estado,
-                    fecha_pago,
-                    referencia_pago,
-                    id_banco,
-                    id_grupo_pago,
-                    capture_pago
-                ) VALUES (
-                    '$c_id_contrato', 
-                    '$fecha_emision', 
-                    '$fecha_vencimiento', 
-                    '$c_monto', 
-                    '$estado',
-                    '$fecha_pago',
-                    '$referencia_pago',
-                    '$id_banco_pago',
-                    '$id_grupo_pago',
-                    '$capture_path'
-                )";
-
-                if ($conn->query($sql_cxc) === TRUE) {
-                    $id_cobro_cxc = $conn->insert_id;
-
-                    // INSERTAR HISTORIAL
-                    $sql_historial = "INSERT INTO cobros_manuales_historial (
-                        id_cobro_cxc, 
-                        id_contrato, 
-                        autorizado_por, 
-                        justificacion, 
-                        monto_cargado
-                    ) VALUES (
-                        '$id_cobro_cxc', 
-                        '$c_id_contrato', 
-                        '$autorizado_por', 
-                        '$c_justificacion', 
-                        '$c_monto'
-                    )";
-
-                    if (!$conn->query($sql_historial)) {
-                        throw new Exception("Error al registrar historial: " . $conn->error);
+                for ($m = 0; $m < $num_meses; $m++) {
+                    // Si es adelanto (m > 0), proyectamos la fecha al día 1 del mes siguiente para evitar duplicados en el proceso mensual
+                    if ($m > 0) {
+                        $loop_fecha_emision = date('Y-m-01', strtotime("+$m month"));
+                        $loop_fecha_vencimiento = date('Y-m-t', strtotime("+$m month"));
+                        $loop_justificacion = $conn->real_escape_string($c_justificacion_base . " [ADELANTO MES ".($m+1)."]");
+                    } else {
+                        $loop_fecha_emision = $fecha_emision;
+                        $loop_fecha_vencimiento = $fecha_vencimiento;
+                        $loop_justificacion = $conn->real_escape_string($c_justificacion_base);
                     }
 
-                    $registros_exitosos++;
-                } else {
-                    throw new Exception("Error al registrar CxC: " . $conn->error);
+                    $sql_cxc = "INSERT INTO cuentas_por_cobrar (
+                        id_contrato, 
+                        fecha_emision, 
+                        fecha_vencimiento, 
+                        monto_total, 
+                        estado,
+                        fecha_pago,
+                        referencia_pago,
+                        id_banco,
+                        id_grupo_pago,
+                        capture_pago,
+                        id_plan_cobrado
+                    ) VALUES (
+                        '$c_id_contrato', 
+                        '$loop_fecha_emision', 
+                        '$loop_fecha_vencimiento', 
+                        '$c_monto', 
+                        '$estado',
+                        '$fecha_pago',
+                        '$referencia_pago',
+                        '$id_banco_pago',
+                        '$id_grupo_pago',
+                        '$capture_path',
+                        (SELECT id_plan FROM contratos WHERE id = '$c_id_contrato' LIMIT 1)
+                    )";
+
+                    if ($conn->query($sql_cxc) === TRUE) {
+                        $id_cobro_cxc = $conn->insert_id;
+
+                        // INSERTAR HISTORIAL
+                        $sql_historial = "INSERT INTO cobros_manuales_historial (
+                            id_cobro_cxc, 
+                            id_contrato, 
+                            autorizado_por, 
+                            justificacion, 
+                            monto_cargado
+                        ) VALUES (
+                            '$id_cobro_cxc', 
+                            '$c_id_contrato', 
+                            '$autorizado_por', 
+                            '$loop_justificacion', 
+                            '$c_monto'
+                        )";
+
+                        if (!$conn->query($sql_historial)) {
+                            throw new Exception("Error al registrar historial: " . $conn->error);
+                        }
+
+                        $registros_exitosos++;
+                    } else {
+                        throw new Exception("Error al registrar CxC: " . $conn->error);
+                    }
                 }
             } // Fin foreach
 
@@ -258,11 +282,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $class = "danger";
     }
 
-    $conn->close();
+    // $conn->close();
 
     // Redirigir siempre a gestion_mensualidades.php para mostrar el mensaje de éxito/error en la lista.
     header("Location: gestion_mensualidades.php?message=" . urlencode($message) . "&class=" . $class);
-    exit();
+    // exit();
 } else {
     // Si acceden directamente al procesador, los enviamos a la lista
     header("Location: gestion_mensualidades.php");

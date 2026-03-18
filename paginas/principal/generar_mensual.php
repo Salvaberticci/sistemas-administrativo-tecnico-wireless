@@ -36,15 +36,12 @@ $sql_contratos = "
     JOIN planes p ON c.id_plan = p.id_plan /* <--- UNIÓN PARA OBTENER EL MONTO */
     WHERE c.estado = 'ACTIVO' 
     AND p.monto > 0                 /* <--- EXCLUYE PLANES CON MONTO CERO (EXONERADOS) */
-    /*
-    La siguiente cláusula se ELIMINÓ previamente para permitir la acumulación:
     AND NOT EXISTS (
         SELECT 1 
         FROM cuentas_por_cobrar cxc 
         WHERE cxc.id_contrato = c.id 
         AND cxc.fecha_emision LIKE '{$mes_actual}%'
     )
-    */
 ";
 
 // Ejecutar consulta de contratos
