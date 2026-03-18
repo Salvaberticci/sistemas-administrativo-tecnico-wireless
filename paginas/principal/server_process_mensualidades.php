@@ -230,8 +230,6 @@ while ($aRow = $rResult->fetch_assoc()) {
     } elseif ($justif && strpos($justif, '||') === false) {
         // Si no tiene tags pero tiene texto, es un cargo manual genérico
         $concepto = 'Cargo Manual / Otro';
-        // Caso borde: Si el texto manual contiene la palabra mensualidad sin el tag []
-        if (stripos($justif, 'mensualidad') !== false) $es_mensualidad = true;
     } elseif ($aRow['nombre_plan']) {
         $concepto = 'Mensualidad / ' . $aRow['nombre_plan'];
         $es_mensualidad = true;
