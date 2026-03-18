@@ -100,6 +100,5 @@ if ($resultado_contratos->num_rows > 0) {
 }
 
 
-$conn->close();
-
+// $conn->close();
 ?>
