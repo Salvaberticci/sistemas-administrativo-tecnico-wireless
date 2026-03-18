@@ -191,7 +191,6 @@ if (file_exists($jsonFileTypes)) {
                             <div class="col-md-6">
                                 <label for="id_plan" class="form-label">Plan</label>
                                 <select name="id_plan" id="id_plan" class="form-select" required>
-                                <input type="hidden" name="monto_plan" id="monto_plan">
                                     <option value="">-- Seleccione un Plan --</option>
                                     <?php
                                     if ($resultado_planes && $resultado_planes->num_rows > 0) {
@@ -203,6 +202,7 @@ if (file_exists($jsonFileTypes)) {
                                     }
                                     ?>
                                 </select>
+                                <input type="hidden" name="monto_plan" id="monto_plan">
                             </div>
 
                             <div class="col-md-6">
