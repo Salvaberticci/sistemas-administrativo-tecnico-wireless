@@ -195,7 +195,11 @@ while ($aRow = $rResult->fetch_assoc()) {
 
     // 0. Fecha (Use payment date if paid, else emission)
     $fecha_base = $aRow['fecha_pago'] ?: $aRow['fecha_emision'];
-    $row[] = date('d/m/Y', strtotime($fecha_base));
+    $mes_servicio = date('m/Y', strtotime($aRow['fecha_emision']));
+    $row[] = '<div class="text-center" title="Periodo: ' . $mes_servicio . '">
+                <span class="badge bg-light text-dark border-0 mb-1" style="font-size: 0.7rem;">' . $mes_servicio . '</span><br>' 
+                . date('d/m/Y', strtotime($fecha_base)) . 
+             '</div>';
 
     // 1. Ref
     $row[] = htmlspecialchars($aRow['referencia_pago'] ?: '-');

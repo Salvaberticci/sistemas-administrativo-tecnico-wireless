@@ -169,15 +169,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
 
                 for ($m = 0; $m < $num_meses; $m++) {
+                    $target_time = strtotime("+$m month");
+                    $mes_nombre = strftime('%B %Y', $target_time);
+                    // Fallback for systems where strftime is deprecated or locales aren't set
+                    if (!$mes_nombre || strpos($mes_nombre, '%') !== false) {
+                        $mes_nombre = date('F Y', $target_time);
+                    }
+                    
+                    // Traducción básica si es necesario (opcional pero ayuda)
+                    $mes_es = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', 'April' => 'Abril', 'May' => 'Mayo', 'June' => 'Junio', 'July' => 'Julio', 'August' => 'Agosto', 'September' => 'Septiembre', 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'];
+                    foreach($mes_es as $en => $es) $mes_nombre = str_ireplace($en, $es, $mes_nombre);
+
                     // Si es adelanto (m > 0), proyectamos la fecha al día 1 del mes siguiente para evitar duplicados en el proceso mensual
                     if ($m > 0) {
-                        $loop_fecha_emision = date('Y-m-01', strtotime("+$m month"));
-                        $loop_fecha_vencimiento = date('Y-m-t', strtotime("+$m month"));
-                        $loop_justificacion = $conn->real_escape_string($c_justificacion_base . " [ADELANTO MES ".($m+1)."]");
+                        $loop_fecha_emision = date('Y-m-01', $target_time);
+                        $loop_fecha_vencimiento = date('Y-m-t', $target_time);
+                        $loop_justificacion = $conn->real_escape_string("[MENSUALIDAD - $mes_nombre] - Adelanto de: " . str_replace('[MENSUALIDAD] ', '', $c_justificacion_base));
                     } else {
                         $loop_fecha_emision = $fecha_emision;
                         $loop_fecha_vencimiento = $fecha_vencimiento;
-                        $loop_justificacion = $conn->real_escape_string($c_justificacion_base);
+                        $loop_justificacion = $conn->real_escape_string("[MENSUALIDAD - $mes_nombre] - " . str_replace('[MENSUALIDAD] ', '', $c_justificacion_base));
                     }
 
                     $sql_cxc = "INSERT INTO cuentas_por_cobrar (
