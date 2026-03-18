@@ -216,6 +216,23 @@ $sql = "UPDATE contratos SET
     WHERE id=$id";
 
 if ($conn->query($sql)) {
+    // --- Debt Syncing ---
+    $saldo_pendiente = round($monto_pagar - $monto_pagado, 2);
+    if ($saldo_pendiente > 0) {
+        // Check if exists
+        $check_deudor = $conn->query("SELECT id FROM clientes_deudores WHERE id_contrato = $id AND estado = 'PENDIENTE' LIMIT 1");
+        if ($check_deudor && $check_deudor->num_rows > 0) {
+            $deudor_row = $check_deudor->fetch_assoc();
+            $id_deudor = $deudor_row['id'];
+            $conn->query("UPDATE clientes_deudores SET monto_total = $monto_pagar, monto_pagado = $monto_pagado, saldo_pendiente = $saldo_pendiente WHERE id = $id_deudor");
+        } else {
+            $conn->query("INSERT INTO clientes_deudores (id_contrato, monto_total, monto_pagado, saldo_pendiente, estado) VALUES ($id, $monto_pagar, $monto_pagado, $saldo_pendiente, 'PENDIENTE')");
+        }
+    } else {
+        // Mark as paid if exists
+        $conn->query("UPDATE clientes_deudores SET estado = 'PAGADO', saldo_pendiente = 0 WHERE id_contrato = $id AND estado = 'PENDIENTE'");
+    }
+
     echo json_encode(['success' => true, 'message' => 'Contrato actualizado correctamente.']);
 } else {
     echo json_encode(['success' => false, 'message' => 'Error en BD: ' . $conn->error]);

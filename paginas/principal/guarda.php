@@ -390,16 +390,7 @@ if ($error_mensaje) {
             ob_clean();
         header('Content-Type: application/json');
 
-        if ($resultado) {
-            $pdf_url = "../reportes_pdf/generar_contrato_pdf.php?id_contrato=" . $id_contrato;
-            echo json_encode([
-                'status' => 'success',
-                'msg' => 'Contrato registrado correctamente.',
-                'id' => $id_contrato,
-                'pdf_url' => $pdf_url
-            ]);
-            exit;
-        } else {
+        if (!$resultado) {
             echo json_encode(['status' => 'error', 'msg' => 'Error al guardar en BD: ' . $conn->error]);
             exit;
         }
@@ -478,7 +469,13 @@ if (ob_get_length())
 if (!headers_sent())
     header('Content-Type: application/json');
 if ($resultado) {
-    echo json_encode(['status' => 'success', 'msg' => 'Contrato procesado.', 'id' => $id_contrato]);
+    $pdf_url = "../reportes_pdf/generar_contrato_pdf.php?id_contrato=" . $id_contrato;
+    echo json_encode([
+        'status' => 'success',
+        'msg' => 'Contrato registrado correctamente.',
+        'id' => $id_contrato,
+        'pdf_url' => $pdf_url
+    ]);
 } else if ($error_mensaje) {
     echo json_encode(['status' => 'error', 'msg' => $error_mensaje]);
 } else {
