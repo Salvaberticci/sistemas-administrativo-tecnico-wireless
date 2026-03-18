@@ -56,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($monto > 0) {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
-                    'monto' => $monto,
+                    'monto' => $monto, // Frontend ya mandaba el total
                     'justificacion' => "[MENSUALIDAD] Mensualidad ($meses mes/es) - " . $justificacion
                 ];
                 $sumatoria_backend += $monto;
@@ -117,7 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $cargos_a_procesar[] = [
                         'id_contrato' => $id_c_extra, // OJO: Va al contrato extra, no al principal
                         'monto' => $monto_extra,
-                        'justificacion' => "[EXTRA] Mens. Extra (Pagado en Ref $referencia_pago) - " . $justificacion
+                        'justificacion' => "[EXTRA] Mens. Extra ($meses_extra mes/es) (Pagado en Ref $referencia_pago) - " . $justificacion
                     ];
                     $sumatoria_backend += $monto_extra;
                 }
@@ -158,15 +158,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $c_id_contrato = $cargo['id_contrato'];
                 $c_monto = $cargo['monto'];
                 $c_justificacion_base = $cargo['justificacion'];
-                $is_mensualidad = (strpos($c_justificacion_base, '[MENSUALIDAD]') !== false);
+                $is_mensualidad = (strpos($c_justificacion_base, '[MENSUALIDAD]') !== false || strpos($c_justificacion_base, '[EXTRA]') !== false);
                 $num_meses = 1;
                 
-                // Extraer número de meses si es mensualidad para el bucle
+                // Extraer número de meses si es mensualidad o extra para el bucle
                 if ($is_mensualidad) {
                     if (preg_match('/\((\d+) mes\/es\)/', $c_justificacion_base, $matches)) {
                         $num_meses = intval($matches[1]);
                     }
                 }
+
+                $monto_por_mes = ($num_meses > 1) ? round($c_monto / $num_meses, 2) : $c_monto;
 
                 for ($m = 0; $m < $num_meses; $m++) {
                     $target_time = strtotime("+$m month");
@@ -179,6 +181,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     // Traducción básica si es necesario (opcional pero ayuda)
                     $mes_es = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', 'April' => 'Abril', 'May' => 'Mayo', 'June' => 'Junio', 'July' => 'Julio', 'August' => 'Agosto', 'September' => 'Septiembre', 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'];
                     foreach($mes_es as $en => $es) $mes_nombre = str_ireplace($en, $es, $mes_nombre);
+
+                    // Reemplazo base para la justificación final
+                    $base_text = str_replace(['[MENSUALIDAD] ', '[EXTRA] '], '', $c_justificacion_base);
+                    $tag = (strpos($c_justificacion_base, '[EXTRA]') !== false) ? '[EXTRA]' : '[MENSUALIDAD]';
+
+                    // Si es adelanto (m > 0), proyectamos la fecha al día 1 del mes siguiente para evitar duplicados en el proceso mensual
+                    if ($m > 0) {
+                        $loop_fecha_emision = date('Y-m-01', $target_time);
+                        $loop_fecha_vencimiento = date('Y-m-t', $target_time);
+                        $loop_justificacion = $conn->real_escape_string("$tag [$mes_nombre] - Adelanto de: " . $base_text);
+                    } else {
+                        $loop_fecha_emision = $fecha_emision;
+                        $loop_fecha_vencimiento = $fecha_vencimiento;
+                        $loop_justificacion = $conn->real_escape_string("$tag [$mes_nombre] - " . $base_text);
+                    }
 
                     // Si es adelanto (m > 0), proyectamos la fecha al día 1 del mes siguiente para evitar duplicados en el proceso mensual
                     if ($m > 0) {
@@ -207,7 +224,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         '$c_id_contrato', 
                         '$loop_fecha_emision', 
                         '$loop_fecha_vencimiento', 
-                        '$c_monto', 
+                        '$monto_por_mes', 
                         '$estado',
                         '$fecha_pago',
                         '$referencia_pago',
