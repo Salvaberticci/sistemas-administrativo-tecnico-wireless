@@ -23,10 +23,10 @@ if ($old_value === $new_value) {
 
 try {
     if ($tipo === 'municipio') {
-        $stmt = $conn->prepare("UPDATE contratos SET municipio = ? WHERE municipio = ?");
+        $stmt = $conn->prepare("UPDATE contratos SET municipio_texto = ? WHERE municipio_texto = ?");
         $stmt->bind_param("ss", $new_value, $old_value);
     } elseif ($tipo === 'parroquia') {
-        $stmt = $conn->prepare("UPDATE contratos SET parroquia = ? WHERE parroquia = ?");
+        $stmt = $conn->prepare("UPDATE contratos SET parroquia_texto = ? WHERE parroquia_texto = ?");
         $stmt->bind_param("ss", $new_value, $old_value);
     } else {
         echo json_encode(['success' => false, 'message' => 'Tipo no válido']);
