@@ -30,4 +30,5 @@ insert_pedro.php
 
 # Configuraciones Sensibles
 paginas/config.php
+paginas/conexion.php
 .env
