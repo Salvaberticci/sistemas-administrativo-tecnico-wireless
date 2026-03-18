@@ -141,6 +141,7 @@ $sSelect = "
     cxc.estado_sae_plus,
     pl.nombre_plan,
     h.justificacion,
+    cxc.fecha_vencimiento,
     cxc.id_grupo_pago,
     (SELECT COUNT(h2.id) FROM cobros_manuales_historial h2 WHERE h2.id_cobro_cxc = cxc.id_cobro) AS es_manual
 ";
@@ -259,11 +260,32 @@ while ($aRow = $rResult->fetch_assoc()) {
 
     // 7. Estado (Badge)
     $badge_class = 'warning';
-    if ($estado == 'PAGADO')
+    
+    $extra_info = '';
+    if ($estado == 'PAGADO') {
         $badge_class = 'success';
-    elseif ($estado == 'VENCIDO')
+    } elseif ($estado == 'VENCIDO') {
         $badge_class = 'danger';
-    $row[] = '<span class="badge bg-' . $badge_class . '">' . $estado . '</span>';
+        // Calcular hace cuánto
+        if ($es_mensualidad && !empty($aRow['fecha_vencimiento'])) {
+            $dias = floor((strtotime(date('Y-m-d')) - strtotime($aRow['fecha_vencimiento'])) / 86400);
+            if ($dias > 0) $extra_info = "<br><small class='text-danger' style='font-size:0.7rem;'>hace $dias día(s)</small>";
+        }
+    } else { // PENDIENTE
+        $badge_class = 'warning';
+        if ($es_mensualidad && !empty($aRow['fecha_vencimiento'])) {
+            $dias = floor((strtotime($aRow['fecha_vencimiento']) - strtotime(date('Y-m-d'))) / 86400);
+            if ($dias > 0) {
+                $extra_info = "<br><small class='text-muted' style='font-size:0.7rem;'>en $dias día(s)</small>";
+            } elseif ($dias == 0) {
+                $extra_info = "<br><small class='text-warning fw-bold' style='font-size:0.7rem;'>¡vence hoy!</small>";
+            } else {
+                $extra_info = "<br><small class='text-danger fw-bold' style='font-size:0.7rem;'>atrasado " . abs($dias) . " día(s)</small>";
+            }
+        }
+    }
+
+    $row[] = '<div class="text-center"><span class="badge w-75 bg-' . $badge_class . '">' . $estado . '</span>' . $extra_info . '</div>';
 
     // 8. Origen (Badge)
     $origen = $aRow['origen'] ?: 'SISTEMA';
