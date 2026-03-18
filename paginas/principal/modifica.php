@@ -382,6 +382,19 @@ require_once '../includes/sidebar.php';
 
 
 
+					<div class="col-md-12">
+						<label for="evidencia_foto" class="form-label">Evidencia Foto (Opcional)</label>
+						<?php if (!empty($row['evidencia_foto'])): ?>
+							<div class="mb-2">
+								<img src="../../<?php echo $row['evidencia_foto']; ?>" class="img-thumbnail"
+									style="max-width: 200px;">
+								<p class="small text-muted">Imagen actual</p>
+							</div>
+						<?php endif; ?>
+						<input type="file" class="form-control" id="evidencia_foto" name="evidencia_foto"
+							accept="image/*">
+					</div>
+
 					<div class="col-12 mt-4 text-end">
 						<a href="gestion_contratos.php" class="btn btn-secondary me-2">Regresar</a>
 						<button type="submit" class="btn btn-primary">Guardar Cambios</button>

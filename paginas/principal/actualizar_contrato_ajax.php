@@ -127,6 +127,24 @@ $mun_val = $id_municipio ?: 'NULL';
 $par_val = $id_parroquia ?: 'NULL';
 $com_val = $id_comunidad ?: 'NULL';
 
+// --- PHOTO ---
+function savePhoto($file, $prefix = 'evidencia') {
+    if (empty($file) || $file['error'] != 0) return null;
+    $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!in_array($file['type'], $allowedTypes)) return null;
+    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $fileName = $prefix . '_' . uniqid() . '.' . $ext;
+    $uploadDir = '../../uploads/contratos/';
+    if (!file_exists($uploadDir)) mkdir($uploadDir, 0755, true);
+    if (move_uploaded_file($file['tmp_name'], $uploadDir . $fileName)) {
+        return 'uploads/contratos/' . $fileName;
+    }
+    return null;
+}
+
+$evidencia_foto_path = savePhoto($_FILES['evidencia_foto'] ?? null);
+$sql_foto = $evidencia_foto_path ? ", evidencia_foto = '$evidencia_foto_path'" : "";
+
 // --- FIRMAS ---
 $firma_cliente_data = $_POST['firma_cliente_data'] ?? '';
 $firma_tecnico_data = $_POST['firma_tecnico_data'] ?? '';
@@ -194,6 +212,7 @@ $sql = "UPDATE contratos SET
     instalador='$instalador'
     $sql_firma_cliente
     $sql_firma_tecnico
+    $sql_foto
     WHERE id=$id";
 
 if ($conn->query($sql)) {

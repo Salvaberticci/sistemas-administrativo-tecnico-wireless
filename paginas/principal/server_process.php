@@ -273,7 +273,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 35. EVIDENCIA FOTO (Foto)
     $link = $aRow['evidencia_foto'];
     if (!empty($link)) {
-        $row[] = "<a href='{$link}' target='_blank' class='btn btn-sm btn-outline-primary'><i class='fa-solid fa-image'></i></a>";
+        $row[] = "<a href='../../{$link}' target='_blank' class='btn btn-sm btn-outline-primary'><i class='fa-solid fa-image'></i></a>";
     } else {
         $row[] = '-';
     }
