@@ -104,8 +104,8 @@ require_once '../includes/sidebar.php';
                                 <option value="E">E</option>
                                 <option value="J">J</option>
                             </select>
-                            <input type="text" class="form-control" id="cedula" name="cedula" required pattern="[0-9]+"
-                                placeholder="12345678">
+                            <input type="text" class="form-control" id="cedula" name="cedula" required pattern="^[VEJ][0-9]+"
+                                placeholder="V12345678">
                         </div>
                         <div class="form-text small">Seleccione tipo e ingrese solo números.</div>
                     </div>
@@ -185,6 +185,7 @@ require_once '../includes/sidebar.php';
                             ?>
 
                         </select>
+                        <input type="hidden" name="monto_plan" id="monto_plan">
 
                     </div>
 
@@ -680,6 +681,13 @@ require_once '../includes/sidebar.php';
     }
 
     $(document).ready(function () {
+        $('#id_plan').on('change', function () {
+            const selectedOption = $(this).find('option:selected');
+            const monto = selectedOption.data('monto-plan');
+            if (monto !== undefined) {
+                $('#monto_plan').val(monto);
+            }
+        });
         $('form').on('submit', mostrarConfirmacionRegistro);
     });
 </script>
@@ -780,6 +788,56 @@ require_once '../includes/sidebar.php';
         // Trigger change al cargar (por si hay valor preseleccionado)
         $('#tipo_conexion').trigger('change');
 
+
+        // ======================================================
+        // LÓGICA DE PREFIJO DE CÉDULA/RIF
+        // ======================================================
+
+        const $tipoCedula = $('#tipo_cedula');
+        const $cedulaInput = $('#cedula');
+
+        function actualizarPrefijo() {
+            const prefijo = $tipoCedula.val();
+            let currentVal = $cedulaInput.val();
+
+            // Si el campo está vacío, ponemos solo el prefijo
+            if (currentVal === '') {
+                $cedulaInput.val(prefijo);
+                return;
+            }
+
+            // Si ya tiene algo, nos aseguramos que empiece con la letra correcta
+            // y que el resto sean solo números
+            const soloNumeros = currentVal.replace(/[^0-9]/g, '');
+            $cedulaInput.val(prefijo + soloNumeros);
+        }
+
+        // Al cambiar el select
+        $tipoCedula.on('change', function() {
+            actualizarPrefijo();
+        });
+
+        // Al escribir en el input
+        $cedulaInput.on('input', function() {
+            const prefijo = $tipoCedula.val();
+            let val = $(this).val();
+
+            // Si intentan borrar el prefijo, lo restauramos
+            if (!val.startsWith(prefijo)) {
+                // Si el primer caracter es un número, lo mantenemos y anteponemos el prefijo
+                const soloNumeros = val.replace(/[^0-9]/g, '');
+                $(this).val(prefijo + soloNumeros);
+            } else {
+                // Si empieza con el prefijo, limpiamos el resto de caracteres no numéricos
+                const rest = val.substring(prefijo.length).replace(/[^0-9]/g, '');
+                $(this).val(prefijo + rest);
+            }
+        });
+
+        // Inicializar al cargar
+        if ($cedulaInput.val() === '') {
+            actualizarPrefijo();
+        }
 
         // ======================================================
         // LÓGICA DE RED (OLT -> PON) -- NUEVA FUNCIÓN
@@ -884,24 +942,7 @@ require_once '../includes/sidebar.php';
             calcularSaldo();
         });
 
-        // ======================================================
-        // VALIDACIÓN Y FORMATEO DE CAMPOS (REQUERIMIENTO USUARIO)
-        // ======================================================
 
-        // 1. Forzar prefijo 'V' en Cédula y permitir solo dígitos después
-        $('#cedula').on('input', function () {
-            let val = $(this).val().toUpperCase();
-
-            // Asegurar que siempre empiece con V
-            if (!val.startsWith('V')) {
-                val = 'V' + val.replace(/[^0-9]/g, '');
-            } else {
-                // Mantener la V inicial y limpiar el resto
-                val = 'V' + val.substring(1).replace(/[^0-9]/g, '');
-            }
-
-            $(this).val(val);
-        });
 
         // Restringir IP a números y puntos y validar octetos 0-255
         $('#ip, #ip_onu').on('input', function () {
@@ -1058,15 +1099,17 @@ require_once '../includes/sidebar.php';
         // LÓGICA DE VERIFICACIÓN DE CÉDULA DUPLICADA
         // ======================================================
         $('#cedula').on('blur', function () {
-            const cedula = $(this).val().trim();
+            const val = $(this).val().trim();
             const tipoCedula = $('#tipo_cedula').val();
+            // Extraer solo los números para la API (el campo ya el prefijo por el listener de input)
+            const cedulaNum = val.startsWith(tipoCedula) ? val.substring(tipoCedula.length) : val.replace(/[^0-9]/g, '');
 
-            if (cedula.length > 0) {
+            if (cedulaNum.length > 0) {
                 $.ajax({
                     url: 'check_cedula_api.php',
                     type: 'GET',
                     data: {
-                        cedula: cedula,
+                        cedula: cedulaNum,
                         tipo_cedula: tipoCedula
                     },
                     dataType: 'json',

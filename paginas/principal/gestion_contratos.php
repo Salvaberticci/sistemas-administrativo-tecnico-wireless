@@ -176,44 +176,45 @@ require_once '../includes/sidebar.php';
                                 <option value="1">Vacío: SAR (Fecha)</option>
                                 <option value="2">Vacío: Cédula</option>
                                 <option value="3">Vacío: Cliente</option>
-                                <option value="4">Vacío: Municipio</option>
-                                <option value="5">Vacío: Parroquia</option>
-                                <option value="6">Vacío: Dirección</option>
-                                <option value="7">Vacío: Telf. 1</option>
-                                <option value="8">Vacío: Telf. 2</option>
-                                <option value="9">Vacío: Correo</option>
-                                <option value="10">Vacío: Correo (Alt)</option>
-                                <option value="11">Vacío: F. Instalación</option>
-                                <option value="12">Vacío: Medio Pago</option>
-                                <option value="13">Vacío: Monto Pagar</option>
-                                <option value="14">Vacío: Monto Pagado</option>
-                                <option value="15">Vacío: Días Prorrateo</option>
-                                <option value="16">Vacío: Monto Prorr. ($)</option>
-                                <option value="17">Vacío: Observaciones</option>
-                                <option value="18">Vacío: Tipo Conex.</option>
-                                <option value="19">Vacío: Num. ONU</option>
-                                <option value="20">Vacío: MAC/Serial</option>
-                                <option value="21">Vacío: IP ONU</option>
-                                <option value="22">Vacío: Caja NAP</option>
-                                <option value="23">Vacío: Puerto NAP</option>
-                                <option value="24">Vacío: NAP TX (dBm)</option>
-                                <option value="25">Vacío: ONU RX (dBm)</option>
-                                <option value="26">Vacío: Dist. Drop (m)</option>
-                                <option value="27">Vacío: Instalador</option>
-                                <option value="28">Vacío: Evidencia Fibra</option>
-                                <option value="29">Vacío: IP Servicio</option>
-                                <option value="30">Vacío: Punto Acceso</option>
-                                <option value="31">Vacío: Val. Conex. (dBm)</option>
-                                <option value="32">Vacío: Precinto ODN</option>
-                                <option value="33">Vacío: Foto</option>
-                                <option value="34">Vacío: Firma Cliente</option>
-                                <option value="35">Vacío: Firma Técnico</option>
-                                <option value="36">Vacío: Vendedor (Edit)</option>
-                                <option value="37">Vacío: SAE Plus (Edit)</option>
-                                <option value="38">Vacío: Plan</option>
-                                <option value="39">Vacío: OLT</option>
-                                <option value="40">Vacío: PON</option>
-                                <option value="41">Vacío: Estado</option>
+                                <option value="4">Vacío: Plan ($)</option>
+                                <option value="5">Vacío: Municipio</option>
+                                <option value="6">Vacío: Parroquia</option>
+                                <option value="7">Vacío: Dirección</option>
+                                <option value="8">Vacío: Telf. 1</option>
+                                <option value="9">Vacío: Telf. 2</option>
+                                <option value="10">Vacío: Correo</option>
+                                <option value="11">Vacío: Correo (Alt)</option>
+                                <option value="12">Vacío: F. Instalación</option>
+                                <option value="13">Vacío: Medio Pago</option>
+                                <option value="14">Vacío: Monto Pagar</option>
+                                <option value="15">Vacío: Monto Pagado</option>
+                                <option value="16">Vacío: Días Prorrateo</option>
+                                <option value="17">Vacío: Monto Prorr. ($)</option>
+                                <option value="18">Vacío: Observaciones</option>
+                                <option value="19">Vacío: Tipo Conex.</option>
+                                <option value="20">Vacío: Num. ONU</option>
+                                <option value="21">Vacío: MAC/Serial</option>
+                                <option value="22">Vacío: IP ONU</option>
+                                <option value="23">Vacío: Caja NAP</option>
+                                <option value="24">Vacío: Puerto NAP</option>
+                                <option value="25">Vacío: NAP TX (dBm)</option>
+                                <option value="26">Vacío: ONU RX (dBm)</option>
+                                <option value="27">Vacío: Dist. Drop (m)</option>
+                                <option value="28">Vacío: Instalador</option>
+                                <option value="29">Vacío: Evidencia Fibra</option>
+                                <option value="30">Vacío: IP Servicio</option>
+                                <option value="31">Vacío: Punto Acceso</option>
+                                <option value="32">Vacío: Val. Conex. (dBm)</option>
+                                <option value="33">Vacío: Precinto ODN</option>
+                                <option value="34">Vacío: Foto</option>
+                                <option value="35">Vacío: Firma Cliente</option>
+                                <option value="36">Vacío: Firma Técnico</option>
+                                <option value="37">Vacío: Vendedor (Edit)</option>
+                                <option value="38">Vacío: SAE Plus (Edit)</option>
+                                <option value="39">Vacío: Plan</option>
+                                <option value="40">Vacío: OLT</option>
+                                <option value="41">Vacío: PON</option>
+                                <option value="42">Vacío: Estado</option>
                             </select>
                         </div>
                     </div>
@@ -266,6 +267,7 @@ require_once '../includes/sidebar.php';
                                 <th title="Marca temporal de registro">SAR</th>
                                 <th>Cédula</th>
                                 <th>Cliente</th>
+                                <th>Plan ($)</th>
                                 <th>Municipio</th>
                                 <th>Parroquia</th>
                                 <th>Dirección</th>
@@ -1167,13 +1169,18 @@ require_once '../includes/sidebar.php';
                             <select class="form-select form-select-sm" id="edit_plan" name="id_plan">
                                 <option value="">-- Seleccione --</option>
                                 <?php
-                                $sql_planes = "SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan ASC";
+                                $sql_planes = "SELECT id_plan, nombre_plan, monto FROM planes ORDER BY nombre_plan ASC";
                                 $res_planes = $conn->query($sql_planes);
                                 while ($p = $res_planes->fetch_assoc()) {
-                                    echo '<option value="' . $p['id_plan'] . '">' . htmlspecialchars($p['nombre_plan']) . '</option>';
+                                    echo '<option value="' . $p['id_plan'] . '" data-monto="' . $p['monto'] . '">' . htmlspecialchars($p['nombre_plan']) . '</option>';
                                 }
                                 ?>
                             </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Monto Plan ($)</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm" id="edit_monto_plan"
+                                name="monto_plan" placeholder="0.00">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">Vendedor</label>
@@ -1525,6 +1532,7 @@ require_once '../includes/sidebar.php';
                 { header: 'SAR', key: 'fecha_registro', width: 15 },
                 { header: 'Cédula', key: 'cedula_cliente', width: 15 },
                 { header: 'Cliente', key: 'nombre_cliente', width: 25 },
+                { header: 'Plan ($)', key: 'monto_plan', width: 15 },
                 { header: 'Municipio', key: 'nombre_municipio', width: 15 },
                 { header: 'Parroquia', key: 'nombre_parroquia', width: 15 },
                 { header: 'Dirección', key: 'direccion_instalacion', width: 30 },
@@ -1827,6 +1835,15 @@ require_once '../includes/sidebar.php';
             else if (t && t.includes('RADIO')) $('#edit_campos_radio').show();
         });
 
+        // Auto-fill monto_plan when plan selection changes in edit modal
+        $('#edit_plan').on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const monto = selectedOption.data('monto');
+            if (monto !== undefined) {
+                $('#edit_monto_plan').val(monto);
+            }
+        });
+
         // Open modal and populate with data
         window.abrirModalEdicion = function (id) {
             // Reset state
@@ -1887,6 +1904,7 @@ require_once '../includes/sidebar.php';
                     $('#no_firma_tecnico').removeClass('d-none');
                 }
                 $('#edit_plan').val(d.id_plan);
+                $('#edit_monto_plan').val(d.monto_plan || 0);
 
                 // Load vendedores dynamically and set value
                 $.get('json_personal_api.php?action=get_vendedores', function (vends) {

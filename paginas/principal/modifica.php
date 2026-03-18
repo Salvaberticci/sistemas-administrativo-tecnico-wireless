@@ -50,9 +50,23 @@ require_once '../includes/sidebar.php';
 					</div>
 
 					<div class="col-md-6">
-						<label for="cedula" class="form-label">Cedula</label>
-						<input type="text" class="form-control" id="cedula" name="cedula"
-							value="<?php echo $row['cedula']; ?>" required>
+						<label for="cedula" class="form-label">Cédula / RIF <span class="text-danger">*</span></label>
+						<div class="input-group">
+							<?php
+							$raw_cedula = $row['cedula'];
+							$tipo_cedula_val = preg_match('/^[VEJ]/i', $raw_cedula) ? strtoupper($raw_cedula[0]) : 'V';
+							// Asegurarnos que el input siempre tenga el prefijo para la lógica JS
+							$cedula_full = preg_match('/^[VEJ]/i', $raw_cedula) ? $raw_cedula : 'V' . $raw_cedula;
+							?>
+							<select class="form-select" name="tipo_cedula" id="tipo_cedula" style="max-width: 80px;"
+								required>
+								<option value="V" <?php echo $tipo_cedula_val == 'V' ? 'selected' : ''; ?>>V</option>
+								<option value="E" <?php echo $tipo_cedula_val == 'E' ? 'selected' : ''; ?>>E</option>
+								<option value="J" <?php echo $tipo_cedula_val == 'J' ? 'selected' : ''; ?>>J</option>
+							</select>
+							<input type="text" class="form-control" id="cedula" name="cedula"
+								value="<?php echo htmlspecialchars($cedula_full); ?>" required pattern="^[VEJ][0-9]+">
+						</div>
 					</div>
 
 					<div class="col-md-6">
@@ -543,6 +557,81 @@ require_once '../includes/sidebar.php';
 			}
 		});
 		$('#tipo_conexion').trigger('change');
+
+		// ======================================================
+		// LÓGICA DE PREFIJO DE CÉDULA/RIF
+		// ======================================================
+
+		const $tipoCedula = $('#tipo_cedula');
+		const $cedulaInput = $('#cedula');
+
+		function actualizarPrefijo() {
+			const prefijo = $tipoCedula.val();
+			let currentVal = $cedulaInput.val();
+
+			if (currentVal === '') {
+				$cedulaInput.val(prefijo);
+				return;
+			}
+
+			const soloNumeros = currentVal.replace(/[^0-9]/g, '');
+			$cedulaInput.val(prefijo + soloNumeros);
+		}
+
+		$tipoCedula.on('change', function() {
+			actualizarPrefijo();
+		});
+
+		$cedulaInput.on('input', function() {
+			const prefijo = $tipoCedula.val();
+			let val = $(this).val();
+
+			if (!val.startsWith(prefijo)) {
+				const soloNumeros = val.replace(/[^0-9]/g, '');
+				$(this).val(prefijo + soloNumeros);
+			} else {
+				const rest = val.substring(prefijo.length).replace(/[^0-9]/g, '');
+				$(this).val(prefijo + rest);
+			}
+		});
+
+		// Inicialización ya manejada por PHP en el valor del input y select
+
+		// VERIFICACIÓN DE CÉDULA DUPLICADA (CON EXCLUSIÓN DE ID ACTUAL)
+		$cedulaInput.on('blur', function () {
+			const val = $(this).val().trim();
+			const prefijo = $tipoCedula.val();
+			const currentId = $('#id').val();
+			// Extraer solo los números
+			const cedulaNum = val.startsWith(prefijo) ? val.substring(prefijo.length) : val.replace(/[^0-9]/g, '');
+
+			if (cedulaNum.length > 0) {
+				$.ajax({
+					url: 'check_cedula_api.php',
+					type: 'GET',
+					data: {
+						cedula: cedulaNum,
+						tipo_cedula: prefijo,
+						exclude_id: currentId
+					},
+					dataType: 'json',
+					success: function (response) {
+						if (response.exists) {
+							Swal.fire({
+								title: '¡Cédula Detectada!',
+								html: `Ya existe <b>otro</b> contrato registrado con esta cédula (<b>${prefijo}-${cedulaNum}</b>) a nombre de:<br><b>${response.nombre_completo}</b>`,
+								icon: 'warning',
+								confirmButtonColor: '#3085d6',
+								confirmButtonText: 'Entendido'
+							});
+						}
+					},
+					error: function (xhr, status, error) {
+						console.error("Error al verificar cédula:", error);
+					}
+				});
+			}
+		});
 
 	});
 </script>

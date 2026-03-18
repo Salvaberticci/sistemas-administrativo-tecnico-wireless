@@ -72,6 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // El nombre en el HTML es estado_contrato para coincidir con nuevo.php
         $estado = $conn->real_escape_string($_POST['estado_contrato'] ?? 'ACTIVO');
+        $monto_plan = floatval($_POST['monto_plan'] ?? 0);
 
         $id_olt = !empty($_POST['id_olt']) ? intval($_POST['id_olt']) : null;
         $id_pon = !empty($_POST['id_pon']) ? intval($_POST['id_pon']) : null;
@@ -156,7 +157,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // INSERT
         $sql = "INSERT INTO contratos (
-            cedula, nombre_completo, municipio_texto, parroquia_texto, id_plan, vendedor_texto, 
+            cedula, nombre_completo, municipio_texto, parroquia_texto, id_plan, monto_plan, vendedor_texto, 
             direccion, telefono, telefono_secundario, correo, correo_adicional, fecha_instalacion, 
             tipo_instalacion, medio_pago, monto_instalacion, gastos_adicionales, plan_prorrateo_nombre, dias_prorrateo, monto_prorrateo_usd,
             monto_pagar, monto_pagado, moneda_pago, observaciones, 
@@ -165,7 +166,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             punto_acceso, valor_conexion_dbm, num_presinto_odn, evidencia_foto, evidencia_documento, 
             firma_cliente, firma_tecnico, id_olt, id_pon, estado
         ) VALUES (
-            '$cedula', '$nombre_completo', '$municipio_texto', '$parroquia_texto', " . ($id_plan ?: "NULL") . ", '$vendedor_texto', 
+            '$cedula', '$nombre_completo', '$municipio_texto', '$parroquia_texto', " . ($id_plan ?: "NULL") . ", $monto_plan, '$vendedor_texto', 
             '$direccion', '$telefono', '$telefono_secundario', '$correo', '$correo_adicional', '$fecha_instalacion', 
             '$tipo_instalacion', '$medio_pago', '$monto_instalacion', '$gastos_adicionales', " . ($plan_prorrateo_nombre ? "'$plan_prorrateo_nombre'" : "NULL") . ", $dias_prorrateo, $monto_prorrateo_usd,
             $monto_pagar, $monto_pagado, '$moneda_pago', '$observaciones', 

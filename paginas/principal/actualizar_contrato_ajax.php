@@ -44,6 +44,7 @@ $observaciones = $conn->real_escape_string($_POST['observaciones'] ?? '');
 $plan_prorrateo_nombre = $conn->real_escape_string($_POST['plan_prorrateo_nombre'] ?? '');
 $dias_prorrateo = intval($_POST['dias_prorrateo'] ?? 0);
 $monto_prorrateo_usd = floatval($_POST['monto_prorrateo_usd'] ?? 0);
+$monto_plan = floatval($_POST['monto_plan'] ?? 0);
 
 // FINANCIAL FIELDS
 $tipo_instalacion = $conn->real_escape_string($_POST['tipo_instalacion'] ?? '');
@@ -176,7 +177,7 @@ $sql = "UPDATE contratos SET
     telefono_secundario='$telefono_sec', correo_adicional='$correo_adicional',
     id_municipio=$mun_val, id_parroquia=$par_val, id_comunidad=$com_val,
     municipio_texto='$municipio_texto', parroquia_texto='$parroquia_texto',
-    id_plan=$id_plan, vendedor_texto=$vnd, sae_plus='$sae_plus',
+    id_plan=$id_plan, monto_plan=$monto_plan, vendedor_texto=$vnd, sae_plus='$sae_plus',
     direccion='$direccion', fecha_instalacion='$fecha_inst', estado='$estado',
     ident_caja_nap='$ident_caja_nap', puerto_nap='$puerto_nap', num_presinto_odn='$num_presinto_odn',
     id_olt=$olt, id_pon=$pon,

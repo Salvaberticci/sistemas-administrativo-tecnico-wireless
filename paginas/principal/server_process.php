@@ -22,7 +22,8 @@ $aColumnas = [
     'c.fecha_registro',         // 1
     'c.cedula',                 // 2
     'c.nombre_completo',        // 3
-    'm.nombre_municipio',       // 4
+    'c.monto_plan',             // 4 [NEW]
+    'm.nombre_municipio',       // 5
     'pa.nombre_parroquia',      // 5
     'c.direccion',              // 6
     'c.telefono',               // 7
@@ -173,7 +174,10 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 3. NOMBRE
     $row[] = "<span class='fw-bold text-primary'>" . clean($aRow['nombre_completo']) . "</span>";
 
-    // 4. MUNICIPIO
+    // 4. MONTO PLAN [NEW]
+    $row[] = "<span class='badge bg-light text-dark border'>$" . clean($aRow['monto_plan']) . "</span>";
+
+    // 5. MUNICIPIO
     $row[] = clean($aRow['nombre_municipio']);
 
     // 5. PARROQUIA

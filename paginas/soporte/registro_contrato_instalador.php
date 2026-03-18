@@ -137,7 +137,7 @@ if (file_exists($jsonFileTypes)) {
                                         <option value="J">J</option>
                                     </select>
                                     <input type="text" class="form-control" id="cedula" name="cedula" required
-                                        pattern="[0-9]+" placeholder="12345678">
+                                        pattern="^[VEJ][0-9]+" placeholder="V12345678">
                                 </div>
                                 <div class="form-text small">Seleccione tipo e ingrese solo números.</div>
                             </div>
@@ -191,6 +191,7 @@ if (file_exists($jsonFileTypes)) {
                             <div class="col-md-6">
                                 <label for="id_plan" class="form-label">Plan</label>
                                 <select name="id_plan" id="id_plan" class="form-select" required>
+                                <input type="hidden" name="monto_plan" id="monto_plan">
                                     <option value="">-- Seleccione un Plan --</option>
                                     <?php
                                     if ($resultado_planes && $resultado_planes->num_rows > 0) {
@@ -615,10 +616,76 @@ if (file_exists($jsonFileTypes)) {
     <!-- INPUT VALIDATION & FIELD MASKING           -->
     <!-- ═══════════════════════════════════════════ -->
     <script>
-        // 1. Cédula: solo dígitos (el prefix V se maneja con el select en este form)
-        $('#cedula').on('input', function () {
-            let val = $(this).val().replace(/[^0-9]/g, '');
-            $(this).val(val);
+        // 1. Cédula/RIF: LÓGICA DE PREFIJO AUTOMÁTICO
+        const $tipoCedula = $('#tipo_cedula');
+        const $cedulaInput = $('#cedula');
+
+        function actualizarPrefijo() {
+            const prefijo = $tipoCedula.val();
+            let currentVal = $cedulaInput.val();
+
+            if (currentVal === '') {
+                $cedulaInput.val(prefijo);
+                return;
+            }
+
+            const soloNumeros = currentVal.replace(/[^0-9]/g, '');
+            $cedulaInput.val(prefijo + soloNumeros);
+        }
+
+        $tipoCedula.on('change', function() {
+            actualizarPrefijo();
+        });
+
+        $cedulaInput.on('input', function() {
+            const prefijo = $tipoCedula.val();
+            let val = $(this).val();
+
+            if (!val.startsWith(prefijo)) {
+                const soloNumeros = val.replace(/[^0-9]/g, '');
+                $(this).val(prefijo + soloNumeros);
+            } else {
+                const rest = val.substring(prefijo.length).replace(/[^0-9]/g, '');
+                $(this).val(prefijo + rest);
+            }
+        });
+
+        if ($cedulaInput.val() === '') {
+            actualizarPrefijo();
+        }
+
+        // 1.1 VERIFICACIÓN DE CÉDULA DUPLICADA
+        $cedulaInput.on('blur', function () {
+            const val = $(this).val().trim();
+            const prefijo = $tipoCedula.val();
+            // Extraer solo los números para la API
+            const cedulaNum = val.startsWith(prefijo) ? val.substring(prefijo.length) : val.replace(/[^0-9]/g, '');
+
+            if (cedulaNum.length > 0) {
+                $.ajax({
+                    url: '../principal/check_cedula_api.php',
+                    type: 'GET',
+                    data: {
+                        cedula: cedulaNum,
+                        tipo_cedula: prefijo
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.exists) {
+                            Swal.fire({
+                                title: '¡Cédula Detectada!',
+                                html: `Ya existe un contrato registrado con esta cédula (<b>${prefijo}-${cedulaNum}</b>) a nombre de:<br><b>${response.nombre_completo}</b>`,
+                                icon: 'warning',
+                                confirmButtonColor: '#3085d6',
+                                confirmButtonText: 'Entendido'
+                            });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error al verificar cédula:", error);
+                    }
+                });
+            }
         });
 
         // 2. IP validation
@@ -684,6 +751,13 @@ if (file_exists($jsonFileTypes)) {
     <!-- ═══════════════════════════════════════════ -->
     <script>
         $(document).ready(function () {
+            $('#id_plan').on('change', function () {
+                const selectedOption = $(this).find('option:selected');
+                const monto = selectedOption.data('monto-plan');
+                if (monto !== undefined) {
+                    $('#monto_plan').val(monto);
+                }
+            });
 
             // === 1. CARGAR DATOS DINÁMICOS ===
 

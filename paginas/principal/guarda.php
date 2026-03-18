@@ -57,6 +57,7 @@ $num_presinto_odn = $conn->real_escape_string($_POST['num_presinto_odn'] ?? '');
 $id_olt = !empty($_POST['id_olt']) ? $conn->real_escape_string($_POST['id_olt']) : null;
 $id_pon = !empty($_POST['id_pon']) ? $conn->real_escape_string($_POST['id_pon']) : null;
 $estado = 'ACTIVO'; // Estado inicial por defecto
+$monto_plan = floatval($_POST['monto_plan'] ?? 0);
 
 // NUEVOS CAMPOS ADMINISTRATIVOS Y TÉCNICOS
 $telefono_secundario = trim($conn->real_escape_string($_POST['telefono_secundario'] ?? ''));
@@ -308,7 +309,7 @@ if ($error_mensaje) {
         // 3. INSERCIÓN EN LA TABLA DE CONTRATOS
         $sql = "INSERT INTO contratos (
         cedula, nombre_completo, telefono, correo, 
-        id_municipio, id_parroquia, municipio_texto, parroquia_texto, id_plan, vendedor_texto, 
+        id_municipio, id_parroquia, municipio_texto, parroquia_texto, id_plan, monto_plan, vendedor_texto, 
         direccion, fecha_instalacion, estado, ident_caja_nap, puerto_nap, 
         num_presinto_odn, id_olt, id_pon, tipo_instalacion, monto_instalacion, 
         gastos_adicionales, monto_pagar, monto_pagado, instaladores,
@@ -318,7 +319,7 @@ if ($error_mensaje) {
         evidencia_fibra, evidencia_foto, firma_cliente, firma_tecnico,
         token_firma, estado_firma
     ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
@@ -327,7 +328,7 @@ if ($error_mensaje) {
 
         $stmt = $conn->prepare($sql);
 
-        $types = "ssssii" . "ss" . "isssssssiisdddds" . "sssssidsssssssssssss" . "ss";
+        $types = "ssssii" . "ss" . "idsssssssiisdddds" . "sssssidsssssssssssss" . "ss";
 
         $stmt->bind_param(
             $types,
@@ -340,6 +341,7 @@ if ($error_mensaje) {
             $municipio_texto,
             $parroquia_texto,
             $id_plan,
+            $monto_plan,
             $vendedor_texto,
             $direccion,
             $fecha_instalacion,

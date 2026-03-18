@@ -9,6 +9,7 @@ $sql = "SELECT
             c.fecha_registro,
             c.cedula AS cedula_cliente,
             c.nombre_completo AS nombre_cliente,
+            c.monto_plan,
             m.nombre_municipio,
             p.nombre_parroquia,
             c.direccion AS direccion_instalacion,
