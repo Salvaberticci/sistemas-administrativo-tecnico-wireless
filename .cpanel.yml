@@ -1,5 +1,5 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/TU_USUARIO_CPANEL/public_html/
+    - export DEPLOYPATH=/home/salvxkld/public_html/
     - /bin/cp -R * $DEPLOYPATH
