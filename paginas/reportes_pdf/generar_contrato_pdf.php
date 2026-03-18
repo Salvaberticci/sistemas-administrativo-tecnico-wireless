@@ -15,8 +15,8 @@ if (!isset($_GET['id_contrato']) || !is_numeric($_GET['id_contrato'])) {
 
 $id_contrato = intval($_GET['id_contrato']);
 
-// Carga el autoloader de Composer (incluye Dompdf y todas las dependencias)
-require '../../vendor/autoload.php';
+// Carga el autoloader de Dompdf (Asegúrate que la ruta sea correcta)
+require '../../dompdf/autoload.inc.php';
 
 use Dompdf\Dompdf;
 use Dompdf\Options;

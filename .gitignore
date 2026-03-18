@@ -1,6 +1,5 @@
 # Dependencias
 vendor/
-dompdf/
 node_modules/
 
 # Archivos de Datos y Uploads
