@@ -182,30 +182,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $mes_es = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', 'April' => 'Abril', 'May' => 'Mayo', 'June' => 'Junio', 'July' => 'Julio', 'August' => 'Agosto', 'September' => 'Septiembre', 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'];
                     foreach($mes_es as $en => $es) $mes_nombre = str_ireplace($en, $es, $mes_nombre);
 
-                    // Reemplazo base para la justificación final
-                    $base_text = str_replace(['[MENSUALIDAD] ', '[EXTRA] '], '', $c_justificacion_base);
-                    $tag = (strpos($c_justificacion_base, '[EXTRA]') !== false) ? '[EXTRA]' : '[MENSUALIDAD]';
-
-                    // Si es adelanto (m > 0), proyectamos la fecha al día 1 del mes siguiente para evitar duplicados en el proceso mensual
-                    if ($m > 0) {
-                        $loop_fecha_emision = date('Y-m-01', $target_time);
-                        $loop_fecha_vencimiento = date('Y-m-t', $target_time);
-                        $loop_justificacion = $conn->real_escape_string("$tag [$mes_nombre] - Adelanto de: " . $base_text);
+                    if ($is_mensualidad) {
+                        $base_text = str_replace(['[MENSUALIDAD] ', '[EXTRA] '], '', $c_justificacion_base);
+                        $tag = (strpos($c_justificacion_base, '[EXTRA]') !== false) ? '[EXTRA]' : '[MENSUALIDAD]';
+                        
+                        // Si es adelanto (m > 0), proyectamos la fecha al día 1 del mes siguiente
+                        if ($m > 0) {
+                            $loop_fecha_emision = date('Y-m-01', $target_time);
+                            $loop_fecha_vencimiento = date('Y-m-t', $target_time);
+                            $loop_justificacion = $conn->real_escape_string("$tag [$mes_nombre] - Adelanto de: " . $base_text);
+                        } else {
+                            $loop_fecha_emision = $fecha_emision;
+                            $loop_fecha_vencimiento = $fecha_vencimiento;
+                            $loop_justificacion = $conn->real_escape_string("$tag [$mes_nombre] - " . $base_text);
+                        }
                     } else {
+                        // Si es Instalación, Equipo, Prorrateo o Genérico
                         $loop_fecha_emision = $fecha_emision;
                         $loop_fecha_vencimiento = $fecha_vencimiento;
-                        $loop_justificacion = $conn->real_escape_string("$tag [$mes_nombre] - " . $base_text);
-                    }
-
-                    // Si es adelanto (m > 0), proyectamos la fecha al día 1 del mes siguiente para evitar duplicados en el proceso mensual
-                    if ($m > 0) {
-                        $loop_fecha_emision = date('Y-m-01', $target_time);
-                        $loop_fecha_vencimiento = date('Y-m-t', $target_time);
-                        $loop_justificacion = $conn->real_escape_string("[MENSUALIDAD - $mes_nombre] - Adelanto de: " . str_replace('[MENSUALIDAD] ', '', $c_justificacion_base));
-                    } else {
-                        $loop_fecha_emision = $fecha_emision;
-                        $loop_fecha_vencimiento = $fecha_vencimiento;
-                        $loop_justificacion = $conn->real_escape_string("[MENSUALIDAD - $mes_nombre] - " . str_replace('[MENSUALIDAD] ', '', $c_justificacion_base));
+                        $loop_justificacion = $conn->real_escape_string($c_justificacion_base);
                     }
 
                     $sql_cxc = "INSERT INTO cuentas_por_cobrar (
