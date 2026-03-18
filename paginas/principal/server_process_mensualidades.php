@@ -212,15 +212,15 @@ while ($aRow = $rResult->fetch_assoc()) {
     $justif = $aRow['justificacion'] ?: '';
     $conceptosArr = [];
 
-    if (strpos($justif, '[MENSUALIDAD]') !== false) $conceptosArr[] = 'Mensualidad';
-    if (strpos($justif, '[INSTALACION]') !== false) $conceptosArr[] = 'Instalación';
-    if (strpos($justif, '[EQUIPOS]') !== false) $conceptosArr[] = 'Equipos / Materiales';
-    if (strpos($justif, '[PRORRATEO]') !== false) $conceptosArr[] = 'Prorrateo';
-    if (strpos($justif, '[ABONO]') !== false) $conceptosArr[] = 'Abono / Saldo a Favor';
-    if (strpos($justif, '[EXTRA]') !== false) $conceptosArr[] = 'Pago de Terceros';
+    if (strpos($justif, '[MENSUALIDAD') !== false) $conceptosArr[] = 'Mensualidad';
+    if (strpos($justif, '[INSTALACION') !== false) $conceptosArr[] = 'Instalación';
+    if (strpos($justif, '[EQUIPOS') !== false) $conceptosArr[] = 'Equipos / Materiales';
+    if (strpos($justif, '[PRORRATEO') !== false) $conceptosArr[] = 'Prorrateo';
+    if (strpos($justif, '[ABONO') !== false) $conceptosArr[] = 'Abono / Saldo a Favor';
+    if (strpos($justif, '[EXTRA') !== false) $conceptosArr[] = 'Pago de Terceros';
 
     $es_mensualidad = false;
-    if (strpos($justif, '[MENSUALIDAD]') !== false) {
+    if (strpos($justif, '[MENSUALIDAD') !== false) {
         $es_mensualidad = true;
     }
 
