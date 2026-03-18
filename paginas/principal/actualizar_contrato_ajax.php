@@ -40,6 +40,7 @@ $onu_rx_power = trim($conn->real_escape_string($_POST['onu_rx_power'] ?? ''));
 $distancia_drop = trim($conn->real_escape_string($_POST['distancia_drop'] ?? ''));
 $punto_acceso = trim($conn->real_escape_string($_POST['punto_acceso'] ?? ''));
 $valor_conexion = trim($conn->real_escape_string($_POST['valor_conexion_dbm'] ?? ''));
+$numero_onu = trim($conn->real_escape_string($_POST['numero_onu'] ?? ''));
 $observaciones = $conn->real_escape_string($_POST['observaciones'] ?? '');
 $plan_prorrateo_nombre = $conn->real_escape_string($_POST['plan_prorrateo_nombre'] ?? '');
 $dias_prorrateo = intval($_POST['dias_prorrateo'] ?? 0);
@@ -56,9 +57,8 @@ $medio_pago = $conn->real_escape_string($_POST['medio_pago'] ?? '');
 $moneda_pago = $conn->real_escape_string($_POST['moneda_pago'] ?? 'USD');
 
 // INSTALADOR(ES)
-$instalador = $conn->real_escape_string($_POST['instalador'] ?? ''); // Single field name
-$instaladores_array = $_POST['instaladores'] ?? [];
-$instaladores_ids = implode(',', array_map('intval', $instaladores_array));
+$instaladores_raw = $_POST['instaladores'] ?? $_POST['instalador'] ?? '';
+$instalador = is_array($instaladores_raw) ? implode(', ', $instaladores_raw) : $conn->real_escape_string($instaladores_raw);
 
 if (!$id) {
     echo json_encode(['success' => false, 'message' => 'ID de contrato inválido.']);
@@ -199,7 +199,7 @@ $sql = "UPDATE contratos SET
     direccion='$direccion', fecha_instalacion='$fecha_inst', estado='$estado',
     ident_caja_nap='$ident_caja_nap', puerto_nap='$puerto_nap', num_presinto_odn='$num_presinto_odn',
     id_olt=$olt, id_pon=$pon,
-    tipo_conexion='$tipo_conexion', mac_onu='$mac_onu', ip_onu='$ip_onu',
+    tipo_conexion='$tipo_conexion', mac_onu='$mac_onu', ip_onu='$ip_onu', numero_onu='$numero_onu',
     nap_tx_power='$nap_tx_power', onu_rx_power='$onu_rx_power', distancia_drop='$distancia_drop',
     punto_acceso='$punto_acceso', valor_conexion_dbm='$valor_conexion',
     observaciones='$observaciones',

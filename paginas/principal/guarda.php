@@ -99,6 +99,7 @@ $nap_tx_power = isset($_POST['nap_tx_power']) ? $conn->real_escape_string($_POST
 $onu_rx_power = isset($_POST['onu_rx_power']) ? $conn->real_escape_string($_POST['onu_rx_power']) : '';
 $distancia_drop = isset($_POST['distancia_drop']) ? $conn->real_escape_string($_POST['distancia_drop']) : '';
 $evidencia_fibra = isset($_POST['evidencia_fibra']) ? $conn->real_escape_string($_POST['evidencia_fibra']) : '';
+$numero_onu = isset($_POST['numero_onu']) ? $conn->real_escape_string($_POST['numero_onu']) : '';
 
 // PROCESAR FOTO EVIDENCIA
 $evidencia_foto = null;
@@ -125,7 +126,7 @@ if (isset($_FILES['evidencia_foto']) && $_FILES['evidencia_foto']['error'] == 0)
 
 // Instaladores (array a string separado por comas)
 $instaladores_array = $_POST['instaladores'] ?? [];
-$instaladores_ids = implode(',', array_map('intval', $instaladores_array));
+$instalador_val = is_array($instaladores_array) ? implode(', ', $instaladores_array) : $conn->real_escape_string($instaladores_array);
 
 // --- FUNCIÓN PARA GUARDAR FIRMAS (Base64 a PNG) ---
 function saveSignature($base64_string, $prefix)
@@ -309,12 +310,12 @@ if ($error_mensaje) {
         // 3. INSERCIÓN EN LA TABLA DE CONTRATOS
         $sql = "INSERT INTO contratos (
         cedula, nombre_completo, telefono, correo, 
-        id_municipio, id_parroquia, municipio_texto, parroquia_texto, id_plan, monto_plan, vendedor_texto, 
+        id_municipio, id_parroquia, municipio_texto, parroquia_texto, id_plan, monto_plan, vendedor_texto,
         direccion, fecha_instalacion, estado, ident_caja_nap, puerto_nap, 
         num_presinto_odn, id_olt, id_pon, tipo_instalacion, monto_instalacion, 
-        gastos_adicionales, monto_pagar, monto_pagado, instaladores,
+        gastos_adicionales, monto_pagar, monto_pagado, instalador,
         telefono_secundario, correo_adicional, medio_pago, moneda_pago, plan_prorrateo_nombre, dias_prorrateo,
-        monto_prorrateo_usd, observaciones, tipo_conexion, mac_onu, ip_onu,
+        monto_prorrateo_usd, observaciones, tipo_conexion, mac_onu, ip_onu, numero_onu,
         nap_tx_power, onu_rx_power, distancia_drop, punto_acceso, valor_conexion_dbm,
         evidencia_fibra, evidencia_foto, firma_cliente, firma_tecnico,
         token_firma, estado_firma
@@ -323,12 +324,12 @@ if ($error_mensaje) {
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-        ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?
     )";
 
         $stmt = $conn->prepare($sql);
 
-        $types = "ssssii" . "ss" . "idsssssssiisdddds" . "sssssidsssssssssssss" . "ss";
+        $types = "ssssii" . "ss" . "id" . "sssssssiisdddds" . "sssssidssssssssssssss" . "ss";
 
         $stmt->bind_param(
             $types,
@@ -356,7 +357,7 @@ if ($error_mensaje) {
             $gastos_adicionales,
             $monto_pagar,
             $monto_pagado,
-            $instaladores_ids,
+            $instalador_val,
             $telefono_secundario,
             $correo_adicional,
             $medio_pago,
@@ -368,6 +369,7 @@ if ($error_mensaje) {
             $tipo_conexion,
             $mac_onu,
             $ip_onu,
+            $numero_onu,
             $nap_tx_power,
             $onu_rx_power,
             $distancia_drop,

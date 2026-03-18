@@ -396,6 +396,13 @@ require_once '../includes/sidebar.php';
                     </div>
 
                     <div class="col-md-6 campo-ftth">
+                        <label for="numero_onu" class="form-label text-primary fw-bold">Número de ONU <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control border-primary shadow-sm" id="numero_onu"
+                            name="numero_onu" placeholder="Ej. 1">
+                    </div>
+
+                    <div class="col-md-6 campo-ftth">
                         <label for="ident_caja_nap" class="form-label">Identificación Caja NAP <span
                                 class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="ident_caja_nap" name="ident_caja_nap">

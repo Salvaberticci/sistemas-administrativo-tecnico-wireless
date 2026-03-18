@@ -1296,6 +1296,11 @@ require_once '../includes/sidebar.php';
                     </div>
                     <div class="row g-3 mb-4" id="edit_campos_ftth">
                         <div class="col-md-4">
+                            <label class="form-label small fw-bold text-primary">Número de ONU</label>
+                            <input type="text" class="form-control form-control-sm border-primary" id="edit_numero_onu" name="numero_onu"
+                                placeholder="Ej. 1">
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label small fw-bold">MAC/Serial ONU</label>
                             <input type="text" class="form-control form-control-sm" id="edit_mac" name="mac_onu"
                                 pattern="[A-Fa-f0-9:.\-]{8,20}" placeholder="FABBCC112233">
@@ -1921,6 +1926,7 @@ require_once '../includes/sidebar.php';
                 $('#edit_puerto_nap').val(d.puerto_nap);
                 $('#edit_odn').val(d.num_presinto_odn);
                 $('#edit_mac').val(d.mac_onu);
+                $('#edit_numero_onu').val(d.numero_onu || '');
                 $('#edit_ip_onu').val(d.ip_onu);
                 $('#edit_nap_tx').val(d.nap_tx_power);
                 $('#edit_onu_rx').val(d.onu_rx_power);
