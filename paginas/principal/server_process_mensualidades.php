@@ -65,6 +65,8 @@ if (isset($_POST['estado_pago']) && $_POST['estado_pago'] != '') {
 
 if (isset($_POST['estado_sae']) && $_POST['estado_sae'] != '') {
     $whereConditions[] = "cxc.estado_sae_plus = '" . $conn->real_escape_string($_POST['estado_sae']) . "'";
+    // Restringir a mensualidades únicamente cuando se filtra por SAE
+    $whereConditions[] = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL) OR h.justificacion LIKE '%mensualidad%')";
 }
 
 if (isset($_POST['referencia']) && $_POST['referencia'] != '') {
