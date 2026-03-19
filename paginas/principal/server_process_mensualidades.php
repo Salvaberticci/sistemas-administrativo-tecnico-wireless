@@ -280,10 +280,21 @@ while ($aRow = $rResult->fetch_assoc()) {
 
     // 7. Estado (Badge)
     $badge_class = 'warning';
-    if ($estado == 'PAGADO') $badge_class = 'success';
-    elseif ($estado == 'VENCIDO') $badge_class = 'danger';
+    $extra_estado = '';
     
-    $row[] = '<div class="text-center"><span class="badge w-75 bg-' . $badge_class . '">' . $estado . '</span></div>';
+    if ($estado == 'PAGADO') {
+        $badge_class = 'success';
+        if ($es_mensualidad && !empty($aRow['fecha_vencimiento']) && !empty($aRow['fecha_pago'])) {
+            // Check if paid late
+            if (strtotime($aRow['fecha_pago']) > strtotime($aRow['fecha_vencimiento'])) {
+                $extra_estado = "<br><small class='text-danger fw-bold' style='font-size:0.65rem;'>Pagado Atrasado</small>";
+            }
+        }
+    } elseif ($estado == 'VENCIDO') {
+        $badge_class = 'danger';
+    }
+    
+    $row[] = '<div class="text-center"><span class="badge bg-' . $badge_class . '">' . $estado . '</span>' . $extra_estado . '</div>';
 
     // 8. Origen (Badge)
     $origen = $aRow['origen'] ?: 'SISTEMA';
