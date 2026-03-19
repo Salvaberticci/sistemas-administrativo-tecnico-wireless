@@ -269,8 +269,6 @@ while ($aRow = $rResult->fetch_assoc()) {
                 $extra_info = "<br><small class='text-muted' style='font-size:0.7rem; font-weight: 500;'>vence en $dias_diferencia día(s)</small>";
             } elseif ($dias_diferencia == 0) {
                 $extra_info = "<br><small class='text-warning fw-bold' style='font-size:0.7rem;'>vence hoy</small>";
-            } else {
-                $extra_info = "<br><small class='text-secondary' style='font-size:0.7rem; font-weight: 500;'>vencido hace " . abs($dias_diferencia) . " día(s)</small>";
             }
         } elseif ($estado == 'PENDIENTE') {
             if ($dias_diferencia > 0) {
