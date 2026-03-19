@@ -114,9 +114,8 @@ $sOrder = "";
 if (isset($aSearchColumns[$sortColIndex])) {
     $direction = $conn->real_escape_string($sortDir);
     if ($sortColIndex == 0) {
-        // Para ordenar de más reciente a más antiguo, primero por fecha, luego agrupamos por referencia
-        // Usar COALESCE para que los que no tienen referencia se agrupen por sí mismos (su id_cobro)
-        $sOrder = "ORDER BY " . $aSearchColumns[0] . " $direction, COALESCE(NULLIF(cxc.referencia_pago, ''), cxc.id_cobro) DESC, cxc.id_cobro DESC";
+        // Ordenar por ID garantiza el orden cronológico exacto de inserción (fecha y hora real)
+        $sOrder = "ORDER BY cxc.id_cobro $direction";
     } else {
         $sOrder = "ORDER BY " . $aSearchColumns[$sortColIndex] . " $direction";
     }
