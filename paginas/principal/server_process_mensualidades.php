@@ -219,7 +219,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     if (strpos($justif, '[EXTRA') !== false) $conceptosArr[] = 'Pago de Terceros';
 
     $es_mensualidad = false;
-    if (strpos($justif, '[MENSUALIDAD') !== false) {
+    if (strpos($justif, '[MENSUALIDAD') !== false || strpos($justif, '[EXTRA') !== false) {
         $es_mensualidad = true;
     }
 
