@@ -109,6 +109,10 @@ if (isset($_POST['meses_mora']) && $_POST['meses_mora'] !== '' && intval($_POST[
         GROUP BY sub_cxc.id_contrato
         HAVING COUNT(*) >= $minMeses
     )";
+
+    // Mejora UX: Si filtramos por mora, mostramos solo las facturas que están pendientes/vencidas
+    // para que el usuario vea exactamente qué es lo que debe cada cliente filtrado.
+    $whereConditions[] = "cxc.estado IN ('PENDIENTE', 'VENCIDO')";
 }
 
 // Global Search
