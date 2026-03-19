@@ -186,14 +186,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $base_text = str_replace(['[MENSUALIDAD] ', '[EXTRA] '], '', $c_justificacion_base);
                         $tag = (strpos($c_justificacion_base, '[EXTRA]') !== false) ? '[EXTRA]' : '[MENSUALIDAD]';
                         
-                        // Si es adelanto (m > 0), proyectamos la fecha al día 1 del mes siguiente
+                        // Proyectamos fechas exactas sumando meses a la fecha base (hoy)
+                        $loop_fecha_emision = date('Y-m-d', strtotime("+$m month"));
+                        $loop_fecha_vencimiento = date('Y-m-d', strtotime("+" . ($m + 1) . " month"));
+                        
                         if ($m > 0) {
-                            $loop_fecha_emision = date('Y-m-01', $target_time);
-                            $loop_fecha_vencimiento = date('Y-m-t', $target_time);
                             $loop_justificacion = $conn->real_escape_string("$tag [$mes_nombre] - Adelanto de: " . $base_text);
                         } else {
-                            $loop_fecha_emision = $fecha_emision;
-                            $loop_fecha_vencimiento = $fecha_vencimiento;
                             $loop_justificacion = $conn->real_escape_string("$tag [$mes_nombre] - " . $base_text);
                         }
                     } else {
