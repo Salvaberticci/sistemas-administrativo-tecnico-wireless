@@ -280,24 +280,17 @@ while ($aRow = $rResult->fetch_assoc()) {
 
     // 7. Estado (Badge)
     $badge_class = 'warning';
-    $extra_estado = '';
     
     // Revertir UX: El usuario prefiere ver 'PENDIENTE' en lugar de 'VENCIDO'
     $estado_mostrar = ($estado == 'VENCIDO') ? 'PENDIENTE' : $estado;
     
     if ($estado_mostrar == 'PAGADO') {
         $badge_class = 'success';
-        if ($es_mensualidad && !empty($aRow['fecha_vencimiento']) && !empty($aRow['fecha_pago'])) {
-            // Check if paid late
-            if (strtotime($aRow['fecha_pago']) > strtotime($aRow['fecha_vencimiento'])) {
-                $extra_estado = "<br><small class='text-danger fw-bold' style='font-size:0.65rem;'>Pagado Atrasado</small>";
-            }
-        }
     } elseif ($estado_mostrar == 'PENDIENTE') {
         $badge_class = 'warning'; // El amarillo original
     }
     
-    $row[] = '<div class="text-center"><span class="badge bg-' . $badge_class . '">' . $estado_mostrar . '</span>' . $extra_estado . '</div>';
+    $row[] = '<div class="text-center"><span class="badge bg-' . $badge_class . '">' . $estado_mostrar . '</span></div>';
 
     // 8. Origen (Badge)
     $origen = $aRow['origen'] ?: 'SISTEMA';
@@ -308,13 +301,9 @@ while ($aRow = $rResult->fetch_assoc()) {
     if ($es_mensualidad) {
         $sae_status = $aRow['estado_sae_plus'] ?: 'NO CARGADO';
         $sae_class = ($sae_status == 'CARGADO') ? 'text-success fw-bold' : 'text-danger';
-        
-        // Bloquear "CARGADO" si no está PAGADO
-        $disabled_cargado = ($estado_mostrar != 'PAGADO') ? 'disabled' : '';
-        
-        $sae_select = '<select class="form-select form-select-sm sae-status-select ' . $sae_class . '" data-id="' . $id_cobro . '" title="' . ($disabled_cargado ? 'Debe estar PAGADO para cargar a SAE' : '') . '">
+        $sae_select = '<select class="form-select form-select-sm sae-status-select ' . $sae_class . '" data-id="' . $id_cobro . '">
             <option value="NO CARGADO" ' . ($sae_status == 'NO CARGADO' ? 'selected' : '') . '>No Cargado</option>
-            <option value="CARGADO" ' . ($sae_status == 'CARGADO' ? 'selected' : '') . ' ' . $disabled_cargado . '>Cargado</option>
+            <option value="CARGADO" ' . ($sae_status == 'CARGADO' ? 'selected' : '') . '>Cargado</option>
         </select>';
         $row[] = $sae_select;
     } else {
@@ -322,23 +311,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     }
 
     // 10. Acciones
-    $acciones = '<div class="d-flex justify-content-end gap-1 align-items-center">';
-    
-    // Dropdown para cambiar el estado de pago rápidamente
-    $status_bg = '';
-    if($estado_mostrar == 'PAGADO') $status_bg = 'bg-success text-white';
-    elseif($estado == 'VENCIDO') $status_bg = 'bg-danger text-white'; // DB status real
-    elseif($estado_mostrar == 'PENDIENTE') $status_bg = 'bg-warning text-dark';
-    
-    $acciones .= '<select class="form-select form-select-sm status-pago-inline ' . $status_bg . '" data-id="' . $id_cobro . '" style="width: 100px; padding: 0.15rem 0.5rem; font-size: 0.75rem;">';
-    // Muestra Vencido internamente si lo estaba para no alterar la DB si lo tocan, pero a nivel UI el usuario ve y puede setear "PAGADO" o "PENDIENTE"
-    $opciones_estado = ['PAGADO' => 'Pagado', 'PENDIENTE' => 'Pendiente', 'VENCIDO' => 'Vencido', 'CANCELADO' => 'Cancelado'];
-    foreach ($opciones_estado as $val => $lbl) {
-        $sel = ($estado == $val) ? 'selected' : '';
-        $acciones .= "<option value='$val' $sel class='bg-white text-dark'>$lbl</option>";
-    }
-    $acciones .= '</select>';
-
+    $acciones = '<div class="d-flex justify-content-end gap-1">';
     // Modificar
     $acciones .= '<button type="button" onclick="confirmarEdicionCobro(' . $id_cobro . ')" class="btn btn-sm btn-warning" title="Modificar"><i class="fas fa-edit"></i></button>';
     
