@@ -90,6 +90,27 @@ if (isset($_POST['filtro_tipo']) && $_POST['filtro_tipo'] != '') {
     }
 }
 
+// Filtro por meses sin pagar: clientes con >= N mensualidades PENDIENTE o VENCIDO
+if (isset($_POST['meses_mora']) && $_POST['meses_mora'] !== '' && intval($_POST['meses_mora']) > 0) {
+    $minMeses = intval($_POST['meses_mora']);
+    // Subquery: contratos que tienen al menos $minMeses facturas pendientes o vencidas de tipo mensualidad
+    $whereConditions[] = "cxc.id_contrato IN (
+        SELECT sub_cxc.id_contrato
+        FROM cuentas_por_cobrar sub_cxc
+        LEFT JOIN cobros_manuales_historial sub_h ON sub_cxc.id_cobro = sub_h.id_cobro_cxc
+        LEFT JOIN contratos sub_co ON sub_cxc.id_contrato = sub_co.id
+        LEFT JOIN planes sub_pl ON sub_co.id_plan = sub_pl.id_plan
+        WHERE sub_cxc.estado IN ('PENDIENTE', 'VENCIDO')
+          AND (
+              sub_h.justificacion LIKE '%[MENSUALIDAD]%'
+              OR sub_h.justificacion IS NULL
+              OR sub_h.justificacion LIKE '%mensualidad%'
+          )
+        GROUP BY sub_cxc.id_contrato
+        HAVING COUNT(*) >= $minMeses
+    )";
+}
+
 // Global Search
 if ($searchVal != "") {
     $searchValue = $conn->real_escape_string($searchVal);

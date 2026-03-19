@@ -161,6 +161,15 @@ require_once '../includes/sidebar.php';
                         </select>
                     </div>
                     <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Meses sin Pagar</label>
+                        <select class="form-select form-select-sm" id="filtro_meses_mora">
+                            <option value="">Todos los Clientes</option>
+                            <option value="1">≥ 1 mes sin pagar</option>
+                            <option value="2">≥ 2 meses sin pagar</option>
+                            <option value="3">≥ 3 meses sin pagar</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Buscar por Referencia</label>
                         <input type="text" class="form-control form-control-sm" id="filtro_referencia" placeholder="Ej: 123456" autocomplete="off">
                     </div>
@@ -1185,6 +1194,7 @@ require_once '../includes/sidebar.php';
                     d.estado_sae = $('#filtro_sae').val();
                     d.estado_pago = $('#filtro_estado').val(); // Nuevo filtro
                     d.filtro_tipo = $('#filtro_tipo').val();
+                    d.meses_mora = $('#filtro_meses_mora').val();
                     d.referencia = $('#filtro_referencia').val();
                     d.sSearch = d.search.value; // Map modern search to legacy param
                 }
@@ -1247,7 +1257,7 @@ require_once '../includes/sidebar.php';
             "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
         });
 
-        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen, #filtro_sae, #filtro_estado, #filtro_tipo').on('change', function () {
+        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen, #filtro_sae, #filtro_estado, #filtro_tipo, #filtro_meses_mora').on('change', function () {
             tablaUnica.ajax.reload();
         });
 
