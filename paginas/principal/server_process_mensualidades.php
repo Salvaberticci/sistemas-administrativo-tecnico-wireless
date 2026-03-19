@@ -258,27 +258,34 @@ while ($aRow = $rResult->fetch_assoc()) {
 
     // 7. Estado (Badge)
     $badge_class = 'warning';
+    if ($estado == 'PAGADO') $badge_class = 'success';
+    elseif ($estado == 'VENCIDO') $badge_class = 'danger';
     
     $extra_info = '';
-    if ($estado == 'PAGADO') {
-        $badge_class = 'success';
-    } elseif ($estado == 'VENCIDO') {
-        $badge_class = 'danger';
-        // Calcular hace cuánto
-        if ($es_mensualidad && !empty($aRow['fecha_vencimiento'])) {
-            $dias = floor((strtotime(date('Y-m-d')) - strtotime($aRow['fecha_vencimiento'])) / 86400);
-            if ($dias > 0) $extra_info = "<br><small class='text-danger' style='font-size:0.7rem;'>hace $dias día(s)</small>";
-        }
-    } else { // PENDIENTE
-        $badge_class = 'warning';
-        if ($es_mensualidad && !empty($aRow['fecha_vencimiento'])) {
-            $dias = floor((strtotime($aRow['fecha_vencimiento']) - strtotime(date('Y-m-d'))) / 86400);
-            if ($dias > 0) {
-                $extra_info = "<br><small class='text-muted' style='font-size:0.7rem;'>en $dias día(s)</small>";
-            } elseif ($dias == 0) {
+    if ($es_mensualidad && !empty($aRow['fecha_vencimiento'])) {
+        $dias_diferencia = floor((strtotime($aRow['fecha_vencimiento']) - strtotime(date('Y-m-d'))) / 86400);
+        
+        if ($estado == 'PAGADO') {
+            if ($dias_diferencia > 0) {
+                $extra_info = "<br><small class='text-muted' style='font-size:0.7rem; font-weight: 500;'>vence en $dias_diferencia día(s)</small>";
+            } elseif ($dias_diferencia == 0) {
+                $extra_info = "<br><small class='text-warning fw-bold' style='font-size:0.7rem;'>vence hoy</small>";
+            } else {
+                $extra_info = "<br><small class='text-secondary' style='font-size:0.7rem; font-weight: 500;'>vencido hace " . abs($dias_diferencia) . " día(s)</small>";
+            }
+        } elseif ($estado == 'PENDIENTE') {
+            if ($dias_diferencia > 0) {
+                $extra_info = "<br><small class='text-muted' style='font-size:0.7rem; font-weight: 500;'>vence en $dias_diferencia día(s)</small>";
+            } elseif ($dias_diferencia == 0) {
                 $extra_info = "<br><small class='text-warning fw-bold' style='font-size:0.7rem;'>¡vence hoy!</small>";
             } else {
-                $extra_info = "<br><small class='text-danger fw-bold' style='font-size:0.7rem;'>atrasado " . abs($dias) . " día(s)</small>";
+                $extra_info = "<br><small class='text-danger fw-bold' style='font-size:0.7rem;'>atrasado " . abs($dias_diferencia) . " día(s)</small>";
+            }
+        } elseif ($estado == 'VENCIDO') {
+            if ($dias_diferencia < 0) {
+                $extra_info = "<br><small class='text-danger fw-bold' style='font-size:0.7rem;'>hace " . abs($dias_diferencia) . " día(s)</small>";
+            } else {
+                $extra_info = "<br><small class='text-muted' style='font-size:0.7rem; font-weight: 500;'>en $dias_diferencia día(s)</small>";
             }
         }
     }
