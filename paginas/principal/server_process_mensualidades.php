@@ -93,7 +93,8 @@ if (isset($_POST['filtro_tipo']) && $_POST['filtro_tipo'] != '') {
 // Filtro por meses sin pagar: clientes con >= N mensualidades PENDIENTE o VENCIDO
 if (isset($_POST['meses_mora']) && $_POST['meses_mora'] !== '' && intval($_POST['meses_mora']) > 0) {
     $minMeses = intval($_POST['meses_mora']);
-    // Subquery: contratos que tienen al menos $minMeses facturas pendientes o vencidas de tipo mensualidad
+    // Subquery: contratos que tienen al menos $minMeses facturas PENDIENTES o VENCIDAS 
+    // estrictamente de MENSUALIDAD y cuya fecha de vencimiento ya pasó (<= Hoy).
     $whereConditions[] = "cxc.id_contrato IN (
         SELECT sub_cxc.id_contrato
         FROM cuentas_por_cobrar sub_cxc
@@ -101,18 +102,19 @@ if (isset($_POST['meses_mora']) && $_POST['meses_mora'] !== '' && intval($_POST[
         LEFT JOIN contratos sub_co ON sub_cxc.id_contrato = sub_co.id
         LEFT JOIN planes sub_pl ON sub_co.id_plan = sub_pl.id_plan
         WHERE sub_cxc.estado IN ('PENDIENTE', 'VENCIDO')
+          AND sub_cxc.fecha_vencimiento <= CURDATE() 
           AND (
               sub_h.justificacion LIKE '%[MENSUALIDAD]%'
-              OR sub_h.justificacion IS NULL
               OR sub_h.justificacion LIKE '%mensualidad%'
+              OR (sub_h.justificacion IS NULL AND sub_pl.id_plan IS NOT NULL)
           )
         GROUP BY sub_cxc.id_contrato
         HAVING COUNT(*) >= $minMeses
     )";
 
     // Mejora UX: Si filtramos por mora, mostramos solo las facturas que están pendientes/vencidas
-    // para que el usuario vea exactamente qué es lo que debe cada cliente filtrado.
-    $whereConditions[] = "cxc.estado IN ('PENDIENTE', 'VENCIDO')";
+    // o que tengan fecha de vencimiento pasada, para que el usuario vea la causa de la mora.
+    $whereConditions[] = "cxc.estado IN ('PENDIENTE', 'VENCIDO') AND cxc.fecha_vencimiento <= CURDATE()";
 }
 
 // Global Search
