@@ -102,7 +102,7 @@ if (isset($_POST['meses_mora']) && $_POST['meses_mora'] !== '' && intval($_POST[
         LEFT JOIN contratos sub_co ON sub_cxc.id_contrato = sub_co.id
         LEFT JOIN planes sub_pl ON sub_co.id_plan = sub_pl.id_plan
         WHERE sub_cxc.estado IN ('PENDIENTE', 'VENCIDO')
-          AND sub_cxc.fecha_vencimiento <= CURDATE() 
+          AND sub_cxc.fecha_vencimiento <= '" . date('Y-m-d') . "'
           AND (
               sub_h.justificacion LIKE '%[MENSUALIDAD]%'
               OR sub_h.justificacion LIKE '%mensualidad%'
@@ -114,7 +114,7 @@ if (isset($_POST['meses_mora']) && $_POST['meses_mora'] !== '' && intval($_POST[
 
     // Mejora UX: Si filtramos por mora, mostramos solo las facturas que están pendientes/vencidas
     // o que tengan fecha de vencimiento pasada, para que el usuario vea la causa de la mora.
-    $whereConditions[] = "cxc.estado IN ('PENDIENTE', 'VENCIDO') AND cxc.fecha_vencimiento <= CURDATE()";
+    $whereConditions[] = "cxc.estado IN ('PENDIENTE', 'VENCIDO') AND cxc.fecha_vencimiento <= '" . date('Y-m-d') . "'";
 }
 
 // Global Search
@@ -287,34 +287,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     if ($estado == 'PAGADO') $badge_class = 'success';
     elseif ($estado == 'VENCIDO') $badge_class = 'danger';
     
-    $extra_info = '';
-    if ($es_mensualidad && !empty($aRow['fecha_vencimiento'])) {
-        $dias_diferencia = floor((strtotime($aRow['fecha_vencimiento']) - strtotime(date('Y-m-d'))) / 86400);
-        
-        if ($estado == 'PAGADO') {
-            if ($dias_diferencia > 0) {
-                $extra_info = "<br><small class='text-muted' style='font-size:0.7rem; font-weight: 500;'>vence en $dias_diferencia día(s)</small>";
-            } elseif ($dias_diferencia == 0) {
-                $extra_info = "<br><small class='text-warning fw-bold' style='font-size:0.7rem;'>vence hoy</small>";
-            }
-        } elseif ($estado == 'PENDIENTE') {
-            if ($dias_diferencia > 0) {
-                $extra_info = "<br><small class='text-muted' style='font-size:0.7rem; font-weight: 500;'>vence en $dias_diferencia día(s)</small>";
-            } elseif ($dias_diferencia == 0) {
-                $extra_info = "<br><small class='text-warning fw-bold' style='font-size:0.7rem;'>¡vence hoy!</small>";
-            } else {
-                $extra_info = "<br><small class='text-danger fw-bold' style='font-size:0.7rem;'>atrasado " . abs($dias_diferencia) . " día(s)</small>";
-            }
-        } elseif ($estado == 'VENCIDO') {
-            if ($dias_diferencia < 0) {
-                $extra_info = "<br><small class='text-danger fw-bold' style='font-size:0.7rem;'>hace " . abs($dias_diferencia) . " día(s)</small>";
-            } else {
-                $extra_info = "<br><small class='text-muted' style='font-size:0.7rem; font-weight: 500;'>en $dias_diferencia día(s)</small>";
-            }
-        }
-    }
-
-    $row[] = '<div class="text-center"><span class="badge w-75 bg-' . $badge_class . '">' . $estado . '</span>' . $extra_info . '</div>';
+    $row[] = '<div class="text-center"><span class="badge w-75 bg-' . $badge_class . '">' . $estado . '</span></div>';
 
     // 8. Origen (Badge)
     $origen = $aRow['origen'] ?: 'SISTEMA';
