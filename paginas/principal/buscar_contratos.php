@@ -11,7 +11,7 @@ $search_query = isset($_GET['q']) ? $conn->real_escape_string($_GET['q']) : '';
 
 if (strlen($search_query) >= 3) {
     // Buscamos contratos activos con su respectivo plan
-    $sql = "SELECT c.id, c.nombre_completo, c.cedula, c.direccion, c.ip_onu as ip, c.tipo_conexion as tipo_servicio, 
+    $sql = "SELECT c.id, c.nombre_completo, c.cedula, c.telefono, c.direccion, c.ip_onu as ip, c.tipo_conexion as tipo_servicio, 
                    p.nombre_plan, p.monto as monto_plan
             FROM contratos c
             LEFT JOIN planes p ON c.id_plan = p.id_plan

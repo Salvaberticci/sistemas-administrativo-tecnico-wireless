@@ -70,6 +70,22 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(25, 135, 84, 0.3);
         }
+
+        /* Estilos para el autocompletado */
+        #contrato_search_results {
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        .search-item {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .search-item:hover {
+            background-color: #f0f7ff;
+        }
     </style>
 </head>
 
@@ -92,19 +108,20 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
                     <div class="card-body p-4 p-md-5">
                         <form action="procesar_reporte_pago.php" method="POST" enctype="multipart/form-data"
                             id="formReportePago">
+                            <input type="hidden" name="id_contrato_asociado" id="id_contrato_asociado">
 
                             <!-- SECCIÓN 1: DATOS DEL TITULAR -->
                             <div class="section-title"><i class="fas fa-user me-2"></i> Datos del Titular del Servicio
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-md-6">
+                                <div class="col-md-6 position-relative">
                                     <label class="form-label">Cédula de Identidad <span
                                             class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="cedula" id="cedula"
-                                        placeholder="12345678" required pattern="[0-9]{5,9}">
+                                        placeholder="12345678 o Nombre" required autocomplete="off">
+                                    <div id="contrato_search_results" class="list-group shadow position-absolute w-100 mt-1 d-none"></div>
                                     <div class="important-note mt-1">
-                                        <i class="fas fa-exclamation-triangle text-warning me-1"></i> Colocar la cédula
-                                        sin espacios ni puntos "." solo números.
+                                        <i class="fas fa-search text-primary me-1"></i> Puedes buscar por <b>Cédula</b> o <b>Nombre</b>.
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -361,11 +378,13 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
             containerMeses.appendChild(div);
             actualizarTodosLosSelects();
             verificarLimiteMeses();
+            recalcularMontoPorMeses();
         }
 
         window.removerMes = function (btn) {
             btn.parentElement.remove();
             verificarLimiteMeses();
+            recalcularMontoPorMeses();
         }
 
         function verificarLimiteMeses() {
@@ -380,21 +399,111 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
         }
 
         // ==============================================================
-        // VALIDACIÓN Y RESTRICCIÓN DE CAMPOS EN TIEMPO REAL
+        // VALIDACIÓN Y RESTRICCIÓN DE CAMPOS EN TIEMPO REAL + AUTOCOMPLETE
         // ==============================================================
 
-        // Cédula: solo dígitos (en este formulario no lleva prefijo V/J)
-        document.getElementById('cedula')?.addEventListener('input', function () {
-            this.value = this.value.replace(/[^0-9]/g, '');
+        const searchInput = document.getElementById('cedula');
+        const resultsContainer = document.getElementById('contrato_search_results');
+        const hiddenIdInput = document.getElementById('id_contrato_asociado');
+        const nombreInput = document.getElementById('nombre');
+        const telefonoInput = document.getElementById('telefono');
+        let planPrecioBase = 0; // Precio base del plan seleccionado
+        
+        // Recalcula el monto según la cantidad de meses activos
+        function recalcularMontoPorMeses() {
+            if (planPrecioBase <= 0) return; // Solo si hay un plan cargado
+            const cantMeses = containerMeses.querySelectorAll('.selector-mes').length;
+            const montoInput = document.getElementById('monto_bs');
+            if (montoInput) {
+                montoInput.value = (planPrecioBase * cantMeses).toFixed(2);
+            }
+        }
+
+        let searchTimer;
+
+        searchInput?.addEventListener('input', function () {
+            // Permitir letras para búsqueda por nombre
+            // this.value = this.value.replace(/[^0-9]/g, ''); // Comentado para permitir nombres
+
+            clearTimeout(searchTimer);
+            const q = this.value.trim();
+            
+            if (q.length < 3) {
+                resultsContainer.classList.add('d-none');
+                resultsContainer.innerHTML = '';
+                return;
+            }
+
+            searchTimer = setTimeout(() => {
+                fetch(`paginas/principal/buscar_contratos.php?q=${encodeURIComponent(q)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        resultsContainer.innerHTML = '';
+                        if (data.length > 0) {
+                            resultsContainer.classList.remove('d-none');
+                            data.forEach(c => {
+                                const item = document.createElement('a');
+                                item.className = 'list-group-item list-group-item-action search-item py-2';
+                                const planLabel = c.nombre_plan
+                                    ? `<span class="badge bg-success-subtle text-success border border-success-subtle ms-1">$${parseFloat(c.monto_plan).toFixed(2)} / ${c.nombre_plan}</span>`
+                                    : '';
+                                item.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-bold text-primary">${c.nombre_completo}</div>
+                                            <small class="text-muted">C.I: ${c.cedula} | Contrato #${c.id} ${planLabel}</small>
+                                        </div>
+                                    </div>
+                                `;
+                                item.onclick = (e) => {
+                                    e.preventDefault();
+                                    
+                                    // Rellenar campos del titular
+                                    searchInput.value = c.cedula;
+                                    nombreInput.value = c.nombre_completo;
+                                    telefonoInput.value = c.telefono || '';
+                                    hiddenIdInput.value = c.id;
+
+                                    // Guardar precio base del plan para recalcular por meses
+                                    planPrecioBase = c.monto_plan ? parseFloat(c.monto_plan) : 0;
+
+                                    // Auto-llenar monto según meses activos actuales
+                                    recalcularMontoPorMeses();
+
+                                    // Si no hay plan, igual llenamos el monto directo si existe
+                                    if (planPrecioBase <= 0 && c.monto_plan) {
+                                        const montoInput = document.getElementById('monto_bs');
+                                        if (montoInput) montoInput.value = parseFloat(c.monto_plan).toFixed(2);
+                                    }
+                                    
+                                    // Cerrar resultados
+                                    resultsContainer.classList.add('d-none');
+                                    resultsContainer.innerHTML = '';
+                                };
+                                resultsContainer.appendChild(item);
+                            });
+                        } else {
+                            resultsContainer.classList.add('d-none');
+                        }
+                    })
+                    .catch(err => console.error('Error en búsqueda:', err));
+            }, 300);
+        });
+
+        // Cerrar resultados al hacer clic fuera
+        document.addEventListener('click', function (e) {
+            if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+                resultsContainer.classList.add('d-none');
+            }
         });
 
         // Nombre: solo letras y espacios
-        document.getElementById('nombre')?.addEventListener('input', function () {
+        nombreInput?.addEventListener('input', function () {
             this.value = this.value.replace(/[^A-Za-zñÑáéíóúÁÉÍÓÚ\s]/g, '');
         });
 
         // Teléfono: solo dígitos, +, - y espacios
-        document.getElementById('telefono')?.addEventListener('input', function () {
+        telefonoInput?.addEventListener('input', function () {
             this.value = this.value.replace(/[^0-9+\-\s]/g, '');
         });
 

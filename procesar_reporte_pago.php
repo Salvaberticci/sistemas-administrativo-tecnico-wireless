@@ -23,12 +23,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
          die("Error: El Método de Pago, el Banco y el Número de Referencia son obligatorios.");
     }
 
-    // 1. Intentar vincular con un contrato existente por cédula (Opcional, ayuda al admin)
-    $id_contrato_asociado = null;
-    $sql_check = "SELECT id FROM contratos WHERE cedula = '$cedula' LIMIT 1";
-    $res_check = $conn->query($sql_check);
-    if ($res_check && $res_check->num_rows > 0) {
-        $id_contrato_asociado = $res_check->fetch_assoc()['id'];
+    // 1. Intentar vincular con un contrato existente
+    $id_contrato_asociado = isset($_POST['id_contrato_asociado']) && !empty($_POST['id_contrato_asociado']) 
+                            ? intval($_POST['id_contrato_asociado']) 
+                            : null;
+
+    if (!$id_contrato_asociado) {
+        $sql_check = "SELECT id FROM contratos WHERE cedula = '$cedula' LIMIT 1";
+        $res_check = $conn->query($sql_check);
+        if ($res_check && $res_check->num_rows > 0) {
+            $id_contrato_asociado = $res_check->fetch_assoc()['id'];
+        }
     }
 
     // 2. Manejo de archivo (Capture)
