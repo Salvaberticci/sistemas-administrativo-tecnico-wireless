@@ -282,7 +282,10 @@ while ($aRow = $rResult->fetch_assoc()) {
     $badge_class = 'warning';
     $extra_estado = '';
     
-    if ($estado == 'PAGADO') {
+    // Revertir UX: El usuario prefiere ver 'PENDIENTE' en lugar de 'VENCIDO'
+    $estado_mostrar = ($estado == 'VENCIDO') ? 'PENDIENTE' : $estado;
+    
+    if ($estado_mostrar == 'PAGADO') {
         $badge_class = 'success';
         if ($es_mensualidad && !empty($aRow['fecha_vencimiento']) && !empty($aRow['fecha_pago'])) {
             // Check if paid late
@@ -290,11 +293,11 @@ while ($aRow = $rResult->fetch_assoc()) {
                 $extra_estado = "<br><small class='text-danger fw-bold' style='font-size:0.65rem;'>Pagado Atrasado</small>";
             }
         }
-    } elseif ($estado == 'VENCIDO') {
-        $badge_class = 'danger';
+    } elseif ($estado_mostrar == 'PENDIENTE') {
+        $badge_class = 'warning'; // El amarillo original
     }
     
-    $row[] = '<div class="text-center"><span class="badge bg-' . $badge_class . '">' . $estado . '</span>' . $extra_estado . '</div>';
+    $row[] = '<div class="text-center"><span class="badge bg-' . $badge_class . '">' . $estado_mostrar . '</span>' . $extra_estado . '</div>';
 
     // 8. Origen (Badge)
     $origen = $aRow['origen'] ?: 'SISTEMA';
