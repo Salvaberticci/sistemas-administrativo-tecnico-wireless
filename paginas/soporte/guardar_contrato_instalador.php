@@ -80,6 +80,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $telefono_secundario = trim($conn->real_escape_string($_POST['telefono_secundario'] ?? ''));
         $correo_adicional = trim($conn->real_escape_string($_POST['correo_adicional'] ?? ''));
         $observaciones = $conn->real_escape_string($_POST['observaciones'] ?? '');
+        $sae_plus = $conn->real_escape_string($_POST['sae_plus'] ?? '');
 
         // Tipo de conexión es el campo principal ahora
         $tipo_conexion = $conn->real_escape_string($_POST['tipo_conexion'] ?? '');
@@ -109,8 +110,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $ip_onu = trim($conn->real_escape_string($_POST['ip_onu'] ?? ''));
 
         // Manejar duplicidad de campos Nap/Puerto
-        $ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap_tecnico'] ?? $_POST['ident_caja_nap'] ?? '');
-        $puerto_nap = $conn->real_escape_string($_POST['puerto_nap_tecnico'] ?? $_POST['puerto_nap'] ?? '');
+        $ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap'] ?? '');
+        $puerto_nap = $conn->real_escape_string($_POST['puerto_nap'] ?? '');
 
         $nap_tx_power = $conn->real_escape_string($_POST['nap_tx_power'] ?? '');
         $onu_rx_power = $conn->real_escape_string($_POST['onu_rx_power'] ?? '');
@@ -123,16 +124,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $punto_acceso = $conn->real_escape_string($_POST['punto_acceso'] ?? '');
         $valor_conexion_dbm = $conn->real_escape_string($_POST['valor_conexion_dbm'] ?? '');
         $num_presinto_odn = $conn->real_escape_string($_POST['num_presinto_odn'] ?? '');
-
         // VALIDACIÓN
         $errors = [];
         if (empty($cedula))
             $errors[] = "La Cédula es obligatoria.";
         if (empty($nombre_completo))
             $errors[] = "El Nombre es obligatorio.";
-        if ($monto_instalacion <= 0)
-            $errors[] = "El monto de instalación debe ser mayor a 0.";
-        if (!empty($ip_onu) && !preg_match('/^(?:\d{1,3}\.){3}\d{1,3}$/', $ip_onu))
+        if ($monto_instalacion < 0)
+            $errors[] = "El monto de instalación no puede ser negativo.";
+
+        // Validar formato de Cédula (V/J/E/G/P + números)
+        if (!empty($cedula) && !preg_match('/^[VJEGP]\d+$/i', $cedula)) {
+            $errors[] = "Formato de Cédula inválido. Debe empezar con V, J, E, G o P seguido de números.";
+        }
+
+        if (!empty($ip_onu) && $ip_onu !== '192.168.' && !preg_match('/^(?:\d{1,3}\.){3}\d{1,3}$/', $ip_onu))
             $errors[] = "IP ONU inválida.";
 
         if (!empty($errors)) {
@@ -155,30 +161,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $evidencia_foto = savePhoto($_FILES['evidencia_foto'] ?? null, 'evidencia');
         $evidencia_documento = savePhoto($_FILES['evidencia_documento'] ?? null, 'doc');
 
-        // INSERT
+        // INSERT (Sync with nuevo.php fields)
         $sql = "INSERT INTO contratos (
             cedula, nombre_completo, municipio_texto, parroquia_texto, id_plan, monto_plan, vendedor_texto, 
             direccion, telefono, telefono_secundario, correo, correo_adicional, fecha_instalacion, 
             tipo_instalacion, medio_pago, monto_instalacion, gastos_adicionales, plan_prorrateo_nombre, dias_prorrateo, monto_prorrateo_usd,
             monto_pagar, monto_pagado, moneda_pago, observaciones, 
-            tipo_conexion, mac_onu, ip_onu, ident_caja_nap, puerto_nap, 
+            tipo_conexion, mac_onu, ip_onu, numero_onu, ident_caja_nap, puerto_nap, 
             nap_tx_power, onu_rx_power, distancia_drop, instalador, 
             punto_acceso, valor_conexion_dbm, num_presinto_odn, evidencia_foto, evidencia_documento, 
-            firma_cliente, firma_tecnico, id_olt, id_pon, estado
+            firma_cliente, firma_tecnico, id_olt, id_pon, estado, sae_plus
         ) VALUES (
             '$cedula', '$nombre_completo', '$municipio_texto', '$parroquia_texto', " . ($id_plan ?: "NULL") . ", $monto_plan, '$vendedor_texto', 
             '$direccion', '$telefono', '$telefono_secundario', '$correo', '$correo_adicional', '$fecha_instalacion', 
             '$tipo_instalacion', '$medio_pago', '$monto_instalacion', '$gastos_adicionales', " . ($plan_prorrateo_nombre ? "'$plan_prorrateo_nombre'" : "NULL") . ", $dias_prorrateo, $monto_prorrateo_usd,
             $monto_pagar, $monto_pagado, '$moneda_pago', '$observaciones', 
-            '$tipo_conexion', '$mac_onu', '$ip_onu', '$ident_caja_nap', '$puerto_nap', 
+            '$tipo_conexion', '$mac_onu', '$ip_onu', '$numero_onu', '$ident_caja_nap', '$puerto_nap', 
             '$nap_tx_power', '$onu_rx_power', '$distancia_drop', '$instalador', 
             '$punto_acceso', '$valor_conexion_dbm', '$num_presinto_odn', " . ($evidencia_foto ? "'$evidencia_foto'" : "NULL") . ", " . ($evidencia_documento ? "'$evidencia_documento'" : "NULL") . ", 
-            " . ($firma_cliente ? "'$firma_cliente'" : "NULL") . ", " . ($firma_tecnico ? "'$firma_tecnico'" : "NULL") . ", " . ($id_olt ?: "NULL") . ", " . ($id_pon ?: "NULL") . ", '$estado'
+            " . ($firma_cliente ? "'$firma_cliente'" : "NULL") . ", " . ($firma_tecnico ? "'$firma_tecnico'" : "NULL") . ", " . ($id_olt ?: "NULL") . ", " . ($id_pon ?: "NULL") . ", '$estado', '$sae_plus'
         )";
 
         if (!$conn->query($sql))
             throw new Exception("Error SQL: " . $conn->error);
         $id_contrato = $conn->insert_id;
+
+        // ════════════════════════════════════════════════════════════════════════════════
+        // GENERACIÓN DE LA PRIMERA CUENTA POR COBRAR (Sync with guarda.php)
+        // ════════════════════════════════════════════════════════════════════════════════
+        if ($id_contrato > 0 && $id_plan) {
+            // Obtener el monto total del plan
+            $sql_monto = "SELECT monto FROM planes WHERE id_plan = $id_plan LIMIT 1";
+            $res_monto = $conn->query($sql_monto);
+            if ($res_monto && $res_monto->num_rows > 0) {
+                $row_monto = $res_monto->fetch_assoc();
+                $monto_mensualidad = $row_monto['monto'];
+
+                // Fechas: Emisión hoy, Vencimiento en 30 días
+                $fecha_emision = $fecha_instalacion;
+                $fecha_vencimiento = date('Y-m-d', strtotime($fecha_emision . ' + 30 days'));
+
+                $sql_cxc = "INSERT INTO cuentas_por_cobrar (id_contrato, fecha_emision, fecha_vencimiento, monto_total)
+                            VALUES ($id_contrato, '$fecha_emision', '$fecha_vencimiento', $monto_mensualidad)";
+                $conn->query($sql_cxc);
+            }
+        }
 
         // SALDO PENDIENTE
         $saldo = round($monto_pagar - $monto_pagado, 2);

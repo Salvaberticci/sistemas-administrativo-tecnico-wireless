@@ -118,6 +118,7 @@ if (file_exists($jsonFileTypes)) {
 
                         <form id="formContrato" action="guardar_contrato_instalador.php" method="POST"
                             enctype="multipart/form-data" class="row g-3" autocomplete="off">
+                            <input type="hidden" name="sae_plus" value="2.0">
 
                             <!-- ═══════════════════════════════════════════ -->
                             <!-- DATOS DEL CLIENTE                          -->
@@ -398,15 +399,22 @@ if (file_exists($jsonFileTypes)) {
                             </div>
 
                             <div class="col-md-6 campo-ftth">
-                                <label for="ident_caja_nap_ftth" class="form-label">Identificación Caja NAP <span
+                                <label for="ident_caja_nap" class="form-label">Identificación Caja NAP <span
                                         class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="ident_caja_nap_ftth" name="ident_caja_nap">
+                                <input type="text" class="form-control" id="ident_caja_nap" name="ident_caja_nap">
                             </div>
 
                             <div class="col-md-6 campo-ftth">
-                                <label for="puerto_nap_ftth" class="form-label">Puerto NAP <span
+                                <label for="puerto_nap" class="form-label">Puerto NAP <span
                                         class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="puerto_nap_ftth" name="puerto_nap">
+                                <input type="text" class="form-control" id="puerto_nap" name="puerto_nap">
+                            </div>
+
+                            <div class="col-md-6 campo-ftth">
+                                <label for="numero_onu" class="form-label text-primary fw-bold">Número de ONU <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control border-primary shadow-sm" id="numero_onu"
+                                    name="numero_onu" placeholder="Ej. 1">
                             </div>
 
                             <div class="col-md-6 campo-ftth">
@@ -582,6 +590,110 @@ if (file_exists($jsonFileTypes)) {
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- MODAL DE CONFIRMACIÓN (Sync with nuevo.php) -->
+    <!-- ═══════════════════════════════════════════ -->
+    <script>
+        function mostrarConfirmacionRegistro(e) {
+            e.preventDefault();
+            const form = e.target;
+
+            // Extraer datos para el resumen
+            const cedula = $('#cedula').val();
+            const nombre = $('#nombre_completo').val();
+            const plan = $('#id_plan option:selected').text();
+            const montoTotal = $('#monto_pagar').val();
+            const montoPagado = $('#monto_pagado').val();
+            const moneda = $('#moneda_pago').val();
+            const medio = $('#medio_pago').val();
+            const tecnico = $('#instaladores').val();
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const htmlResumen = `
+                <div class="text-start">
+                    <table class="table table-sm table-bordered mt-2">
+                        <tbody>
+                            <tr><th class="bg-light">Cédula:</th><td>${cedula}</td></tr>
+                            <tr><th class="bg-light">Titular:</th><td>${nombre}</td></tr>
+                            <tr><th class="bg-light">Plan:</th><td>${plan}</td></tr>
+                            <tr><th class="bg-light">Monto Total:</th><td>$${montoTotal}</td></tr>
+                            <tr><th class="bg-light">Monto Pagado:</th><td>${montoPagado} ${moneda}</td></tr>
+                            <tr><th class="bg-light">Medio de Pago:</th><td>${medio}</td></tr>
+                            <tr><th class="bg-light">Instalador:</th><td>${tecnico || 'No asignado'}</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="text-center fw-bold text-success mt-3">¿Desea registrar este contrato con estos datos?</p>
+                </div>
+            `;
+
+            Swal.fire({
+                title: 'Confirmar Registro',
+                html: htmlResumen,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, Registrar',
+                cancelButtonText: 'Verificar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    ejecutarGuardado(form);
+                }
+            });
+        }
+
+        function ejecutarGuardado(form) {
+             // Capturar firmas antes de enviar
+            if (window.padCliente && !window.padCliente.isEmpty()) {
+                $('#firma_cliente_data').val(window.padCliente.toDataURL());
+            }
+            if (window.padTecnico && !window.padTecnico.isEmpty()) {
+                $('#firma_tecnico_data').val(window.padTecnico.toDataURL());
+            }
+
+            const formData = new FormData(form);
+
+            Swal.fire({
+                title: 'Procesando...',
+                text: 'Guardando registro...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            fetch('guardar_contrato_instalador.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: 'Contrato registrado correctamente.',
+                        icon: 'success',
+                        confirmButtonText: 'Aceptar'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', data.msg, 'error');
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                Swal.fire('Error', 'Error de conexión', 'error');
+            });
+        }
+
+        $(document).ready(function() {
+            $('#formContrato').on('submit', mostrarConfirmacionRegistro);
+        });
+    </script>
 
     <!-- ═══════════════════════════════════════════ -->
     <!-- SIGNATURE PAD INIT                         -->
@@ -858,7 +970,7 @@ if (file_exists($jsonFileTypes)) {
 
                 if (tipo === 'FTTH') {
                     $('.campo-ftth').show();
-                    $('#mac_onu, #ip_onu, #ident_caja_nap_ftth, #puerto_nap_ftth, #nap_tx_power, #onu_rx_power, #distancia_drop, #num_presinto_odn').prop('required', true);
+                    $('#mac_onu, #ip_onu, #ident_caja_nap, #puerto_nap, #nap_tx_power, #onu_rx_power, #distancia_drop, #num_presinto_odn, #numero_onu').prop('required', true);
                 } else if (tipo === 'RADIO') {
                     $('.campo-radio').show();
                     $('#ip, #punto_acceso, #valor_conexion_dbm').prop('required', true);
