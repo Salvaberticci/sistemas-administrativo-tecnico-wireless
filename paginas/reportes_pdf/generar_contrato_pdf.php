@@ -30,7 +30,8 @@ require_once '../conexion.php';
 
 // NOTA: Las imágenes DEBEN estar en la misma carpeta que este script.
 $path_encabezado = '../../images/encabezado_contrato_nuevo.PNG';
-$path_pie = '../../images/piedepagina_contrato.PNG';
+$path_pie = '../../images/logo_footer.png';
+$path_firma_gerente = '../../images/firma-gerente.png';
 
 // Función para codificar imágenes a Base64 (más limpia y fiable para Dompdf)
 function encode_image_to_base64($path, $mime)
@@ -46,6 +47,7 @@ function encode_image_to_base64($path, $mime)
 // Codificación de las imágenes
 $img_encabezado_b64 = encode_image_to_base64($path_encabezado, 'image/png');
 $img_pie_b64 = encode_image_to_base64($path_pie, 'image/png');
+$img_firma_empresa_pre = encode_image_to_base64($path_firma_gerente, 'image/png');
 
 // ----------------------------------------------------------------------
 // 2. CONSULTA DE DATOS DEL CONTRATO, CLIENTE Y PLAN (EXISTENTE)
@@ -117,6 +119,7 @@ $placeholders = [
     '{NOMBRE_EMPRESA}' => 'Wireless Supply, C.A.',
     '{NOMBRE_EMPRESA_REPRESENTANTE}' => 'David Garcia',
     '{CARGO_REPRESENTANTE}' => 'Gerente',
+    '{IMG_FIRMA_EMPRESA_PRE}' => $img_firma_empresa_pre,
     // Placeholders para formato de campo
     '{NOMBRE_CLIENTE_F}' => format_field((string) ($contrato_data['nombre_cliente'] ?? '')),
     '{CEDULA_CLIENTE_F}' => format_field((string) ($contrato_data['cedula_cliente'] ?? '')),
@@ -145,7 +148,7 @@ $img_firma_tecnico = '';
 
 if (!empty($contrato_data['firma_cliente']) && file_exists($firma_cliente_path)) {
     // Reducimos max-height y max-width para evitar solapamientos
-    $img_firma_cliente = '<img src="' . encode_image_to_base64($firma_cliente_path, 'image/png') . '" style="max-height: 50px; max-width: 120px; object-fit: contain;">';
+    $img_firma_cliente = '<img src="' . encode_image_to_base64($firma_cliente_path, 'image/png') . '" style="max-height: 70px; max-width: 140px; object-fit: contain;">';
 } else {
     $img_firma_cliente = '<br><br><br>'; // Espacio para firma manual si falla digital
 }
@@ -153,7 +156,7 @@ if (!empty($contrato_data['firma_cliente']) && file_exists($firma_cliente_path))
 // Firma Empresa (Firma del técnico o representante)
 if (!empty($contrato_data['firma_tecnico']) && file_exists($firma_tecnico_path)) {
     // Reducimos max-height y max-width
-    $img_firma_tecnico = '<img src="' . encode_image_to_base64($firma_tecnico_path, 'image/png') . '" style="max-height: 50px; max-width: 120px; object-fit: contain;">';
+    $img_firma_tecnico = '<img src="' . encode_image_to_base64($firma_tecnico_path, 'image/png') . '" style="max-height: 70px; max-width: 140px; object-fit: contain;">';
 } else {
     // Si no hay firma digital del técnico, usar firma genérica de la empresa si existe imagen, o dejar espacio
     $img_firma_tecnico = '<br><br><br>';
@@ -224,42 +227,52 @@ $html_contrato_plantilla = '
         <span style="margin-left: 20px;"><span class="field-label">Municipio:</span> {NOMBRE_MUNICIPIO_F}</span></p>
         <p><span class="field-label">Teléfono:</span> {TELEFONO_CLIENTE_F}
         <span style="float: right;"><span class="field-label">e-mail:</span> {EMAIL_CLIENTE_F}</span></p>
-        <p><span class="field-label">Vendedor:</span> {VENDEDOR_TEXTO_F}</p>
+        <p><span class="field-label">Vendedor / Instalador:</span> {VENDEDOR_TEXTO_F}</p>
 
-        <div class="signature-area">
-            <table style="width: 100%; border: none; margin-top: 50px;">
-                <tr>
-                    <td style="width: 45%; border: none; text-align: center; vertical-align: bottom; height: 100px;">
-                        <div class="signature-box" style="width: 100%;">
-                            <div style="margin-bottom: 5px; min-height: 60px; display: flex; align-items: flex-end; justify-content: center;">{FIRMA_CLIENTE_IMG}</div>
-                            <div class="signature-line">
-                                {NOMBRE_CLIENTE}<br>
-                            </div>
-                            <div class="signature-role">
-                                C.I.: {CEDULA_CLIENTE}<br>
-                                EL CLIENTE
-                            </div>
+    <div class="signature-area">
+        <table style="width: 100%; border: none; margin-top: 50px;">
+            <tr>
+                <td style="width: 32%; border: none; text-align: center; vertical-align: top; height: 100px;">
+                    <div class="signature-box" style="width: 100%;">
+                        <div style="margin-bottom: 5px; height: 80px; display: flex; align-items: flex-end; justify-content: center;">{FIRMA_CLIENTE_IMG}</div>
+                        <div class="signature-line">
+                            {NOMBRE_CLIENTE}<br>
                         </div>
-                    </td>
-                    <td style="width: 10%; border: none;"></td>
-                    <td style="width: 45%; border: none; text-align: center; vertical-align: bottom; height: 100px;">
-                        <div class="signature-box" style="width: 100%;">
-                             <div style="margin-bottom: 5px; min-height: 60px; display: flex; align-items: flex-end; justify-content: center;">{FIRMA_EMPRESA_IMG}</div>
-                            <div class="signature-line">
-                                {NOMBRE_EMPRESA_REPRESENTANTE}<br>
-                            </div>
-                            <div class="signature-role">
-                                {CARGO_REPRESENTANTE}<br>
-                                POR LA EMPRESA
-                            </div>
+                        <div class="signature-role">
+                            C.I.: {CEDULA_CLIENTE}<br>
+                            EL CLIENTE
                         </div>
-                    </td>
-                </tr>
+                    </div>
+                </td>
+                <td style="width: 2%; border: none;"></td>
+                <td style="width: 32%; border: none; text-align: center; vertical-align: top; height: 100px;">
+                    <div class="signature-box" style="width: 100%;">
+                         <div style="margin-bottom: 5px; height: 80px; display: flex; align-items: flex-end; justify-content: center;">{FIRMA_EMPRESA_IMG}</div>
+                        <div class="signature-line">
+                            VENDEDOR / INSTALADOR<br>
+                        </div>
+                        <div class="signature-role">
+                            TÉCNICO
+                        </div>
+                    </div>
+                </td>
+                <td style="width: 2%; border: none;"></td>
+                <td style="width: 32%; border: none; text-align: center; vertical-align: top; height: 100px;">
+                    <div class="signature-box" style="width: 100%;">
+                        <div style="margin-bottom: 5px; height: 80px; display: flex; align-items: flex-end; justify-content: center;">
+                            <img src="{IMG_FIRMA_EMPRESA_PRE}" style="max-height: 100px; max-width: 180px; object-fit: contain;">
+                         </div>
+                        <div class="signature-line">
+                            REPRESENTANTE LEGAL
+                        </div>
+                    </div>
+                </td>
+            </tr>
             </table>
             
              <br><br>
-             <div id="footer-image-container">
-                <img src="{IMG_PIE_B64}" class="footer-image">
+             <div style="width: 100%; text-align: center; margin-top: 25px;">
+                <img src="{IMG_PIE_B64}" style="max-width: 380px; height: auto;">
             </div>
         </div>        
 ';
@@ -308,23 +321,7 @@ $html_style = '
         object-fit: cover;
     }
     
-    /* NUEVO: Contenedor para la imagen del pie de página (posición fija) */
-    #footer-image-container {
-        position: fixed;
-        bottom: 400px;
-        left: 0;
-        right: 0;
-        height: 200px; /* Altura del contenedor del pie de página */
-        z-index: 1000;
-        text-align: center;
-        margin: 0; /* Asegura que no haya márgenes que lo muevan */
-        padding: 0;
-    }
-    .footer-image {
-        width: 100%; /* La imagen debe ocupar todo el ancho del documento */
-        max-height: 200px;
-        object-fit: cover;
-    }
+    /* El footer ahora se muestra directamente bajo Vendedor / Instalador, eliminamos posición fija */
     
     /* 2. ENCABEZADOS Y SECCIONES */
     .company-header {
