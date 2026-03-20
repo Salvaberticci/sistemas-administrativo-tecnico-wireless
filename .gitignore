@@ -13,6 +13,7 @@ db/
 !package-lock.json
 !db_locations.json
 !paginas/soporte/data/opciones_soporte.json
+!paginas/principal/data/*.json
 
 # Archivos Temporales y de Depuración
 *.txt
