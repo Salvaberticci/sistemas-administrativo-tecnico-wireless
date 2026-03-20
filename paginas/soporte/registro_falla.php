@@ -155,31 +155,36 @@ while ($row = $res_olt->fetch_assoc()) {
                     <h5 class="fw-bold mb-0"><i class="fa-solid fa-tag me-2"></i>Clasificación de la Falla</h5>
                 </div>
 
-                <div class="row g-3 mb-3">
-                    <div class="col-12 text-center py-2 bg-danger text-white rounded shadow-sm">
-                        <h4 class="fw-bold mb-0"><i class="fa-solid fa-triangle-exclamation me-2"></i>PRIORIDAD: NIVEL 3 (FALLA MASIVA)</h4>
-                        <input type="hidden" id="prioridad" name="prioridad" value="NIVEL 3" required>
+                <div id="olts-container">
+                    <!-- Fila 1 (siempre visible) -->
+                    <div class="olt-row row g-3 mb-2 align-items-end" data-index="0">
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold">OLT Afectada <span class="text-danger">*</span></label>
+                            <select class="form-select border-primary olt-select" name="olts[]" required>
+                                <option value="">Seleccione OLT...</option>
+                                <?php foreach ($olts as $olt): ?>
+                                    <option value="<?php echo $olt['id_olt']; ?>"><?php echo htmlspecialchars($olt['nombre_olt']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold">PON Afectado <span class="text-muted fw-normal">(Opcional)</span></label>
+                            <select class="form-select border-primary pon-select" name="pons[]">
+                                <option value="">Primero seleccione OLT...</option>
+                            </select>
+                            <small class="text-muted">Deja en blanco si es caída total de la OLT</small>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-center">
+                            <button type="button" class="btn btn-outline-danger btn-sm btn-remove-olt d-none" title="Eliminar fila">
+                                <i class="fa-solid fa-trash-can"></i> Eliminar
+                            </button>
+                        </div>
                     </div>
                 </div>
-
-                <div class="row g-3 mt-2">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">OLT Afectada <span class="text-danger">*</span></label>
-                        <select class="form-select border-primary" id="id_olt" name="id_olt" required>
-                            <option value="">Seleccione OLT...</option>
-                            <?php foreach ($olts as $olt): ?>
-                                <option value="<?php echo $olt['id_olt']; ?>"><?php echo htmlspecialchars($olt['nombre_olt']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <div class="invalid-feedback">Debe seleccionar la OLT afectada</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">PON Afectado (Opcional)</label>
-                        <select class="form-select border-primary" id="id_pon" name="id_pon">
-                            <option value="">Primero seleccione OLT...</option>
-                        </select>
-                        <small class="text-muted">Deja en blanco si es caída total de la OLT</small>
-                    </div>
+                <div class="mt-2">
+                    <button type="button" id="btn-add-olt" class="btn btn-outline-primary btn-sm">
+                        <i class="fa-solid fa-plus me-1"></i> Agregar otra OLT / PON
+                    </button>
                 </div>
                 <div class="row g-3">
                     <div class="col-12">
@@ -330,13 +335,18 @@ while ($row = $res_olt->fetch_assoc()) {
 
 <script>
     $(document).ready(function () {
-        // Cargar PONs cuando cambie la OLT
-        $('#id_olt').change(function() {
-            const id_olt = $(this).val();
-            const ponSelect = $('#id_pon');
-            
+
+        // =========================================================
+        // --- Lógica de filas dinámicas OLT / PON ---
+        // =========================================================
+
+        // Cargar PONs para un select concreto dado el OLT seleccionado
+        function cargarPons(oltSelect) {
+            const id_olt = $(oltSelect).val();
+            const ponSelect = $(oltSelect).closest('.olt-row').find('.pon-select');
+
             ponSelect.empty().append('<option value="">Cargando...</option>');
-            
+
             if (!id_olt) {
                 ponSelect.html('<option value="">Primero seleccione OLT...</option>');
                 return;
@@ -347,7 +357,7 @@ while ($row = $res_olt->fetch_assoc()) {
                 data: { id_olt: id_olt },
                 dataType: 'json',
                 success: function(data) {
-                    ponSelect.empty().append('<option value="">Toda la OLT / Seleccione PON...</option>');
+                    ponSelect.empty().append('<option value="">Toda la OLT (sin PON específico)</option>');
                     data.forEach(function(pon) {
                         ponSelect.append(`<option value="${pon.id_pon}">${pon.nombre_pon}</option>`);
                     });
@@ -356,6 +366,45 @@ while ($row = $res_olt->fetch_assoc()) {
                     ponSelect.html('<option value="">Error al cargar PONs</option>');
                 }
             });
+        }
+
+        // Delegación de evento: cuando cambia un select OLT dentro del contenedor
+        $('#olts-container').on('change', '.olt-select', function() {
+            cargarPons(this);
+        });
+
+        // Agregar nueva fila OLT/PON
+        let rowIndex = 1;
+        $('#btn-add-olt').click(function() {
+            const newRow = $(`
+                <div class="olt-row row g-3 mb-2 align-items-end" data-index="${rowIndex}">
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">OLT Afectada <span class="text-danger">*</span></label>
+                        <select class="form-select border-primary olt-select" name="olts[]" required>
+                            <option value="">Seleccione OLT...</option>
+                            <?php foreach ($olts as $olt): echo '<option value="' . $olt['id_olt'] . '">' . htmlspecialchars($olt['nombre_olt']) . '</option>'; endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">PON Afectado <span class="text-muted fw-normal">(Opcional)</span></label>
+                        <select class="form-select border-primary pon-select" name="pons[]">
+                            <option value="">Primero seleccione OLT...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-center">
+                        <button type="button" class="btn btn-outline-danger btn-sm btn-remove-olt" title="Eliminar fila">
+                            <i class="fa-solid fa-trash-can"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            `);
+            $('#olts-container').append(newRow);
+            rowIndex++;
+        });
+
+        // Eliminar fila
+        $('#olts-container').on('click', '.btn-remove-olt', function() {
+            $(this).closest('.olt-row').remove();
         });
 
         // Buscador AJAX de clientes (igual que en reporte_tecnico.php)
@@ -467,18 +516,35 @@ while ($row = $res_olt->fetch_assoc()) {
                 id_contrato: $('#id_contrato').val(),
                 prioridad: $('#prioridad').val(),
                 tipo_falla: $('#tipo_falla').val(),
-                es_caida_critica: 1, // Siempre es crítica en este formulario
+                es_caida_critica: 1,
                 clientes_afectados: $('#clientes_afectados').val() || 50,
                 sector: $('#sector').val(),
                 zona_afectada: $('#zona_afectada').val(),
-                id_olt: $('#id_olt').val(),
-                id_pon: $('#id_pon').val(),
                 observaciones: $('#observaciones').val(),
                 equipos_afectados: equiposAfectados.join(', '),
                 tecnico_asignado: $('#tecnico_asignado').val(),
                 notas_internas: $('#notas_internas').val(),
-                fecha_reporte: $('#fecha_reporte').val()
+                fecha_reporte: $('#fecha_reporte').val(),
+                'olts[]': [],
+                'pons[]': []
             };
+
+            // Recopilar todos los pares OLT/PON
+            let hasOlt = false;
+            $('#olts-container .olt-row').each(function() {
+                const oltVal = $(this).find('.olt-select').val();
+                const ponVal = $(this).find('.pon-select').val();
+                if (oltVal) {
+                    formData['olts[]'].push(oltVal);
+                    formData['pons[]'].push(ponVal || '');
+                    hasOlt = true;
+                }
+            });
+
+            if (!hasOlt) {
+                Swal.fire({ icon: 'warning', title: 'OLT requerida', text: 'Debe seleccionar al menos una OLT afectada.' });
+                return;
+            }
 
             // Enviar datos
             $.ajax({
