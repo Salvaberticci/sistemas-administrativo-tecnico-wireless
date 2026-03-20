@@ -57,6 +57,11 @@ if ($resultado && $resultado->num_rows > 0): ?>
                 </div>
             </td>
             <td>
+                <span class="badge bg-primary fs-6">
+                    Bs. <?php echo number_format($row['monto_bs'], 2, ',', '.'); ?>
+                </span>
+            </td>
+            <td>
                 <span class="text-wrap small">
                     <?php echo htmlspecialchars($row['meses_pagados']); ?>
                 </span>
