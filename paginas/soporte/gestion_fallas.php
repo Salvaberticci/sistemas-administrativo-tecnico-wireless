@@ -668,23 +668,14 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 <div class="alert alert-danger py-2 mb-3"><i class="fa-solid fa-fire me-1"></i><strong>Falla Masiva NIVEL 3</strong> — Afecta múltiples clientes o infraestructura de red.</div>
 
                 <!-- Infraestructura -->
-                <div class="p-2 mb-2 bg-light border-start border-danger border-4 fw-bold">Infraestructura Afectada</div>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">OLT</label>
-                        <select class="form-select" id="critica_olt">
-                            <option value="">-- Seleccionar OLT --</option>
-                            <?php foreach ($olts as $olt): ?>
-                            <option value="<?php echo $olt['id_olt']; ?>"><?php echo htmlspecialchars($olt['nombre_olt']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Puerto PON (Opcional)</label>
-                        <select class="form-select" id="critica_pon">
-                            <option value="">Toda la OLT / Seleccione PON...</option>
-                        </select>
-                    </div>
+                <div class="p-2 mb-2 bg-light border-start border-danger border-4 d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Infraestructura Afectada</span>
+                    <button type="button" id="btn-add-olt-critica-edit" class="btn btn-outline-danger btn-sm">
+                        <i class="fa-solid fa-plus me-1"></i> Agregar OLT / PON
+                    </button>
+                </div>
+                <div id="olts-critica-edit-container" class="mb-3">
+                    <!-- Filas dinámicas se insertan aquí -->
                 </div>
 
                 <!-- Datos principales -->
@@ -1926,6 +1917,91 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         addOltRowEdit();
     });
 
+    // --- Lógica similar para el modal de Críticas ---
+    window.addOltRowEditCritica = function(oltId = '', ponId = '') {
+        const container = $('#olts-critica-edit-container');
+        const index = container.find('.olt-row-critica-edit').length;
+        
+        const newRow = $(`
+            <div class="olt-row-critica-edit row g-2 mb-2 align-items-start" data-index="${index}">
+                <div class="col-md-5">
+                    <select class="form-select form-select-sm olt-select-critica-edit" name="olts[]" required>
+                        <option value="">Seleccione OLT...</option>
+                        <?php foreach ($olts as $olt): ?>
+                            <option value="<?php echo $olt['id_olt']; ?>"><?php echo htmlspecialchars($olt['nombre_olt']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <select class="form-select form-select-sm pon-select-critica-edit" name="pons[]">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100 btn-remove-olt-critica-edit" title="Eliminar fila">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+        `);
+
+        container.append(newRow);
+
+        const oltSelect = newRow.find('.olt-select-critica-edit');
+        const ponSelect = newRow.find('.pon-select-critica-edit');
+
+        if (oltId) {
+            oltSelect.val(oltId);
+            cargarPonsEditCritica(oltSelect, ponId);
+        } else {
+            ponSelect.html('<option value="">Primero seleccione OLT...</option>');
+        }
+    };
+
+    function cargarPonsEditCritica(oltSelect, selectedPonId = '') {
+        const id_olt = $(oltSelect).val();
+        const ponSelect = $(oltSelect).closest('.olt-row-critica-edit').find('.pon-select-critica-edit');
+
+        if (!id_olt) {
+            ponSelect.html('<option value="">Primero seleccione OLT...</option>');
+            return;
+        }
+
+        ponSelect.html('<option value="">Cargando...</option>');
+
+        $.ajax({
+            url: 'get_pons_ajax.php',
+            data: { id_olt: id_olt },
+            dataType: 'json',
+            success: function(data) {
+                ponSelect.empty().append('<option value="">Toda la OLT (sin PON específico)</option>');
+                data.forEach(function(pon) {
+                    const selected = (selectedPonId && selectedPonId == pon.id_pon) ? 'selected' : '';
+                    ponSelect.append(`<option value="${pon.id_pon}" ${selected}>${pon.nombre_pon}</option>`);
+                });
+            },
+            error: function() {
+                ponSelect.html('<option value="">Error</option>');
+            }
+        });
+    }
+
+    $('#olts-critica-edit-container').on('change', '.olt-select-critica-edit', function() {
+        cargarPonsEditCritica(this);
+    });
+
+    $('#olts-critica-edit-container').on('click', '.btn-remove-olt-critica-edit', function() {
+        if ($('#olts-critica-edit-container .olt-row-critica-edit').length > 1) {
+            $(this).closest('.olt-row-critica-edit').remove();
+        } else {
+            $(this).closest('.olt-row-critica-edit').find('select').val('');
+        }
+    });
+
+    $('#btn-add-olt-critica-edit').click(function() {
+        addOltRowEditCritica();
+    });
+
     // =========================================================
     // --- Ver Detalles Crítica ---
     function verDetallesCritica(id) {
@@ -1992,7 +2068,10 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
     function editarCritica(id) {
         $('#criticaEdit_id').text(id);
         $('#critica_edit_id_soporte').val(id);
-        $('#critica_pon').html('<option value="">Cargando...</option>');
+        
+        // Limpiar contenedor de OLTs
+        $('#olts-critica-edit-container').empty();
+
         new bootstrap.Modal(document.getElementById('modalCriticaEditar')).show();
 
         fetch('get_soporte_detalle.php?id=' + id)
@@ -2005,31 +2084,19 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 $('#critica_zona').val(d.zona_afectada || d.sector || '');
                 $('#critica_tecnico').val(d.tecnico_asignado || '');
                 $('#critica_observaciones').val(d.observaciones || '');
-                $('#critica_notas').val(d.notas_internas || '');
+                $('#critica_notas').val(d.notas_internas || d.descrip_falla || '');
                 $('#critica_solucionada').prop('checked', d.solucion_completada == 1);
 
-                // Cargar OLT
-                $('#critica_olt').val(d.id_olt || '');
-
-                // Cargar PONs y pre-seleccionar
-                if (d.id_olt) {
-                    $.ajax({
-                        url: 'get_pons_ajax.php',
-                        data: { id_olt: d.id_olt },
-                        dataType: 'json',
-                        success: function (pons) {
-                            $('#critica_pon').html('<option value="">Toda la OLT / Seleccione PON...</option>');
-                            pons.forEach(p => {
-                                const selected = p.id_pon == d.id_pon ? 'selected' : '';
-                                $('#critica_pon').append(`<option value="${p.id_pon}" ${selected}>${p.nombre_pon}</option>`);
-                            });
-                        },
-                        error: function () {
-                            $('#critica_pon').html('<option value="">Error al cargar PONs</option>');
-                        }
+                // Cargar múltiples OLTs
+                if (d.olts_afectadas && d.olts_afectadas.length > 0) {
+                    d.olts_afectadas.forEach(p => {
+                        addOltRowEditCritica(p.id_olt, p.id_pon);
                     });
+                } else if (d.id_olt) {
+                    // Fallback para fallas viejas que solo tienen una OLT en la tabla principal
+                    addOltRowEditCritica(d.id_olt, d.id_pon);
                 } else {
-                    $('#critica_pon').html('<option value="">Toda la OLT / Seleccione PON...</option>');
+                    addOltRowEditCritica();
                 }
             })
             .catch(() => alert('Error al cargar datos.'));
@@ -2040,6 +2107,18 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         const btn = document.getElementById('btnGuardarCriticaEdit');
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Guardando...';
+
+        // Recolectar OLTs y PONs
+        const olts = [];
+        const pons = [];
+        $('#olts-critica-edit-container .olt-row-critica-edit').each(function() {
+            const o = $(this).find('.olt-select-critica-edit').val();
+            const p = $(this).find('.pon-select-critica-edit').val();
+            if (o) {
+                olts.push(o);
+                pons.push(p);
+            }
+        });
 
         $.ajax({
             url: 'actualizar_soporte.php',
@@ -2056,8 +2135,8 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 descripcion_edit: $('#critica_observaciones').val(),
                 notas_internas_edit: $('#critica_notas').val(),
                 solucion_completada: $('#critica_solucionada').is(':checked') ? 1 : 0,
-                id_olt_edit: $('#critica_olt').val(),
-                id_pon_edit: $('#critica_pon').val(),
+                olts: olts,
+                pons: pons,
                 es_caida_critica_edit: 1,
                 monto_total_edit: 0
             },
