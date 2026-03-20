@@ -1270,36 +1270,6 @@ require_once '../includes/sidebar.php';
             }, 400); // 400ms delay to prevent too many requests
         });
 
-        // Handler para cambio de estado de pago inline
-        $(document).on('change', '.status-pago-inline', function () {
-            const select = $(this);
-            const id = select.data('id');
-            const nuevoEstado = select.val();
-
-            select.prop('disabled', true);
-
-            fetch('actualizar_estado_pago.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `id_cobro=${id}&estado_pago=${nuevoEstado}`
-            })
-                .then(r => r.json())
-                .then(res => {
-                    if (res.success) {
-                        toastr.success('Estado actualizado correctamente', 'Éxito');
-                        // Recargar tabla para aplicar los fondos del select y bloquear/desbloquear SAE Plus
-                        tablaUnica.ajax.reload(null, false); 
-                    } else {
-                        alert('Error al actualizar estado: ' + res.message);
-                        select.prop('disabled', false);
-                    }
-                })
-                .catch(err => {
-                    alert('Error técnico: ' + err);
-                    select.prop('disabled', false);
-                });
-        });
-
         // Handler para cambio de estado SAE Plus
         $(document).on('change', '.sae-status-select', function () {
             const select = $(this);
