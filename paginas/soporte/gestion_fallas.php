@@ -16,6 +16,12 @@ while ($row = $res_olt->fetch_assoc()) {
     $olts[] = $row;
 }
 require_once $path_to_root . 'paginas/includes/layout_head.php';
+// Cargar lista de instaladores/técnicos
+$jsonInstaladores = $path_to_root . 'paginas/principal/data/instaladores.json';
+$instaladoresList = [];
+if (file_exists($jsonInstaladores)) {
+    $instaladoresList = json_decode(file_get_contents($jsonInstaladores), true) ?: [];
+}
 // Incluir SweetAlert2 para diálogos de confirmación
 echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
 require_once $path_to_root . 'paginas/includes/sidebar.php';
@@ -778,7 +784,14 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label fw-bold">Técnico Asignado</label>
-                        <input type="text" class="form-control" name="tecnico_edit" id="tecnico_edit" required>
+                        <select class="form-select" name="tecnico_edit" id="tecnico_edit" required>
+                            <option value="">-- Seleccionar técnico --</option>
+                            <?php foreach ($instaladoresList as $instalador): ?>
+                            <option value="<?php echo htmlspecialchars($instalador); ?>">
+                                <?php echo htmlspecialchars($instalador); ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label fw-bold">Sector</label>
