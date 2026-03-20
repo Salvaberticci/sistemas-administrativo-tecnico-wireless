@@ -270,7 +270,7 @@ if (file_exists($jsonFileTypes)) {
                             </div>
 
                             <div class="col-md-6">
-                                <label for="tipo_conexion" class="form-label">Tipo de Conexión (TEST)</label>
+                                <label for="tipo_conexion" class="form-label">Tipo de Conexión</label>
                                 <select name="tipo_conexion" id="tipo_conexion" class="form-select" required>
                                     <option value="">-- Seleccione Conexión --</option>
                                     <?php foreach ($tiposConexion as $type) {
