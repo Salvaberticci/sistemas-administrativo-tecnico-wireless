@@ -1352,6 +1352,43 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         }
     }
 
+    // ─── Plugin global: texto al centro del doughnut en hover ───────────────
+    const centerTextPlugin = {
+        id: 'centerText',
+        afterDraw(chart) {
+            if (chart.config.type !== 'doughnut') return;
+            const { ctx, data } = chart;
+            const { width, height } = chart;
+            if (!chart._hoveredSegment) return;
+
+            const { label, value, percentage } = chart._hoveredSegment;
+            ctx.save();
+
+            const cx = width / 2;
+            const cy = height / 2 + (chart.legend ? chart.legend.height / 2 : 0);
+
+            // Línea 1: Label (negrita)
+            ctx.font = 'bold 13px Arial';
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, cx, cy - 14);
+
+            // Línea 2: Cantidad
+            ctx.font = 'bold 18px Arial';
+            ctx.fillStyle = '#111';
+            ctx.fillText(value, cx, cy + 6);
+
+            // Línea 3: Porcentaje
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#666';
+            ctx.fillText(percentage + '%', cx, cy + 24);
+
+            ctx.restore();
+        }
+    };
+    Chart.register(centerTextPlugin);
+
     function crearGraficos(data) {
         // Destruir gráficos anteriores
         Object.values(charts).forEach(chart => chart.destroy());
@@ -1434,7 +1471,22 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                onHover: function(event, activeElements) {
+                    if (activeElements.length > 0) {
+                        const idx = activeElements[0].index;
+                        const total = tecnicoData.reduce((a, b) => a + b, 0);
+                        const val = tecnicoData[idx];
+                        this._hoveredSegment = {
+                            label: tecnicoLabels[idx],
+                            value: val,
+                            percentage: total > 0 ? ((val / total) * 100).toFixed(1) : 0
+                        };
+                    } else {
+                        this._hoveredSegment = null;
+                    }
+                    this.update();
+                }
             }
         });
 
@@ -1451,28 +1503,38 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 datasets: [{
                     data: nivelesData,
                     backgroundColor: nivelesLabels.map(l => {
-                        if (l === 'NIVEL 3') return 'rgba(220, 53, 69, 0.8)';   // Rojo
-                        if (l === 'NIVEL 2') return 'rgba(253, 126, 20, 0.8)';  // Naranja
-                        if (l === 'NIVEL 1') return 'rgba(255, 193, 7, 0.8)';   // Amarillo
-                        return 'rgba(108, 117, 125, 0.8)';                      // Gris
+                        if (l === 'NIVEL 3') return 'rgba(220, 53, 69, 0.8)';
+                        if (l === 'NIVEL 2') return 'rgba(253, 126, 20, 0.8)';
+                        if (l === 'NIVEL 1') return 'rgba(255, 193, 7, 0.8)';
+                        return 'rgba(108, 117, 125, 0.8)';
                     })
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                onHover: function(event, activeElements) {
+                    if (activeElements.length > 0) {
+                        const idx = activeElements[0].index;
+                        const val = nivelesData[idx];
+                        const pct = totalFallas > 0 ? ((val / totalFallas) * 100).toFixed(1) : 0;
+                        this._hoveredSegment = {
+                            label: nivelesLabels[idx],
+                            value: val,
+                            percentage: pct
+                        };
+                    } else {
+                        this._hoveredSegment = null;
+                    }
+                    this.update();
+                },
                 plugins: {
                     tooltip: {
                         callbacks: {
-                            label: function (context) {
-                                let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
+                            label: function(context) {
                                 const value = context.parsed || 0;
                                 const percentage = totalFallas > 0 ? ((value / totalFallas) * 100).toFixed(1) : 0;
-                                label += value + ' reportes (' + percentage + '%)';
-                                return label;
+                                return context.label + ': ' + value + ' reportes (' + percentage + '%)';
                             }
                         }
                     }
