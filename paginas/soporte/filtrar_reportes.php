@@ -64,7 +64,11 @@ if (isset($_GET['fecha_hasta']) && !empty($_GET['fecha_hasta'])) {
 // Filtro de tipo de falla
 if (isset($_GET['tipo_falla']) && !empty($_GET['tipo_falla'])) {
     $tipo_falla = $conn->real_escape_string($_GET['tipo_falla']);
-    $aWhere[] = "s.tipo_falla = '$tipo_falla'";
+    if (strpos($tipo_falla, 'NIVEL') === 0) {
+        $aWhere[] = "s.prioridad = '$tipo_falla'";
+    } else {
+        $aWhere[] = "s.tipo_falla = '$tipo_falla'";
+    }
 }
 
 // Filtro de técnico

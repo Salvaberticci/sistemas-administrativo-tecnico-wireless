@@ -39,7 +39,11 @@ try {
 
     $where_filtros = " AND fecha_soporte BETWEEN '$fecha_desde' AND '$fecha_hasta'";
     if ($tipo_falla_filt != '') {
-        $where_filtros .= " AND tipo_falla = '$tipo_falla_filt'";
+        if (strpos($tipo_falla_filt, 'NIVEL') === 0) {
+            $where_filtros .= " AND prioridad = '$tipo_falla_filt'";
+        } else {
+            $where_filtros .= " AND tipo_falla = '$tipo_falla_filt'";
+        }
     }
     if ($tecnico_filt != '') {
         $where_filtros .= " AND tecnico_asignado LIKE '%$tecnico_filt%'";

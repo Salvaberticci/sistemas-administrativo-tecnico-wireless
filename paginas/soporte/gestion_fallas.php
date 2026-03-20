@@ -221,22 +221,9 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                         <label class="form-label small">Tipo de Falla</label>
                         <select class="form-select" id="tipo_falla" name="tipo_falla">
                             <option value="">Todos</option>
-                            <option value="Sin Señal / LOS" <?php echo $filtro_tipo == 'Sin Señal / LOS' ? 'selected' : ''; ?>>Sin Señal / LOS</option>
-                            <option value="Internet Lento" <?php echo $filtro_tipo == 'Internet Lento' ? 'selected' : ''; ?>>Internet Lento</option>
-                            <option value="Cortes Intermitentes" <?php echo $filtro_tipo == 'Cortes Intermitentes' ? 'selected' : ''; ?>>Cortes Intermitentes</option>
-                            <option value="Router Dañado" <?php echo $filtro_tipo == 'Router Dañado' ? 'selected' : ''; ?>>Router Dañado</option>
-                            <option value="ONU Apagada/Dañada" <?php echo $filtro_tipo == 'ONU Apagada/Dañada' ? 'selected' : ''; ?>>ONU Apagada/Dañada</option>
-                            <option value="Antena Desalineada" <?php echo $filtro_tipo == 'Antena Desalineada' ? 'selected' : ''; ?>>Antena Desalineada</option>
-                            <option value="Cable Dañado" <?php echo $filtro_tipo == 'Cable Dañado' ? 'selected' : ''; ?>>
-                                Cable Dañado</option>
-                            <option value="Fibra Cortada" <?php echo $filtro_tipo == 'Fibra Cortada' ? 'selected' : ''; ?>>Fibra Cortada</option>
-                            <option value="Problema Eléctrico" <?php echo $filtro_tipo == 'Problema Eléctrico' ? 'selected' : ''; ?>>Problema Eléctrico</option>
-                            <option value="Configuración Incorrecta" <?php echo $filtro_tipo == 'Configuración Incorrecta' ? 'selected' : ''; ?>>Configuración Incorrecta</option>
-                            <option value="Dispositivo del Cliente" <?php echo $filtro_tipo == 'Dispositivo del Cliente' ? 'selected' : ''; ?>>Dispositivo del Cliente</option>
-                            <option value="Saturación de Red" <?php echo $filtro_tipo == 'Saturación de Red' ? 'selected' : ''; ?>>Saturación de Red</option>
-                            <option value="Mantenimiento Preventivo" <?php echo $filtro_tipo == 'Mantenimiento Preventivo' ? 'selected' : ''; ?>>Mantenimiento Preventivo</option>
-                            <option value="Cambio de Equipo" <?php echo $filtro_tipo == 'Cambio de Equipo' ? 'selected' : ''; ?>>Cambio de Equipo</option>
-                            <option value="Otro" <?php echo $filtro_tipo == 'Otro' ? 'selected' : ''; ?>>Otro</option>
+                            <option value="NIVEL 1" <?php echo $filtro_tipo == 'NIVEL 1' ? 'selected' : ''; ?>>Fallas Nivel 1 (WhatsApp)</option>
+                            <option value="NIVEL 2" <?php echo $filtro_tipo == 'NIVEL 2' ? 'selected' : ''; ?>>Fallas Nivel 2 (Visita)</option>
+                            <option value="NIVEL 3" <?php echo $filtro_tipo == 'NIVEL 3' ? 'selected' : ''; ?>>Fallas Nivel 3 (Crítica)</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -334,8 +321,14 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
             ORDER BY s.id_soporte DESC LIMIT 100";
         $res_criticas = $conn->query($sql_criticas);
 
-        $sWhere = "s.fecha_soporte BETWEEN '$filtro_desde' AND '$filtro_hasta' AND s.prioridad != 'NIVEL 3'";
-        if (!empty($filtro_tipo)) $sWhere .= " AND s.tipo_falla = '$filtro_tipo'";
+        $sWhere = "s.fecha_soporte BETWEEN '$filtro_desde' AND '$filtro_hasta'";
+        if (!empty($filtro_tipo)) {
+            if (strpos($filtro_tipo, 'NIVEL') === 0) {
+                $sWhere .= " AND s.prioridad = '$filtro_tipo'";
+            } else {
+                $sWhere .= " AND s.tipo_falla = '$filtro_tipo'";
+            }
+        }
         if (!empty($filtro_tecnico)) $sWhere .= " AND s.tecnico_asignado LIKE '%$filtro_tecnico%'";
         if (!empty($filtro_pago)) {
             if ($filtro_pago == 'PAGADO')
