@@ -1054,6 +1054,18 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     if (p === 'NIVEL 3') return '<span class="badge bg-danger">NIVEL 3</span>';
                     return '<span class="badge bg-secondary">' + f(p) + '</span>';
                 };
+                // Generar lista de OLTs/PONs
+                let infraHtml = '';
+                if (d.olts_afectadas && d.olts_afectadas.length > 0) {
+                    d.olts_afectadas.forEach(p => {
+                        infraHtml += `<p class="mb-1"><strong>OLT:</strong> <span class="badge bg-dark">${f(p.nombre_olt)}</span> 
+                                      <strong>PON:</strong> <span class="badge bg-secondary">${f(p.nombre_pon)}</span></p>`;
+                    });
+                } else {
+                    infraHtml = `<p class="mb-1"><strong>OLT:</strong> <span class="badge bg-dark">${f(d.nombre_olt)}</span></p>
+                                 <p class="mb-1"><strong>PON:</strong> <span class="badge bg-secondary">${f(d.nombre_pon)}</span></p>`;
+                }
+
                 const path_root = '../../';
                 let html = `
                 <div class="row">
@@ -1075,8 +1087,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                 <p class="mb-1"><strong>Tiempo:</strong> ${f(d.tiempo_transcurrido)}</p>
                                 <p class="mb-1"><strong>Técnico:</strong> ${f(d.tecnico_asignado)}</p>
                                 <p class="mb-1"><strong>Sector:</strong> ${f(d.sector)}</p>
-                                <p class="mb-1"><strong>OLT:</strong> <span class="badge bg-dark">${f(d.nombre_olt)}</span></p>
-                                <p class="mb-1"><strong>PON:</strong> <span class="badge bg-secondary">${f(d.nombre_pon)}</span></p>
+                                ${infraHtml}
                                 <p class="mb-1"><strong>Tipo Falla:</strong> ${f(d.tipo_falla)}</p>
                                 <p class="mb-1"><strong>Prioridad:</strong> ${badge(d.prioridad)}</p>
                                 <p class="mb-0"><strong>Caída Crítica:</strong> ${d.es_caida_critica == 1 ? '<span class=\"badge bg-danger\">Sí (' + f(d.clientes_afectados) + ' clientes)</span>' : 'No'}</p>
@@ -2015,6 +2026,18 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
             .then(d => {
                 if (d.error) { $('#criticaDetalleBody').html(`<div class="alert alert-danger">${d.error}</div>`); return; }
                 const f = v => v || '—';
+                // Generar lista de OLTs/PONs
+                let infraHtml = '';
+                if (d.olts_afectadas && d.olts_afectadas.length > 0) {
+                    d.olts_afectadas.forEach(p => {
+                        infraHtml += `<p class="mb-1"><strong>OLT:</strong> <span class="badge bg-dark">${f(p.nombre_olt)}</span> 
+                                      <strong>PON:</strong> <span class="badge bg-secondary">${f(p.nombre_pon)}</span></p>`;
+                    });
+                } else {
+                    infraHtml = `<p class="mb-1"><strong>OLT:</strong> <span class="badge bg-dark">${f(d.nombre_olt)}</span></p>
+                                 <p class="mb-1"><strong>PON:</strong> <span class="badge bg-secondary">${f(d.nombre_pon)}</span></p>`;
+                }
+
                 const html = `
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -2028,8 +2051,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                         <div class="card border-0 shadow-sm mb-3">
                             <div class="card-header bg-dark text-white"><i class="fa-solid fa-network-wired me-2"></i>Infraestructura</div>
                             <div class="card-body">
-                                <p class="mb-1"><strong>OLT:</strong> <span class="badge bg-dark">${f(d.nombre_olt)}</span></p>
-                                <p class="mb-1"><strong>PON:</strong> <span class="badge bg-secondary">${f(d.nombre_pon)}</span></p>
+                                ${infraHtml}
                                 <p class="mb-0"><strong>Clientes Afectados:</strong> <span class="badge bg-danger fs-6">${f(d.clientes_afectados)}</span></p>
                             </div>
                         </div>
