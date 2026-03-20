@@ -142,8 +142,21 @@ function savePhoto($file, $prefix = 'evidencia') {
     return null;
 }
 
-$evidencia_foto_path = savePhoto($_FILES['evidencia_foto'] ?? null);
+$evidencia_foto_path = savePhoto($_FILES['evidencia_foto'] ?? null, 'evidencia');
 $sql_foto = $evidencia_foto_path ? ", evidencia_foto = '$evidencia_foto_path'" : "";
+
+$evidencia_documento_path = savePhoto($_FILES['evidencia_documento_file'] ?? null, 'doc');
+$sql_documento = $evidencia_documento_path ? ", evidencia_documento = '$evidencia_documento_path'" : "";
+
+$evidencia_fibra_path = savePhoto($_FILES['evidencia_fibra_file'] ?? null, 'fibra');
+$sql_fibra_file = $evidencia_fibra_path ? ", evidencia_fibra = '$evidencia_fibra_path'" : "";
+
+// Si no se subió archivo de fibra, pero se envió texto manual
+$sql_fibra_text = "";
+if (!$evidencia_fibra_path && isset($_POST['evidencia_fibra'])) {
+    $evid_fibra_text = $conn->real_escape_string($_POST['evidencia_fibra']);
+    $sql_fibra_text = ", evidencia_fibra = '$evid_fibra_text'";
+}
 
 // --- FIRMAS ---
 $firma_cliente_data = $_POST['firma_cliente_data'] ?? '';
@@ -213,6 +226,9 @@ $sql = "UPDATE contratos SET
     $sql_firma_cliente
     $sql_firma_tecnico
     $sql_foto
+    $sql_documento
+    $sql_fibra_file
+    $sql_fibra_text
     WHERE id=$id";
 
 if ($conn->query($sql)) {

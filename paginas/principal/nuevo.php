@@ -464,9 +464,9 @@ require_once '../includes/sidebar.php';
                     <!-- Otros campos (Ocultos o generales según necesidad, por ahora fuera de la lógica dinámica estricta o ocultos) -->
 
 
-                    <div class="col-md-12" style="display:none;">
+                    <div class="col-md-12">
                         <label for="evidencia_fibra" class="form-label">Evidencia de Fibra</label>
-                        <input type="text" class="form-control" id="evidencia_fibra" name="evidencia_fibra">
+                        <input type="text" class="form-control" id="evidencia_fibra" name="evidencia_fibra" placeholder="Detalle o ID de evidencia de fibra">
                     </div>
 
                     <!-- Campos específicos RADIO -->
@@ -480,9 +480,15 @@ require_once '../includes/sidebar.php';
                         <input type="text" class="form-control" id="valor_conexion_dbm" name="valor_conexion_dbm">
                     </div>
 
-                    <div class="col-md-12">
-                        <label for="evidencia_foto" class="form-label">Evidencia Fotográfica</label>
+                    <div class="col-md-6">
+                        <label for="evidencia_foto" class="form-label">Evidencia Fotográfica (Instalación)</label>
                         <input type="file" class="form-control" id="evidencia_foto" name="evidencia_foto"
+                            accept="image/*">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="foto_documento" class="form-label">Documento de Identidad</label>
+                        <input type="file" class="form-control" id="foto_documento" name="evidencia_documento_file"
                             accept="image/*">
                     </div>
 

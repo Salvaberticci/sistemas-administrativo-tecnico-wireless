@@ -108,6 +108,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $mac_onu = strtoupper(trim($conn->real_escape_string($_POST['mac_onu'] ?? '')));
         $ip_onu = trim($conn->real_escape_string($_POST['ip_onu'] ?? ''));
+        $numero_onu = trim($conn->real_escape_string($_POST['numero_onu'] ?? ''));
 
         // Manejar duplicidad de campos Nap/Puerto
         $ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap'] ?? '');
@@ -116,6 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $nap_tx_power = $conn->real_escape_string($_POST['nap_tx_power'] ?? '');
         $onu_rx_power = $conn->real_escape_string($_POST['onu_rx_power'] ?? '');
         $distancia_drop = $conn->real_escape_string($_POST['distancia_drop'] ?? '');
+        $evidencia_fibra = $conn->real_escape_string($_POST['evidencia_fibra'] ?? '');
 
         // Instaladores[] es un array en el HTML de nuevo.php
         $instalador_raw = $_POST['instaladores'] ?? '';
@@ -159,7 +161,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $firma_cliente = saveSignature($_POST['firma_cliente_data'] ?? '', 'cliente');
         $firma_tecnico = saveSignature($_POST['firma_tecnico_data'] ?? '', 'tecnico');
         $evidencia_foto = savePhoto($_FILES['evidencia_foto'] ?? null, 'evidencia');
-        $evidencia_documento = savePhoto($_FILES['evidencia_documento'] ?? null, 'doc');
+        $evidencia_documento = savePhoto($_FILES['evidencia_documento_file'] ?? null, 'doc');
 
         // INSERT (Sync with nuevo.php fields)
         $sql = "INSERT INTO contratos (
@@ -170,7 +172,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             tipo_conexion, mac_onu, ip_onu, numero_onu, ident_caja_nap, puerto_nap, 
             nap_tx_power, onu_rx_power, distancia_drop, instalador, 
             punto_acceso, valor_conexion_dbm, num_presinto_odn, evidencia_foto, evidencia_documento, 
-            firma_cliente, firma_tecnico, id_olt, id_pon, estado, sae_plus
+            evidencia_fibra, firma_cliente, firma_tecnico, id_olt, id_pon, estado, sae_plus
         ) VALUES (
             '$cedula', '$nombre_completo', '$municipio_texto', '$parroquia_texto', " . ($id_plan ?: "NULL") . ", $monto_plan, '$vendedor_texto', 
             '$direccion', '$telefono', '$telefono_secundario', '$correo', '$correo_adicional', '$fecha_instalacion', 
@@ -179,7 +181,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             '$tipo_conexion', '$mac_onu', '$ip_onu', '$numero_onu', '$ident_caja_nap', '$puerto_nap', 
             '$nap_tx_power', '$onu_rx_power', '$distancia_drop', '$instalador', 
             '$punto_acceso', '$valor_conexion_dbm', '$num_presinto_odn', " . ($evidencia_foto ? "'$evidencia_foto'" : "NULL") . ", " . ($evidencia_documento ? "'$evidencia_documento'" : "NULL") . ", 
-            " . ($firma_cliente ? "'$firma_cliente'" : "NULL") . ", " . ($firma_tecnico ? "'$firma_tecnico'" : "NULL") . ", " . ($id_olt ?: "NULL") . ", " . ($id_pon ?: "NULL") . ", '$estado', '$sae_plus'
+            '$evidencia_fibra', " . ($firma_cliente ? "'$firma_cliente'" : "NULL") . ", " . ($firma_tecnico ? "'$firma_tecnico'" : "NULL") . ", " . ($id_olt ?: "NULL") . ", " . ($id_pon ?: "NULL") . ", '$estado', '$sae_plus'
         )";
 
         if (!$conn->query($sql))

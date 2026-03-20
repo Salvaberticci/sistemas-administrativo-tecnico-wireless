@@ -148,15 +148,26 @@ function saveSignature($base64_string, $prefix)
     return null;
 }
 
-// Procesar Firmas
-$generate_link = isset($_POST['generate_link']) && $_POST['generate_link'] === '1';
-$token_firma = null;
-$estado_firma = 'COMPLETADO';
-
+// Procesar Firmas y Documento
 $firma_cliente_b64 = $_POST['firma_cliente_data'] ?? '';
 $firma_tecnico_b64 = $_POST['firma_tecnico_data'] ?? '';
 $firma_cliente = saveSignature($firma_cliente_b64, 'cliente');
 $firma_tecnico = saveSignature($firma_tecnico_b64, 'tecnico');
+
+// PROCESAR FOTO DOCUMENTO
+$evidencia_documento = null;
+if (isset($_FILES['evidencia_documento_file']) && $_FILES['evidencia_documento_file']['error'] == 0) {
+    if (in_array(strtolower(pathinfo($_FILES['evidencia_documento_file']['name'], PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif'])) {
+        $new_filename_doc = 'doc_' . uniqid() . '.' . strtolower(pathinfo($_FILES['evidencia_documento_file']['name'], PATHINFO_EXTENSION));
+        $upload_dir = '../../uploads/contratos/';
+        if (!file_exists($upload_dir)) mkdir($upload_dir, 0755, true);
+        if (move_uploaded_file($_FILES['evidencia_documento_file']['tmp_name'], $upload_dir . $new_filename_doc)) {
+            $evidencia_documento = 'uploads/contratos/' . $new_filename_doc;
+        }
+    }
+}
+
+$generate_link = isset($_POST['generate_link']) && $_POST['generate_link'] === '1';
 
 if ($generate_link) {
     $token_firma = bin2hex(random_bytes(32));
@@ -317,19 +328,19 @@ if ($error_mensaje) {
         telefono_secundario, correo_adicional, medio_pago, moneda_pago, plan_prorrateo_nombre, dias_prorrateo,
         monto_prorrateo_usd, observaciones, tipo_conexion, mac_onu, ip_onu, numero_onu,
         nap_tx_power, onu_rx_power, distancia_drop, punto_acceso, valor_conexion_dbm,
-        evidencia_fibra, evidencia_foto, firma_cliente, firma_tecnico,
+        evidencia_fibra, evidencia_foto, evidencia_documento, firma_cliente, firma_tecnico,
         token_firma, estado_firma
     ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-        ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?
     )";
 
         $stmt = $conn->prepare($sql);
 
-        $types = "ssssii" . "ss" . "id" . "sssssssiisdddds" . "sssssidssssssssssssss" . "ss";
+        $types = "ssssii" . "ss" . "id" . "sssssssiisdddds" . "sssssidssssssssssssss" . "sss";
 
         $stmt->bind_param(
             $types,
@@ -377,6 +388,7 @@ if ($error_mensaje) {
             $valor_conexion_dbm,
             $evidencia_fibra,
             $evidencia_foto,
+            $evidencia_documento,
             $firma_cliente,
             $firma_tecnico,
             $token_firma,

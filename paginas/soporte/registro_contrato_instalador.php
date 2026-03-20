@@ -459,6 +459,11 @@ if (file_exists($jsonFileTypes)) {
                                 <input type="text" class="form-control" id="punto_acceso" name="punto_acceso">
                             </div>
 
+                            <div class="col-md-12">
+                                <label for="evidencia_fibra" class="form-label">Evidencia de Fibra</label>
+                                <input type="text" class="form-control" id="evidencia_fibra" name="evidencia_fibra" placeholder="Detalle o ID de evidencia de fibra">
+                            </div>
+
                             <div class="col-md-6 campo-radio">
                                 <label for="valor_conexion_dbm" class="form-label">Valor Conexión (dBm) <span
                                         class="text-danger">*</span></label>

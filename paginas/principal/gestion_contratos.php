@@ -1097,6 +1097,13 @@ require_once '../includes/sidebar.php';
                             <input type="text" class="form-control form-control-sm" id="edit_nombre"
                                 name="nombre_completo" required pattern="[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+">
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Documento de Identidad (ID)</label>
+                            <div class="input-group input-group-sm">
+                                <input type="file" class="form-control" id="edit_evidencia_documento_file" name="evidencia_documento_file" accept="image/*">
+                                <span class="input-group-text"><i class="fa-solid fa-id-card"></i></span>
+                            </div>
+                        </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Teléfono</label>
                             <input type="text" class="form-control form-control-sm" id="edit_telefono" name="telefono"
@@ -1343,11 +1350,44 @@ require_once '../includes/sidebar.php';
                         </div>
                     </div>
 
-                    <div class="row mt-3">
                         <div class="col-md-12">
                             <label class="form-label small fw-bold">Observaciones</label>
                             <textarea class="form-control form-control-sm" id="edit_observaciones" name="observaciones"
-                                rows="3"></textarea>
+                                rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN: EVIDENCIA FOOTER -->
+                    <div class="section-title bg-light p-2 fw-bold border-start border-info border-4 mb-3 mt-4">
+                        <i class="fa-solid fa-camera me-2 text-info"></i>Evidencias y Documentación
+                    </div>
+                    <div class="row g-4 mb-2 text-center">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold d-block text-secondary text-uppercase">Instalación</label>
+                            <div id="prev_evidencia_foto_div" class="mb-2 border rounded p-1 bg-white" style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
+                                <img id="prev_evidencia_foto" src="" alt="Instalación" class="img-fluid rounded" style="max-height: 120px; display:none;">
+                                <span id="no_evidencia_foto" class="text-muted small">Sin imagen</span>
+                            </div>
+                            <input type="file" class="form-control form-control-sm" id="edit_evidencia_foto" name="evidencia_foto" accept="image/*">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold d-block text-secondary text-uppercase">Documento ID</label>
+                            <div id="prev_evidencia_documento_div" class="mb-2 border rounded p-1 bg-white" style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
+                                <img id="prev_evidencia_documento" src="" alt="Documento" class="img-fluid rounded" style="max-height: 120px; display:none;">
+                                <span id="no_evidencia_documento" class="text-muted small">Sin imagen</span>
+                            </div>
+                            <input type="file" class="form-control form-control-sm" id="edit_evidencia_documento" name="evidencia_documento_file" accept="image/*">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold d-block text-secondary text-uppercase">Fibra</label>
+                            <div id="prev_evidencia_fibra_div" class="mb-2 border rounded p-1 bg-white" style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
+                                <img id="prev_evidencia_fibra" src="" alt="Fibra" class="img-fluid rounded" style="max-height: 120px; display:none;">
+                                <span id="no_evidencia_fibra" class="text-muted small">Sin imagen</span>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="edit_evidencia_fibra" name="evidencia_fibra" placeholder="ID Fibra">
+                                <span class="input-group-text"><i class="fa-solid fa-barcode"></i></span>
+                            </div>
                         </div>
                     </div>
 
@@ -1933,7 +1973,33 @@ require_once '../includes/sidebar.php';
                 $('#edit_drop').val(d.distancia_drop);
                 $('#edit_pa').val(d.punto_acceso);
                 $('#edit_dbm').val(d.valor_conexion_dbm);
-                $('#edit_obs').val(d.observaciones);
+                $('#edit_observaciones').val(d.observaciones);
+
+                // --- PREVISUALIZACIÓN DE IMÁGENES ---
+                const setPreview = (imgId, noId, path) => {
+                    const $img = $('#' + imgId);
+                    const $no = $('#' + noId);
+                    if (path && path !== 'null') {
+                        $img.attr('src', '../../' + path).show();
+                        $no.hide();
+                    } else {
+                        $img.hide();
+                        $no.show();
+                    }
+                };
+
+                setPreview('prev_evidencia_foto', 'no_evidencia_foto', d.evidencia_foto);
+                setPreview('prev_evidencia_documento', 'no_evidencia_documento', d.evidencia_documento);
+                
+                // Para Fibra (si es imagen o texto)
+                if (d.evidencia_fibra && (d.evidencia_fibra.includes('uploads/') || d.evidencia_fibra.match(/\.(jpg|jpeg|png|gif)$/i))) {
+                   setPreview('prev_evidencia_fibra', 'no_evidencia_fibra', d.evidencia_fibra);
+                   $('#edit_evidencia_fibra').val(''); // Es imagen, el input texto queda opcional o para el ID
+                } else {
+                   $('#prev_evidencia_fibra').hide();
+                   $('#no_evidencia_fibra').show();
+                   $('#edit_evidencia_fibra').val(d.evidencia_fibra || '');
+                }
 
                 // Tipo conexion
                 $('#edit_tipo_conexion').val(d.tipo_conexion).trigger('change');
