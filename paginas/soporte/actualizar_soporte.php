@@ -60,10 +60,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $bw_ping = isset($_POST['bw_ping']) ? $conn->real_escape_string($_POST['bw_ping']) : '';
     $estado_antena = isset($_POST['estado_antena']) ? $conn->real_escape_string($_POST['estado_antena']) : '';
     $valores_antena = isset($_POST['valores_antena']) ? $conn->real_escape_string($_POST['valores_antena']) : '';
-    $id_olt = isset($_POST['id_olt_edit']) ? intval($_POST['id_olt_edit']) : NULL;
-    $id_pon = isset($_POST['id_pon_edit']) ? intval($_POST['id_pon_edit']) : NULL;
     $clientes_afectados = isset($_POST['clientes_afectados_edit']) ? intval($_POST['clientes_afectados_edit']) : 0;
     $zona_afectada = isset($_POST['zona_afectada_edit']) ? $conn->real_escape_string($_POST['zona_afectada_edit']) : '';
+
+    // Múltiples OLT / PON
+    $olts_raw = isset($_POST['olts']) ? (array)$_POST['olts'] : [];
+    $pons_raw = isset($_POST['pons']) ? (array)$_POST['pons'] : [];
+
+    // Filtrar y limpiar pares
+    $pairs = [];
+    foreach ($olts_raw as $i => $olt_id) {
+        $olt_id = intval($olt_id);
+        if ($olt_id <= 0) continue;
+        $pon_id = isset($pons_raw[$i]) ? intval($pons_raw[$i]) : 0;
+        $pairs[] = ['id_olt' => $olt_id, 'id_pon' => $pon_id > 0 ? $pon_id : null];
+    }
+
+    // Primera para compatibilidad legacy
+    $id_olt_legacy = !empty($pairs) ? $pairs[0]['id_olt'] : null;
+    $id_pon_legacy = !empty($pairs) ? $pairs[0]['id_pon'] : null;
 
     // Firmas (base64)
     $firma_tecnico_b64 = isset($_POST['firma_tecnico_data']) ? $_POST['firma_tecnico_data'] : '';
@@ -108,6 +123,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     throw new Exception("Error al actualizar estado: " . $conn->error);
                 }
             } else {
+                $id_olt_sql = $id_olt_legacy ? $id_olt_legacy : "NULL";
+                $id_pon_sql = $id_pon_legacy ? $id_pon_legacy : "NULL";
+
                 $sql_update = "UPDATE soportes SET 
                                fecha_soporte = '$fecha',
                                tecnico_asignado = '$tecnico', 
@@ -131,8 +149,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                es_caida_critica = '$es_caida_critica',
                                clientes_afectados = '$clientes_afectados',
                                zona_afectada = '$zona_afectada',
-                               id_olt = " . ($id_olt ? $id_olt : "NULL") . ",
-                               id_pon = " . ($id_pon ? $id_pon : "NULL") . ",
+                               id_olt = $id_olt_sql,
+                               id_pon = $id_pon_sql,
                                solucion_completada = '$solucion_completada',
                                monto_total = '$nuevo_total' 
                                $update_firmas
@@ -140,6 +158,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 
                 if (!$conn->query($sql_update)) {
                     throw new Exception("Error al actualizar soporte: " . $conn->error);
+                }
+
+                // --- Sincronizar tabla soporte_olts_afectados ---
+                $conn->query("DELETE FROM soporte_olts_afectados WHERE id_soporte = '$id_soporte'");
+                if (!empty($pairs)) {
+                    $stmt_ins = $conn->prepare("INSERT INTO soporte_olts_afectados (id_soporte, id_olt, id_pon) VALUES (?, ?, ?)");
+                    foreach ($pairs as $p) {
+                        $stmt_ins->bind_param("iii", $id_soporte, $p['id_olt'], $p['id_pon']);
+                        $stmt_ins->execute();
+                    }
+                    $stmt_ins->close();
                 }
                 
                 $hora_sql = !empty($hora_solucion) ? "'$hora_solucion'" : "NULL";

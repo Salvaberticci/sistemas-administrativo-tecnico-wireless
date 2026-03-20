@@ -847,6 +847,16 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     </div>
                 </div>
 
+                <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">OLTs / PONs Afectados</div>
+                <div id="olts-edit-container" class="mb-2">
+                    <!-- Filas dinámicas se insertan aquí -->
+                </div>
+                <div class="mb-3">
+                    <button type="button" id="btn-add-olt-edit" class="btn btn-outline-primary btn-sm">
+                        <i class="fa-solid fa-plus me-1"></i> Agregar otra OLT / PON
+                    </button>
+                </div>
+
                 <!-- Detalles Técnicos -->
                 <div class="p-2 mb-2 bg-light border-start border-primary border-4 fw-bold">Detalles Técnicos</div>
                 <div class="row mb-3">
@@ -1151,17 +1161,20 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     if (d.es_caida_critica == 1) {
                         $('#clientesAfectadosEditContainer').show();
                         $('#clientes_afectados_edit').val(d.clientes_afectados);
+                        $('#zona_afectada_edit').val(d.zona_afectada);
                     } else {
                         $('#clientesAfectadosEditContainer').hide();
-                        $('#clientes_afectados_edit').val('');
                     }
 
-                    // Poblado de OLT y PON
-                    $('#id_olt_edit').val(d.id_olt);
-                    if (d.id_olt) {
-                       cargarPonsEdit(d.id_olt, d.id_pon);
+                    // --- Cargar OLTs/PONs afectadas ---
+                    $('#olts-edit-container').empty();
+                    if (d.olts_afectadas && d.olts_afectadas.length > 0) {
+                        d.olts_afectadas.forEach(item => {
+                            addOltRowEdit(item.id_olt, item.id_pon);
+                        });
                     } else {
-                       $('#id_pon_edit').html('<option value="">Primero seleccione OLT...</option>');
+                        // Fallback: si no hay en la tabla de relación, usar los del soporte principal
+                        addOltRowEdit(d.id_olt, d.id_pon);
                     }
 
                     $('#ip_edit').val(d.ip_address || '');
@@ -1816,6 +1829,101 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
     // Cargar al abrir el modal
     $('#configModal').on('show.bs.modal', function () {
         cargarOpcionesJSON();
+    });
+
+    // Poner el foco al abrir
+    $('#modalNuevoSoporte').on('shown.bs.modal', function () {
+        $('#id_contrato').focus();
+    });
+
+    // =========================================================
+    // --- Lógica de filas dinámicas OLT / PON en Edición ---
+    // =========================================================
+
+    window.addOltRowEdit = function(oltId = '', ponId = '') {
+        const container = $('#olts-edit-container');
+        const index = container.find('.olt-row-edit').length;
+        
+        const newRow = $(`
+            <div class="olt-row-edit row g-2 mb-2 align-items-start" data-index="${index}">
+                <div class="col-md-5">
+                    <select class="form-select form-select-sm olt-select-edit" name="olts[]" required>
+                        <option value="">Seleccione OLT...</option>
+                        <?php foreach ($olts as $olt): ?>
+                            <option value="<?php echo $olt['id_olt']; ?>"><?php echo htmlspecialchars($olt['nombre_olt']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <select class="form-select form-select-sm pon-select-edit" name="pons[]">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100 btn-remove-olt-edit" title="Eliminar fila">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+        `);
+
+        container.append(newRow);
+
+        const oltSelect = newRow.find('.olt-select-edit');
+        const ponSelect = newRow.find('.pon-select-edit');
+
+        if (oltId) {
+            oltSelect.val(oltId);
+            cargarPonsEdit(oltSelect, ponId);
+        } else {
+            ponSelect.html('<option value="">Primero seleccione OLT...</option>');
+        }
+    };
+
+    function cargarPonsEdit(oltSelect, selectedPonId = '') {
+        const id_olt = $(oltSelect).val();
+        const ponSelect = $(oltSelect).closest('.olt-row-edit').find('.pon-select-edit');
+
+        if (!id_olt) {
+            ponSelect.html('<option value="">Primero seleccione OLT...</option>');
+            return;
+        }
+
+        ponSelect.html('<option value="">Cargando...</option>');
+
+        $.ajax({
+            url: 'get_pons_ajax.php',
+            data: { id_olt: id_olt },
+            dataType: 'json',
+            success: function(data) {
+                ponSelect.empty().append('<option value="">Toda la OLT (sin PON específico)</option>');
+                data.forEach(function(pon) {
+                    const selected = (selectedPonId && selectedPonId == pon.id_pon) ? 'selected' : '';
+                    ponSelect.append(`<option value="${pon.id_pon}" ${selected}>${pon.nombre_pon}</option>`);
+                });
+            },
+            error: function() {
+                ponSelect.html('<option value="">Error</option>');
+            }
+        });
+    }
+
+    // Eventos para el contenedor de edición
+    $('#olts-edit-container').on('change', '.olt-select-edit', function() {
+        cargarPonsEdit(this);
+    });
+
+    $('#olts-edit-container').on('click', '.btn-remove-olt-edit', function() {
+        if ($('#olts-edit-container .olt-row-edit').length > 1) {
+            $(this).closest('.olt-row-edit').remove();
+        } else {
+            // Si es la última, solo limpiar los valores
+            $(this).closest('.olt-row-edit').find('select').val('');
+        }
+    });
+
+    $('#btn-add-olt-edit').click(function() {
+        addOltRowEdit();
     });
 
     // =========================================================
