@@ -157,7 +157,7 @@ while ($row = $res_olt->fetch_assoc()) {
 
                 <div id="olts-container">
                     <!-- Fila 1 (siempre visible) -->
-                    <div class="olt-row row g-3 mb-2 align-items-end" data-index="0">
+                    <div class="olt-row row g-3 mb-2 align-items-start" data-index="0">
                         <div class="col-md-5">
                             <label class="form-label fw-bold">OLT Afectada <span class="text-danger">*</span></label>
                             <select class="form-select border-primary olt-select" name="olts[]" required>
@@ -377,7 +377,7 @@ while ($row = $res_olt->fetch_assoc()) {
         let rowIndex = 1;
         $('#btn-add-olt').click(function() {
             const newRow = $(`
-                <div class="olt-row row g-3 mb-2 align-items-end" data-index="${rowIndex}">
+                <div class="olt-row row g-3 mb-2 align-items-start" data-index="${rowIndex}">
                     <div class="col-md-5">
                         <label class="form-label fw-bold">OLT Afectada <span class="text-danger">*</span></label>
                         <select class="form-select border-primary olt-select" name="olts[]" required>
