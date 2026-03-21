@@ -785,16 +785,28 @@ require_once '../includes/sidebar.php';
         // Mostrar/Ocultar campos según Tipo de Conexión
         $('#tipo_conexion').on('change', function () {
             var tipo = $(this).val();
-            // Ocultar todos primero y quitar required
+            // Ocultar todos primero, quitar required y desactivar para evitar errores de validación en campos ocultos
             $('.campo-ftth, .campo-radio').hide();
-            $('.campo-ftth input, .campo-radio input').prop('required', false);
+            $('.campo-ftth input, .campo-radio input').prop('required', false).prop('disabled', true);
 
             if (tipo === 'FTTH') {
                 $('.campo-ftth').show();
+                $('.campo-ftth input').prop('disabled', false); // Habilitar campos FTTH
                 $('#mac_onu, #ip_onu, #ident_caja_nap, #puerto_nap, #nap_tx_power, #onu_rx_power, #distancia_drop, #num_presinto_odn').prop('required', true);
+                
+                // Si la IP está vacía, restaurar el prefijo por defecto
+                if ($('#ip_onu').val() === '') {
+                    $('#ip_onu').val('192.168.');
+                }
             } else if (tipo === 'RADIO') {
                 $('.campo-radio').show();
+                $('.campo-radio input').prop('disabled', false); // Habilitar campos RADIO
                 $('#ip, #punto_acceso, #valor_conexion_dbm').prop('required', true);
+                
+                // Limpiar IP de la ONU para que no dé error de "pattern" si estaba a medias
+                if ($('#ip_onu').val() === '192.168.') {
+                    $('#ip_onu').val('');
+                }
             }
         });
 
@@ -1286,7 +1298,6 @@ require_once '../includes/sidebar.php';
         });
     }
     // intl-tel-input JS
-    // </script> is handled in layout_foot or above. We'll add our own script block.
 </script>
 
 <!-- intl-tel-input JS -->

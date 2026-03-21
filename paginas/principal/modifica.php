@@ -562,14 +562,26 @@ require_once '../includes/sidebar.php';
 		// 🔑 NUEVO: Manejar visibilidad de campos técnicos
 		$('#tipo_conexion').on('change', function () {
 			var tipo = $(this).val();
+			// Ocultar todos primero y desactivar para evitar errores de validación en campos ocultos
 			$('.campo-ftth, .campo-radio').hide();
+			$('.campo-ftth input, .campo-radio input').prop('disabled', true);
+
 			if (tipo && tipo.includes('FTTH')) {
 				$('.campo-ftth').show();
+				$('.campo-ftth input').prop('disabled', false);
+				// Si la IP está vacía, restaurar el prefijo por defecto
+				if ($('#ip_onu').val() === '') {
+					$('#ip_onu').val('192.168.');
+				}
 			} else if (tipo && tipo.includes('RADIO')) {
 				$('.campo-radio').show();
+				$('.campo-radio input').prop('disabled', false);
+				// Limpiar IP de la ONU si solo tiene el prefijo por defecto para evitar errores de pattern
+				if ($('#ip_onu').val() === '192.168.') {
+					$('#ip_onu').val('');
+				}
 			}
-		});
-		$('#tipo_conexion').trigger('change');
+		}).trigger('change');
 
 		// ======================================================
 		// LÓGICA DE PREFIJO DE CÉDULA/RIF
