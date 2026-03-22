@@ -1386,12 +1386,8 @@ require_once '../includes/sidebar.php';
                             <input type="file" class="form-control form-control-sm" id="edit_evidencia_documento" name="evidencia_documento_file" accept="image/*">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold d-block text-secondary text-uppercase">Fibra</label>
-                            <div id="prev_evidencia_fibra_div" class="mb-2 border rounded p-1 bg-white" style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
-                                <img id="prev_evidencia_fibra" src="" alt="Fibra" class="img-fluid rounded" style="max-height: 120px; display:none;">
-                                <span id="no_evidencia_fibra" class="text-muted small">Sin imagen</span>
-                            </div>
-                            <div class="input-group input-group-sm">
+                            <label class="form-label small fw-bold d-block text-secondary text-uppercase">Fibra (ID / Detalle)</label>
+                            <div class="input-group input-group-sm mt-1">
                                 <input type="text" class="form-control" id="edit_evidencia_fibra" name="evidencia_fibra" placeholder="ID Fibra">
                                 <span class="input-group-text"><i class="fa-solid fa-barcode"></i></span>
                             </div>
@@ -2014,15 +2010,7 @@ require_once '../includes/sidebar.php';
                 setPreview('prev_evidencia_foto', 'no_evidencia_foto', d.evidencia_foto);
                 setPreview('prev_evidencia_documento', 'no_evidencia_documento', d.evidencia_documento);
                 
-                // Para Fibra (si es imagen o texto)
-                if (d.evidencia_fibra && (d.evidencia_fibra.includes('uploads/') || d.evidencia_fibra.match(/\.(jpg|jpeg|png|gif)$/i))) {
-                   setPreview('prev_evidencia_fibra', 'no_evidencia_fibra', d.evidencia_fibra);
-                   $('#edit_evidencia_fibra').val(''); // Es imagen, el input texto queda opcional o para el ID
-                } else {
-                   $('#prev_evidencia_fibra').hide();
-                   $('#no_evidencia_fibra').show();
-                   $('#edit_evidencia_fibra').val(d.evidencia_fibra || '');
-                }
+                $('#edit_evidencia_fibra').val(d.evidencia_fibra || '');
 
                 // Tipo conexion
                 $('#edit_tipo_conexion').val(d.tipo_conexion).trigger('change');
