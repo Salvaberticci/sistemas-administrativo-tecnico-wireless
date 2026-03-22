@@ -42,6 +42,8 @@ $onu_rx_power = $conn->real_escape_string($_POST['onu_rx_power'] ?? '');
 $distancia_drop = $conn->real_escape_string($_POST['distancia_drop'] ?? '');
 $punto_acceso = $conn->real_escape_string($_POST['punto_acceso'] ?? '');
 $valor_conexion_dbm = $conn->real_escape_string($_POST['valor_conexion_dbm'] ?? '');
+$instalador_ftth = $conn->real_escape_string($_POST['instalador_ftth'] ?? '');
+$instalador_radio = $conn->real_escape_string($_POST['instalador_radio'] ?? '');
 
 $errores = '';
 
@@ -129,7 +131,8 @@ if (empty($errores)) {
 	  fecha_instalacion='$fecha_instalacion', estado='$estado', ident_caja_nap='$ident_caja_nap', puerto_nap='$puerto_nap',
 	   num_presinto_odn='$num_presinto_odn', id_olt='$id_olt', id_pon='$id_pon',
 	   tipo_conexion='$tipo_conexion', mac_onu='$mac_onu', ip_onu='$ip_onu', nap_tx_power='$nap_tx_power', onu_rx_power='$onu_rx_power',
-	   distancia_drop='$distancia_drop', punto_acceso='$punto_acceso', valor_conexion_dbm='$valor_conexion_dbm'
+	   distancia_drop='$distancia_drop', punto_acceso='$punto_acceso', valor_conexion_dbm='$valor_conexion_dbm',
+	   instalador='$instalador_ftth', instalador_c='$instalador_radio'
 	   WHERE id = $id";
 
 	$resultado = $conn->query($sql);

@@ -24,7 +24,7 @@ $aColumnas = [
     'c.nombre_completo',        // 3
     'c.monto_plan',             // 4 [NEW]
     'm.nombre_municipio',       // 5
-    'pa.nombre_parroquia',      // 5
+    'pa.nombre_parroquia',      // 6
     'c.direccion',              // 6
     'c.telefono',               // 7
     'c.telefono_secundario',    // 8
@@ -47,6 +47,7 @@ $aColumnas = [
     'c.onu_rx_power',           // 25
     'c.distancia_drop',         // 26
     'c.instalador',             // 27
+    'c.instalador_c',           // 18 [NEW]
     'c.evidencia_fibra',        // 28
     'c.punto_acceso',           // 29 (was 30)
     'c.valor_conexion_dbm',     // 30 (was 31)
@@ -61,7 +62,9 @@ $aColumnas = [
     'pn.nombre_pon',            // 39 (was 40)
     'c.estado',                 // 40 (was 41)
     'c.token_firma',            // 41 (was 42)
-    'c.estado_firma'            // 42 (was 43)
+    'c.estado_firma',           // 42 (was 43)
+    'c.municipio_texto',        // 43 (NEW)
+    'c.parroquia_texto'         // 44 (NEW)
 ];
 
 $sIndexColumn = "c.id";
@@ -177,11 +180,13 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 4. MONTO PLAN [NEW]
     $row[] = "<span class='badge bg-light text-dark border'>$" . clean($aRow['monto_plan']) . "</span>";
 
-    // 5. MUNICIPIO
-    $row[] = clean($aRow['nombre_municipio']);
+    // 5. MUNICIPIO (Con fallback a texto libre)
+    $mun = !empty($aRow['nombre_municipio']) ? $aRow['nombre_municipio'] : (!empty($aRow['municipio_texto']) ? $aRow['municipio_texto'] : '');
+    $row[] = clean($mun);
 
-    // 5. PARROQUIA
-    $row[] = clean($aRow['nombre_parroquia']);
+    // 6. PARROQUIA (Con fallback a texto libre)
+    $par = !empty($aRow['nombre_parroquia']) ? $aRow['nombre_parroquia'] : (!empty($aRow['parroquia_texto']) ? $aRow['parroquia_texto'] : '');
+    $row[] = clean($par);
 
     // 6. DIRECCION (Boton + Texto)
     $direccion = clean(str_replace(["\r", "\n"], ' ', $aRow['direccion']));
@@ -258,8 +263,8 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 29. VALOR CONEXION DBM (was 30)
     $row[] = clean($aRow['valor_conexion_dbm']);
 
-    // 31. INSTALADOR (Cierre)
-    $row[] = clean($aRow['instalador']);
+    // 31. INSTALADOR RADIO (was Cierre)
+    $row[] = clean($aRow['instalador_c']);
 
     // 32. EVIDENCIA FIBRA (Antes estaba al final, causaba desplazamiento)
     $row[] = clean($aRow['evidencia_fibra']);

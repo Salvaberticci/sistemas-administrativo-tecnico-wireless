@@ -501,30 +501,51 @@ require_once '../includes/sidebar.php';
                             $instaladoresList = json_decode(file_get_contents($jsonInstaladores), true) ?: [];
                         }
                         ?>
-                        <label for="instaladores" class="form-label font-weight-bold">Instalador</label>
-                        <select name="instaladores[]" id="instaladores" class="form-select">
+                    <!-- Instalador FTTH -->
+                    <div class="col-md-6 campo-ftth">
+                        <label for="instalador_ftth" class="form-label fw-bold">Instalador FTTH</label>
+                        <select name="instalador_ftth" id="instalador_ftth" class="form-select">
                             <option value="">-- Seleccione un Instalador --</option>
                             <?php
                             if (!empty($instaladoresList)) {
                                 foreach ($instaladoresList as $inst) {
-                                    // El valor y el texto son el nombre, ya que JSON es un array simple de nombres
-                                    echo '<option value="' . htmlspecialchars($inst) . '">' .
-                                        htmlspecialchars($inst) . '</option>';
+                                    echo '<option value="' . htmlspecialchars($inst) . '">' . htmlspecialchars($inst) . '</option>';
                                 }
                             } else {
-                                // Fallback SQL
                                 $sql_inst_fb = "SELECT * FROM instaladores WHERE activo = 1 ORDER BY nombre_instalador ASC";
                                 $res_inst_fb = $conn->query($sql_inst_fb);
                                 if ($res_inst_fb && $res_inst_fb->num_rows > 0) {
                                     while ($inst = $res_inst_fb->fetch_assoc()) {
-                                        echo '<option value="' . $inst['nombre_instalador'] . '">' . htmlspecialchars($inst['nombre_instalador']) . '</option>'; // Use name as value to align with JSON
+                                        echo '<option value="' . $inst['nombre_instalador'] . '">' . htmlspecialchars($inst['nombre_instalador']) . '</option>';
                                     }
-                                } else {
-                                    echo '<option disabled>No hay instaladores activos</option>';
                                 }
                             }
                             ?>
                         </select>
+                    </div>
+
+                    <!-- Instalador Radio -->
+                    <div class="col-md-6 campo-radio">
+                        <label for="instalador_radio" class="form-label fw-bold">Instalador Radio</label>
+                        <select name="instalador_radio" id="instalador_radio" class="form-select">
+                            <option value="">-- Seleccione un Instalador --</option>
+                            <?php
+                            if (!empty($instaladoresList)) {
+                                foreach ($instaladoresList as $inst) {
+                                    echo '<option value="' . htmlspecialchars($inst) . '">' . htmlspecialchars($inst) . '</option>';
+                                }
+                            } else {
+                                $sql_inst_fb = "SELECT * FROM instaladores WHERE activo = 1 ORDER BY nombre_instalador ASC";
+                                $res_inst_fb = $conn->query($sql_inst_fb);
+                                if ($res_inst_fb && $res_inst_fb->num_rows > 0) {
+                                    while ($inst = $res_inst_fb->fetch_assoc()) {
+                                        echo '<option value="' . $inst['nombre_instalador'] . '">' . htmlspecialchars($inst['nombre_instalador']) . '</option>';
+                                    }
+                                }
+                            }
+                            ?>
+                        </select>
+                    </div>
                     </div>
 
                     <!-- EVIDENCIAS DE FIRMA -->
@@ -574,7 +595,8 @@ require_once '../includes/sidebar.php';
         const montoPagado = $('#monto_pagado').val();
         const moneda = $('#moneda_pago').val();
         const medio = $('#medio_pago').val();
-        const tecnico = $('#instaladores').val();
+        const tipoConex = $('#tipo_conexion').val();
+        const tecnico = (tipoConex === 'FTTH') ? $('#instalador_ftth').val() : $('#instalador_radio').val();
 
         if (!form.checkValidity()) {
             form.reportValidity();
@@ -787,11 +809,11 @@ require_once '../includes/sidebar.php';
             var tipo = $(this).val();
             // Ocultar todos primero, quitar required y desactivar para evitar errores de validación en campos ocultos
             $('.campo-ftth, .campo-radio').hide();
-            $('.campo-ftth input, .campo-radio input').prop('required', false).prop('disabled', true);
+            $('.campo-ftth :input, .campo-radio :input').prop('disabled', true);
 
             if (tipo === 'FTTH') {
                 $('.campo-ftth').show();
-                $('.campo-ftth input').prop('disabled', false); // Habilitar campos FTTH
+                $('.campo-ftth :input').prop('disabled', false); // Habilitar campos FTTH
                 $('#mac_onu, #ip_onu, #ident_caja_nap, #puerto_nap, #nap_tx_power, #onu_rx_power, #distancia_drop, #num_presinto_odn').prop('required', true);
                 
                 // Si la IP está vacía, restaurar el prefijo por defecto
@@ -800,7 +822,7 @@ require_once '../includes/sidebar.php';
                 }
             } else if (tipo === 'RADIO') {
                 $('.campo-radio').show();
-                $('.campo-radio input').prop('disabled', false); // Habilitar campos RADIO
+                $('.campo-radio :input').prop('disabled', false); // Habilitar campos RADIO
                 $('#ip, #punto_acceso, #valor_conexion_dbm').prop('required', true);
                 
                 // Limpiar IP de la ONU para que no dé error de "pattern" si estaba a medias

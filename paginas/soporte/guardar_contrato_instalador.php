@@ -7,13 +7,18 @@ require_once '../conexion.php';
 header('Content-Type: application/json');
 
 // Manejo de errores para respuestas JSON
-function jsonErrorHandler($errno, $errstr, $errfile, $errline)
-{
-    if (ob_get_length())
-        ob_clean();
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'msg' => "PHP Error: $errstr en $errfile:$errline"]);
-    exit;
+if (!function_exists('jsonErrorHandler')) {
+    function jsonErrorHandler($errno, $errstr, $errfile, $errline)
+    {
+        if (!(error_reporting() & $errno)) {
+            return false;
+        }
+        if (ob_get_length())
+            ob_clean();
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'msg' => "PHP Error: $errstr en $errfile:$errline"]);
+        exit;
+    }
 }
 set_error_handler("jsonErrorHandler");
 
@@ -52,6 +57,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             mkdir($uploadDir, 0755, true);
         if (move_uploaded_file($file['tmp_name'], $uploadDir . $fileName))
             return 'uploads/contratos/' . $fileName;
+    }
+
+    // --- FUNCIONES DE RESOLUCIÓN DE UBICACIÓN (ID por Nombre) ---
+    function getMunicipioId($conn, $nombre)
+    {
+        $nombre = trim($conn->real_escape_string($nombre));
+        if (empty($nombre))
+            return null;
+        $sql = "SELECT id_municipio FROM municipio WHERE nombre_municipio = '$nombre' LIMIT 1";
+        $res = $conn->query($sql);
+        if ($res && $res->num_rows > 0)
+            return $res->fetch_assoc()['id_municipio'];
+        // Si no existe, lo insertamos para mantener integridad
+        if ($conn->query("INSERT INTO municipio (nombre_municipio) VALUES ('$nombre')"))
+            return $conn->insert_id;
+        return null;
+    }
+
+    function getParroquiaId($conn, $nombre, $id_municipio)
+    {
+        $nombre = trim($conn->real_escape_string($nombre));
+        if (empty($nombre) || empty($id_municipio))
+            return null;
+        $sql = "SELECT id_parroquia FROM parroquia WHERE nombre_parroquia = '$nombre' LIMIT 1";
+        $res = $conn->query($sql);
+        if ($res && $res->num_rows > 0)
+            return $res->fetch_assoc()['id_parroquia'];
+        // Si no existe, lo insertamos
+        if ($conn->query("INSERT INTO parroquia (nombre_parroquia, id_municipio) VALUES ('$nombre', $id_municipio)"))
+            return $conn->insert_id;
         return null;
     }
 
@@ -65,6 +100,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $correo = trim($conn->real_escape_string($_POST['correo'] ?? ''));
         $municipio_texto = $conn->real_escape_string($_POST['id_municipio'] ?? '');
         $parroquia_texto = $conn->real_escape_string($_POST['id_parroquia'] ?? '');
+
+        // Resolver IDs para integridad referencial en tablas antiguas
+        $id_municipio = getMunicipioId($conn, $municipio_texto);
+        $id_parroquia = getParroquiaId($conn, $parroquia_texto, $id_municipio);
+
         $id_plan = !empty($_POST['id_plan']) ? intval($_POST['id_plan']) : null;
         $vendedor_texto = $conn->real_escape_string($_POST['vendedor_texto'] ?? '');
         $direccion = $conn->real_escape_string($_POST['direccion'] ?? '');
@@ -119,9 +159,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $distancia_drop = $conn->real_escape_string($_POST['distancia_drop'] ?? '');
         $evidencia_fibra = $conn->real_escape_string($_POST['evidencia_fibra'] ?? '');
 
-        // Instaladores[] es un array en el HTML de nuevo.php
-        $instalador_raw = $_POST['instaladores'] ?? '';
-        $instalador = is_array($instalador_raw) ? implode(', ', $instalador_raw) : $conn->real_escape_string($instalador_raw);
+        // Manejar Instaladores por tipo
+        $instalador_ftth = $conn->real_escape_string($_POST['instalador_ftth'] ?? '');
+        $instalador_radio = $conn->real_escape_string($_POST['instalador_radio'] ?? '');
+
+        // Para compatibilidad con la columna 'instalador' existente (FTTH)
+        $instalador = ($tipo_conexion === 'FTTH') ? $instalador_ftth : '';
+        // Nueva columna para Radio
+        $instalador_c = ($tipo_conexion === 'RADIO') ? $instalador_radio : '';
 
         $punto_acceso = $conn->real_escape_string($_POST['punto_acceso'] ?? '');
         $valor_conexion_dbm = $conn->real_escape_string($_POST['valor_conexion_dbm'] ?? '');
@@ -165,21 +210,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // INSERT (Sync with nuevo.php fields)
         $sql = "INSERT INTO contratos (
-            cedula, nombre_completo, municipio_texto, parroquia_texto, id_plan, monto_plan, vendedor_texto, 
+            cedula, nombre_completo, id_municipio, id_parroquia, municipio_texto, parroquia_texto, id_plan, monto_plan, vendedor_texto, 
             direccion, telefono, telefono_secundario, correo, correo_adicional, fecha_instalacion, 
             tipo_instalacion, medio_pago, monto_instalacion, gastos_adicionales, plan_prorrateo_nombre, dias_prorrateo, monto_prorrateo_usd,
             monto_pagar, monto_pagado, moneda_pago, observaciones, 
             tipo_conexion, mac_onu, ip_onu, numero_onu, ident_caja_nap, puerto_nap, 
-            nap_tx_power, onu_rx_power, distancia_drop, instalador, 
+            nap_tx_power, onu_rx_power, distancia_drop, instalador, instalador_c,
             punto_acceso, valor_conexion_dbm, num_presinto_odn, evidencia_foto, evidencia_documento, 
             evidencia_fibra, firma_cliente, firma_tecnico, id_olt, id_pon, estado, sae_plus
         ) VALUES (
-            '$cedula', '$nombre_completo', '$municipio_texto', '$parroquia_texto', " . ($id_plan ?: "NULL") . ", $monto_plan, '$vendedor_texto', 
+            '$cedula', '$nombre_completo', " . ($id_municipio ?: "NULL") . ", " . ($id_parroquia ?: "NULL") . ", '$municipio_texto', '$parroquia_texto', " . ($id_plan ?: "NULL") . ", $monto_plan, '$vendedor_texto', 
             '$direccion', '$telefono', '$telefono_secundario', '$correo', '$correo_adicional', '$fecha_instalacion', 
             '$tipo_instalacion', '$medio_pago', '$monto_instalacion', '$gastos_adicionales', " . ($plan_prorrateo_nombre ? "'$plan_prorrateo_nombre'" : "NULL") . ", $dias_prorrateo, $monto_prorrateo_usd,
             $monto_pagar, $monto_pagado, '$moneda_pago', '$observaciones', 
             '$tipo_conexion', '$mac_onu', '$ip_onu', '$numero_onu', '$ident_caja_nap', '$puerto_nap', 
-            '$nap_tx_power', '$onu_rx_power', '$distancia_drop', '$instalador', 
+            '$nap_tx_power', '$onu_rx_power', '$distancia_drop', '$instalador', '$instalador_c',
             '$punto_acceso', '$valor_conexion_dbm', '$num_presinto_odn', " . ($evidencia_foto ? "'$evidencia_foto'" : "NULL") . ", " . ($evidencia_documento ? "'$evidencia_documento'" : "NULL") . ", 
             '$evidencia_fibra', " . ($firma_cliente ? "'$firma_cliente'" : "NULL") . ", " . ($firma_tecnico ? "'$firma_tecnico'" : "NULL") . ", " . ($id_olt ?: "NULL") . ", " . ($id_pon ?: "NULL") . ", '$estado', '$sae_plus'
         )";
@@ -226,5 +271,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 } else {
     echo json_encode(['status' => 'error', 'msg' => 'Método no permitido']);
 }
-$conn->close();
 ?>

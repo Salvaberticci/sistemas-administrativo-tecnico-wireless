@@ -295,12 +295,12 @@ require_once '../includes/sidebar.php';
                                 <th>NAP TX (dBm)</th>
                                 <th>ONU RX (dBm)</th>
                                 <th>Dist. Drop (m)</th>
-                                <th>Instalador</th>
+                                <th>Instalador FTTH</th>
                                 <th>Punto Acceso</th>
                                 <th>Val. Conex. (dBm)</th>
 
                                 <!-- Cierre -->
-                                <th title="Instalador (Cierre)">Instalador (C)</th>
+                                <th title="Instalador Radio">Instalador Radio</th>
                                 <th title="Evidencia de Fibra">Evidencia Fibra</th>
                                 <th title="Sugerencias/Observaciones">Sugerencias</th>
                                 <th>Precinto ODN</th>
@@ -1290,10 +1290,17 @@ require_once '../includes/sidebar.php';
                             <input type="text" class="form-control form-control-sm" id="edit_puerto_nap"
                                 name="puerto_nap">
                         </div>
-                        <div class="col-md-12">
-                            <label class="form-label small fw-bold">Instalador Principal</label>
-                            <input type="text" class="form-control form-control-sm" id="edit_instalador"
-                                name="instalador" placeholder="Nombre del instalador">
+                        <div class="col-md-6 campo-edit-ftth">
+                            <label class="form-label small fw-bold text-primary">Instalador FTTH</label>
+                            <select class="form-select form-select-sm" id="edit_instalador_ftth" name="instalador_ftth">
+                                <option value="">-- Seleccione --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 campo-edit-radio">
+                            <label class="form-label small fw-bold text-warning">Instalador Radio</label>
+                            <select class="form-select form-select-sm" id="edit_instalador_radio" name="instalador_radio">
+                                <option value="">-- Seleccione --</option>
+                            </select>
                         </div>
                     </div>
 
@@ -1349,7 +1356,7 @@ require_once '../includes/sidebar.php';
                                 name="valor_conexion_dbm" pattern="-?[0-9.]+" placeholder="-55.0">
                         </div>
                     </div>
-
+                    <div class="row g-3 mb-4">
                         <div class="col-md-12">
                             <label class="form-label small fw-bold">Observaciones</label>
                             <textarea class="form-control form-control-sm" id="edit_observaciones" name="observaciones"
@@ -1875,9 +1882,16 @@ require_once '../includes/sidebar.php';
         // Tipo conexion visibility
         $('#edit_tipo_conexion').on('change', function () {
             var t = $(this).val();
-            $('#edit_campos_ftth, #edit_campos_radio').hide();
-            if (t && t.includes('FTTH')) $('#edit_campos_ftth').show();
-            else if (t && t.includes('RADIO')) $('#edit_campos_radio').show();
+            $('#edit_campos_ftth, #edit_campos_radio, .campo-edit-ftth, .campo-edit-radio').hide();
+            $('#edit_campos_ftth :input, #edit_campos_radio :input, .campo-edit-ftth :input, .campo-edit-radio :input').prop('disabled', true);
+
+            if (t && t.includes('FTTH')) {
+                $('#edit_campos_ftth, .campo-edit-ftth').show();
+                $('#edit_campos_ftth :input, .campo-edit-ftth :input').prop('disabled', false);
+            } else if (t && t.includes('RADIO')) {
+                $('#edit_campos_radio, .campo-edit-radio').show();
+                $('#edit_campos_radio :input, .campo-edit-radio :input').prop('disabled', false);
+            }
         });
 
         // Auto-fill monto_plan when plan selection changes in edit modal
@@ -1925,8 +1939,17 @@ require_once '../includes/sidebar.php';
                 // --- COSTOS Y PAGOS ---
                 $('#edit_monto_pagar').val(d.monto_pagar || 0);
                 $('#edit_monto_pagado').val(d.monto_pagado || 0);
-                $('#edit_medio_pago').val(d.medio_pago || '');
-                $('#edit_instalador').val(d.instalador || '');
+                // --- INSTALADORES ---
+                $.get('json_personal_api.php?action=get_instaladores', function (insts) {
+                    let opts = '<option value="">-- Seleccione --</option>';
+                    if (insts && insts.length > 0) {
+                        insts.forEach(i => {
+                            opts += `<option value="${i}">${i}</option>`;
+                        });
+                    }
+                    $('#edit_instalador_ftth').html(opts).val(d.instalador || '');
+                    $('#edit_instalador_radio').html(opts).val(d.instalador_c || '');
+                });
 
                 // --- FIRMAS ---
                 resetEditPadsWorkflows();
@@ -2127,7 +2150,7 @@ require_once '../includes/sidebar.php';
                             var m = document.getElementById('modalEditarContrato');
                             var bsModal = bootstrap.Modal.getInstance(m);
                             if (bsModal) bsModal.hide();
-                        }, 500);
+                        }, 1200);
                     } else {
                         $alert.addClass('alert-danger').html('<i class="fa-solid fa-circle-exclamation me-1"></i>' + res.message);
                     }

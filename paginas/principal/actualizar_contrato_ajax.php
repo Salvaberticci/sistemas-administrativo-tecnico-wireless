@@ -57,8 +57,8 @@ $medio_pago = $conn->real_escape_string($_POST['medio_pago'] ?? '');
 $moneda_pago = $conn->real_escape_string($_POST['moneda_pago'] ?? 'USD');
 
 // INSTALADOR(ES)
-$instaladores_raw = $_POST['instaladores'] ?? $_POST['instalador'] ?? '';
-$instalador = is_array($instaladores_raw) ? implode(', ', $instaladores_raw) : $conn->real_escape_string($instaladores_raw);
+$instalador_ftth = $conn->real_escape_string($_POST['instalador_ftth'] ?? '');
+$instalador_radio = $conn->real_escape_string($_POST['instalador_radio'] ?? '');
 
 if (!$id) {
     echo json_encode(['success' => false, 'message' => 'ID de contrato inválido.']);
@@ -222,7 +222,8 @@ $sql = "UPDATE contratos SET
     monto_pagar=$monto_pagar,
     monto_pagado=$monto_pagado,
     medio_pago='$medio_pago',
-    instalador='$instalador'
+    instalador='$instalador_ftth',
+    instalador_c='$instalador_radio'
     $sql_firma_cliente
     $sql_firma_tecnico
     $sql_foto

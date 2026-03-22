@@ -124,9 +124,14 @@ if (isset($_FILES['evidencia_foto']) && $_FILES['evidencia_foto']['error'] == 0)
     }
 }
 
-// Instaladores (array a string separado por comas)
-$instaladores_array = $_POST['instaladores'] ?? [];
-$instalador_val = is_array($instaladores_array) ? implode(', ', $instaladores_array) : $conn->real_escape_string($instaladores_array);
+// Manejar Instaladores por tipo
+$instalador_ftth = isset($_POST['instalador_ftth']) ? $conn->real_escape_string($_POST['instalador_ftth']) : '';
+$instalador_radio = isset($_POST['instalador_radio']) ? $conn->real_escape_string($_POST['instalador_radio']) : '';
+
+// Para compatibilidad con la columna 'instalador' existente (FTTH)
+$instalador_val = ($tipo_conexion === 'FTTH') ? $instalador_ftth : '';
+// Nueva columna para Radio
+$instalador_c = ($tipo_conexion === 'RADIO') ? $instalador_radio : '';
 
 // --- FUNCIÓN PARA GUARDAR FIRMAS (Base64 a PNG) ---
 function saveSignature($base64_string, $prefix)
@@ -324,7 +329,7 @@ if ($error_mensaje) {
         id_municipio, id_parroquia, municipio_texto, parroquia_texto, id_plan, monto_plan, vendedor_texto,
         direccion, fecha_instalacion, estado, ident_caja_nap, puerto_nap, 
         num_presinto_odn, id_olt, id_pon, tipo_instalacion, monto_instalacion, 
-        gastos_adicionales, monto_pagar, monto_pagado, instalador,
+        gastos_adicionales, monto_pagar, monto_pagado, instalador, instalador_c,
         telefono_secundario, correo_adicional, medio_pago, moneda_pago, plan_prorrateo_nombre, dias_prorrateo,
         monto_prorrateo_usd, observaciones, tipo_conexion, mac_onu, ip_onu, numero_onu,
         nap_tx_power, onu_rx_power, distancia_drop, punto_acceso, valor_conexion_dbm,
@@ -335,12 +340,12 @@ if ($error_mensaje) {
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-        ?, ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?, ?
     )";
 
         $stmt = $conn->prepare($sql);
 
-        $types = "ssssii" . "ss" . "id" . "sssssssiisdddds" . "sssssidssssssssssssss" . "sss";
+        $types = "ssssii" . "ss" . "id" . "sssssssiisddddss" . "sssssidssssssssssssss" . "sss";
 
         $stmt->bind_param(
             $types,
@@ -369,6 +374,7 @@ if ($error_mensaje) {
             $monto_pagar,
             $monto_pagado,
             $instalador_val,
+            $instalador_c,
             $telefono_secundario,
             $correo_adicional,
             $medio_pago,

@@ -380,6 +380,49 @@ require_once '../includes/sidebar.php';
 							value="<?php echo $row['valor_conexion_dbm']; ?>">
 					</div>
 
+					<!-- Instaladores -->
+					<?php
+					$jsonInstaladores = 'data/instaladores.json';
+					$instaladoresList = [];
+					if (file_exists($jsonInstaladores)) {
+						$instaladoresList = json_decode(file_get_contents($jsonInstaladores), true) ?: [];
+					}
+					// Si el JSON está vacío, intentamos cargar de la DB
+					if (empty($instaladoresList)) {
+						$sql_inst_fb = "SELECT nombre_instalador FROM instaladores WHERE activo = 1 ORDER BY nombre_instalador ASC";
+						$res_inst_fb = $conn->query($sql_inst_fb);
+						while ($inst = $res_inst_fb->fetch_assoc()) {
+							$instaladoresList[] = $inst['nombre_instalador'];
+						}
+					}
+					?>
+
+					<div class="col-md-6 campo-ftth">
+						<label for="instalador_ftth" class="form-label fw-bold">Instalador FTTH</label>
+						<select name="instalador_ftth" id="instalador_ftth" class="form-select">
+							<option value="">-- Seleccione un Instalador --</option>
+							<?php
+							foreach ($instaladoresList as $inst) {
+								$selected = ($inst == $row['instalador']) ? 'selected' : '';
+								echo '<option value="' . htmlspecialchars($inst) . '" ' . $selected . '>' . htmlspecialchars($inst) . '</option>';
+							}
+							?>
+						</select>
+					</div>
+
+					<div class="col-md-6 campo-radio">
+						<label for="instalador_radio" class="form-label fw-bold">Instalador Radio</label>
+						<select name="instalador_radio" id="instalador_radio" class="form-select">
+							<option value="">-- Seleccione un Instalador --</option>
+							<?php
+							foreach ($instaladoresList as $inst) {
+								$selected = ($inst == $row['instalador_c']) ? 'selected' : '';
+								echo '<option value="' . htmlspecialchars($inst) . '" ' . $selected . '>' . htmlspecialchars($inst) . '</option>';
+							}
+							?>
+						</select>
+					</div>
+
 
 
 					<div class="col-md-12">
@@ -564,18 +607,18 @@ require_once '../includes/sidebar.php';
 			var tipo = $(this).val();
 			// Ocultar todos primero y desactivar para evitar errores de validación en campos ocultos
 			$('.campo-ftth, .campo-radio').hide();
-			$('.campo-ftth input, .campo-radio input').prop('disabled', true);
+			$('.campo-ftth :input, .campo-radio :input').prop('disabled', true);
 
 			if (tipo && tipo.includes('FTTH')) {
 				$('.campo-ftth').show();
-				$('.campo-ftth input').prop('disabled', false);
+				$('.campo-ftth :input').prop('disabled', false);
 				// Si la IP está vacía, restaurar el prefijo por defecto
 				if ($('#ip_onu').val() === '') {
 					$('#ip_onu').val('192.168.');
 				}
 			} else if (tipo && tipo.includes('RADIO')) {
 				$('.campo-radio').show();
-				$('.campo-radio input').prop('disabled', false);
+				$('.campo-radio :input').prop('disabled', false);
 				// Limpiar IP de la ONU si solo tiene el prefijo por defecto para evitar errores de pattern
 				if ($('#ip_onu').val() === '192.168.') {
 					$('#ip_onu').val('');

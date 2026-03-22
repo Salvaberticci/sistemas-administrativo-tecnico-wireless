@@ -471,10 +471,25 @@ if (file_exists($jsonFileTypes)) {
                                     name="valor_conexion_dbm" pattern="-?[0-9.]+" placeholder="-55.0">
                             </div>
 
-                            <!-- Instalador -->
-                            <div class="col-md-6">
-                                <label for="instaladores" class="form-label fw-bold">Instalador</label>
-                                <select name="instaladores[]" id="instaladores" class="form-select">
+                            <!-- Instalador FTTH -->
+                            <div class="col-md-6 campo-ftth">
+                                <label for="instalador_ftth" class="form-label fw-bold">Instalador FTTH</label>
+                                <select name="instalador_ftth" id="instalador_ftth" class="form-select">
+                                    <option value="">-- Seleccione un Instalador --</option>
+                                    <?php
+                                    if (!empty($instaladoresList)) {
+                                        foreach ($instaladoresList as $inst) {
+                                            echo '<option value="' . htmlspecialchars($inst) . '">' . htmlspecialchars($inst) . '</option>';
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <!-- Instalador Radio -->
+                            <div class="col-md-6 campo-radio">
+                                <label for="instalador_radio" class="form-label fw-bold">Instalador Radio</label>
+                                <select name="instalador_radio" id="instalador_radio" class="form-select">
                                     <option value="">-- Seleccione un Instalador --</option>
                                     <?php
                                     if (!empty($instaladoresList)) {
@@ -972,11 +987,11 @@ if (file_exists($jsonFileTypes)) {
                 var tipo = $(this).val();
                 // Ocultar todos primero, quitar required y desactivar para evitar errores de validación en campos ocultos
                 $('.campo-ftth, .campo-radio').hide();
-                $('.campo-ftth input, .campo-radio input').prop('required', false).prop('disabled', true);
+                $('.campo-ftth :input, .campo-radio :input').prop('required', false).prop('disabled', true);
 
                 if (tipo === 'FTTH') {
                     $('.campo-ftth').show();
-                    $('.campo-ftth input').prop('disabled', false); // Habilitar campos FTTH
+                    $('.campo-ftth :input').prop('disabled', false); // Habilitar campos FTTH
                     $('#mac_onu, #ip_onu, #ident_caja_nap, #puerto_nap, #nap_tx_power, #onu_rx_power, #distancia_drop, #num_presinto_odn, #numero_onu').prop('required', true);
                     
                     // Si la IP está vacía, restaurar el prefijo por defecto
@@ -985,7 +1000,7 @@ if (file_exists($jsonFileTypes)) {
                     }
                 } else if (tipo === 'RADIO') {
                     $('.campo-radio').show();
-                    $('.campo-radio input').prop('disabled', false); // Habilitar campos RADIO
+                    $('.campo-radio :input').prop('disabled', false); // Habilitar campos RADIO
                     $('#ip, #punto_acceso, #valor_conexion_dbm').prop('required', true);
                     
                     // Limpiar IP de la ONU para que no dé error de "pattern" si estaba a medias
@@ -1147,7 +1162,8 @@ if (file_exists($jsonFileTypes)) {
                 const montoPagado = mPagado.val();
                 const moneda = mMoneda.val();
                 const medio = mMedio.val();
-                const tecnico = $('#instaladores').val();
+                const tipoConex = $('#tipo_conexion').val();
+                const tecnico = (tipoConex === 'FTTH') ? $('#instalador_ftth').val() : $('#instalador_radio').val();
 
                 const htmlResumen = `
                     <div class="text-start">
