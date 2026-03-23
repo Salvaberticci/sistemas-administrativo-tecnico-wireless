@@ -3,30 +3,33 @@
 require_once 'paginas/conexion.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $cedula = $conn->real_escape_string($_POST['cedula']);
-    $nombre = $conn->real_escape_string($_POST['nombre']);
-    $telefono = $conn->real_escape_string($_POST['telefono']);
-    $fecha_pago = $conn->real_escape_string($_POST['fecha_pago']);
-    $metodo_pago = $conn->real_escape_string($_POST['metodo_pago']);
+    $cedula         = $conn->real_escape_string($_POST['cedula']);
+    $nombre         = $conn->real_escape_string($_POST['nombre']);
+    $telefono       = $conn->real_escape_string($_POST['telefono']);
+    $fecha_pago     = $conn->real_escape_string($_POST['fecha_pago']);
+    $metodo_pago    = $conn->real_escape_string($_POST['metodo_pago']);
     $id_banco_destino = isset($_POST['id_banco_destino']) ? intval($_POST['id_banco_destino']) : null;
-    $referencia = isset($_POST['referencia']) ? $conn->real_escape_string($_POST['referencia']) : '';
-    $monto_bs = isset($_POST['monto_bs']) ? floatval($_POST['monto_bs']) : 0.00;
-    $meses = isset($_POST['meses']) ? implode(', ', $_POST['meses']) : '';
-    $concepto = isset($_POST['concepto']) ? $conn->real_escape_string($_POST['concepto']) : '';
+    $referencia     = isset($_POST['referencia']) ? $conn->real_escape_string($_POST['referencia']) : '';
+    $meses          = isset($_POST['meses']) ? implode(', ', $_POST['meses']) : '';
+    $concepto       = isset($_POST['concepto']) ? $conn->real_escape_string($_POST['concepto']) : '';
 
-    // VALIDACIÓN BACKEND: Campos Obligatorios
-    if (empty($metodo_pago) || empty($referencia) || ($metodo_pago !== 'Efectivo' && $metodo_pago !== 'Divisas' && empty($id_banco_destino))) {
-        // En realidad el usuario pidió que banco sea obligatorio también.
-    }
-    
+    // Monto en USD (el valor que realmente se guarda)
+    $monto_usd  = isset($_POST['monto_usd'])   ? floatval($_POST['monto_usd'])   : 0.00;
+    $tasa_dolar = isset($_POST['tasa_dolar'])   ? floatval($_POST['tasa_dolar'])  : 0.00;
+    // monto_bs es solo referencial — calculado a partir de USD x tasa
+    $monto_bs   = ($monto_usd > 0 && $tasa_dolar > 0) ? round($monto_usd * $tasa_dolar, 2) : 0.00;
+
+    // VALIDACIÓN BACKEND
     if (empty($metodo_pago) || empty($referencia) || empty($id_banco_destino)) {
-         die("Error: El Método de Pago, el Banco y el Número de Referencia son obligatorios.");
+        die("Error: El Método de Pago, el Banco y el Número de Referencia son obligatorios.");
+    }
+    if ($monto_usd <= 0) {
+        die("Error: Debe ingresar un monto válido en dólares.");
     }
 
-    // 1. Intentar vincular con un contrato existente
-    $id_contrato_asociado = isset($_POST['id_contrato_asociado']) && !empty($_POST['id_contrato_asociado']) 
-                            ? intval($_POST['id_contrato_asociado']) 
-                            : null;
+    // 1. Vincular con contrato existente
+    $id_contrato_asociado = isset($_POST['id_contrato_asociado']) && !empty($_POST['id_contrato_asociado'])
+                            ? intval($_POST['id_contrato_asociado']) : null;
 
     if (!$id_contrato_asociado) {
         $sql_check = "SELECT id FROM contratos WHERE cedula = '$cedula' LIMIT 1";
@@ -40,16 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $capture_path = '';
     if (isset($_FILES['capture_pago']) && $_FILES['capture_pago']['error'] === UPLOAD_ERR_OK) {
         $upload_dir = 'uploads/pagos/';
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
-        }
+        if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
 
         $file_name = uniqid('pago_') . '_' . basename($_FILES['capture_pago']['name']);
-        // Limpiar nombre de archivo para evitar problemas
         $file_name = preg_replace("/[^a-zA-Z0-9._-]/", "_", $file_name);
         $target_file = $upload_dir . $file_name;
 
-        // Validar tipo de imagen
         $check = getimagesize($_FILES['capture_pago']['tmp_name']);
         if ($check !== false) {
             if (move_uploaded_file($_FILES['capture_pago']['tmp_name'], $target_file)) {
@@ -64,13 +63,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("Debe subir un comprobante de pago.");
     }
 
-    // 3. Insertar en la tabla de reportes pendientes
-    $sql_insert = "INSERT INTO pagos_reportados 
-        (cedula_titular, nombre_titular, telefono_titular, fecha_pago, metodo_pago, id_banco_destino, referencia, monto_bs, meses_pagados, concepto, capture_path, id_contrato_asociado)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    // 3. Insertar en pagos_reportados
+    $sql_insert = "INSERT INTO pagos_reportados
+        (cedula_titular, nombre_titular, telefono_titular, fecha_pago, metodo_pago,
+         id_banco_destino, referencia, monto_bs, monto_usd, tasa_dolar,
+         meses_pagados, concepto, capture_path, id_contrato_asociado)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql_insert);
-    $stmt->bind_param("sssssisdsssi", $cedula, $nombre, $telefono, $fecha_pago, $metodo_pago, $id_banco_destino, $referencia, $monto_bs, $meses, $concepto, $capture_path, $id_contrato_asociado);
+    if (!$stmt) die("Error preparando insert: " . $conn->error);
+    $stmt->bind_param("sssssisdddsss" . "i",
+        $cedula, $nombre, $telefono, $fecha_pago, $metodo_pago,
+        $id_banco_destino, $referencia, $monto_bs, $monto_usd, $tasa_dolar,
+        $meses, $concepto, $capture_path, $id_contrato_asociado
+    );
 
     if ($stmt->execute()) {
         $mensaje_exito = "¡Gracias! Tu reporte de pago ha sido enviado correctamente. Será verificado por nuestro equipo administrativo a la brevedad posible.";
