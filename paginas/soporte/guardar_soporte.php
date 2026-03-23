@@ -83,6 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $estado_firma = 'COMPLETADO';
             $token_firma = null;
             $generate_link = isset($_POST['generate_link']) && $_POST['generate_link'] === '1';
+            $hora_solucion = date('H:i:s');
 
             if ($generate_link) {
                 // Generar token único
@@ -91,13 +92,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
             $sql_soporte = "INSERT INTO soportes (
-                id_contrato, descripcion, monto_total, monto_pagado, fecha_soporte, tecnico_asignado, observaciones,
+                id_contrato, descripcion, monto_total, monto_pagado, fecha_soporte, hora_solucion, tecnico_asignado, observaciones,
                 sector, tipo_servicio, ip_address, estado_onu, estado_router, modelo_router,
                 bw_bajada, bw_subida, bw_ping, num_dispositivos,
                 estado_antena, valores_antena, sugerencias, solucion_completada,
                 firma_tecnico, firma_cliente, token_firma, estado_firma, prioridad, id_olt, id_pon
             ) VALUES (
-                '$id_contrato', '$descripcion_problema', '$monto_total', '$monto_pagado', '$fecha_soporte', '$tecnico', '$descripcion_problema',
+                '$id_contrato', '$descripcion_problema', '$monto_total', '$monto_pagado', '$fecha_soporte', '$hora_solucion', '$tecnico', '$descripcion_problema',
                 '$sector', '$tipo_servicio', '$ip', '$estado_onu', '$estado_router', '$modelo_router',
                 '$bw_bajada', '$bw_subida', '$bw_ping', '$num_dispositivos',
                 '$estado_antena', '$valores_antena', '$sugerencias', '$solucion_completada',

@@ -89,14 +89,15 @@ $fecha_reporte_sql  = $conn->real_escape_string($fecha_reporte);
 // Insertar en soportes (tabla principal)
 $id_olt_sql = $id_olt_legacy ?? 'NULL';
 $id_pon_sql = $id_pon_legacy  ?? 'NULL';
+$hora_solucion = date('H:i:s');
 
 $sql = "INSERT INTO soportes (
-    id_contrato, fecha_soporte, fecha_reporte, descripcion, tipo_falla,
+    id_contrato, fecha_soporte, fecha_reporte, hora_solucion, descripcion, tipo_falla,
     prioridad, es_caida_critica, clientes_afectados, tipo_servicio,
     sector, zona_afectada, observaciones, notas_internas, tecnico_asignado,
     id_olt, id_pon, solucion_completada, monto_total, monto_pagado, estado_firma
 ) VALUES (
-    $id_contrato, '$fecha_soporte', '$fecha_reporte_sql', '$descripcion_corta', '$tipo_falla',
+    $id_contrato, '$fecha_soporte', '$fecha_reporte_sql', '$hora_solucion', '$descripcion_corta', '$tipo_falla',
     'NIVEL 3', 1, $clientes_afectados, '$tipo_servicio',
     '$sector', '$zona_afectada', '$observaciones', '$notas_internas', '$tecnico_asignado',
     $id_olt_sql, $id_pon_sql, 0, 0, 0, 'PENDIENTE'

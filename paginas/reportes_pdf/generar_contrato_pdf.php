@@ -117,7 +117,8 @@ $placeholders = [
     '{NOMBRE_MUNICIPIO}' => htmlspecialchars((string) ($contrato_data['nombre_municipio'] ?? 'No especificado')),
     '{LUGAR_FIRMA}' => 'Escuque, Sabana Libre ', // ⚠️ CAMBIA ESTO
     '{NOMBRE_EMPRESA}' => 'Wireless Supply, C.A.',
-    '{NOMBRE_EMPRESA_REPRESENTANTE}' => 'David Garcia',
+    '{NOMBRE_EMPRESA_REPRESENTANTE}' => 'David Alfonzo García Chinchilla',
+    '{CEDULA_REPRESENTANTE}' => '10.913.095',
     '{CARGO_REPRESENTANTE}' => 'Gerente',
     '{IMG_FIRMA_EMPRESA_PRE}' => $img_firma_empresa_pre,
     // Placeholders para formato de campo
@@ -263,7 +264,9 @@ $html_contrato_plantilla = '
                             <img src="{IMG_FIRMA_EMPRESA_PRE}" style="max-height: 100px; max-width: 180px; object-fit: contain;">
                          </div>
                         <div class="signature-line">
-                            REPRESENTANTE LEGAL
+                            REPRESENTANTE LEGAL<br>
+                            C.I.: {CEDULA_REPRESENTANTE}<br>
+                            {NOMBRE_EMPRESA_REPRESENTANTE}
                         </div>
                     </div>
                 </td>

@@ -67,6 +67,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $firma_tecnico_b64 = isset($_POST['firma_tecnico_data']) ? $_POST['firma_tecnico_data'] : '';
     $firma_cliente_b64 = isset($_POST['firma_cliente_data']) ? $_POST['firma_cliente_data'] : '';
 
+    // Prioridad
+    $prioridad = isset($_POST['prioridad']) ? $conn->real_escape_string($_POST['prioridad']) : 'NIVEL 1';
+
     if ($id_contrato > 0) {
         $conn->begin_transaction();
         try {
@@ -89,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 '$sector', '$tipo_servicio', '$ip', '$estado_onu', '$estado_router', '$modelo_router',
                 '$bw_bajada', '$bw_subida', '$bw_ping', '$num_dispositivos',
                 '$estado_antena', '$valores_antena', '$sugerencias', '$solucion_completada',
-                '$path_firma_tecnico', '$path_firma_cliente', 'NIVEL 2', $id_olt, $id_pon
+                '$path_firma_tecnico', '$path_firma_cliente', '$prioridad', $id_olt, $id_pon
             )";
 
             if (!$conn->query($sql)) {

@@ -33,10 +33,13 @@ $filtro_tipo = isset($_GET['tipo_falla']) ? $conn->real_escape_string($_GET['tip
 $filtro_tecnico = isset($_GET['tecnico']) ? $conn->real_escape_string($_GET['tecnico']) : '';
 $filtro_pago = isset($_GET['estado_pago']) ? $conn->real_escape_string($_GET['estado_pago']) : '';
 
-// Conteo por nivel de prioridad (global, sin filtro de fecha para reflejar estado real)
-$cnt_n1 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 'NIVEL 1'")->fetch_assoc()['c'] ?? 0);
-$cnt_n2 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 'NIVEL 2'")->fetch_assoc()['c'] ?? 0);
-$cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 'NIVEL 3'")->fetch_assoc()['c'] ?? 0);
+// Conteo por nivel de prioridad (Respetando filtros)
+$sWhere_base = "fecha_soporte BETWEEN '$filtro_desde' AND '$filtro_hasta'";
+if (!empty($filtro_tecnico)) $sWhere_base .= " AND tecnico_asignado LIKE '%$filtro_tecnico%'";
+
+$cnt_n1 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 'NIVEL 1' AND $sWhere_base")->fetch_assoc()['c'] ?? 0);
+$cnt_n2 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 'NIVEL 2' AND $sWhere_base")->fetch_assoc()['c'] ?? 0);
+$cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 'NIVEL 3' AND $sWhere_base")->fetch_assoc()['c'] ?? 0);
 ?>
 
 <!-- Include DataTables CSS inside head if not already included by layout_head.php (removing DT css) -->
@@ -320,11 +323,14 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
         
         <!-- PESTAÑAS DE TABLAS POR NIVEL -->
         <?php
+        $sWhere_n3 = "s.fecha_soporte BETWEEN '$filtro_desde' AND '$filtro_hasta' AND s.prioridad = 'NIVEL 3'";
+        if (!empty($filtro_tecnico)) $sWhere_n3 .= " AND s.tecnico_asignado LIKE '%$filtro_tecnico%'";
+
         $sql_criticas = "SELECT s.id_soporte, DATE_FORMAT(s.fecha_soporte, '%d/%m/%Y') as fecha, c.nombre_completo, s.tipo_falla, s.tecnico_asignado, s.clientes_afectados, s.zona_afectada, s.solucion_completada, s.prioridad
             FROM soportes s
             INNER JOIN contratos c ON s.id_contrato = c.id
-            WHERE s.prioridad = 'NIVEL 3'
-            ORDER BY s.id_soporte DESC LIMIT 100";
+            WHERE $sWhere_n3
+            ORDER BY s.id_soporte DESC";
         $res_criticas = $conn->query($sql_criticas);
 
         $sWhere = "s.fecha_soporte BETWEEN '$filtro_desde' AND '$filtro_hasta'";
@@ -450,17 +456,17 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
             <div class="card-header bg-white border-bottom p-0">
                 <ul class="nav nav-tabs border-0" id="tablesTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active fw-bold text-dark px-4 py-3 border-0 rounded-0" id="nav-nivel1-tab" data-bs-toggle="tab" data-bs-target="#nav-nivel1" type="button" role="tab" style="background-color: transparent;">
+                        <button class="nav-link <?php echo ($filtro_tipo == 'NIVEL 1' || empty($filtro_tipo)) ? 'active' : ''; ?> fw-bold text-dark px-4 py-3 border-0 rounded-0" id="nav-nivel1-tab" data-bs-toggle="tab" data-bs-target="#nav-nivel1" type="button" role="tab" style="background-color: transparent;">
                             <i class="fa-solid fa-screwdriver-wrench text-warning me-1"></i>Fallas Nivel 1 (<?php echo count($rowsNivel1); ?>)
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link fw-bold text-dark px-4 py-3 border-0 rounded-0" id="nav-nivel2-tab" data-bs-toggle="tab" data-bs-target="#nav-nivel2" type="button" role="tab" style="background-color: transparent;">
+                        <button class="nav-link <?php echo ($filtro_tipo == 'NIVEL 2') ? 'active' : ''; ?> fw-bold text-dark px-4 py-3 border-0 rounded-0" id="nav-nivel2-tab" data-bs-toggle="tab" data-bs-target="#nav-nivel2" type="button" role="tab" style="background-color: transparent;">
                             <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i>Fallas Nivel 2 (<?php echo count($rowsNivel2); ?>)
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link fw-bold text-danger px-4 py-3 border-0 rounded-0" id="nav-criticas-tab" data-bs-toggle="tab" data-bs-target="#nav-criticas" type="button" role="tab" style="background-color: transparent;">
+                        <button class="nav-link <?php echo ($filtro_tipo == 'NIVEL 3') ? 'active' : ''; ?> fw-bold text-danger px-4 py-3 border-0 rounded-0" id="nav-criticas-tab" data-bs-toggle="tab" data-bs-target="#nav-criticas" type="button" role="tab" style="background-color: transparent;">
                             <i class="fa-solid fa-fire fa-shake me-1"></i>Caídas Críticas Nivel 3 (<?php echo $res_criticas ? $res_criticas->num_rows : 0; ?>)
                         </button>
                     </li>
@@ -470,7 +476,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 <div class="tab-content" id="nav-tabContent">
                     
                     <!-- TAB NIVEL 1 -->
-                    <div class="tab-pane fade show active" id="nav-nivel1" role="tabpanel">
+                    <div class="tab-pane fade <?php echo ($filtro_tipo == 'NIVEL 1' || empty($filtro_tipo)) ? 'show active' : ''; ?>" id="nav-nivel1" role="tabpanel">
                         <div class="bg-warning text-dark p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
                                 <i class="fa-solid fa-screwdriver-wrench"></i>
@@ -511,7 +517,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     </div>
 
                     <!-- TAB NIVEL 2 -->
-                    <div class="tab-pane fade" id="nav-nivel2" role="tabpanel">
+                    <div class="tab-pane fade <?php echo ($filtro_tipo == 'NIVEL 2') ? 'show active' : ''; ?>" id="nav-nivel2" role="tabpanel">
                         <div style="background-color: #fd7e14;" class="text-white p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
                                 <i class="fa-solid fa-triangle-exclamation"></i>
@@ -552,7 +558,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     </div>
 
                     <!-- TAB NIVEL 3 (Caídas Críticas) -->
-                    <div class="tab-pane fade" id="nav-criticas" role="tabpanel">
+                    <div class="tab-pane fade <?php echo ($filtro_tipo == 'NIVEL 3') ? 'show active' : ''; ?>" id="nav-criticas" role="tabpanel">
                         <div class="bg-danger text-white p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
                                 <i class="fa-solid fa-fire fa-shake"></i>
