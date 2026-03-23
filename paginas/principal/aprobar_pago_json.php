@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         $reporte = $res_orig->fetch_assoc();
-        $justificacion = "Aprobado desde Conciliación Bancaria. Meses: " . $reporte['meses_pagados'] . ". Notas: " . $reporte['concepto'];
+        $justificacion = "[MENSUALIDAD] Aprobado desde Conciliación Bancaria. Meses: " . $reporte['meses_pagados'] . ". Notas: " . $reporte['concepto'];
         $path_archivo = $reporte['capture_path'];
 
         $conn->begin_transaction();
