@@ -248,7 +248,14 @@ while ($aRow = $rResult->fetch_assoc()) {
 
     $concepto = '';
     if (count($conceptosArr) > 0) {
-        $concepto = implode(' + ', $conceptosArr);
+        // If Mensualidad is among the concepts, append the plan name for consistency
+        $mapped = array_map(function($c) use ($aRow) {
+            if ($c === 'Mensualidad' && !empty($aRow['nombre_plan'])) {
+                return 'Mensualidad / ' . $aRow['nombre_plan'];
+            }
+            return $c;
+        }, $conceptosArr);
+        $concepto = implode(' + ', $mapped);
     } elseif ($justif && strpos($justif, '||') === false) {
         // Si no tiene tags pero tiene texto, es un cargo manual genérico
         $concepto = 'Cargo Manual / Otro';
