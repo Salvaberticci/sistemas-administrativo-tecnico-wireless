@@ -29,6 +29,7 @@ if ($action === 'modal_stats') {
     $installer = $_GET['installer'] ?? '';
     $vendor_text = $_GET['vendor'] ?? '';
     $contract_type = $_GET['type'] ?? '';
+    $install_type = $_GET['install_type'] ?? '';
 
     $where = [];
     $params = [];
@@ -60,6 +61,13 @@ if ($action === 'modal_stats') {
     if (!empty($contract_type)) {
         $where[] = "tipo_conexion = ?";
         $params[] = $contract_type;
+        $types .= "s";
+    }
+
+    // Filtro Tipo Instalacion (tipo_instalacion)
+    if (!empty($install_type)) {
+        $where[] = "tipo_instalacion = ?";
+        $params[] = $install_type;
         $types .= "s";
     }
 

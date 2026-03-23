@@ -2,12 +2,12 @@
 header('Content-Type: application/json');
 
 // Archivo JSON
-$jsonFile = 'data/tipos_instalacion.json';
+$jsonFile = 'data/tipos_conexion.json';
 
 // CREAR ARCHIVO SI NO EXISTE
 if (!file_exists($jsonFile)) {
     // Valores por defecto si se crea de cero
-    $defaults = ["Nivel 1", "Nivel 2", "Nivel 3", "Mudanza", "Migración", "Onu", "Reactivación"];
+    $defaults = ["FTTH", "RADIO"];
     file_put_contents($jsonFile, json_encode($defaults, JSON_PRETTY_PRINT));
 }
 
@@ -45,7 +45,7 @@ if ($method === 'GET') {
                 $safe_new_name = $conn->real_escape_string($new_name);
 
                 // Ejecutar UPDATE en cascada para la nueva columna
-                $sql = "UPDATE contratos SET tipo_instalacion = '$safe_new_name' WHERE tipo_instalacion = '$old_name'";
+                $sql = "UPDATE contratos SET tipo_conexion = '$safe_new_name' WHERE tipo_conexion = '$old_name'";
                 $conn->query($sql);
             }
         }

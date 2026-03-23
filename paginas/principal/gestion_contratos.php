@@ -137,6 +137,13 @@ require_once '../includes/sidebar.php';
                         <i class="fa-solid fa-tags"></i> <span class="d-none d-md-inline">Editar Tipos de
                             Conexión</span>
                     </button>
+                    <!-- NUEVO BOTÓN TIPO INSTALACIÓN -->
+                    <button type="button" class="btn btn-outline-info d-flex align-items-center gap-2"
+                        data-bs-toggle="modal" data-bs-target="#modalTiposInstalacion">
+                        <i class="fa-solid fa-wrench"></i> <span class="d-none d-md-inline">Editar Tipos de
+                            Instalación</span>
+                    </button>
+
                     <!-- BOTONES INSTALADORES / VENDEDORES -->
                     <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-2"
                         data-bs-toggle="modal" data-bs-target="#modalInstaladores">
@@ -192,29 +199,30 @@ require_once '../includes/sidebar.php';
                                 <option value="17">Vacío: Monto Prorr. ($)</option>
                                 <option value="18">Vacío: Observaciones</option>
                                 <option value="19">Vacío: Tipo Conex.</option>
-                                <option value="20">Vacío: Num. ONU</option>
-                                <option value="21">Vacío: MAC/Serial</option>
-                                <option value="22">Vacío: IP ONU</option>
-                                <option value="23">Vacío: Caja NAP</option>
-                                <option value="24">Vacío: Puerto NAP</option>
-                                <option value="25">Vacío: NAP TX (dBm)</option>
-                                <option value="26">Vacío: ONU RX (dBm)</option>
-                                <option value="27">Vacío: Dist. Drop (m)</option>
-                                <option value="28">Vacío: Instalador</option>
-                                <option value="29">Vacío: Evidencia Fibra</option>
-                                <option value="30">Vacío: IP Servicio</option>
-                                <option value="31">Vacío: Punto Acceso</option>
-                                <option value="32">Vacío: Val. Conex. (dBm)</option>
-                                <option value="33">Vacío: Precinto ODN</option>
-                                <option value="34">Vacío: Foto</option>
-                                <option value="35">Vacío: Firma Cliente</option>
-                                <option value="36">Vacío: Firma Técnico</option>
-                                <option value="37">Vacío: Vendedor (Edit)</option>
-                                <option value="38">Vacío: SAE Plus (Edit)</option>
-                                <option value="39">Vacío: Plan</option>
-                                <option value="40">Vacío: OLT</option>
-                                <option value="41">Vacío: PON</option>
-                                <option value="42">Vacío: Estado</option>
+                                <option value="20">Vacío: Tipo Instal.</option>
+                                <option value="21">Vacío: Num. ONU</option>
+                                <option value="22">Vacío: MAC/Serial</option>
+                                <option value="23">Vacío: IP ONU</option>
+                                <option value="24">Vacío: Caja NAP</option>
+                                <option value="25">Vacío: Puerto NAP</option>
+                                <option value="26">Vacío: NAP TX (dBm)</option>
+                                <option value="27">Vacío: ONU RX (dBm)</option>
+                                <option value="28">Vacío: Dist. Drop (m)</option>
+                                <option value="29">Vacío: Instalador FTTH</option>
+                                <option value="30">Vacío: Instalador Radio</option>
+                                <option value="31">Vacío: Evidencia Fibra</option>
+                                <option value="32">Vacío: Punto Acceso</option>
+                                <option value="33">Vacío: Val. Conex. (dBm)</option>
+                                <option value="34">Vacío: Precinto ODN</option>
+                                <option value="35">Vacío: Foto</option>
+                                <option value="36">Vacío: Firma Cliente</option>
+                                <option value="37">Vacío: Firma Técnico</option>
+                                <option value="38">Vacío: Vendedor (Edit)</option>
+                                <option value="39">Vacío: SAE Plus (Edit)</option>
+                                <option value="40">Vacío: Plan</option>
+                                <option value="41">Vacío: OLT</option>
+                                <option value="42">Vacío: PON</option>
+                                <option value="43">Vacío: Estado</option>
                             </select>
                         </div>
                     </div>
@@ -287,6 +295,7 @@ require_once '../includes/sidebar.php';
 
                                 <!-- Tecnicos -->
                                 <th>Tipo Conex.</th>
+                                <th>Tipo Instal.</th>
                                 <th>Num. ONU</th>
                                 <th>MAC/Serial</th>
                                 <th>IP ONU</th>
@@ -351,6 +360,36 @@ require_once '../includes/sidebar.php';
                             <i class="fa-solid fa-plus" id="iconTipoAction"></i>
                         </button>
                         <button class="btn btn-secondary d-none" type="button" id="btnCancelEditTipo">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <small class="text-muted me-auto">Los cambios se guardan automáticamente.</small>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GESTION TIPOS INSTALACION NUEVO -->
+    <div class="modal fade" id="modalTiposInstalacion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-dark">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-wrench me-2"></i>Tipos de Instalación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group mb-3" id="listTiposInstalacion" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Items generados por JS -->
+                    </div>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="newTipoInstalacion" placeholder="Nuevo Tipo (Ej. Nivel 1, Mudanza)">
+                        <button class="btn btn-success" type="button" id="btnAddTipoInstalacion">
+                            <i class="fa-solid fa-plus" id="iconTipoInstalacionAction"></i>
+                        </button>
+                        <button class="btn btn-secondary d-none" type="button" id="btnCancelEditTipoInstalacion">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
@@ -529,7 +568,7 @@ require_once '../includes/sidebar.php';
                                     <label class="form-label small">Fecha Fin</label>
                                     <input type="date" class="form-control" id="statEndDate">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label small">Instalador</label>
                                     <select class="form-select" id="statInstaller">
                                         <option value="">Todos</option>
@@ -541,9 +580,15 @@ require_once '../includes/sidebar.php';
                                         <option value="">Todos</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label small">Tipo de Conexión</label>
                                     <select class="form-select" id="statContractType">
+                                        <option value="">Todos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Tipo Instalación</label>
+                                    <select class="form-select" id="statInstallType">
                                         <option value="">Todos</option>
                                     </select>
                                 </div>
@@ -708,11 +753,14 @@ require_once '../includes/sidebar.php';
                 // Fetch Vendedores from JSON API
                 fetch('json_personal_api.php?action=get_vendedores').then(r => r.json()),
                 // Fetch Tipos from Types API
+                fetch('api_tipos_conexion.php').then(r => r.json()),
+                // Fetch Tipos Instalacion from Types API
                 fetch('api_tipos_instalacion.php').then(r => r.json())
-            ]).then(([installers, vendors, types]) => {
+            ]).then(([installers, vendors, typesConn, typesInst]) => {
                 const selInst = document.getElementById('statInstaller');
                 const selVend = document.getElementById('statVendor');
                 const selType = document.getElementById('statContractType');
+                const selInstType = document.getElementById('statInstallType');
 
                 // Fill Instaladores
                 if (selInst.options.length <= 1) {
@@ -724,9 +772,14 @@ require_once '../includes/sidebar.php';
                     vendors.forEach(vend => selVend.add(new Option(vend, vend)));
                 }
 
-                // Fill Tipos
+                // Fill Tipos Conex
                 if (selType.options.length <= 1) {
-                    types.forEach(t => selType.add(new Option(t, t)));
+                    typesConn.forEach(t => selType.add(new Option(t, t)));
+                }
+
+                // Fill Tipos Instalacion
+                if (selInstType.options.length <= 1) {
+                    typesInst.forEach(t => selInstType.add(new Option(t, t)));
                 }
             }).catch(err => console.error('Error loading lists:', err));
         }
@@ -740,6 +793,7 @@ require_once '../includes/sidebar.php';
             const inst = document.getElementById('statInstaller').value;
             const vend = document.getElementById('statVendor').value;
             const type = document.getElementById('statContractType').value;
+            const instType = document.getElementById('statInstallType').value;
 
             const params = new URLSearchParams({
                 action: 'modal_stats',
@@ -748,6 +802,7 @@ require_once '../includes/sidebar.php';
                 installer: inst,
                 vendor: vend,
                 type: type,
+                install_type: instType,
                 _t: new Date().getTime() // Cache busting
             });
 
@@ -964,7 +1019,8 @@ require_once '../includes/sidebar.php';
                 end: document.getElementById('statEndDate').value,
                 installer: document.getElementById('statInstaller').value,
                 vendor: document.getElementById('statVendor').value,
-                type: document.getElementById('statContractType').value
+                type: document.getElementById('statContractType').value,
+                install_type: document.getElementById('statInstallType').value
             };
 
             const form = document.createElement('form');
@@ -1270,13 +1326,32 @@ require_once '../includes/sidebar.php';
                             <select class="form-select form-select-sm" id="edit_tipo_conexion" name="tipo_conexion">
                                 <option value="">-- Seleccione --</option>
                                 <?php
-                                $jsonTipos = 'data/tipos_instalacion.json';
+                                $jsonTipos = 'data/tipos_conexion.json';
                                 if (file_exists($jsonTipos)) {
                                     $tipos = json_decode(file_get_contents($jsonTipos), true);
                                     foreach ($tipos as $t)
                                         echo '<option value="' . $t . '">' . $t . '</option>';
                                 } else {
                                     echo '<option value="FTTH">FTTH</option><option value="RADIO">RADIO</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Tipo Instalación</label>
+                            <select class="form-select form-select-sm" id="edit_tipo_instalacion" name="tipo_instalacion">
+                                <option value="">-- Seleccione --</option>
+                                <?php
+                                $jsonTiposInst = 'data/tipos_instalacion.json';
+                                if (file_exists($jsonTiposInst)) {
+                                    $tiposInst = json_decode(file_get_contents($jsonTiposInst), true);
+                                    foreach ($tiposInst as $t)
+                                        echo '<option value="' . $t . '">' . $t . '</option>';
+                                } else {
+                                    // Fallback defaults
+                                    $defaultsInst = ["Nivel 1", "Nivel 2", "Nivel 3", "Mudanza", "Migración", "Onu", "Reactivación"];
+                                    foreach ($defaultsInst as $t)
+                                        echo '<option value="' . $t . '">' . $t . '</option>';
                                 }
                                 ?>
                             </select>
@@ -1597,6 +1672,7 @@ require_once '../includes/sidebar.php';
                 { header: 'Monto Prorr. ($)', key: 'monto_prorrateo', width: 15 },
                 { header: 'Observ.', key: 'observaciones', width: 30 },
                 { header: 'Tipo Conex.', key: 'tipo_conexion', width: 15 },
+                { header: 'Tipo Instal.', key: 'tipo_instalacion', width: 15 },
                 { header: 'Num. ONU', key: 'numero_onu', width: 15 },
                 { header: 'MAC/Serial', key: 'mac_serial', width: 20 },
                 { header: 'IP ONU', key: 'ip_onu', width: 15 },
@@ -2012,8 +2088,9 @@ require_once '../includes/sidebar.php';
                 
                 $('#edit_evidencia_fibra').val(d.evidencia_fibra || '');
 
-                // Tipo conexion
+                // Tipo conexion e instalacion
                 $('#edit_tipo_conexion').val(d.tipo_conexion).trigger('change');
+                $('#edit_tipo_instalacion').val(d.tipo_instalacion || '');
 
                 // --- PRORRATEO (NUEVO) ---
                 $('#edit_dias_prorrateo').val(d.dias_prorrateo || 0);
@@ -2666,9 +2743,9 @@ require_once '../includes/sidebar.php';
     let editTipoIndex = -1;
 
     function loadTipos() {
-        console.log("Cargando tipos de instalación...");
+        console.log("Cargando tipos de conexión...");
         $.ajax({
-            url: 'api_tipos_instalacion.php',
+            url: 'api_tipos_conexion.php',
             type: 'GET',
             dataType: 'json',
             success: function (data) {
@@ -2748,7 +2825,7 @@ require_once '../includes/sidebar.php';
 
     function saveTipos() {
         $.ajax({
-            url: 'api_tipos_instalacion.php',
+            url: 'api_tipos_conexion.php',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(tiposData),
@@ -2756,6 +2833,117 @@ require_once '../includes/sidebar.php';
             error: function () { Swal.fire('Error', 'No se pudo guardar los cambios', 'error'); }
         });
     }
+
+    // --- TIPOS DE INSTALACION ---
+    let tiposInstalacionData = [];
+    let editTipoInstalacionIndex = -1;
+
+    function loadTiposInstalacion() {
+        $.ajax({
+            url: 'api_tipos_instalacion.php', 
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                tiposInstalacionData = Array.isArray(data) ? data : [];
+                renderTiposInstalacion();
+            },
+            error: function () {
+                tiposInstalacionData = ["Nivel 1", "Nivel 2", "Nivel 3", "Mudanza", "Migración", "Onu", "Reactivación"];
+                renderTiposInstalacion();
+            }
+        });
+    }
+
+    function renderTiposInstalacion() {
+        const list = $('#listTiposInstalacion');
+        list.empty();
+        if (tiposInstalacionData.length === 0) {
+            list.html('<div class="text-center text-muted p-2">Sin registros</div>');
+            return;
+        }
+        tiposInstalacionData.forEach((t, index) => {
+            const row = `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${t}</span>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editTipoInstalacion(${index})" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="btn btn-sm btn-danger py-0 px-2" onclick="deleteTipoInstalacion(${index})" title="Eliminar"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                </div>`;
+            list.append(row);
+        });
+    }
+
+    window.editTipoInstalacion = function (index) {
+        editTipoInstalacionIndex = index;
+        $('#newTipoInstalacion').val(tiposInstalacionData[index]);
+        $('#btnAddTipoInstalacion').removeClass('btn-success').addClass('btn-info').attr('title', 'Actualizar');
+        $('#iconTipoInstalacionAction').removeClass('fa-plus').addClass('fa-check');
+        $('#btnCancelEditTipoInstalacion').removeClass('d-none');
+    };
+
+    window.cancelEditTipoInstalacion = function () {
+        editTipoInstalacionIndex = -1;
+        $('#newTipoInstalacion').val('');
+        $('#btnAddTipoInstalacion').removeClass('btn-info').addClass('btn-success').attr('title', 'Agregar');
+        $('#iconTipoInstalacionAction').removeClass('fa-check').addClass('fa-plus');
+        $('#btnCancelEditTipoInstalacion').addClass('d-none');
+    };
+
+    $('#btnAddTipoInstalacion').on('click', async function () {
+        const nombre = $('#newTipoInstalacion').val().trim();
+        if (!nombre) return;
+
+        if (editTipoInstalacionIndex === -1 && tiposInstalacionData.includes(nombre)) {
+            Swal.fire({ target: document.getElementById('modalTiposInstalacion'), title: 'Atención', text: 'Este tipo ya existe', icon: 'warning' });
+            return;
+        }
+
+        const actionLabel = (editTipoInstalacionIndex > -1) ? 'Actualizar Tipo de Instalación' : 'Agregar Tipo de Instalación';
+        const ok = await verificarClave(actionLabel, document.getElementById('modalTiposInstalacion'));
+        if (!ok) return;
+
+        if (editTipoInstalacionIndex > -1) {
+            tiposInstalacionData[editTipoInstalacionIndex] = nombre;
+            cancelEditTipoInstalacion();
+        } else {
+            tiposInstalacionData.push(nombre);
+            $('#newTipoInstalacion').val('');
+        }
+
+        saveTiposInstalacion();
+        renderTiposInstalacion();
+    });
+
+    $('#btnCancelEditTipoInstalacion').on('click', cancelEditTipoInstalacion);
+
+    window.deleteTipoInstalacion = async function (index) {
+        const nombre = tiposInstalacionData[index];
+
+        const ok = await verificarClave('Eliminar Tipo de Instalación: ' + nombre, document.getElementById('modalTiposInstalacion'));
+        if (!ok) return;
+
+        tiposInstalacionData.splice(index, 1);
+        saveTiposInstalacion();
+        renderTiposInstalacion();
+        Swal.fire({ target: document.getElementById('modalTiposInstalacion'), title: 'Eliminado', icon: 'success', timer: 1000, showConfirmButton: false });
+    };
+
+    function saveTiposInstalacion() {
+        $.ajax({
+            url: 'api_tipos_instalacion.php',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(tiposInstalacionData),
+            success: function () { _pageNeedsReload = true; },
+            error: function () { Swal.fire('Error', 'No se pudo guardar los cambios', 'error'); }
+        });
+    }
+
+    // INITIALIZATION (Ensure it runs on modal open or startup)
+    $('#modalTiposInstalacion').on('show.bs.modal', function () {
+        if(tiposInstalacionData.length === 0) loadTiposInstalacion();
+    });
 
     // ==========================================
     // LÓGICA GESTIÓN UBICACIONES (JSON)

@@ -43,6 +43,7 @@ try {
         'Monto Prorr. ($)' => 'monto_prorrateo_usd',
         'Observ.' => 'observaciones',
         'Tipo Conex.' => 'tipo_conexion',
+        'Tipo Instal.' => 'tipo_instalacion',
         'Num. ONU' => 'numero_onu',
         'MAC/Serial' => 'mac_onu',
         'IP ONU' => 'ip_onu',
@@ -120,15 +121,16 @@ try {
         $nombre = $rowData['nombre_completo'] ?? '';
         $direccion = $rowData['direccion'] ?? '';
         $telefono = $rowData['telefono'] ?? '';
+        $tipo_instalacion = $rowData['tipo_instalacion'] ?? '';
         $id_contrato = isset($rowData['id']) ? (int) $rowData['id'] : 0;
 
         if ($id_contrato > 0) {
             // INTENTAR UPDATE
             $stmt = $conn->prepare("UPDATE contratos SET
                 cedula=?, nombre_completo=?, direccion=?, telefono=?,
-                id_municipio=?, id_parroquia=?, id_plan=?, id_olt=?
+                id_municipio=?, id_parroquia=?, id_plan=?, id_olt=?, tipo_instalacion=?
                 WHERE id=?");
-            $stmt->bind_param("ssssiiiii", $cedula, $nombre, $direccion, $telefono, $munID, $parID, $planID, $oltID, $id_contrato);
+            $stmt->bind_param("ssssiiiisi", $cedula, $nombre, $direccion, $telefono, $munID, $parID, $planID, $oltID, $tipo_instalacion, $id_contrato);
             if ($stmt->execute()) {
                 $stats['updated']++;
             } else {
@@ -138,9 +140,9 @@ try {
             // INTENTAR INSERT
             $stmt = $conn->prepare("INSERT INTO contratos (
                 cedula, nombre_completo, direccion, telefono,
-                id_municipio, id_parroquia, id_plan, id_olt
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssiiii", $cedula, $nombre, $direccion, $telefono, $munID, $parID, $planID, $oltID);
+                id_municipio, id_parroquia, id_plan, id_olt, tipo_instalacion
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssiiiis", $cedula, $nombre, $direccion, $telefono, $munID, $parID, $planID, $oltID, $tipo_instalacion);
             if ($stmt->execute()) {
                 $stats['inserted']++;
             } else {

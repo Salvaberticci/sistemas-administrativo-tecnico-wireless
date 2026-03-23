@@ -22,6 +22,7 @@ $end_date = $_POST['end'] ?? $_GET['end'] ?? '';
 $installer = $_POST['installer'] ?? $_GET['installer'] ?? '';
 $vendor_id = $_POST['vendor'] ?? $_GET['vendor'] ?? '';
 $contract_type = $_POST['type'] ?? $_GET['type'] ?? '';
+$install_type = $_POST['install_type'] ?? $_GET['install_type'] ?? '';
 
 // === CONSTRUCCIÓN DE QUERIES (Lógica sincronizada con Versión 4) ===
 $where = [];
@@ -54,6 +55,13 @@ if (!empty($installer)) {
 if (!empty($contract_type)) {
     $where[] = "tipo_conexion = ?";
     $params[] = $contract_type;
+    $types .= "s";
+}
+
+// Filtro Tipo de Instalación (tipo_instalacion)
+if (!empty($install_type)) {
+    $where[] = "tipo_instalacion = ?";
+    $params[] = $install_type;
     $types .= "s";
 }
 
@@ -506,6 +514,7 @@ $filter_period = (!empty($start_date) && !empty($end_date)) ? "$start_date → $
 $filter_vend = !empty($vendor_id) ? htmlspecialchars($vendor_id) : 'Todos';
 $filter_inst = !empty($installer) ? htmlspecialchars($installer) : 'Todos';
 $filter_type = !empty($contract_type) ? htmlspecialchars($contract_type) : 'Todos';
+$filter_inst_type = !empty($install_type) ? htmlspecialchars($install_type) : 'Todos';
 
 $html = '<!DOCTYPE html>
 <html lang="es">
@@ -553,7 +562,8 @@ $html .= "<table style=\"width:100%; border-collapse:collapse; font-size:9.5px;\
 $html .= "<tr><td style=\"padding:3px 6px; color:#555; width:140px;\">Periodo:</td><td style=\"padding:3px 6px; font-weight:bold; color:{$C_TEXT};\">{$filter_period}</td>
           <td style=\"padding:3px 6px; color:#555; width:140px;\">Tipo de Conexión:</td><td style=\"padding:3px 6px; font-weight:bold; color:{$C_TEXT};\">{$filter_type}</td></tr>";
 $html .= "<tr><td style=\"padding:3px 6px; color:#555;\">Vendedor:</td><td style=\"padding:3px 6px; font-weight:bold; color:{$C_TEXT};\">{$filter_vend}</td>
-          <td style=\"padding:3px 6px; color:#555;\">Instalador:</td><td style=\"padding:3px 6px; font-weight:bold; color:{$C_TEXT};\">{$filter_inst}</td></tr>";
+          <td style=\"padding:3px 6px; color:#555;\">Tipo de Instalación:</td><td style=\"padding:3px 6px; font-weight:bold; color:{$C_TEXT};\">{$filter_inst_type}</td></tr>";
+$html .= "<tr><td style=\"padding:3px 6px; color:#555;\">Instalador:</td><td style=\"padding:3px 6px; font-weight:bold; color:{$C_TEXT};\">{$filter_inst}</td><td colspan='2'></td></tr>";
 $html .= "</table>";
 $html .= "</div>";
 

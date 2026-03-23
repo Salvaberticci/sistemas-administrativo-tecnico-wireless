@@ -38,6 +38,7 @@ $aColumnas = [
     'c.monto_prorrateo_usd',    // 16
     'c.observaciones',          // 17
     'c.tipo_conexion',          // 18
+    'c.tipo_instalacion',       // 18.1 [NEW]
     'c.numero_onu',             // 19
     'c.mac_onu',                // 20
     'c.ip_onu',                 // 21
@@ -229,6 +230,9 @@ while ($aRow = $rResult->fetch_assoc()) {
 
     // 18. TIPO CONEXION
     $row[] = clean($aRow['tipo_conexion']);
+
+    // 18.1 TIPO INSTALACION
+    $row[] = clean($aRow['tipo_instalacion']);
 
     // 19. NUMERO ONU
     $row[] = clean($aRow['numero_onu']);

@@ -265,7 +265,7 @@ require_once '../includes/sidebar.php';
                             <option value="">-- Seleccione Conexión --</option>
                             <?php
                             // Cargar Tipos desde JSON (Repurposed for Connection Type)
-                            $jsonFileTypes = 'data/tipos_instalacion.json';
+                            $jsonFileTypes = 'data/tipos_conexion.json';
                             if (file_exists($jsonFileTypes)) {
                                 $typesData = json_decode(file_get_contents($jsonFileTypes), true);
                                 if (is_array($typesData)) {
@@ -277,6 +277,26 @@ require_once '../includes/sidebar.php';
                                 // Fallback básico
                                 echo '<option value="FTTH">FTTH</option>';
                                 echo '<option value="RADIO">RADIO</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="tipo_instalacion" class="form-label">Tipo de Instalación <span
+                                class="text-danger">*</span></label>
+                        <select class="form-select" id="tipo_instalacion" name="tipo_instalacion" required>
+                            <option value="">-- Seleccione --</option>
+                            <?php
+                            $jsonTiposInst = 'data/tipos_instalacion.json';
+                            if (file_exists($jsonTiposInst)) {
+                                $tiposInst = json_decode(file_get_contents($jsonTiposInst), true);
+                                foreach ($tiposInst as $t)
+                                    echo '<option value="' . $t . '">' . $t . '</option>';
+                            } else {
+                                $defaultsInst = ["Nivel 1", "Nivel 2", "Nivel 3", "Mudanza", "Migración", "Onu", "Reactivación"];
+                                foreach ($defaultsInst as $t)
+                                    echo '<option value="' . $t . '">' . $t . '</option>';
                             }
                             ?>
                         </select>
