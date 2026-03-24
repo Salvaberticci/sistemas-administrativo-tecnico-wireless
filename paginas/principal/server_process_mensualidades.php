@@ -34,6 +34,13 @@ $sTabla = "
     LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc
 ";
 
+// Verificar si las columnas bimonetarias ya existen en la BD (pueden no existir si no se ejecutó el ALTER TABLE)
+$tiene_cols_bimonetarias = false;
+$check_cols = $conn->query("SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_NAME='cuentas_por_cobrar' AND COLUMN_NAME='monto_total_bs' LIMIT 1");
+if ($check_cols && $check_cols->num_rows > 0) {
+    $tiene_cols_bimonetarias = true;
+}
+
 // 3. Define Columns for Search/Sort
 // We use aSearchColumns for DataTables logic
 $aSearchColumns = [
@@ -157,6 +164,7 @@ $sSelect = "
     cxc.fecha_pago,
     cxc.referencia_pago,
     cxc.monto_total,
+    " . ($tiene_cols_bimonetarias ? "cxc.monto_total_bs, cxc.tasa_bcv," : "NULL AS monto_total_bs, NULL AS tasa_bcv,") . "
     cxc.estado,
     cxc.id_banco,
     cxc.origen,
@@ -278,7 +286,11 @@ while ($aRow = $rResult->fetch_assoc()) {
     $row[] = '<span class="small text-muted">' . $justifHtml . '</span>';
 
     // 5. Monto
-    $row[] = '$' . number_format($aRow['monto_total'], 2, ',', '.');
+    $montoHtml = '<div class="text-end fw-bold text-success">$' . number_format($aRow['monto_total'], 2, ',', '.') . '</div>';
+    if (!empty($aRow['monto_total_bs']) && !empty($aRow['tasa_bcv'])) {
+        $montoHtml .= '<div class="text-end small text-secondary" style="font-size: 0.75rem;">Bs. ' . number_format($aRow['monto_total_bs'], 2, ',', '.') . ' <br><span style="font-size:0.65rem; opacity: 0.8;">(Tasa BCV: ' . number_format($aRow['tasa_bcv'], 2, ',', '.') . ')</span></div>';
+    }
+    $row[] = $montoHtml;
 
     // 6. Cuenta (JSON Map)
     $id_bank = $aRow['id_banco'];

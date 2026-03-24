@@ -7,6 +7,10 @@ require_once '../conexion.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // 1. Obtener y sanitizar datos del formulario (GLOBALES)
     $id_contrato_principal = isset($_POST['id_contrato']) ? intval($_POST['id_contrato']) : 0;
+    
+    // NOTA: 'monto' viene del campo oculto monto_cobro_hidden, que ya almacena el valor en USD
+    // (la función calcCobro() en JS hace la conversión antes de guardar en ese campo).
+    // Por tanto, NO se debe volver a convertir este valor.
     $monto_total_declarado = isset($_POST['monto']) ? floatval(str_replace(',', '.', $_POST['monto'])) : 0.0;
     
     $referencia_pago = isset($_POST['referencia_pago']) ? $conn->real_escape_string(trim($_POST['referencia_pago'])) : '';
@@ -38,10 +42,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // 2. Definir fechas y estados por defecto (Es un capture de pago)
-    $fecha_emision = date('Y-m-d');
-    $fecha_vencimiento = date('Y-m-d'); 
-    $fecha_pago = date('Y-m-d'); // Todo nace pagado hoy
+    $fecha_pago = isset($_POST['fecha_pago']) && !empty($_POST['fecha_pago']) ? $conn->real_escape_string($_POST['fecha_pago']) : date('Y-m-d');
+    $fecha_emision = $fecha_pago; // Emitido en la fecha real del pago histórico
+    $fecha_vencimiento = $fecha_pago; 
     $estado = 'PAGADO'; // Requisito: Todo cargo manual/desglose nace pagado.
+
+    // 2.5 METADATOS BIMONETARIOS
+    $moneda_enviada = isset($_POST['moneda_enviada']) ? strtolower($_POST['moneda_enviada']) : 'usd';
+    $tasa_aplicada = isset($_POST['tasa_aplicada']) ? floatval($_POST['tasa_aplicada']) : 0;
+    
+    // Función auxiliar de conversión al vuelo
+    $tasa_valida = ($tasa_aplicada > 0) ? $tasa_aplicada : 1;
+    $convertir_a_usd = function($monto) use ($moneda_enviada, $tasa_valida) {
+        return ($moneda_enviada === 'bs') ? round($monto / $tasa_valida, 2) : $monto;
+    };
+    $convertir_a_bs = function($monto) use ($moneda_enviada, $tasa_valida) {
+        return ($moneda_enviada === 'bs') ? $monto : round($monto * $tasa_valida, 2);
+    };
 
     if ($id_contrato_principal > 0 && $monto_total_declarado > 0 && !empty($referencia_pago) && $id_banco_pago > 0) {
 
@@ -51,54 +68,66 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // --- Mensualidad Principal ---
         if (isset($_POST['desglose_mensualidad_activado']) && $_POST['desglose_mensualidad_activado'] == '1') {
-            $monto = floatval(str_replace(',', '.', $_POST['monto_mensualidad'] ?? 0));
+            $monto_bruto = floatval(str_replace(',', '.', $_POST['monto_mensualidad'] ?? 0));
+            $monto_usd = $convertir_a_usd($monto_bruto);
+            $monto_bs = $convertir_a_bs($monto_bruto);
             $meses = intval($_POST['meses_mensualidad'] ?? 1);
-            if ($monto > 0) {
+            if ($monto_usd > 0) {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
-                    'monto' => $monto, // Frontend ya mandaba el total
+                    'monto' => $monto_usd, 
+                    'monto_bs' => $monto_bs,
                     'justificacion' => "[MENSUALIDAD] Mensualidad ($meses mes/es) - " . $justificacion
                 ];
-                $sumatoria_backend += $monto;
+                $sumatoria_backend += $monto_usd;
             }
         }
 
         // --- Instalación ---
         if (isset($_POST['desglose_instalacion_activado']) && $_POST['desglose_instalacion_activado'] == '1') {
-            $monto = floatval(str_replace(',', '.', $_POST['monto_instalacion'] ?? 0));
-            if ($monto > 0) {
+            $monto_bruto = floatval(str_replace(',', '.', $_POST['monto_instalacion'] ?? 0));
+            $monto_usd = $convertir_a_usd($monto_bruto);
+            $monto_bs = $convertir_a_bs($monto_bruto);
+            if ($monto_usd > 0) {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
-                    'monto' => $monto,
+                    'monto' => $monto_usd,
+                    'monto_bs' => $monto_bs,
                     'justificacion' => "[INSTALACION] Instalación - " . $justificacion
                 ];
-                $sumatoria_backend += $monto;
+                $sumatoria_backend += $monto_usd;
             }
         }
 
         // --- Prorrateo ---
         if (isset($_POST['desglose_prorrateo_activado']) && $_POST['desglose_prorrateo_activado'] == '1') {
-            $monto = floatval(str_replace(',', '.', $_POST['monto_prorrateo'] ?? 0));
-            if ($monto > 0) {
+            $monto_bruto = floatval(str_replace(',', '.', $_POST['monto_prorrateo'] ?? 0));
+            $monto_usd = $convertir_a_usd($monto_bruto);
+            $monto_bs = $convertir_a_bs($monto_bruto);
+            if ($monto_usd > 0) {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
-                    'monto' => $monto,
+                    'monto' => $monto_usd,
+                    'monto_bs' => $monto_bs,
                     'justificacion' => "[PRORRATEO] Prorrateo - " . $justificacion
                 ];
-                $sumatoria_backend += $monto;
+                $sumatoria_backend += $monto_usd;
             }
         }
 
         // --- Equipo ---
         if (isset($_POST['desglose_equipo_activado']) && $_POST['desglose_equipo_activado'] == '1') {
-            $monto = floatval(str_replace(',', '.', $_POST['monto_equipo'] ?? 0));
-            if ($monto > 0) {
+            $monto_bruto = floatval(str_replace(',', '.', $_POST['monto_equipo'] ?? 0));
+            $monto_usd = $convertir_a_usd($monto_bruto);
+            $monto_bs = $convertir_a_bs($monto_bruto);
+            if ($monto_usd > 0) {
                 $cargos_a_procesar[] = [
                     'id_contrato' => $id_contrato_principal,
-                    'monto' => $monto,
+                    'monto' => $monto_usd,
+                    'monto_bs' => $monto_bs,
                     'justificacion' => "[EQUIPOS] Pago de Equipo - " . $justificacion
                 ];
-                $sumatoria_backend += $monto;
+                $sumatoria_backend += $monto_usd;
             }
         }
 
@@ -110,16 +139,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             for ($i = 0; $i < count($extras_contratos); $i++) {
                 $id_c_extra = intval($extras_contratos[$i] ?? 0);
-                $monto_extra = floatval(str_replace(',', '.', $extras_montos[$i] ?? 0));
+                $monto_bruto = floatval(str_replace(',', '.', $extras_montos[$i] ?? 0));
+                $monto_usd = $convertir_a_usd($monto_bruto);
+                $monto_bs = $convertir_a_bs($monto_bruto);
                 $meses_extra = intval($extras_meses[$i] ?? 1);
 
-                if ($id_c_extra > 0 && $monto_extra > 0) {
+                if ($id_c_extra > 0 && $monto_usd > 0) {
                     $cargos_a_procesar[] = [
-                        'id_contrato' => $id_c_extra, // OJO: Va al contrato extra, no al principal
-                        'monto' => $monto_extra,
+                        'id_contrato' => $id_c_extra, 
+                        'monto' => $monto_usd,
+                        'monto_bs' => $monto_bs,
                         'justificacion' => "[EXTRA] Mens. Extra ($meses_extra mes/es) (Pagado en Ref $referencia_pago) - " . $justificacion
                     ];
-                    $sumatoria_backend += $monto_extra;
+                    $sumatoria_backend += $monto_usd;
                 }
             }
         }
@@ -156,7 +188,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // 5. INSERTAR CADA CARGO EN EL BUCLE
             foreach ($cargos_a_procesar as $cargo) {
                 $c_id_contrato = $cargo['id_contrato'];
-                $c_monto = $cargo['monto'];
+                $c_monto_usd = $cargo['monto'];
+                $c_monto_bs = $cargo['monto_bs'];
                 $c_justificacion_base = $cargo['justificacion'];
                 $is_mensualidad = (strpos($c_justificacion_base, '[MENSUALIDAD]') !== false || strpos($c_justificacion_base, '[EXTRA]') !== false);
                 $num_meses = 1;
@@ -168,7 +201,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     }
                 }
 
-                $monto_por_mes = ($num_meses > 1) ? round($c_monto / $num_meses, 2) : $c_monto;
+                $monto_por_mes_usd = ($num_meses > 1) ? round($c_monto_usd / $num_meses, 2) : $c_monto_usd;
+                $monto_por_mes_bs = ($num_meses > 1) ? round($c_monto_bs / $num_meses, 2) : $c_monto_bs;
 
                 for ($m = 0; $m < $num_meses; $m++) {
                     $target_time = strtotime("+$m month");
@@ -186,9 +220,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $base_text = str_replace(['[MENSUALIDAD] ', '[EXTRA] '], '', $c_justificacion_base);
                         $tag = (strpos($c_justificacion_base, '[EXTRA]') !== false) ? '[EXTRA]' : '[MENSUALIDAD]';
                         
-                        // Proyectamos fechas exactas sumando meses a la fecha base (hoy)
-                        $loop_fecha_emision = date('Y-m-d', strtotime("+$m month"));
-                        $loop_fecha_vencimiento = date('Y-m-d', strtotime("+" . ($m + 1) . " month"));
+                        // Proyectamos fechas exactas sumando meses a la fecha base ($fecha_pago)
+                        $loop_fecha_emision = date('Y-m-d', strtotime("+$m month", strtotime($fecha_pago)));
+                        $loop_fecha_vencimiento = date('Y-m-d', strtotime("+" . ($m + 1) . " month", strtotime($fecha_pago)));
                         
                         if ($m > 0) {
                             $loop_justificacion = $conn->real_escape_string("$tag [$mes_nombre] - Adelanto de: " . $base_text);
@@ -207,6 +241,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         fecha_emision, 
                         fecha_vencimiento, 
                         monto_total, 
+                        monto_total_bs,
+                        tasa_bcv,
                         estado,
                         fecha_pago,
                         referencia_pago,
@@ -218,7 +254,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         '$c_id_contrato', 
                         '$loop_fecha_emision', 
                         '$loop_fecha_vencimiento', 
-                        '$monto_por_mes', 
+                        '$monto_por_mes_usd', 
+                        '$monto_por_mes_bs',
+                        '$tasa_aplicada',
                         '$estado',
                         '$fecha_pago',
                         '$referencia_pago',
@@ -237,13 +275,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             id_contrato, 
                             autorizado_por, 
                             justificacion, 
-                            monto_cargado
+                            monto_cargado,
+                            monto_cargado_bs,
+                            tasa_bcv
                         ) VALUES (
                             '$id_cobro_cxc', 
                             '$c_id_contrato', 
                             '$autorizado_por', 
                             '$loop_justificacion', 
-                            '$c_monto'
+                            '$c_monto_usd',
+                            '$c_monto_bs',
+                            '$tasa_aplicada'
                         )";
 
                         if (!$conn->query($sql_historial)) {

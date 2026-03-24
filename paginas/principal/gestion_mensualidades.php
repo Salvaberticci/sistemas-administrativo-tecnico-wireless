@@ -292,8 +292,12 @@ require_once '../includes/sidebar.php';
                 <h5 class="modal-title fw-bold">Generar Cargo Manual</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form action="generar_cobro_manual.php" method="POST" enctype="multipart/form-data">
-                <div class="modal-body p-0">
+            <form id="form_generar_cobro" action="generar_cobro_manual.php" method="POST" enctype="multipart/form-data">
+                <div class="modal-body p-4 text-start">
+                    <!-- METADATOS BIMONETARIOS OCULTOS -->
+                    <input type="hidden" name="moneda_enviada" id="moneda_enviada_hidden" value="usd">
+                    <input type="hidden" name="tasa_aplicada" id="tasa_aplicada_hidden" value="0">
+                    
                     <div class="row g-0">
                         <!-- COLUMNA IZQUIERDA: DATOS Y DESGLOSE -->
                         <div class="col-md-7 border-end p-4">
@@ -336,12 +340,16 @@ require_once '../includes/sidebar.php';
                             </div>
 
                             <div class="row g-3 mb-4">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-calendar-day"></i> Fecha (Pago Real)</label>
+                                    <input type="date" class="form-control form-control-sm shadow-sm" name="fecha_pago" id="input_fecha_generar_cobro" required value="<?php echo date('Y-m-d'); ?>" max="<?php echo date('Y-m-d'); ?>">
+                                </div>
+                                <div class="col-md-4">
                                     <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-hashtag"></i> N° Referencia</label>
                                     <input type="text" class="form-control form-control-sm shadow-sm numeric-input" name="referencia_pago" id="input_ref_generar_cobro" required placeholder="Nro de operación">
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-university"></i> Banco Recepto</label>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-university"></i> Banco Receptor</label>
                                     <select class="form-select form-select-sm shadow-sm" name="id_banco_pago" id="select_banco_cobro" required>
                                         <option value="">Seleccione banco...</option>
                                     </select>
@@ -494,6 +502,13 @@ require_once '../includes/sidebar.php';
                                         <div class="fw-bold fs-5" id="container_restante"><span class="sym_res"></span><span id="val_monto_restante">0.00</span></div>
                                         <div id="equiv_restante" class="small opacity-75" style="font-size: 0.6rem;"></div>
                                     </div>
+                                </div>
+                            </div>
+                            <!-- Aviso Tasa Histórica -->
+                            <div id="alerta_tasa_historica" class="d-none alert alert-info py-2 px-3 border-0 shadow-sm rounded mb-3 animate__animated animate__fadeIn">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-history me-2"></i>
+                                    <span class="small fw-bold text-dark">Tasa BCV calculada para el <span id="txt_fecha_tasa" class="text-primary">hoy</span>: <strong class="fs-6 text-success">Bs. <span id="val_tasa_historica">--</span></strong></span>
                                 </div>
                             </div>
                             <!-- Aviso de Saldo sin Asignar -->
@@ -990,6 +1005,8 @@ require_once '../includes/sidebar.php';
     $(function () {
         // === TASA DE CAMBIO ===
         let TASA_BCV = 0;
+        let TASA_BCV_HOY = 0;
+        let historicoTasas = null;
 
         // Obtener Tasa al Cargar
         fetch('get_tasa_dolar.php')
@@ -997,11 +1014,103 @@ require_once '../includes/sidebar.php';
             .then(data => {
                 if (data.success) {
                     TASA_BCV = parseFloat(data.promedio);
+                    TASA_BCV_HOY = TASA_BCV;
+                    // *** CRÍTICO: Sincronizar la tasa inicial con el campo oculto del formulario ***
+                    const inputTasaHidden = document.getElementById('tasa_aplicada_hidden');
+                    if (inputTasaHidden) inputTasaHidden.value = TASA_BCV;
                     $('#tasa_display').html(`<strong>Tasa BCV/Ref:</strong> Bs. ${TASA_BCV.toFixed(2)}`);
                 } else {
                     $('#tasa_display').html(`<span class="text-danger">Error Tasa</span>`);
                 }
             });
+
+        // Lógica de Tasa Histórica (BCV)
+        const inputFechaPago = document.getElementById('input_fecha_generar_cobro');
+        const alertaTasa = document.getElementById('alerta_tasa_historica');
+        const txtFechaTasa = document.getElementById('txt_fecha_tasa');
+        const valTasaHistorica = document.getElementById('val_tasa_historica');
+
+        function aplicarTasa(tasa, fechaTexto) {
+            TASA_BCV = tasa;
+            const inputTasaHidden = document.getElementById('tasa_aplicada_hidden');
+            if(inputTasaHidden) inputTasaHidden.value = tasa;
+            
+            if(alertaTasa && valTasaHistorica) {
+                valTasaHistorica.textContent = tasa.toFixed(2);
+                txtFechaTasa.textContent = fechaTexto;
+                alertaTasa.classList.remove('d-none');
+            }
+            if(typeof calcCobro === 'function') calcCobro();
+        }
+
+        function buscarAplicarTasaHistorica(targetDate) {
+            // El array viene ordenado ascendentemente. Iteramos al revés para buscar la fecha <= targetDate
+            let foundTasa = null;
+            let foundFecha = null;
+            for (let i = historicoTasas.length - 1; i >= 0; i--) {
+                if (historicoTasas[i].fecha <= targetDate) {
+                    foundTasa = historicoTasas[i].promedio;
+                    foundFecha = historicoTasas[i].fecha;
+                    break;
+                }
+            }
+            
+            if (foundTasa) {
+                if(alertaTasa) {
+                    alertaTasa.classList.remove('alert-warning');
+                    alertaTasa.classList.add('alert-info');
+                }
+                const [y, m, d] = foundFecha.split('-');
+                aplicarTasa(foundTasa, `${d}/${m}/${y}`);
+            } else {
+                aplicarTasa(TASA_BCV_HOY, 'hoy (sin datos)');
+                if (alertaTasa) alertaTasa.classList.add('d-none');
+            }
+        }
+
+        if (inputFechaPago) {
+            inputFechaPago.addEventListener('change', function() {
+                const selectedDate = this.value;
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Si la fecha elegida es hoy, a futuro, o vacía, regresamos a la tasa actual
+                if (selectedDate >= today || !selectedDate) {
+                    aplicarTasa(TASA_BCV_HOY, 'hoy');
+                    if (alertaTasa) alertaTasa.classList.add('d-none'); // Ocultar si es hoy
+                    return;
+                }
+
+                // Mostrar mensaje de "buscando"
+                if(alertaTasa && valTasaHistorica) {
+                    alertaTasa.classList.remove('alert-info');
+                    alertaTasa.classList.add('alert-warning');
+                    txtFechaTasa.textContent = 'buscando en BCV...';
+                    valTasaHistorica.textContent = '...';
+                    alertaTasa.classList.remove('d-none');
+                }
+
+                // Si ya descargamos las tasas, buscar directamente
+                if (historicoTasas) {
+                    buscarAplicarTasaHistorica(selectedDate);
+                } else {
+                    // Descargar historial (ve.dolarapi.com/v1/historicos/dolares/oficial)
+                    fetch('https://ve.dolarapi.com/v1/historicos/dolares/oficial')
+                        .then(r => r.json())
+                        .then(data => {
+                            historicoTasas = data;
+                            buscarAplicarTasaHistorica(selectedDate);
+                        })
+                        .catch(err => {
+                            console.error("Error obteniendo histórico:", err);
+                            aplicarTasa(TASA_BCV_HOY, 'hoy (fallo API)');
+                            if(alertaTasa) {
+                                alertaTasa.classList.remove('alert-warning');
+                                alertaTasa.classList.add('alert-info');
+                            }
+                        });
+                }
+            });
+        }
 
         // === VALIDACIÓN DE FECHAS ===
         const inputDesde = document.getElementById('fecha_inicio');
@@ -1083,8 +1192,11 @@ require_once '../includes/sidebar.php';
         // === CONVERSIÓN EN MODAL GENERAR COBRO ===
         const inputMontoCobro = document.getElementById('input_monto_cobro');
         const inputMontoCobroHidden = document.getElementById('monto_cobro_hidden');
+        const inputMonedaEnviadaHidden = document.getElementById('moneda_enviada_hidden');
         const displayEquivCobro = document.getElementById('equiv_cobro');
         const radiosMonedaCobro = document.getElementsByName('moneda_cobro');
+        let currentStateMoneda = document.querySelector('input[name="moneda_cobro"]:checked') ? document.querySelector('input[name="moneda_cobro"]:checked').value : 'usd';
+        if (inputMonedaEnviadaHidden) inputMonedaEnviadaHidden.value = currentStateMoneda;
 
         // Nuevo: Monto Pagado Hoy
         const inputPagoHoy = document.getElementById('monto_pagado_hoy');
@@ -1153,13 +1265,58 @@ require_once '../includes/sidebar.php';
                 if (inputPagoHoy) inputPagoHoy.dataset.manuallyChanged = ''; // Reset flag if total changes
                 calcCobro();
             });
-            radiosMonedaCobro.forEach(r => r.addEventListener('change', calcCobro));
+            radiosMonedaCobro.forEach(r => r.addEventListener('change', function() {
+                const newState = this.value;
+                if (newState !== currentStateMoneda && TASA_BCV > 0) {
+                    const isToBs = (newState === 'bs');
+                    
+                    // Convertir Input Principal
+                    let currentMain = parseFloat(inputMontoCobro.value.replace(',', '.')) || 0;
+                    if (currentMain > 0) {
+                        inputMontoCobro.value = isToBs ? (currentMain * TASA_BCV).toFixed(2) : (currentMain / TASA_BCV).toFixed(2);
+                    }
+                    
+                    // Convertir todos los Inputs del Desglose
+                    const desgloseInputs = document.querySelectorAll('#modalGenerarCobro .desglose-monto');
+                    desgloseInputs.forEach(input => {
+                        let val = parseFloat(input.value.replace(',', '.')) || 0;
+                        if (val > 0) {
+                            input.value = isToBs ? (val * TASA_BCV).toFixed(2) : (val / TASA_BCV).toFixed(2);
+                        }
+                    // Soporte para los planes del usuario que inyectan el precio base
+                    if (input.dataset.basePrice) {
+                        let base = parseFloat(input.dataset.basePrice);
+                        input.dataset.basePrice = isToBs ? (base * TASA_BCV).toFixed(2) : (base / TASA_BCV).toFixed(2);
+                    }
+                });
+
+                currentStateMoneda = newState;
+                if (inputMonedaEnviadaHidden) inputMonedaEnviadaHidden.value = currentStateMoneda;
+            }
+            calcCobro();
+            if (typeof validarSumatoriaDesglose === 'function') {
+                validarSumatoriaDesglose();
+            }
+        }));
 
             // Escuchar cambios en cualquier monto de desglose
             document.querySelector('#modalGenerarCobro').addEventListener('input', (e) => {
                 if (e.target.classList.contains('desglose-monto')) {
                     updateAllDesgloseEquivalents();
                     if (typeof validarSumatoriaDesglose === 'function') validarSumatoriaDesglose();
+                }
+            });
+
+            // *** FIX DEFINITIVO: Capturar tasa y moneda justoantes de enviar el formulario ***
+            // Esto garantiza que el backend siempre recibe la tasa correcta aunque el fetch
+            // sea asíncrono o el campo oculto no se haya actualizado antes.
+            document.getElementById('form_generar_cobro').addEventListener('submit', function() {
+                const tasaHidden = document.getElementById('tasa_aplicada_hidden');
+                const monedaHidden = document.getElementById('moneda_enviada_hidden');
+                if (tasaHidden && TASA_BCV > 0) tasaHidden.value = TASA_BCV;
+                if (monedaHidden) {
+                    const radioChecked = document.querySelector('input[name="moneda_cobro"]:checked');
+                    monedaHidden.value = radioChecked ? radioChecked.value : 'usd';
                 }
             });
         }
