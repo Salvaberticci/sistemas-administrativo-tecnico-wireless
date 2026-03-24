@@ -175,11 +175,10 @@ while ($aRow = $rResult->fetch_assoc()) {
     $row[] = clean($aRow['cedula']);
 
     // 3. NOMBRE
-    $nombre = clean($aRow['nombre_completo']);
-    $row[] = "<div class='text-truncate-scroll fw-bold text-primary' style='max-width: 220px;' title='{$nombre}'>{$nombre}</div>";
+    $row[] = clean($aRow['nombre_completo']);
 
     // 4. MONTO PLAN [NEW]
-    $row[] = "<span class='badge bg-light text-dark border'>$" . clean($aRow['monto_plan']) . "</span>";
+    $row[] = clean($aRow['monto_plan']);
 
     // 5. MUNICIPIO (Con fallback a texto libre)
     $mun = !empty($aRow['nombre_municipio']) ? $aRow['nombre_municipio'] : (!empty($aRow['municipio_texto']) ? $aRow['municipio_texto'] : '');
@@ -189,89 +188,85 @@ while ($aRow = $rResult->fetch_assoc()) {
     $par = !empty($aRow['nombre_parroquia']) ? $aRow['nombre_parroquia'] : (!empty($aRow['parroquia_texto']) ? $aRow['parroquia_texto'] : '');
     $row[] = clean($par);
 
-    // 6. DIRECCION (Boton + Texto)
-    $direccion = clean(str_replace(["\r", "\n"], ' ', $aRow['direccion']));
-    $row[] = "<div class='d-flex align-items-center gap-2'>
-                <small class='text-muted d-inline-block' style='max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;' title='{$direccion}'>{$direccion}</small>
-              </div>";
+    // 7. DIRECCION
+    $row[] = clean(str_replace(["\r", "\n"], ' ', $aRow['direccion']));
 
-    // 7. TELEFONO 1
+    // 8. TELEFONO 1
     $row[] = clean($aRow['telefono']);
 
-    // 8. TELEFONO 2
+    // 9. TELEFONO 2
     $row[] = clean($aRow['telefono_secundario']);
 
-    // 9. CORREO
+    // 10. CORREO
     $row[] = clean($aRow['correo']);
 
-    // 10. CORREO ADICIONAL
+    // 11. CORREO ADICIONAL
     $row[] = clean($aRow['correo_adicional']);
 
-    // 11. FECHA INSTALACION
+    // 12. FECHA INSTALACION
     $row[] = (!empty($aRow['fecha_instalacion']) && $aRow['fecha_instalacion'] != '0000-00-00') ? date('d/m/Y', strtotime($aRow['fecha_instalacion'])) : '';
 
-    // 12. MEDIO PAGO
+    // 13. MEDIO PAGO
     $row[] = clean($aRow['medio_pago']);
 
-    // 13. MONTO PAGAR
+    // 14. MONTO PAGAR
     $row[] = clean($aRow['monto_pagar']);
 
-    // 14. MONTO PAGADO
+    // 15. MONTO PAGADO
     $row[] = clean($aRow['monto_pagado']);
 
-    // 15. DIAS PRORRATEO
+    // 16. DIAS PRORRATEO
     $row[] = clean($aRow['dias_prorrateo']);
 
-    // 16. MONTO PRORRATEO $
+    // 17. MONTO PRORRATEO $
     $row[] = clean($aRow['monto_prorrateo_usd']);
 
-    // 17. OBSERVACIONES
-    $obs = clean($aRow['observaciones']);
-    $row[] = "<div class='text-truncate-scroll' style='max-width: 250px;' title='{$obs}'>{$obs}</div>";
+    // 18. OBSERVACIONES
+    $row[] = clean($aRow['observaciones']);
 
-    // 18. TIPO CONEXION
+    // 19. TIPO CONEXION
     $row[] = clean($aRow['tipo_conexion']);
 
-    // 18.1 TIPO INSTALACION
+    // 20. TIPO INSTALACION
     $row[] = clean($aRow['tipo_instalacion']);
 
-    // 19. MAC ONU
+    // 21. MAC ONU
     $row[] = clean($aRow['mac_onu']);
 
-    // 21. IP ONU
+    // 22. IP ONU
     $row[] = clean($aRow['ip_onu']);
 
-    // 22. CAJA NAP
+    // 23. CAJA NAP
     $row[] = clean($aRow['ident_caja_nap']);
 
-    // 23. PUERTO NAP
+    // 24. PUERTO NAP
     $row[] = clean($aRow['puerto_nap']);
 
-    // 24. NAP TX POWER
+    // 25. NAP TX POWER
     $row[] = clean($aRow['nap_tx_power']);
 
-    // 25. ONU RX POWER
+    // 26. ONU RX POWER
     $row[] = clean($aRow['onu_rx_power']);
 
-    // 26. DISTANCIA DROP
+    // 27. DISTANCIA DROP
     $row[] = clean($aRow['distancia_drop']);
 
-    // 27. INSTALADOR
+    // 28. INSTALADOR
     $row[] = clean($aRow['instalador']);
 
-    // 28. PUNTO ACCESO (was 29)
+    // 29. PUNTO ACCESO
     $row[] = clean($aRow['punto_acceso']);
 
-    // 29. VALOR CONEXION DBM (was 30)
+    // 30. VALOR CONEXION DBM
     $row[] = clean($aRow['valor_conexion_dbm']);
 
-    // 31. INSTALADOR RADIO (was Cierre)
+    // 31. INSTALADOR RADIO
     $row[] = clean($aRow['instalador_c']);
 
-    // 32. EVIDENCIA FIBRA (Antes estaba al final, causaba desplazamiento)
+    // 32. EVIDENCIA FIBRA
     $row[] = clean($aRow['evidencia_fibra']);
 
-    // 33. SUGERENCIAS (Observaciones)
+    // 33. SUGERENCIAS (Mismo que observaciones si no hay campo)
     $row[] = clean($aRow['observaciones']);
 
     // 34. PRECINTO ODN
@@ -280,7 +275,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 35. EVIDENCIA FOTO (Foto)
     $link = $aRow['evidencia_foto'];
     if (!empty($link)) {
-        $row[] = "<a href='../../{$link}' target='_blank' class='btn btn-sm btn-outline-primary'><i class='fa-solid fa-image'></i></a>";
+        $row[] = "<a href='../../{$link}' target='_blank' class='btn btn-sm btn-outline-primary shadow-sm'><i class='fa-solid fa-image'></i></a>";
     } else {
         $row[] = '-';
     }
@@ -288,7 +283,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 36. FIRMA CLIENTE
     $firmaCliente = $aRow['firma_cliente'] ?? '';
     if (!empty($firmaCliente)) {
-        $row[] = "<a href='../../uploads/firmas/{$firmaCliente}' target='_blank' class='btn btn-sm btn-outline-info'><i class='fa-solid fa-signature'></i></a>";
+        $row[] = "<a href='../../uploads/firmas/{$firmaCliente}' target='_blank' class='btn btn-sm btn-outline-info shadow-sm'><i class='fa-solid fa-signature'></i></a>";
     } else {
         $row[] = '-';
     }
@@ -296,7 +291,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 37. FIRMA TECNICO
     $firmaTecnico = $aRow['firma_tecnico'] ?? '';
     if (!empty($firmaTecnico)) {
-        $row[] = "<a href='../../uploads/firmas/{$firmaTecnico}' target='_blank' class='btn btn-sm btn-outline-success'><i class='fa-solid fa-signature'></i></a>";
+        $row[] = "<a href='../../uploads/firmas/{$firmaTecnico}' target='_blank' class='btn btn-sm btn-outline-success shadow-sm'><i class='fa-solid fa-signature'></i></a>";
     } else {
         $row[] = '-';
     }

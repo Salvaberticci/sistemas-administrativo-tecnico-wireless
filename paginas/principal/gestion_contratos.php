@@ -87,6 +87,7 @@ require_once '../includes/sidebar.php';
 
     /* Clase para truncar texto con elipsis */
     .text-truncate-scroll {
+        max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -1782,6 +1783,7 @@ require_once '../includes/sidebar.php';
             "bProcessing": true,
             "bServerSide": true,
             "sAjaxSource": "server_process.php",
+            "autoWidth": false, // Evitar que DataTables recalcule anchos automáticamente
             "fnServerParams": function (aoData) {
                 aoData.push({ "name": "empty_filter", "value": $('#filter_empty').val() });
             },
@@ -1789,12 +1791,30 @@ require_once '../includes/sidebar.php';
                 { "bVisible": false, "aTargets": [0] }, // Ocultar ID
                 { "className": "text-center", "aTargets": "_all" }, // Centrar todo por defecto
                 
+                // Renderizado con Truncado y Tooltip (Title)
+                {
+                    "aTargets": [3, 7, 18, 33],
+                    "mRender": function (data, type, full) {
+                        if (!data) return '';
+                        var strData = data.toString().replace(/"/g, '&quot;');
+                        return '<span class="text-truncate-scroll" title="' + strData + '">' + data + '</span>';
+                    }
+                },
+                // Badge para Plan ($)
+                {
+                    "aTargets": [4],
+                    "mRender": function (data, type, full) {
+                        return '<span class="badge bg-light text-dark border">$' + data + '</span>';
+                    }
+                },
+
                 // Anchos Fijos para estabilidad (Indices 0-based)
                 { "sWidth": "120px", "aTargets": [1] },  // SAR
                 { "sWidth": "100px", "aTargets": [2] },  // Cédula
                 { "sWidth": "220px", "aTargets": [3] },  // Cliente
                 { "sWidth": "300px", "aTargets": [7] },  // Dirección
                 { "sWidth": "250px", "aTargets": [18] }, // Observ.
+                { "sWidth": "250px", "aTargets": [33] }, // Sugerencias
                 { "sWidth": "180px", "aTargets": [22] }, // IP ONU
                 { "sWidth": "120px", "aTargets": [21] }, // MAC/Serial
                 { "sWidth": "100px", "aTargets": [23] }  // Caja NAP
