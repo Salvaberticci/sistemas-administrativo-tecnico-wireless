@@ -1456,17 +1456,17 @@ require_once '../includes/sidebar.php';
                         badgeIndicador.textContent = 'PAGO EXACTO';
                         badgeIndicador.className = 'badge bg-success text-white border-0 py-1 px-3';
                         containerRestante.className = 'fw-bold fs-5';
-                        containerRestante.style.color = '#2ecc71'; // Verde brillante para éxito
+                        containerRestante.style.color = '#2ecc71'; // Verde brillante
                     } else if (restante > 0) {
                         badgeIndicador.textContent = 'SALDO PENDIENTE';
                         badgeIndicador.className = 'badge bg-danger text-white border-0 py-1 px-3';
                         containerRestante.className = 'fw-bold fs-5';
-                        containerRestante.style.color = '#ff4d4d'; // Rojo brillante para deuda
+                        containerRestante.style.color = '#ff4d4d'; // Rojo brillante
                     } else {
                         badgeIndicador.textContent = 'SALDO A FAVOR';
                         badgeIndicador.className = 'badge bg-info text-dark border-0 py-1 px-3';
                         containerRestante.className = 'fw-bold fs-5';
-                        containerRestante.style.color = '#00d1ff'; // Cyan brillante para saldo a favor
+                        containerRestante.style.color = '#00d1ff'; // Cyan brillante
                     }
                 }
             } else {
@@ -1474,7 +1474,8 @@ require_once '../includes/sidebar.php';
                 if (badgeIndicador) {
                     badgeIndicador.textContent = 'ESPERANDO SELECCIÓN';
                     badgeIndicador.className = 'badge bg-secondary text-white border-0 py-1 px-3';
-                    containerRestante.className = 'fw-bold text-muted fs-5';
+                    containerRestante.className = 'fw-bold fs-5';
+                    containerRestante.style.color = '#ffffff'; // Blanco para visibilidad máxima en espera
                 }
             }
         }
