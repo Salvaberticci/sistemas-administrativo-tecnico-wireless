@@ -16,8 +16,8 @@ $errors = 0;
 
 $stmt = $conn->prepare("INSERT INTO prorrogas (
     tipo_solicitud, cedula_titular, nombre_titular, existe_saeplus, 
-    fecha_corte, dia_prorroga, prorroga_regular, estado
-) VALUES ('PRORROGA', ?, ?, ?, ?, ?, ?, ?)");
+    fecha_corte, dia_prorroga, prorroga_regular, estado, codigo_sae_plus
+) VALUES ('PRORROGA', ?, ?, ?, ?, ?, ?, ?, ?)");
 
 foreach ($data['data'] as $row) {
     $cedula = $row['cedula'] ?? '';
@@ -26,6 +26,7 @@ foreach ($data['data'] as $row) {
     $corte_dia = (int) ($row['corte'] ?? 0);
     $prorroga_dia = (int) ($row['prorroga'] ?? 0);
     $regular = strtoupper($row['regular'] ?? 'SI');
+    $codigo_sae_plus = $row['codigo_sae_plus'] ?? null;
 
     // Normalizar SAEPLUS y REGULAR (SI/NO)
     if (strpos($saeplus, 'S') !== false)
@@ -46,7 +47,7 @@ foreach ($data['data'] as $row) {
     $estado = 'PENDIENTE';
 
     if (!empty($cedula) && !empty($nombre)) {
-        $stmt->bind_param("ssssiss", $cedula, $nombre, $saeplus, $fecha_corte, $prorroga_dia, $regular, $estado);
+        $stmt->bind_param("ssssisss", $cedula, $nombre, $saeplus, $fecha_corte, $prorroga_dia, $regular, $estado, $codigo_sae_plus);
         if ($stmt->execute()) {
             $imported++;
         } else {

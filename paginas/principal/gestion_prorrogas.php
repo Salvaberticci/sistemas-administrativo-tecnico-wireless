@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: text/html; charset=utf-8');
 require_once '../conexion.php';
 
 $path_to_root = "../../";
@@ -101,6 +102,7 @@ $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_
                                 <th>Cliente / Titular</th>
                                 <th>Regular?</th>
                                 <th>Corte</th>
+                                <th>ID SAE Plus</th>
                                 <th>Estado / Pago</th>
                                 <th class="text-end">Acciones</th>
                             </tr>
@@ -180,7 +182,13 @@ $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_
                             </select>
                         </div>
                     </div>
-                </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">ID SAE Plus</label>
+                        <input type="text" name="codigo_sae_plus" class="form-control" placeholder="Ej: 12345" maxlength="50">
+                        <div class="form-text text-muted small">Código del cliente en el sistema SAE Plus (opcional).</div>
+                    </div>
+
                 <div class="modal-footer bg-light border-0">
                     <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-dark px-4 shadow">Registrar Prórroga</button>
@@ -190,7 +198,7 @@ $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_
     </div>
 </div>
 <!-- Modal Editar Prórroga -->
-<div class="modal fade" id="modalEditarProrroga" tabindex="-1" aria-hidden="true">
+<div class="modal" id="modalEditarProrroga" tabindex="-1" aria-hidden="true" style="z-index: 9999 !important;">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-primary text-white">
@@ -218,6 +226,10 @@ $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_
                             <option value="SI">SÍ (Permanente)</option>
                             <option value="NO">NO (Temporal)</option>
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">ID SAE Plus</label>
+                        <input type="text" name="codigo_sae_plus" id="edit_codigo_sae_plus" class="form-control" placeholder="Ej: 12345" maxlength="50">
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-0">
@@ -345,6 +357,12 @@ $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_
                 },
                 { "data": "fecha_corte" },
                 {
+                    "data": "codigo_sae_plus", "render": function (data) {
+                        if (data) return `<span class="badge bg-dark font-monospace">${data}</span>`;
+                        return '<span class="text-muted small">—</span>';
+                    }
+                },
+                {
                     "data": "estado", "render": function (data, type, row) {
                         let html = '';
                         let badge = 'bg-warning';
@@ -362,14 +380,19 @@ $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_
                 {
                     "data": "id_prorroga", "className": "text-end", "render": function (id, type, row) {
                         return `<div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary" title="Editar" onclick='abrirModalEditar(${JSON.stringify(row)})'><i class="fa-solid fa-edit"></i></button>
+                            <button class="btn btn-sm btn-outline-primary btn-editar-prorroga" title="Editar" data-id="${id}"><i class="fa-solid fa-edit"></i></button>
                             <button class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="eliminarProrroga(${id})"><i class="fa-solid fa-trash"></i></button>
                         </div>`;
                     }
                 }
             ],
-            "order": [[0, "desc"]],
-            "language": { "url": "<?php echo $path_to_root; ?>js/es-ES.json" }
+            "order": [[0, "desc"]]
+        });
+
+        // Event delegation for edit button
+        $('#tabla_prorrogas tbody').on('click', '.btn-editar-prorroga', function() {
+            var id = $(this).data('id');
+            abrirModalEditar(id);
         });
 
         // Autocomplete para el Modal Interno
@@ -443,13 +466,41 @@ $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_
         });
     }
 
-    function abrirModalEditar(data) {
-        document.getElementById('edit_id_prorroga').value = data.id_prorroga;
-        document.getElementById('edit_nombre_titular').value = data.nombre_titular;
-        document.getElementById('edit_cedula_titular').value = data.cedula_titular;
-        document.getElementById('edit_fecha_corte').value = data.fecha_corte;
-        document.getElementById('edit_prorroga_regular').value = data.prorroga_regular;
-        $('#modalEditarProrroga').modal('show');
+    function abrirModalEditar(id) {
+        console.log("Intentando abrir modal para ID:", id);
+        var table = $('#tabla_prorrogas').DataTable();
+        var data = table.rows().data().toArray().find(r => r.id_prorroga == id);
+        
+        if (!data) {
+            Swal.fire('Error', 'No se encontraron los datos de esta prórroga.', 'error');
+            return;
+        }
+
+        // Poblar campos
+        $('#edit_id_prorroga').val(data.id_prorroga);
+        $('#edit_nombre_titular').val(data.nombre_titular);
+        $('#edit_cedula_titular').val(data.cedula_titular);
+        $('#edit_fecha_corte').val(data.fecha_corte);
+        $('#edit_prorroga_regular').val(data.prorroga_regular);
+        $('#edit_codigo_sae_plus').val(data.codigo_sae_plus || '');
+        
+        // Abrir modal usando el API nativo de Bootstrap 
+        var modalEl = document.getElementById('modalEditarProrroga');
+        
+        // Mover al body si no está ahí para evitar clipping
+        if (modalEl.parentElement !== document.body) {
+            document.body.appendChild(modalEl);
+        }
+
+        var modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+
+        // Forzar visibilidad (Hack)
+        setTimeout(() => {
+            modalEl.style.display = 'block';
+            modalEl.style.opacity = '1';
+            console.log("Modal display forzado a block.");
+        }, 100);
     }
 
     $("#formEditar").on("submit", function(e) {
@@ -529,19 +580,19 @@ $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_
 
                 // 1. Título y Mes (Fila 1)
                 const monthName = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date()).toUpperCase();
-                worksheet.mergeCells('A1:F1');
+                worksheet.mergeCells('A1:G1');
                 const titleCell = worksheet.getCell('A1');
                 titleCell.value = "Galanet-Prórroga " + new Date().getFullYear();
                 titleCell.font = { name: 'Arial', family: 4, size: 14, bold: true };
                 titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
 
-                const monthCell = worksheet.getCell('G1');
+                const monthCell = worksheet.getCell('H1');
                 monthCell.value = monthName;
                 monthCell.font = { name: 'Arial', family: 4, size: 12, bold: true };
                 monthCell.alignment = { vertical: 'middle', horizontal: 'right' };
 
                 // 2. Cabeceras (Fila 2)
-                const headers = ["CEDULA", "NOMBRE", "SAEPLUS", "CORTE", "PRORROGA", "REGULAR?", "CARGADO"];
+                const headers = ["CEDULA", "NOMBRE", "SAEPLUS", "ID SAE PLUS", "CORTE", "PRORROGA", "REGULAR?", "CARGADO"];
                 const headerRow = worksheet.getRow(2);
                 headerRow.values = headers;
                 headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -567,6 +618,7 @@ $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_
                         r.cedula_titular || '',
                         r.nombre_titular || '',
                         r.existe_saeplus || 'NO',
+                        r.codigo_sae_plus || '',
                         r.fecha_corte ? new Date(r.fecha_corte + ' 00:00:00').getDate() : '',
                         r.dia_prorroga || '',
                         r.prorroga_regular || 'SI',
@@ -599,10 +651,11 @@ $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_
                 worksheet.getColumn(1).width = 15; // CEDULA
                 worksheet.getColumn(2).width = 45; // NOMBRE
                 worksheet.getColumn(3).width = 10; // SAEPLUS
-                worksheet.getColumn(4).width = 10; // CORTE
-                worksheet.getColumn(5).width = 12; // PRORROGA
-                worksheet.getColumn(6).width = 12; // REGULAR?
-                worksheet.getColumn(7).width = 15; // CARGADO
+                worksheet.getColumn(4).width = 15; // ID SAE PLUS
+                worksheet.getColumn(5).width = 10; // CORTE
+                worksheet.getColumn(6).width = 12; // PRORROGA
+                worksheet.getColumn(7).width = 12; // REGULAR?
+                worksheet.getColumn(8).width = 15; // CARGADO
 
                 // Descargar archivo
                 const buffer = await workbook.xlsx.writeBuffer();
@@ -675,6 +728,7 @@ $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_
                     if (key.includes('CORTE')) mapped.corte = row[k];
                     if (key.includes('PRORROGA')) mapped.prorroga = row[k];
                     if (key.includes('REGULAR')) mapped.regular = row[k];
+                    if (key.includes('ID SAE PLUS') || key.includes('CODIGO SAE PLUS')) mapped.codigo_sae_plus = row[k];
                 });
                 return mapped;
             }).filter(r => r.cedula && r.nombre);
