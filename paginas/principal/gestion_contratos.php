@@ -1456,6 +1456,11 @@ require_once '../includes/sidebar.php';
                             <input type="text" class="form-control form-control-sm" id="edit_pa" name="punto_acceso">
                         </div>
                         <div class="col-md-4">
+                            <label class="form-label small fw-bold">IP Servicio</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_ip_radio" name="ip_servicio"
+                                placeholder="192.168.1.1">
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label small fw-bold">Valor Conexión (dBm)</label>
                             <input type="text" class="form-control form-control-sm" id="edit_dbm"
                                 name="valor_conexion_dbm" pattern="-?[0-9.]+" placeholder="-55.0">
@@ -2122,6 +2127,7 @@ require_once '../includes/sidebar.php';
                 $('#edit_mac').val(d.mac_onu);
 
                 $('#edit_ip_onu').val(d.ip_onu);
+                $('#edit_ip_radio').val(d.ip_servicio || '');
                 $('#edit_nap_tx').val(d.nap_tx_power);
                 $('#edit_onu_rx').val(d.onu_rx_power);
                 $('#edit_drop').val(d.distancia_drop);
@@ -2217,7 +2223,7 @@ require_once '../includes/sidebar.php';
             $(this).val(val);
         });
 
-        $('#edit_ip, #edit_ip_onu').on('input', function () {
+        $('#edit_ip, #edit_ip_onu, #edit_ip_radio').on('input', function () {
             let val = $(this).val().replace(/[^0-9.]/g, '');
             $(this).val(val);
         });
