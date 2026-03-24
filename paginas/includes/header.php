@@ -8,8 +8,16 @@ if (!isset($path_fix)) {
     $path_fix = isset($path_to_root) ? $path_to_root : '../';
 }
 
-// --- SEGURIDAD: CONTROL DE ACCESO (Manejado por auth.php en páginas principales) ---
-// La sesión ja debe estar iniciada y validada antes de este punto para evitar errores de cabecera.
+// --- SEGURIDAD: CONTROL DE ACCESO ---
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['usuario_id'])) {
+    // Si no hay sesión iniciada, redirigir al login
+    header("Location: " . $path_fix . "index.html");
+    exit;
+}
 
 // Obtener datos del usuario desde la sesión
 $user_name = isset($_SESSION['nombre_completo']) ? $_SESSION['nombre_completo'] : 'Usuario';

@@ -1,11 +1,10 @@
 <?php
-$path_to_root = "../../";
-require_once '../includes/auth.php';
 /**
  * Página principal que muestra la tabla de registros
  */
 require '../conexion.php';
 
+$path_to_root = "../../";
 $page_title = "Gestión de Contratos";
 $breadcrumb = ["Admin"];
 $back_url = "../menu.php";
@@ -25,21 +24,14 @@ require_once '../includes/sidebar.php';
         overflow-x: auto;
     }
 
-    /* Headers mas compactos y alineados */
+    /* Headers mas compactos */
     #mitabla thead th {
         font-size: 0.8rem;
         white-space: nowrap;
         vertical-align: middle;
-        text-align: center !important;
+        text-align: center;
         background-color: #f8f9fa;
         color: #495057;
-        border-bottom: 2px solid #dee2e6;
-    }
-
-    #mitabla {
-        table-layout: fixed !important;
-        width: 100% !important;
-        border-collapse: collapse !important;
     }
 
     /* Nuevos estilos para Signature Pad y secciones */
@@ -71,15 +63,14 @@ require_once '../includes/sidebar.php';
         margin-bottom: 10px;
     }
 
-    /* Celdas mas compactas, centradas y estables */
+    /* Celdas mas compactas y estables */
     #mitabla tbody td {
         font-size: 0.85rem;
         vertical-align: middle;
-        text-align: center !important;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        padding: 6px 8px;
+        padding: 4px 8px;
     }
 
     /* Forzar el ancho en columnas específicas si exceden el límite */
@@ -101,7 +92,6 @@ require_once '../includes/sidebar.php';
         text-overflow: ellipsis;
         white-space: nowrap;
         display: block;
-        margin: 0 auto;
     }
 
     .editable-cell:hover {
@@ -1798,8 +1788,8 @@ require_once '../includes/sidebar.php';
                 aoData.push({ "name": "empty_filter", "value": $('#filter_empty').val() });
             },
             "aoColumnDefs": [
-                { "className": "text-center", "aTargets": "_all" }, // Centrar todo estrictamente
                 { "bVisible": false, "aTargets": [0] }, // Ocultar ID
+                { "className": "text-center", "aTargets": "_all" }, // Centrar todo por defecto
                 
                 // Renderizado con Truncado y Tooltip (Title)
                 {
@@ -1814,7 +1804,7 @@ require_once '../includes/sidebar.php';
                 {
                     "aTargets": [4],
                     "mRender": function (data, type, full) {
-                        return '<span class="badge bg-light text-dark border shadow-sm">$' + data + '</span>';
+                        return '<span class="badge bg-light text-dark border">$' + data + '</span>';
                     }
                 },
 
@@ -1829,14 +1819,7 @@ require_once '../includes/sidebar.php';
                 { "sWidth": "120px", "aTargets": [21] }, // MAC/Serial
                 { "sWidth": "100px", "aTargets": [23] }  // Caja NAP
             ],
-            "initComplete": function(settings, json) {
-                // Ajustar columnas una vez cargado
-                this.api().columns.adjust();
-            },
-            "drawCallback": function(settings) {
-                // Ajustar columnas después de cada redibujado (paginación, filtros)
-                this.api().columns.adjust();
-            }
+            // Callback tras dibujar la tabla (para bindings si fuera necesario, pero delegamos eventos al tbody)
         });
 
         // --- Inline Edit Logic ---
