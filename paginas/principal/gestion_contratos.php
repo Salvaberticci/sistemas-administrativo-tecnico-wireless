@@ -109,65 +109,88 @@ require_once '../includes/sidebar.php';
 
     <div class="page-content">
         <div class="card">
-            <div
-                class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pt-4 px-4">
-                <div>
-                    <h5 class="fw-bold text-primary mb-1">Contratos</h5>
-                    <p class="text-muted small mb-0">Gestión integral de contratos y servicios</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-outline-success d-flex align-items-center gap-2"
-                        data-bs-toggle="modal" data-bs-target="#modalStats" id="btnOpenStats">
-                        <i class="fa-solid fa-chart-pie"></i> <span class="d-none d-md-inline">Estadísticas</span>
-                    </button>
-                    <!-- BOTONES EXCEL NUEVOS -->
-                    <div class="vr mx-1"></div>
-                    <button type="button" class="btn btn-success d-flex align-items-center gap-2 shadow-sm"
-                        onclick="exportExcel()">
-                        <i class="fa-solid fa-file-excel"></i> <span class="d-none d-md-inline">Exportar</span>
-                    </button>
-                    <button type="button" class="btn btn-outline-success d-flex align-items-center gap-2 shadow-sm"
-                        data-bs-toggle="modal" data-bs-target="#modalImportExcel">
-                        <i class="fa-solid fa-file-import"></i> <span class="d-none d-md-inline">Importar</span>
-                    </button>
-                    <div class="vr mx-1"></div>
-
-                    <button type="button" class="btn btn-outline-info d-flex align-items-center gap-2"
-                        data-bs-toggle="modal" data-bs-target="#modalTipos">
-                        <i class="fa-solid fa-tags"></i> <span class="d-none d-md-inline">Editar Tipos de
-                            Conexión</span>
-                    </button>
-                    <!-- NUEVO BOTÓN TIPO INSTALACIÓN -->
-                    <button type="button" class="btn btn-outline-info d-flex align-items-center gap-2"
-                        data-bs-toggle="modal" data-bs-target="#modalTiposInstalacion">
-                        <i class="fa-solid fa-wrench"></i> <span class="d-none d-md-inline">Editar Tipos de
-                            Instalación</span>
-                    </button>
-
-                    <!-- BOTONES INSTALADORES / VENDEDORES -->
-                    <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-2"
-                        data-bs-toggle="modal" data-bs-target="#modalInstaladores">
-                        <i class="fa-solid fa-helmet-safety"></i> <span class="d-none d-md-inline">Instaladores</span>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-2"
-                        data-bs-toggle="modal" data-bs-target="#modalVendedores">
-                        <i class="fa-solid fa-user-tie"></i> <span class="d-none d-md-inline">Vendedores</span>
-                    </button>
-                    <!-- BOTON PLANES PRORRATEO -->
-                    <button type="button" class="btn btn-outline-warning d-flex align-items-center gap-2"
-                        data-bs-toggle="modal" data-bs-target="#modalProrrateo">
-                        <i class="fa-solid fa-file-invoice-dollar"></i> <span class="d-none d-md-inline">Planes
-                            Prorrateo</span>
-                    </button>
-
-                    <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-2"
-                        data-bs-toggle="modal" data-bs-target="#modalUbicaciones">
-                        <i class="fa-solid fa-map-location-dot"></i> <span class="d-none d-md-inline">Editar
-                            Ubicaciones</span>
-                    </button>
-                    <a href="nuevo.php" class="btn btn-primary d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> <span class="d-none d-md-inline">Nuevo Contrato</span>
+            <!-- ── HEADER: TÍTULO Y BOTÓN PRINCIPAL ── -->
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-2">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+                    <div>
+                        <h5 class="fw-bold text-primary mb-1">Contratos</h5>
+                        <p class="text-muted small mb-0">Gestión integral de contratos y servicios</p>
+                    </div>
+                    <a href="nuevo.php" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm px-4 py-2">
+                        <i class="fa-solid fa-circle-plus"></i>
+                        <strong>Nuevo Contrato</strong>
                     </a>
+                </div>
+
+                <!-- ── FILA 2: BARRA DE HERRAMIENTAS SECUNDARIA ── -->
+                <div class="d-flex flex-wrap gap-2 align-items-center border-top pt-3">
+                    
+                    <!-- Reportes y Datos -->
+                    <div class="btn-group shadow-sm">
+                        <button type="button" class="btn btn-outline-success d-flex align-items-center gap-1"
+                            data-bs-toggle="modal" data-bs-target="#modalStats" id="btnOpenStats">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span class="d-none d-lg-inline">Estadísticas</span>
+                        </button>
+                        <button type="button" class="btn btn-success d-flex align-items-center gap-1"
+                            onclick="exportExcel()">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span class="d-none d-lg-inline">Exportar</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-success d-flex align-items-center gap-1"
+                            data-bs-toggle="modal" data-bs-target="#modalImportExcel">
+                            <i class="fa-solid fa-file-import"></i>
+                            <span class="d-none d-lg-inline">Importar</span>
+                        </button>
+                    </div>
+
+                    <div class="vr mx-1 d-none d-md-block"></div>
+
+                    <!-- Configuración Técnica -->
+                    <div class="btn-group shadow-sm">
+                        <button type="button" class="btn btn-outline-info d-flex align-items-center gap-1"
+                            data-bs-toggle="modal" data-bs-target="#modalTipos">
+                            <i class="fa-solid fa-network-wired"></i>
+                            <span class="d-none d-xl-inline">Conexiones</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-info d-flex align-items-center gap-1"
+                            data-bs-toggle="modal" data-bs-target="#modalTiposInstalacion">
+                            <i class="fa-solid fa-tools"></i>
+                            <span class="d-none d-xl-inline">Instalaciones</span>
+                        </button>
+                    </div>
+
+                    <div class="vr mx-1 d-none d-md-block"></div>
+
+                    <!-- Catálogos y Personal -->
+                    <div class="btn-group shadow-sm">
+                        <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-1"
+                            data-bs-toggle="modal" data-bs-target="#modalInstaladores">
+                            <i class="fa-solid fa-hard-hat"></i>
+                            <span class="d-none d-xl-inline">Instaladores</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-1"
+                            data-bs-toggle="modal" data-bs-target="#modalVendedores">
+                            <i class="fa-solid fa-user-friends"></i>
+                            <span class="d-none d-xl-inline">Vendedores</span>
+                        </button>
+                    </div>
+
+                    <div class="vr mx-1 d-none d-md-block"></div>
+
+                    <!-- Configuración General -->
+                    <div class="btn-group shadow-sm">
+                        <button type="button" class="btn btn-outline-warning d-flex align-items-center gap-1"
+                            data-bs-toggle="modal" data-bs-target="#modalProrrateo">
+                            <i class="fa-solid fa-dollar-sign"></i>
+                            <span class="d-none d-lg-inline">Planes Prorrateo</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-1"
+                            data-bs-toggle="modal" data-bs-target="#modalUbicaciones">
+                            <i class="fa-solid fa-map-marked-alt"></i>
+                            <span class="d-none d-lg-inline">Ubicaciones</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -200,29 +223,28 @@ require_once '../includes/sidebar.php';
                                 <option value="18">Vacío: Observaciones</option>
                                 <option value="19">Vacío: Tipo Conex.</option>
                                 <option value="20">Vacío: Tipo Instal.</option>
-                                <option value="21">Vacío: Num. ONU</option>
-                                <option value="22">Vacío: MAC/Serial</option>
-                                <option value="23">Vacío: IP ONU</option>
-                                <option value="24">Vacío: Caja NAP</option>
-                                <option value="25">Vacío: Puerto NAP</option>
-                                <option value="26">Vacío: NAP TX (dBm)</option>
-                                <option value="27">Vacío: ONU RX (dBm)</option>
-                                <option value="28">Vacío: Dist. Drop (m)</option>
-                                <option value="29">Vacío: Instalador FTTH</option>
-                                <option value="30">Vacío: Instalador Radio</option>
-                                <option value="31">Vacío: Evidencia Fibra</option>
-                                <option value="32">Vacío: Punto Acceso</option>
-                                <option value="33">Vacío: Val. Conex. (dBm)</option>
-                                <option value="34">Vacío: Precinto ODN</option>
-                                <option value="35">Vacío: Foto</option>
-                                <option value="36">Vacío: Firma Cliente</option>
-                                <option value="37">Vacío: Firma Técnico</option>
-                                <option value="38">Vacío: Vendedor (Edit)</option>
-                                <option value="39">Vacío: SAE Plus (Edit)</option>
-                                <option value="40">Vacío: Plan</option>
-                                <option value="41">Vacío: OLT</option>
-                                <option value="42">Vacío: PON</option>
-                                <option value="43">Vacío: Estado</option>
+                                <option value="21">Vacío: MAC/Serial</option>
+                                <option value="22">Vacío: IP ONU</option>
+                                <option value="23">Vacío: Caja NAP</option>
+                                <option value="24">Vacío: Puerto NAP</option>
+                                <option value="25">Vacío: NAP TX (dBm)</option>
+                                <option value="26">Vacío: ONU RX (dBm)</option>
+                                <option value="27">Vacío: Dist. Drop (m)</option>
+                                <option value="28">Vacío: Instalador FTTH</option>
+                                <option value="29">Vacío: Instalador Radio</option>
+                                <option value="30">Vacío: Evidencia Fibra</option>
+                                <option value="31">Vacío: Punto Acceso</option>
+                                <option value="32">Vacío: Val. Conex. (dBm)</option>
+                                <option value="33">Vacío: Precinto ODN</option>
+                                <option value="34">Vacío: Foto</option>
+                                <option value="35">Vacío: Firma Cliente</option>
+                                <option value="36">Vacío: Firma Técnico</option>
+                                <option value="37">Vacío: Vendedor (Edit)</option>
+                                <option value="38">Vacío: SAE Plus (Edit)</option>
+                                <option value="39">Vacío: Plan</option>
+                                <option value="40">Vacío: OLT</option>
+                                <option value="41">Vacío: PON</option>
+                                <option value="42">Vacío: Estado</option>
                             </select>
                         </div>
                     </div>
@@ -296,7 +318,6 @@ require_once '../includes/sidebar.php';
                                 <!-- Tecnicos -->
                                 <th>Tipo Conex.</th>
                                 <th>Tipo Instal.</th>
-                                <th>Num. ONU</th>
                                 <th>MAC/Serial</th>
                                 <th>IP ONU</th>
                                 <th>Caja NAP</th>
@@ -1385,11 +1406,6 @@ require_once '../includes/sidebar.php';
                     </div>
                     <div class="row g-3 mb-4" id="edit_campos_ftth">
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold text-primary">Número de ONU</label>
-                            <input type="text" class="form-control form-control-sm border-primary" id="edit_numero_onu" name="numero_onu"
-                                placeholder="Ej. 1">
-                        </div>
-                        <div class="col-md-4">
                             <label class="form-label small fw-bold">MAC/Serial ONU</label>
                             <input type="text" class="form-control form-control-sm" id="edit_mac" name="mac_onu"
                                 pattern="[A-Fa-f0-9:.\-]{8,20}" placeholder="FABBCC112233">
@@ -1673,7 +1689,7 @@ require_once '../includes/sidebar.php';
                 { header: 'Observ.', key: 'observaciones', width: 30 },
                 { header: 'Tipo Conex.', key: 'tipo_conexion', width: 15 },
                 { header: 'Tipo Instal.', key: 'tipo_instalacion', width: 15 },
-                { header: 'Num. ONU', key: 'numero_onu', width: 15 },
+
                 { header: 'MAC/Serial', key: 'mac_serial', width: 20 },
                 { header: 'IP ONU', key: 'ip_onu', width: 15 },
                 { header: 'Caja NAP', key: 'caja_nap', width: 10 },
@@ -2061,7 +2077,7 @@ require_once '../includes/sidebar.php';
                 $('#edit_puerto_nap').val(d.puerto_nap);
                 $('#edit_odn').val(d.num_presinto_odn);
                 $('#edit_mac').val(d.mac_onu);
-                $('#edit_numero_onu').val(d.numero_onu || '');
+
                 $('#edit_ip_onu').val(d.ip_onu);
                 $('#edit_nap_tx').val(d.nap_tx_power);
                 $('#edit_onu_rx').val(d.onu_rx_power);

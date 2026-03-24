@@ -99,7 +99,7 @@ $nap_tx_power = isset($_POST['nap_tx_power']) ? $conn->real_escape_string($_POST
 $onu_rx_power = isset($_POST['onu_rx_power']) ? $conn->real_escape_string($_POST['onu_rx_power']) : '';
 $distancia_drop = isset($_POST['distancia_drop']) ? $conn->real_escape_string($_POST['distancia_drop']) : '';
 $evidencia_fibra = isset($_POST['evidencia_fibra']) ? $conn->real_escape_string($_POST['evidencia_fibra']) : '';
-$numero_onu = isset($_POST['numero_onu']) ? $conn->real_escape_string($_POST['numero_onu']) : '';
+$evidencia_fibra = isset($_POST['evidencia_fibra']) ? $conn->real_escape_string($_POST['evidencia_fibra']) : '';
 
 // PROCESAR FOTO EVIDENCIA
 $evidencia_foto = null;
@@ -331,7 +331,7 @@ if ($error_mensaje) {
         num_presinto_odn, id_olt, id_pon, tipo_instalacion, monto_instalacion, 
         gastos_adicionales, monto_pagar, monto_pagado, instalador, instalador_c,
         telefono_secundario, correo_adicional, medio_pago, moneda_pago, plan_prorrateo_nombre, dias_prorrateo,
-        monto_prorrateo_usd, observaciones, tipo_conexion, mac_onu, ip_onu, numero_onu,
+        monto_prorrateo_usd, observaciones, tipo_conexion, mac_onu, ip_onu,
         nap_tx_power, onu_rx_power, distancia_drop, punto_acceso, valor_conexion_dbm,
         evidencia_fibra, evidencia_foto, evidencia_documento, firma_cliente, firma_tecnico,
         token_firma, estado_firma
@@ -340,12 +340,15 @@ if ($error_mensaje) {
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-        ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?
     )";
 
         $stmt = $conn->prepare($sql);
 
-        $types = "ssssii" . "ss" . "id" . "sssssssiisddddss" . "sssssidssssssssssssss" . "sss";
+        // 49 params: ssss=cedula..correo | ii=id_mun,id_par | ss=texto,texto | i=id_plan | d=monto_plan | s=vendedor
+        // sssssss=dir..presinto | ii=id_olt,id_pon | s=tipo_instal | dddd=montos | sssssss=instalador..plan_prorra
+        // i=dias | d=monto_prorra | sssssssssssssssss=observ..estado_firma (17 s from pos 33 to 49)
+        $types = "ssssiissidsssssssiisddddssssssidsssssssssssssssss";
 
         $stmt->bind_param(
             $types,
@@ -386,7 +389,6 @@ if ($error_mensaje) {
             $tipo_conexion,
             $mac_onu,
             $ip_onu,
-            $numero_onu,
             $nap_tx_power,
             $onu_rx_power,
             $distancia_drop,

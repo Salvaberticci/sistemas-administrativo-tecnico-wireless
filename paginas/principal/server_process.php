@@ -39,8 +39,7 @@ $aColumnas = [
     'c.observaciones',          // 17
     'c.tipo_conexion',          // 18
     'c.tipo_instalacion',       // 18.1 [NEW]
-    'c.numero_onu',             // 19
-    'c.mac_onu',                // 20
+    'c.mac_onu',                // 19
     'c.ip_onu',                 // 21
     'c.ident_caja_nap',         // 22
     'c.puerto_nap',             // 23
@@ -234,10 +233,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 18.1 TIPO INSTALACION
     $row[] = clean($aRow['tipo_instalacion']);
 
-    // 19. NUMERO ONU
-    $row[] = clean($aRow['numero_onu']);
-
-    // 20. MAC ONU
+    // 19. MAC ONU
     $row[] = clean($aRow['mac_onu']);
 
     // 21. IP ONU

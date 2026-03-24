@@ -44,7 +44,7 @@ try {
         'Observ.' => 'observaciones',
         'Tipo Conex.' => 'tipo_conexion',
         'Tipo Instal.' => 'tipo_instalacion',
-        'Num. ONU' => 'numero_onu',
+
         'MAC/Serial' => 'mac_onu',
         'IP ONU' => 'ip_onu',
         'Caja NAP' => 'ident_caja_nap',

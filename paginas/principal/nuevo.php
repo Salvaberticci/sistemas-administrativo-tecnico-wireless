@@ -415,12 +415,7 @@ require_once '../includes/sidebar.php';
                             placeholder="192.168.1.1">
                     </div>
 
-                    <div class="col-md-6 campo-ftth">
-                        <label for="numero_onu" class="form-label text-primary fw-bold">Número de ONU <span
-                                class="text-danger">*</span></label>
-                        <input type="text" class="form-control border-primary shadow-sm" id="numero_onu"
-                            name="numero_onu" placeholder="Ej. 1">
-                    </div>
+
 
                     <div class="col-md-6 campo-ftth">
                         <label for="ident_caja_nap" class="form-label">Identificación Caja NAP <span
@@ -607,6 +602,62 @@ require_once '../includes/sidebar.php';
         e.preventDefault();
         const form = e.target;
 
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const cedula = $('#cedula').val();
+        const tipoCedula = $('#tipo_cedula').val();
+        // Extraer solo los números para la API
+        const cedulaNum = cedula.startsWith(tipoCedula) ? cedula.substring(tipoCedula.length) : cedula.replace(/[^0-9]/g, '');
+
+        // VALIDACIÓN DE DUPLICADOS (Nuevo paso)
+        $.ajax({
+            url: 'check_cedula_api.php',
+            type: 'GET',
+            data: {
+                cedula: cedulaNum,
+                tipo_cedula: tipoCedula
+            },
+            dataType: 'json',
+            success: function (response) {
+                if (response.exists) {
+                    Swal.fire({
+                        title: '¡Cédula Detectada!',
+                        html: `Ya existe un contrato registrado con esta cédula (<b>${tipoCedula}-${cedulaNum}</b>) a nombre de:<br><b>${response.nombre_completo}</b><br><br>¿Quieres registrar un nuevo contrato con esta misma cédula?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#198754',
+                        cancelButtonColor: '#dc3545',
+                        confirmButtonText: 'Sí, registrar otro',
+                        cancelButtonText: 'No, cambiar cédula'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            procederAlResumen(form);
+                        } else {
+                            Swal.fire({
+                                title: 'Cambio de Cédula',
+                                text: 'Entonces, por favor ingresa otra cédula para registrar este contrato.',
+                                icon: 'info',
+                                confirmButtonText: 'Entendido'
+                            }).then(() => {
+                                $('#cedula').val('').focus();
+                            });
+                        }
+                    });
+                } else {
+                    procederAlResumen(form);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Error al verificar cédula:", error);
+                procederAlResumen(form); // Fallback: Proceed if API fails
+            }
+        });
+    }
+
+    function procederAlResumen(form) {
         // Extraer datos para el resumen
         const cedula = $('#cedula').val();
         const nombre = $('#nombre_completo').val();
@@ -617,11 +668,6 @@ require_once '../includes/sidebar.php';
         const medio = $('#medio_pago').val();
         const tipoConex = $('#tipo_conexion').val();
         const tecnico = (tipoConex === 'FTTH') ? $('#instalador_ftth').val() : $('#instalador_radio').val();
-
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
 
         const htmlResumen = `
             <div class="text-start">
@@ -1168,7 +1214,8 @@ require_once '../includes/sidebar.php';
         $('#cedula').on('blur', function () {
             const val = $(this).val().trim();
             const tipoCedula = $('#tipo_cedula').val();
-            // Extraer solo los números para la API (el campo ya el prefijo por el listener de input)
+            const $el = $(this);
+            // Extraer solo los números para la API
             const cedulaNum = val.startsWith(tipoCedula) ? val.substring(tipoCedula.length) : val.replace(/[^0-9]/g, '');
 
             if (cedulaNum.length > 0) {
@@ -1184,10 +1231,24 @@ require_once '../includes/sidebar.php';
                         if (response.exists) {
                             Swal.fire({
                                 title: '¡Cédula Detectada!',
-                                html: `Ya existe un contrato registrado con esta cédula (<b>${tipoCedula}-${cedula}</b>) a nombre de:<br><b>${response.nombre_completo}</b>`,
+                                html: `Ya existe un contrato registrado con esta cédula (<b>${tipoCedula}-${cedulaNum}</b>) a nombre de:<br><b>${response.nombre_completo}</b><br><br>¿Quieres registrar un nuevo contrato con esta misma cédula?`,
                                 icon: 'warning',
-                                confirmButtonColor: '#3085d6',
-                                confirmButtonText: 'Entendido'
+                                showCancelButton: true,
+                                confirmButtonColor: '#198754',
+                                cancelButtonColor: '#dc3545',
+                                confirmButtonText: 'Sí, registrar otro',
+                                cancelButtonText: 'No, cambiar cédula'
+                            }).then((result) => {
+                                if (!result.isConfirmed) {
+                                    Swal.fire({
+                                        title: 'Cambio de Cédula',
+                                        text: 'Entonces, por favor ingresa otra cédula para registrar este contrato.',
+                                        icon: 'info',
+                                        confirmButtonText: 'Entendido'
+                                    }).then(() => {
+                                        $el.val('').focus();
+                                    });
+                                }
                             });
                         }
                     },

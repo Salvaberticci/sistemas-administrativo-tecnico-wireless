@@ -27,7 +27,6 @@ $sql = "SELECT
             c.observaciones,
             c.tipo_conexion,
             c.tipo_instalacion,
-            c.numero_onu,
             c.mac_onu AS mac_serial,
             c.ip_onu,
             c.ident_caja_nap AS caja_nap,

@@ -40,7 +40,6 @@ $onu_rx_power = trim($conn->real_escape_string($_POST['onu_rx_power'] ?? ''));
 $distancia_drop = trim($conn->real_escape_string($_POST['distancia_drop'] ?? ''));
 $punto_acceso = trim($conn->real_escape_string($_POST['punto_acceso'] ?? ''));
 $valor_conexion = trim($conn->real_escape_string($_POST['valor_conexion_dbm'] ?? ''));
-$numero_onu = trim($conn->real_escape_string($_POST['numero_onu'] ?? ''));
 $observaciones = $conn->real_escape_string($_POST['observaciones'] ?? '');
 $plan_prorrateo_nombre = $conn->real_escape_string($_POST['plan_prorrateo_nombre'] ?? '');
 $dias_prorrateo = intval($_POST['dias_prorrateo'] ?? 0);
@@ -212,7 +211,7 @@ $sql = "UPDATE contratos SET
     direccion='$direccion', fecha_instalacion='$fecha_inst', estado='$estado',
     ident_caja_nap='$ident_caja_nap', puerto_nap='$puerto_nap', num_presinto_odn='$num_presinto_odn',
     id_olt=$olt, id_pon=$pon,
-    tipo_conexion='$tipo_conexion', tipo_instalacion='$tipo_instalacion', mac_onu='$mac_onu', ip_onu='$ip_onu', numero_onu='$numero_onu',
+    tipo_conexion='$tipo_conexion', tipo_instalacion='$tipo_instalacion', mac_onu='$mac_onu', ip_onu='$ip_onu', 
     nap_tx_power='$nap_tx_power', onu_rx_power='$onu_rx_power', distancia_drop='$distancia_drop',
     punto_acceso='$punto_acceso', valor_conexion_dbm='$valor_conexion',
     observaciones='$observaciones',

@@ -148,7 +148,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $mac_onu = strtoupper(trim($conn->real_escape_string($_POST['mac_onu'] ?? '')));
         $ip_onu = trim($conn->real_escape_string($_POST['ip_onu'] ?? ''));
-        $numero_onu = trim($conn->real_escape_string($_POST['numero_onu'] ?? ''));
 
         // Manejar duplicidad de campos Nap/Puerto
         $ident_caja_nap = $conn->real_escape_string($_POST['ident_caja_nap'] ?? '');
@@ -214,7 +213,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             direccion, telefono, telefono_secundario, correo, correo_adicional, fecha_instalacion, 
             tipo_instalacion, medio_pago, monto_instalacion, gastos_adicionales, plan_prorrateo_nombre, dias_prorrateo, monto_prorrateo_usd,
             monto_pagar, monto_pagado, moneda_pago, observaciones, 
-            tipo_conexion, mac_onu, ip_onu, numero_onu, ident_caja_nap, puerto_nap, 
+            tipo_conexion, mac_onu, ip_onu, ident_caja_nap, puerto_nap, 
             nap_tx_power, onu_rx_power, distancia_drop, instalador, instalador_c,
             punto_acceso, valor_conexion_dbm, num_presinto_odn, evidencia_foto, evidencia_documento, 
             evidencia_fibra, firma_cliente, firma_tecnico, id_olt, id_pon, estado, sae_plus
@@ -223,7 +222,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             '$direccion', '$telefono', '$telefono_secundario', '$correo', '$correo_adicional', '$fecha_instalacion', 
             '$tipo_instalacion', '$medio_pago', '$monto_instalacion', '$gastos_adicionales', " . ($plan_prorrateo_nombre ? "'$plan_prorrateo_nombre'" : "NULL") . ", $dias_prorrateo, $monto_prorrateo_usd,
             $monto_pagar, $monto_pagado, '$moneda_pago', '$observaciones', 
-            '$tipo_conexion', '$mac_onu', '$ip_onu', '$numero_onu', '$ident_caja_nap', '$puerto_nap', 
+            '$tipo_conexion', '$mac_onu', '$ip_onu', '$ident_caja_nap', '$puerto_nap', 
             '$nap_tx_power', '$onu_rx_power', '$distancia_drop', '$instalador', '$instalador_c',
             '$punto_acceso', '$valor_conexion_dbm', '$num_presinto_odn', " . ($evidencia_foto ? "'$evidencia_foto'" : "NULL") . ", " . ($evidencia_documento ? "'$evidencia_documento'" : "NULL") . ", 
             '$evidencia_fibra', " . ($firma_cliente ? "'$firma_cliente'" : "NULL") . ", " . ($firma_tecnico ? "'$firma_tecnico'" : "NULL") . ", " . ($id_olt ?: "NULL") . ", " . ($id_pon ?: "NULL") . ", '$estado', '$sae_plus'

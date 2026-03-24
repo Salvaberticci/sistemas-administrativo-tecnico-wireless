@@ -431,13 +431,6 @@ if (file_exists($jsonFileTypes)) {
                             </div>
 
                             <div class="col-md-6 campo-ftth">
-                                <label for="numero_onu" class="form-label text-primary fw-bold">Número de ONU <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control border-primary shadow-sm" id="numero_onu"
-                                    name="numero_onu" placeholder="Ej. 1">
-                            </div>
-
-                            <div class="col-md-6 campo-ftth">
                                 <label for="nap_tx_power" class="form-label">NAP TX Power (dBm) <span
                                         class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="nap_tx_power" name="nap_tx_power"
@@ -639,6 +632,62 @@ if (file_exists($jsonFileTypes)) {
             e.preventDefault();
             const form = e.target;
 
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const cedula = $('#cedula').val();
+            const prefijo = $('#tipo_cedula').val();
+            // Extraer solo los números para la API
+            const cedulaNum = cedula.startsWith(prefijo) ? cedula.substring(prefijo.length) : cedula.replace(/[^0-9]/g, '');
+
+            // VALIDACIÓN DE DUPLICADOS (Nuevo paso)
+            $.ajax({
+                url: '../principal/check_cedula_api.php',
+                type: 'GET',
+                data: {
+                    cedula: cedulaNum,
+                    tipo_cedula: prefijo
+                },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.exists) {
+                        Swal.fire({
+                            title: '¡Cédula Detectada!',
+                            html: `Ya existe un contrato registrado con esta cédula (<b>${prefijo}-${cedulaNum}</b>) a nombre de:<br><b>${response.nombre_completo}</b><br><br>¿Quieres registrar un nuevo contrato con esta misma cédula?`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#198754',
+                            cancelButtonColor: '#dc3545',
+                            confirmButtonText: 'Sí, registrar otro',
+                            cancelButtonText: 'No, cambiar cédula'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                procederAlResumen(form);
+                            } else {
+                                Swal.fire({
+                                    title: 'Cambio de Cédula',
+                                    text: 'Entonces, por favor ingresa otra cédula para registrar este contrato.',
+                                    icon: 'info',
+                                    confirmButtonText: 'Entendido'
+                                }).then(() => {
+                                    $('#cedula').val('').focus();
+                                });
+                            }
+                        });
+                    } else {
+                        procederAlResumen(form);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al verificar cédula:", error);
+                    procederAlResumen(form);
+                }
+            });
+        }
+
+        function procederAlResumen(form) {
             // Extraer datos para el resumen
             const cedula = $('#cedula').val();
             const nombre = $('#nombre_completo').val();
@@ -648,11 +697,6 @@ if (file_exists($jsonFileTypes)) {
             const moneda = $('#moneda_pago').val();
             const medio = $('#medio_pago').val();
             const tecnico = $('#instaladores').val();
-
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
 
             const htmlResumen = `
                 <div class="text-start">
@@ -810,6 +854,7 @@ if (file_exists($jsonFileTypes)) {
         $cedulaInput.on('blur', function () {
             const val = $(this).val().trim();
             const prefijo = $tipoCedula.val();
+            const $el = $(this);
             // Extraer solo los números para la API
             const cedulaNum = val.startsWith(prefijo) ? val.substring(prefijo.length) : val.replace(/[^0-9]/g, '');
 
@@ -826,10 +871,24 @@ if (file_exists($jsonFileTypes)) {
                         if (response.exists) {
                             Swal.fire({
                                 title: '¡Cédula Detectada!',
-                                html: `Ya existe un contrato registrado con esta cédula (<b>${prefijo}-${cedulaNum}</b>) a nombre de:<br><b>${response.nombre_completo}</b>`,
+                                html: `Ya existe un contrato registrado con esta cédula (<b>${prefijo}-${cedulaNum}</b>) a nombre de:<br><b>${response.nombre_completo}</b><br><br>¿Quieres registrar un nuevo contrato con esta misma cédula?`,
                                 icon: 'warning',
-                                confirmButtonColor: '#3085d6',
-                                confirmButtonText: 'Entendido'
+                                showCancelButton: true,
+                                confirmButtonColor: '#198754',
+                                cancelButtonColor: '#dc3545',
+                                confirmButtonText: 'Sí, registrar otro',
+                                cancelButtonText: 'No, cambiar cédula'
+                            }).then((result) => {
+                                if (!result.isConfirmed) {
+                                    Swal.fire({
+                                        title: 'Cambio de Cédula',
+                                        text: 'Entonces, por favor ingresa otra cédula para registrar este contrato.',
+                                        icon: 'info',
+                                        confirmButtonText: 'Entendido'
+                                    }).then(() => {
+                                        $el.val('').focus();
+                                    });
+                                }
                             });
                         }
                     },
@@ -1012,7 +1071,7 @@ if (file_exists($jsonFileTypes)) {
                 if (tipo === 'FTTH') {
                     $('.campo-ftth').show();
                     $('.campo-ftth :input').prop('disabled', false); // Habilitar campos FTTH
-                    $('#mac_onu, #ip_onu, #ident_caja_nap, #puerto_nap, #nap_tx_power, #onu_rx_power, #distancia_drop, #num_presinto_odn, #numero_onu').prop('required', true);
+                    $('#mac_onu, #ip_onu, #ident_caja_nap, #puerto_nap, #nap_tx_power, #onu_rx_power, #distancia_drop, #num_presinto_odn').prop('required', true);
                     
                     // Si la IP está vacía, restaurar el prefijo por defecto
                     if ($('#ip_onu').val() === '') {
