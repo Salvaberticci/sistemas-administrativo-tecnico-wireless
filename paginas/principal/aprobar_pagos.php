@@ -269,10 +269,21 @@ $resultado = $conn->query($sql);
                                         <label class="form-label fw-bold">Banco Receptor</label>
                                         <select name="id_banco" id="ap_id_banco" class="form-select" required>
                                             <?php
-                                            // Recargar bancos para el modal
-                                            $res_banks = $conn->query("SELECT id_banco, nombre_banco FROM bancos");
-                                            while ($b = $res_banks->fetch_assoc()) {
-                                                echo "<option value='" . $b['id_banco'] . "'>" . htmlspecialchars($b['nombre_banco']) . "</option>";
+                                            // Recargar bancos para el modal desde JSON (nuevo sistema) o BD antigua
+                                            $jsonFile = 'bancos.json';
+                                            if (file_exists($jsonFile)) {
+                                                $bancosData = json_decode(file_get_contents($jsonFile), true);
+                                                if ($bancosData) {
+                                                    foreach ($bancosData as $b) {
+                                                        echo "<option value='" . htmlspecialchars($b['id_banco']) . "'>" . htmlspecialchars($b['nombre_banco']) . "</option>";
+                                                    }
+                                                }
+                                            } else {
+                                                // Fallback si no hay JSON
+                                                $res_banks = $conn->query("SELECT id_banco, nombre_banco FROM bancos");
+                                                while ($b = $res_banks->fetch_assoc()) {
+                                                    echo "<option value='" . $b['id_banco'] . "'>" . htmlspecialchars($b['nombre_banco']) . "</option>";
+                                                }
                                             }
                                             ?>
                                         </select>
@@ -416,6 +427,8 @@ $resultado = $conn->query($sql);
         // Reset OCR UI
         document.getElementById('ocrStatus').style.display = 'block';
         document.getElementById('ocrText').innerText = 'Analizando capture con OCR...';
+        const spinner = document.querySelector('#ocrStatus .spinner-border');
+        if (spinner) spinner.style.display = 'inline-block';
 
         console.log("Preparando aprobación para reporte:", data);
 
@@ -587,14 +600,56 @@ $resultado = $conn->query($sql);
                 valOcrEl.innerText = displayVal;
                 valOcrEl.className = 'badge bg-success';
             } else {
-                statusText.innerHTML = '<span class="text-warning"><i class="fas fa-exclamation-triangle"></i> No detectado en capture — ingrese manualmente</span>';
+                statusText.innerHTML = '<span class="text-warning"><i class="fas fa-exclamation-triangle"></i> Monto no detectado — ingrese manualmente</span>';
                 document.getElementById('val_monto_ocr').innerText = 'No detectado';
                 document.getElementById('val_monto_ocr').className = 'badge bg-warning text-dark';
             }
 
+            // --- Extraer Referencia (Mejorada) ---
+            let detectedRef = null;
+            const refRegex = /(?:[Rr]ef(?:erencia)?|[Oo]p(?:eraci[oó]n)?|ID)[.:\s]*(\d{4,12})/i;
+            const mRef = text.match(refRegex);
+            if (mRef && mRef[1] && mRef[1].length >= 4) {
+                detectedRef = mRef[1];
+            } else {
+                // Buscamos secuencias de 6 a 12 dígitos como fallback
+                const fallbackRefRegex = /(?<![\d.,])(\d{6,12})(?![\d.,])/g;
+                let matches = [...text.matchAll(fallbackRefRegex)];
+                if (matches.length > 0) {
+                     detectedRef = matches[matches.length - 1][1]; 
+                }
+            }
+            if (detectedRef) {
+                document.getElementById('ap_referencia').value = detectedRef;
+                statusText.innerHTML += `<br><span class="text-success small"><i class="fas fa-check"></i> Referencia sugerida: <strong>${detectedRef}</strong></span>`;
+            }
+
+            // --- Extraer Fecha ---
+            let detectedDate = null;
+            // Buscar DD/MM/YYYY, DD-MM-YYYY o DD/MM/YY
+            const dateRegex = /\b(\d{2})[\/\-](\d{2})[\/\-](\d{2,4})\b/g;
+            let mDate = [...text.matchAll(dateRegex)];
+            if (mDate.length > 0) {
+                 let day = mDate[0][1];
+                 let month = mDate[0][2];
+                 let year = mDate[0][3];
+                 if (year.length === 2) year = "20" + year; // Asumir 20xx para años de 2 dígitos
+                 detectedDate = `${year}-${month}-${day}`;
+            }
+            if (detectedDate) {
+                 document.getElementById('ap_fecha_pago').value = detectedDate;
+                 // Formato español para visualización
+                 const [y, m, d] = detectedDate.split('-');
+                 statusText.innerHTML += `<br><span class="text-success small"><i class="fas fa-check"></i> Fecha de comprobante: <strong>${d}/${m}/${y}</strong></span>`;
+            }
+
         } catch (err) {
             console.error("OCR Error:", err);
-            statusText.innerHTML = '<span class="text-muted"><i class="fas fa-times"></i> OCR no disponible</span>';
+            statusText.innerHTML = '<span class="text-danger"><i class="fas fa-times"></i> Error procesando OCR comprobante</span>';
+        } finally {
+            // Eliminar spinner al concluir el OCR para indicar que la carga finalizó
+            const spinner = document.querySelector('#ocrStatus .spinner-border');
+            if (spinner) spinner.style.display = 'none';
         }
     }
     // === VALIDACIÓN DE MONTOS (SOLO NÚMEROS Y POSITIVOS) ===
