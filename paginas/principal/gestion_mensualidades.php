@@ -367,6 +367,7 @@ require_once '../includes/sidebar.php';
                                         <div class="col-4">
                                             <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
                                             <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_mensualidad" placeholder="0,00" inputmode="decimal">
+                                            <div class="equiv-desglose text-primary fw-bold mt-1" style="font-size: 0.7rem;"></div>
                                         </div>
                                         <div class="col-3">
                                             <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Cant.</label>
@@ -392,6 +393,7 @@ require_once '../includes/sidebar.php';
                                     <div class="d-none desglose-fields mt-1" id="fields_instalacion">
                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
                                         <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_instalacion" placeholder="0,00" inputmode="decimal">
+                                        <div class="equiv-desglose text-primary fw-bold mt-1" style="font-size: 0.7rem;"></div>
                                     </div>
                                 </div>
 
@@ -406,6 +408,7 @@ require_once '../includes/sidebar.php';
                                     <div class="d-none desglose-fields mt-1" id="fields_equipo">
                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
                                         <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_equipo" placeholder="0,00" inputmode="decimal">
+                                        <div class="equiv-desglose text-primary fw-bold mt-1" style="font-size: 0.7rem;"></div>
                                     </div>
                                 </div>
 
@@ -421,6 +424,7 @@ require_once '../includes/sidebar.php';
                                             <div class="d-none desglose-fields mt-1" id="fields_prorrateo">
                                                 <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
                                                 <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_prorrateo" placeholder="0,00" inputmode="decimal">
+                                                <div class="equiv-desglose text-primary fw-bold mt-1" style="font-size: 0.7rem;"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -450,6 +454,7 @@ require_once '../includes/sidebar.php';
                                                     <div class="col-3">
                                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
                                                         <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="extra_monto[]" placeholder="0,00" inputmode="decimal">
+                                                        <div class="equiv-desglose text-primary fw-bold mt-1" style="font-size: 0.7rem;"></div>
                                                     </div>
                                                     <div class="col-2">
                                                         <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Cant.</label>
@@ -1109,6 +1114,35 @@ require_once '../includes/sidebar.php';
                     displayEquivPagoHoy.textContent = `Equivalente: Bs. ${(usd * TASA_BCV).toFixed(2)}`;
                 }
             }
+
+            // Sincronizar todos los equivalentes del desglose
+            updateAllDesgloseEquivalents();
+        }
+
+        function updateAllDesgloseEquivalents() {
+            if (!TASA_BCV) return;
+            let esBs = document.getElementById('moneda_cobro_bs').checked;
+            
+            // Buscar todos los montos de desglose
+            const inputsDesglose = document.querySelectorAll('#modalGenerarCobro .desglose-monto');
+            inputsDesglose.forEach(input => {
+                let val = parseFloat(input.value.replace(',', '.')) || 0;
+                let container = input.parentElement.querySelector('.equiv-desglose');
+                if (!container) return;
+
+                if (val <= 0) {
+                    container.textContent = '';
+                    return;
+                }
+
+                if (esBs) {
+                    let usd = val / TASA_BCV;
+                    container.textContent = `Equivalente: $${usd.toFixed(2)}`;
+                } else {
+                    let bs = val * TASA_BCV;
+                    container.textContent = `Equivalente: Bs. ${bs.toFixed(2)}`;
+                }
+            });
         }
 
         if (inputMontoCobro) {
@@ -1117,6 +1151,14 @@ require_once '../includes/sidebar.php';
                 calcCobro();
             });
             radiosMonedaCobro.forEach(r => r.addEventListener('change', calcCobro));
+
+            // Escuchar cambios en cualquier monto de desglose
+            document.querySelector('#modalGenerarCobro').addEventListener('input', (e) => {
+                if (e.target.classList.contains('desglose-monto')) {
+                    updateAllDesgloseEquivalents();
+                    if (typeof validarSumatoriaDesglose === 'function') validarSumatoriaDesglose();
+                }
+            });
         }
 
         if (inputPagoHoy) {
