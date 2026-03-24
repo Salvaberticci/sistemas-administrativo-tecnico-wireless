@@ -175,7 +175,8 @@ while ($aRow = $rResult->fetch_assoc()) {
     $row[] = clean($aRow['cedula']);
 
     // 3. NOMBRE
-    $row[] = "<span class='fw-bold text-primary'>" . clean($aRow['nombre_completo']) . "</span>";
+    $nombre = clean($aRow['nombre_completo']);
+    $row[] = "<div class='text-truncate-scroll fw-bold text-primary' style='max-width: 220px;' title='{$nombre}'>{$nombre}</div>";
 
     // 4. MONTO PLAN [NEW]
     $row[] = "<span class='badge bg-light text-dark border'>$" . clean($aRow['monto_plan']) . "</span>";
@@ -225,7 +226,8 @@ while ($aRow = $rResult->fetch_assoc()) {
     $row[] = clean($aRow['monto_prorrateo_usd']);
 
     // 17. OBSERVACIONES
-    $row[] = clean($aRow['observaciones']);
+    $obs = clean($aRow['observaciones']);
+    $row[] = "<div class='text-truncate-scroll' style='max-width: 250px;' title='{$obs}'>{$obs}</div>";
 
     // 18. TIPO CONEXION
     $row[] = clean($aRow['tipo_conexion']);

@@ -63,21 +63,34 @@ require_once '../includes/sidebar.php';
         margin-bottom: 10px;
     }
 
-    /* Celdas mas compactas */
+    /* Celdas mas compactas y estables */
     #mitabla tbody td {
         font-size: 0.85rem;
         vertical-align: middle;
         white-space: nowrap;
-        /* Evita saltos de linea largos */
+        overflow: hidden;
+        text-overflow: ellipsis;
         padding: 4px 8px;
     }
 
-    /* Estilo Editable Excel */
+    /* Forzar el ancho en columnas específicas si exceden el límite */
+    .col-fixed-sm { max-width: 100px; }
+    .col-fixed-md { max-width: 200px; }
+    .col-fixed-lg { max-width: 300px; }
+
     .editable-cell {
         cursor: text;
         transition: background-color 0.2s, border-color 0.2s;
         padding: 4px;
         border-radius: 4px;
+    }
+
+    /* Clase para truncar texto con elipsis */
+    .text-truncate-scroll {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
     }
 
     .editable-cell:hover {
@@ -1774,7 +1787,17 @@ require_once '../includes/sidebar.php';
             },
             "aoColumnDefs": [
                 { "bVisible": false, "aTargets": [0] }, // Ocultar ID
-                { "className": "text-center", "aTargets": "_all" } // Centrar todo por defecto
+                { "className": "text-center", "aTargets": "_all" }, // Centrar todo por defecto
+                
+                // Anchos Fijos para estabilidad (Indices 0-based)
+                { "sWidth": "120px", "aTargets": [1] },  // SAR
+                { "sWidth": "100px", "aTargets": [2] },  // Cédula
+                { "sWidth": "220px", "aTargets": [3] },  // Cliente
+                { "sWidth": "300px", "aTargets": [7] },  // Dirección
+                { "sWidth": "250px", "aTargets": [18] }, // Observ.
+                { "sWidth": "180px", "aTargets": [22] }, // IP ONU
+                { "sWidth": "120px", "aTargets": [21] }, // MAC/Serial
+                { "sWidth": "100px", "aTargets": [23] }  // Caja NAP
             ],
             // Callback tras dibujar la tabla (para bindings si fuera necesario, pero delegamos eventos al tbody)
         });

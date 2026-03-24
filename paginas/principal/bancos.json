@@ -9,15 +9,5 @@
             "Pago Móvil",
             "Transferencia"
         ]
-    },
-    {
-        "id_banco": "5",
-        "nombre_banco": "Zelle",
-        "numero_cuenta": "zelle@gmail.com",
-        "cedula_propietario": "30236536",
-        "nombre_propietario": "Zelle",
-        "metodos_pago": [
-            "Zelle"
-        ]
     }
 ]
