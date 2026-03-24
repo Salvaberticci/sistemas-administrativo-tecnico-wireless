@@ -1231,23 +1231,53 @@ require_once '../includes/sidebar.php';
                         if (response.exists) {
                             Swal.fire({
                                 title: '¡Cédula Detectada!',
-                                html: `Ya existe un contrato registrado con esta cédula (<b>${tipoCedula}-${cedulaNum}</b>) a nombre de:<br><b>${response.nombre_completo}</b><br><br>¿Quieres registrar un nuevo contrato con esta misma cédula?`,
+                                html: `Ya existe un contrato registrado con esta cédula (<b>${tipoCedula}-${cedulaNum}</b>) a nombre de:<br><b>${response.data.nombre_completo}</b><br><br>¿Quieres registrar un nuevo contrato cargando los datos de este cliente?`,
                                 icon: 'warning',
                                 showCancelButton: true,
                                 confirmButtonColor: '#198754',
                                 cancelButtonColor: '#dc3545',
-                                confirmButtonText: 'Sí, registrar otro',
-                                cancelButtonText: 'No, cambiar cédula'
+                                confirmButtonText: 'Sí, cargar datos',
+                                cancelButtonText: 'No, llenar manualmente',
+                                denyButtonText: 'Cambiar cédula',
+                                showDenyButton: true,
+                                reverseButtons: true
                             }).then((result) => {
-                                if (!result.isConfirmed) {
+                                if (result.isConfirmed) {
+                                    // AUTOCOMPLETAR DATOS
+                                    const d = response.data;
+                                    $('#nombre_completo').val(d.nombre_completo);
+                                    $('#correo').val(d.correo);
+                                    $('#correo_adicional').val(d.correo_adicional);
+                                    $('#direccion').val(d.direccion);
+                                    
+                                    // Teléfonos con intl-tel-input
+                                    if (window.iti1) window.iti1.setNumber(d.telefono || '');
+                                    else $('#telefono').val(d.telefono);
+                                    
+                                    if (window.iti2) window.iti2.setNumber(d.telefono_secundario || '');
+                                    else $('#telefono_secundario').val(d.telefono_secundario);
+
+                                    // Localización
+                                    if (d.municipio_texto) {
+                                        $('#municipio').val(d.municipio_texto).trigger('change');
+                                        // Timeout para esperar que carguen las parroquias
+                                        setTimeout(() => {
+                                            if (d.parroquia_texto) {
+                                                $('#parroquia').val(d.parroquia_texto).trigger('change');
+                                            }
+                                        }, 500);
+                                    }
+
                                     Swal.fire({
-                                        title: 'Cambio de Cédula',
-                                        text: 'Entonces, por favor ingresa otra cédula para registrar este contrato.',
-                                        icon: 'info',
-                                        confirmButtonText: 'Entendido'
-                                    }).then(() => {
-                                        $el.val('').focus();
+                                        icon: 'success',
+                                        title: 'Datos cargados',
+                                        text: 'Se han completado los campos con la información existente del cliente.',
+                                        timer: 2000,
+                                        showConfirmButton: false
                                     });
+
+                                } else if (result.isDenied) {
+                                    $el.val(tipoCedula).focus();
                                 }
                             });
                         }
@@ -1409,13 +1439,13 @@ require_once '../includes/sidebar.php';
     const telInput1 = document.querySelector("#telefono");
     const telInput2 = document.querySelector("#telefono_secundario");
 
-    const iti1 = window.intlTelInput(telInput1, {
+    window.iti1 = window.intlTelInput(telInput1, {
         initialCountry: "ve",
         separateDialCode: true,
         utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
     });
 
-    const iti2 = window.intlTelInput(telInput2, {
+    window.iti2 = window.intlTelInput(telInput2, {
         initialCountry: "ve",
         separateDialCode: true,
         utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",

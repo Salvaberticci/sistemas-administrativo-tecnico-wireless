@@ -16,7 +16,7 @@ if (empty($cedula_num)) {
 // Format cédula as it's stored in the database (e.g., V12345678)
 $cedula_completa = strtoupper($tipo_cedula . $cedula_num);
 
-$sql = "SELECT nombre_completo FROM contratos WHERE cedula = ?";
+$sql = "SELECT nombre_completo, telefono, correo, telefono_secundario, correo_adicional, direccion, id_municipio, id_parroquia, municipio_texto, parroquia_texto FROM contratos WHERE cedula = ?";
 $params = [$cedula_completa];
 $types = "s";
 
@@ -26,7 +26,7 @@ if (!empty($exclude_id)) {
     $types .= "i";
 }
 
-$sql .= " LIMIT 1";
+$sql .= " ORDER BY id DESC LIMIT 1";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param($types, ...$params);
@@ -37,7 +37,18 @@ if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
     echo json_encode([
         'exists' => true,
-        'nombre_completo' => $row['nombre_completo']
+        'data' => [
+            'nombre_completo' => $row['nombre_completo'],
+            'telefono' => $row['telefono'],
+            'correo' => $row['correo'],
+            'telefono_secundario' => $row['telefono_secundario'],
+            'correo_adicional' => $row['correo_adicional'],
+            'direccion' => $row['direccion'],
+            'id_municipio_id' => $row['id_municipio'],
+            'id_parroquia_id' => $row['id_parroquia'],
+            'municipio_texto' => $row['municipio_texto'],
+            'parroquia_texto' => $row['parroquia_texto']
+        ]
     ]);
 } else {
     echo json_encode(['exists' => false]);
