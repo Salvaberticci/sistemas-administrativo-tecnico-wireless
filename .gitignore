@@ -5,3 +5,4 @@ paginas/conexion.php
 .env
 *.zip
 node_modules/
+*.sql

@@ -57,11 +57,15 @@ try {
         $conn->query($sql_historial);
     }
 
-    // B. Delete accounts receivable
+    // B. Delete associated supports (added cleanup for FK constraint)
+    $sql_soportes = "DELETE FROM soportes WHERE id_contrato = $id";
+    $conn->query($sql_soportes);
+
+    // C. Delete accounts receivable
     $sql_cxc = "DELETE FROM cuentas_por_cobrar WHERE id_contrato = $id";
     $conn->query($sql_cxc);
 
-    // C. Delete parent record (contract)
+    // D. Delete parent record (contract)
     $sql_contrato = "DELETE FROM contratos WHERE id = $id";
     $conn->query($sql_contrato);
 
