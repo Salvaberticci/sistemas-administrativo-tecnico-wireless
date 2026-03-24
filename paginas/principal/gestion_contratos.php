@@ -1,10 +1,11 @@
 <?php
+$path_to_root = "../../";
+require_once '../includes/auth.php';
 /**
  * Página principal que muestra la tabla de registros
  */
 require '../conexion.php';
 
-$path_to_root = "../../";
 $page_title = "Gestión de Contratos";
 $breadcrumb = ["Admin"];
 $back_url = "../menu.php";
