@@ -104,14 +104,18 @@ try {
     $stats = ['updated' => 0, 'inserted' => 0, 'errors' => 0, 'skipped' => 0];
 
     foreach ($rows as $row) {
-        $rowData = [];
+        // Inicializar todos los campos con string vacío para evitar NULL
+        $rowData = array_fill_keys(array_values($colMap), '');
+        
         foreach ($headers as $colKey => $normHeader) {
             if (isset($colMap[$normHeader])) {
-                $rowData[$colMap[$normHeader]] = $row[$colKey] ?? '';
+                $val = $row[$colKey] ?? '';
+                $rowData[$colMap[$normHeader]] = ($val === null) ? '' : trim($val);
             }
         }
 
-        if (empty($rowData['cedula'])) {
+        // Validar datos mínimos obligatorios (Cédula y Nombre)
+        if (empty($rowData['cedula']) || empty($rowData['nombre_completo'])) {
             $stats['skipped']++;
             continue;
         }
