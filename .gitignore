@@ -4,5 +4,4 @@ paginas/config.php
 paginas/conexion.php
 .env
 *.zip
-vendor/
 node_modules/
