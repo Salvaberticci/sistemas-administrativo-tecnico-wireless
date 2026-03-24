@@ -365,7 +365,7 @@ require_once '../includes/sidebar.php';
                                     </div>
                                     <div class="d-none desglose-fields row g-2 mt-1" id="fields_mensualidad">
                                         <div class="col-4">
-                                            <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                            <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto</label>
                                             <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_mensualidad" placeholder="0,00" inputmode="decimal">
                                             <div class="equiv-desglose text-primary fw-bold mt-1" style="font-size: 0.7rem;"></div>
                                         </div>
@@ -391,7 +391,7 @@ require_once '../includes/sidebar.php';
                                         <label class="form-check-label fw-bold text-dark small mb-0" for="switch_instalacion">Instalación</label>
                                     </div>
                                     <div class="d-none desglose-fields mt-1" id="fields_instalacion">
-                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto</label>
                                         <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_instalacion" placeholder="0,00" inputmode="decimal">
                                         <div class="equiv-desglose text-primary fw-bold mt-1" style="font-size: 0.7rem;"></div>
                                     </div>
@@ -406,7 +406,7 @@ require_once '../includes/sidebar.php';
                                         <label class="form-check-label fw-bold text-dark small mb-0" for="switch_equipo">Equipos/Materiales</label>
                                     </div>
                                     <div class="d-none desglose-fields mt-1" id="fields_equipo">
-                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto</label>
                                         <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_equipo" placeholder="0,00" inputmode="decimal">
                                         <div class="equiv-desglose text-primary fw-bold mt-1" style="font-size: 0.7rem;"></div>
                                     </div>
@@ -422,7 +422,7 @@ require_once '../includes/sidebar.php';
                                                 <label class="form-check-label fw-bold text-dark small mb-0" for="switch_prorrateo" style="font-size: 0.75rem;">Prorrateo</label>
                                             </div>
                                             <div class="d-none desglose-fields mt-1" id="fields_prorrateo">
-                                                <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                                <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto</label>
                                                 <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="monto_prorrateo" placeholder="0,00" inputmode="decimal">
                                                 <div class="equiv-desglose text-primary fw-bold mt-1" style="font-size: 0.7rem;"></div>
                                             </div>
@@ -452,7 +452,7 @@ require_once '../includes/sidebar.php';
                                                 </div>
                                                 <div class="row g-2 align-items-end">
                                                     <div class="col-3">
-                                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
+                                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto</label>
                                                         <input type="text" class="form-control form-control-sm desglose-monto decimal-input" name="extra_monto[]" placeholder="0,00" inputmode="decimal">
                                                         <div class="equiv-desglose text-primary fw-bold mt-1" style="font-size: 0.7rem;"></div>
                                                     </div>
@@ -481,15 +481,18 @@ require_once '../includes/sidebar.php';
                                 <div class="row g-2 text-center text-md-start">
                                     <div class="col-4 border-end border-secondary">
                                         <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Monto Pagado</div>
-                                        <div class="fw-bold text-white fs-5">$ <span id="val_monto_total">0.00</span></div>
+                                        <div class="fw-bold text-white fs-5"><span class="sym_res"></span><span id="val_monto_total">0.00</span></div>
+                                        <div id="equiv_total_declarado" class="small opacity-75" style="font-size: 0.6rem;"></div>
                                     </div>
                                     <div class="col-4 border-end border-secondary">
                                         <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Monto Total a Pagar</div>
-                                        <div class="fw-bold text-info fs-5">$ <span id="val_suma_desglose">0.00</span></div>
+                                        <div class="fw-bold text-info fs-5"><span class="sym_res"></span><span id="val_suma_desglose">0.00</span></div>
+                                        <div id="equiv_total_desglose" class="small opacity-75" style="font-size: 0.6rem;"></div>
                                     </div>
                                     <div class="col-4">
                                         <div class="small fw-bold text-uppercase opacity-75" style="font-size: 0.55rem;">Saldo Pendiente</div>
-                                        <div class="fw-bold fs-5" id="container_restante">$ <span id="val_monto_restante">0.00</span></div>
+                                        <div class="fw-bold fs-5" id="container_restante"><span class="sym_res"></span><span id="val_monto_restante">0.00</span></div>
+                                        <div id="equiv_restante" class="small opacity-75" style="font-size: 0.6rem;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -1393,57 +1396,74 @@ require_once '../includes/sidebar.php';
         }
 
         function validarSumatoriaDesglose() {
-            let totalDeclarado = parseFloat(document.getElementById('monto_cobro_hidden').value) || 0;
+            let totalDeclaradoInput = parseFloat(inputMontoCobro.value) || 0;
+            let esBs = document.getElementById('moneda_cobro_bs').checked;
             let sumatoriaDesglose = 0;
 
             // Recorrer todos los switches activados
             switchesDesglose.forEach(sw => {
                 if (sw.checked) {
-                    // Buscar los inputs de monto dentro del contenedor hermano
                     const container = sw.closest('.rounded, .fila-extra, .bg-white').querySelector('.desglose-fields');
                     if (container) {
                         const montos = container.querySelectorAll('.desglose-monto');
                         montos.forEach(m => {
-                            sumatoriaDesglose += parseFloat(m.value) || 0;
+                            sumatoriaDesglose += parseFloat(m.value.replace(',', '.')) || 0;
                         });
                     }
                 }
             });
 
-            let restante = sumatoriaDesglose - totalDeclarado; // Saldo deudor si > 0
+            let restante = sumatoriaDesglose - totalDeclaradoInput;
+            let sym = esBs ? 'Bs. ' : '$ ';
 
             // Actualizar UI
-            document.getElementById('val_monto_total').textContent = totalDeclarado.toFixed(2);
+            document.getElementById('val_monto_total').textContent = totalDeclaradoInput.toFixed(2);
             document.getElementById('val_suma_desglose').textContent = sumatoriaDesglose.toFixed(2);
-            const spanRestante = document.getElementById('val_monto_restante');
-            const containerRestante = document.getElementById('container_restante');
-            
-            spanRestante.textContent = Math.abs(restante).toFixed(2);
+            document.getElementById('val_monto_restante').textContent = Math.abs(restante).toFixed(2);
+
+            // Actualizar Símbolos en la franja negra
+            document.querySelectorAll('.sym_res').forEach(el => el.textContent = sym);
+
+            // Mostrar Equivalentes en la franja negra
+            if (TASA_BCV > 0) {
+                const equivDeclarado = document.getElementById('equiv_total_declarado');
+                const equivDesglose = document.getElementById('equiv_total_desglose');
+                const equivRestante = document.getElementById('equiv_restante');
+
+                if (esBs) {
+                    equivDeclarado.textContent = `Equiv: $${(totalDeclaradoInput / TASA_BCV).toFixed(2)}`;
+                    equivDesglose.textContent = `Equiv: $${(sumatoriaDesglose / TASA_BCV).toFixed(2)}`;
+                    equivRestante.textContent = `Equiv: $${(Math.abs(restante) / TASA_BCV).toFixed(2)}`;
+                } else {
+                    equivDeclarado.textContent = `Equiv: Bs. ${(totalDeclaradoInput * TASA_BCV).toFixed(2)}`;
+                    equivDesglose.textContent = `Equiv: Bs. ${(sumatoriaDesglose * TASA_BCV).toFixed(2)}`;
+                    equivRestante.textContent = `Equiv: Bs. ${(Math.abs(restante) * TASA_BCV).toFixed(2)}`;
+                }
+            }
 
             // Validar
             const badgeIndicador = document.getElementById('badge_indicador_suma');
             const hiddenIdContrato = document.getElementById('id_contrato_hidden_modal').value;
+            const containerRestante = document.getElementById('container_restante');
             
-            // Lógica de habilitación: Necesitamos un cliente y al menos un cargo
             const tieneCliente = hiddenIdContrato && hiddenIdContrato !== "0";
             const tieneCargos = sumatoriaDesglose > 0;
 
             if (tieneCliente && tieneCargos) {
                 btnSubmitCobro.disabled = false;
-                
                 if (badgeIndicador) {
                     if (Math.abs(restante) < 0.01) {
                         badgeIndicador.textContent = 'PAGO EXACTO';
                         badgeIndicador.className = 'badge bg-success text-white border-0 py-1 px-3';
-                        containerRestante.className = 'fw-bold text-success';
+                        containerRestante.className = 'fw-bold text-success fs-5';
                     } else if (restante > 0) {
                         badgeIndicador.textContent = 'SALDO PENDIENTE';
                         badgeIndicador.className = 'badge bg-danger text-white border-0 py-1 px-3';
-                        containerRestante.className = 'fw-bold text-danger';
+                        containerRestante.className = 'fw-bold text-danger fs-5';
                     } else {
                         badgeIndicador.textContent = 'SALDO A FAVOR';
                         badgeIndicador.className = 'badge bg-info text-dark border-0 py-1 px-3';
-                        containerRestante.className = 'fw-bold text-info';
+                        containerRestante.className = 'fw-bold text-info fs-5';
                     }
                 }
             } else {
@@ -1451,7 +1471,7 @@ require_once '../includes/sidebar.php';
                 if (badgeIndicador) {
                     badgeIndicador.textContent = 'ESPERANDO SELECCIÓN';
                     badgeIndicador.className = 'badge bg-secondary text-white border-0 py-1 px-3';
-                    containerRestante.className = 'fw-bold text-muted';
+                    containerRestante.className = 'fw-bold text-muted fs-5';
                 }
             }
         }
