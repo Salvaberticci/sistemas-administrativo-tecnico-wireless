@@ -1,10 +1,10 @@
 [
     {
         "id_banco": "4",
-        "nombre_banco": "Banca amiga",
-        "numero_cuenta": "0102-0000-0000-0000-0000",
-        "cedula_propietario": "v12722373",
-        "nombre_propietario": "galanet solutions,c.a",
+        "nombre_banco": "Bancamiga GALANET SOLUTION C.A.",
+        "numero_cuenta": "0172-0110-721100-497146",
+        "cedula_propietario": "J 309091865",
+        "nombre_propietario": "GALANET SOLUTION CA",
         "metodos_pago": [
             "Pago Móvil",
             "Transferencia"
@@ -12,16 +12,76 @@
     },
     {
         "id_banco": "5",
-        "nombre_banco": "prueba",
-        "numero_cuenta": "0102-0000-0000-0000-0000",
-        "cedula_propietario": "30236536",
-        "nombre_propietario": "galanet solutions,c.a",
+        "nombre_banco": "Bancamiga WIRELESS SUPPLYC.A.",
+        "numero_cuenta": "0172-0521-88-5218159811",
+        "cedula_propietario": "J 507358860",
+        "nombre_propietario": "WIRELESS SUPPLY, C.A",
         "metodos_pago": [
             "Pago Móvil",
+            "Transferencia"
+        ]
+    },
+    {
+        "id_banco": "6",
+        "nombre_banco": "Bancamiga ASOCIACION COOPERATIVA WIRELESS SERVICIO",
+        "numero_cuenta": "0172-0521-88521-8015336",
+        "cedula_propietario": "J 404655549",
+        "nombre_propietario": "ASOCIACION COOPERATIVA WIRELESS SERVICIO",
+        "metodos_pago": [
+            "Pago Móvil",
+            "Transferencia"
+        ]
+    },
+    {
+        "id_banco": "7",
+        "nombre_banco": "ZELLE",
+        "numero_cuenta": "edinsonmedinamoreno@hotmail.com",
+        "cedula_propietario": "ZELLE",
+        "nombre_propietario": "EDINSON MEDINA-MORENO",
+        "metodos_pago": [
+            "Zelle"
+        ]
+    },
+    {
+        "id_banco": "8",
+        "nombre_banco": "BINANCE",
+        "numero_cuenta": "danielgarciach20@gmail.com",
+        "cedula_propietario": "V27152970",
+        "nombre_propietario": "Daniel Garcia",
+        "metodos_pago": [
             "Transferencia",
-            "Zelle",
+            "Divisas"
+        ]
+    },
+    {
+        "id_banco": "9",
+        "nombre_banco": "Banco de Vnezuela",
+        "numero_cuenta": "04247040713",
+        "cedula_propietario": "V10913095",
+        "nombre_propietario": "David Garcia",
+        "metodos_pago": [
+            "Pago Móvil"
+        ]
+    },
+    {
+        "id_banco": "10",
+        "nombre_banco": "Divisas $",
+        "numero_cuenta": "$",
+        "cedula_propietario": "$",
+        "nombre_propietario": "$",
+        "metodos_pago": [
             "Efectivo",
             "Divisas"
+        ]
+    },
+    {
+        "id_banco": "11",
+        "nombre_banco": "Efectivo",
+        "numero_cuenta": "Bolivares",
+        "cedula_propietario": "0",
+        "nombre_propietario": "0",
+        "metodos_pago": [
+            "Efectivo"
         ]
     }
 ]
