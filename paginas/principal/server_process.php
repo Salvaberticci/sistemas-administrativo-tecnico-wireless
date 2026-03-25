@@ -64,7 +64,8 @@ $aColumnas = [
     'c.token_firma',            // 41 (was 42)
     'c.estado_firma',           // 42 (was 43)
     'c.municipio_texto',        // 43 (NEW)
-    'c.parroquia_texto'         // 44 (NEW)
+    'c.parroquia_texto',        // 44 (NEW)
+    '(SELECT COUNT(*) FROM contratos WHERE cedula = c.cedula) AS total_contratos' // 45 (NEW)
 ];
 
 $sIndexColumn = "c.id";
@@ -98,6 +99,7 @@ $searchConditions = [];
 if (isset($_GET['sSearch']) && $_GET['sSearch'] != "") {
     $searchValue = $conn->real_escape_string($_GET['sSearch']);
     foreach ($aColumnas as $col) {
+        if (strpos($col, 'SELECT') !== false || strpos($col, 'AS') !== false) continue; // Skip calculated columns
         $searchConditions[] = "$col LIKE '%$searchValue%'";
     }
 }
@@ -174,8 +176,14 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 2. CEDULA
     $row[] = clean($aRow['cedula']);
 
-    // 3. NOMBRE
-    $row[] = clean($aRow['nombre_completo']);
+    // 3. NOMBRE (Con Badge Multi-Contrato y Referencia de Punto de Acceso)
+    $nombre = clean($aRow['nombre_completo']);
+    $total = intval($aRow['total_contratos'] ?? 1);
+    $multiBadge = ($total > 1) ? "<span class='badge bg-info text-dark ms-1' style='font-size:0.65rem; vertical-align:middle' title='Este cliente tiene {$total} contratos registrados'>Multi {$total}</span>" : "";
+    
+    $refPunto = !empty($aRow['punto_acceso']) ? "<div class='text-muted' style='font-size:0.75rem; line-height: 1.1; margin-top: 2px;'><i class='fa-solid fa-location-dot me-1' style='font-size:0.6rem'></i>" . clean($aRow['punto_acceso']) . "</div>" : "";
+    
+    $row[] = "<div class='text-start'>" . "<strong>{$nombre}</strong>" . $multiBadge . $refPunto . "</div>";
 
     // 4. MONTO PLAN [NEW]
     $row[] = clean($aRow['monto_plan']);
