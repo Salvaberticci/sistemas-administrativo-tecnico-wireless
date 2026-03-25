@@ -459,6 +459,14 @@ if ($error_mensaje) {
                 if (!$stmt_cobro->execute()) {
                     // El contrato se guardó ($resultado sigue siendo true), pero la factura falló.
                     $error_mensaje = "ADVERTENCIA: Contrato guardado, pero falló la generación de la primera factura. (No se encontró el plan o error interno)";
+                } else {
+                    // Insertar en historial con concepto amigable para que NO aparezca como "Mensualidad" genérica
+                    $id_cobro_nuevo = $conn->insert_id;
+                    $justif_contrato = "[REGISTRO_CONTRATO] Primera mensualidad del contrato";
+                    $stmt_hist = $conn->prepare("INSERT INTO cobros_manuales_historial (id_cobro_cxc, id_contrato, autorizado_por, justificacion, monto_cargado) VALUES (?, ?, 'SISTEMA', ?, ?)");
+                    $stmt_hist->bind_param("iisd", $id_cobro_nuevo, $id_contrato, $justif_contrato, $monto_total);
+                    $stmt_hist->execute();
+                    $stmt_hist->close();
                 }
                 $stmt_cobro->close();
             } else {

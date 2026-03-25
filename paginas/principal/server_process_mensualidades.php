@@ -255,11 +255,14 @@ while ($aRow = $rResult->fetch_assoc()) {
     if (strpos($justif, '[PRORRATEO') !== false) $conceptosArr[] = 'Prorrateo';
     if (strpos($justif, '[ABONO') !== false) $conceptosArr[] = 'Abono / Saldo a Favor';
     if (strpos($justif, '[EXTRA') !== false) $conceptosArr[] = 'Pago de Terceros';
+    if (strpos($justif, '[REGISTRO_CONTRATO') !== false) $conceptosArr[] = 'Registro de Contrato';
 
     $es_mensualidad = false;
     if (strpos($justif, '[MENSUALIDAD') !== false || strpos($justif, '[EXTRA') !== false) {
         $es_mensualidad = true;
     }
+    // Registro de Contrato: NO es mensualidad, no necesita control SAE
+    $es_registro_contrato = strpos($justif, '[REGISTRO_CONTRATO') !== false;
 
     $concepto = '';
     if (count($conceptosArr) > 0) {
