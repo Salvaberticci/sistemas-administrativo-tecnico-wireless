@@ -322,15 +322,15 @@ require_once '../includes/sidebar.php';
                                 <div class="row g-3">
                                     <div class="col-md-5">
                                         <div class="btn-group w-100 border rounded bg-white p-1" role="group">
-                                            <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_usd" value="usd" checked>
+                                            <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_usd" value="usd">
                                             <label class="btn btn-outline-success border-0 btn-sm py-2" for="moneda_cobro_usd"><i class="fas fa-dollar-sign"></i> USD</label>
-                                            <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_bs" value="bs">
+                                            <input type="radio" class="btn-check" name="moneda_cobro" id="moneda_cobro_bs" value="bs" checked>
                                             <label class="btn btn-outline-primary border-0 btn-sm py-2" for="moneda_cobro_bs">Bs</label>
                                         </div>
                                     </div>
                                     <div class="col-md-7">
                                         <div class="input-group">
-                                            <span class="input-group-text bg-white text-muted fw-bold">$</span>
+                                            <span class="input-group-text bg-white text-muted fw-bold" id="moneda_label_principal">Bs.</span>
                                             <input type="text" class="form-control form-control-lg fw-bold text-success border-0 shadow-none decimal-input" id="input_monto_cobro" required placeholder="0,00" style="background-color: transparent;" inputmode="decimal">
                                         </div>
                                         <input type="hidden" name="monto" id="monto_cobro_hidden">
@@ -1297,6 +1297,12 @@ require_once '../includes/sidebar.php';
 
                 currentStateMoneda = newState;
                 if (inputMonedaEnviadaHidden) inputMonedaEnviadaHidden.value = currentStateMoneda;
+                
+                // Actualizar Label Visual Principal ($ -> Bs.)
+                const labelPrincipal = document.getElementById('moneda_label_principal');
+                if (labelPrincipal) {
+                    labelPrincipal.textContent = (newState === 'bs') ? 'Bs.' : '$';
+                }
             }
             calcCobro();
             if (typeof validarSumatoriaDesglose === 'function') {
@@ -2308,12 +2314,13 @@ require_once '../includes/sidebar.php';
     const editBtnSubmit = document.querySelector('#modalEditarCobro form button[type="submit"]');
 
     function editActualizarMesesDinamicos(input) {
-        const row = input.closest('.rounded, .row, .bg-white, .fila-extra-edit');
-        const container = row.querySelector('.container-meses-dinamicos');
+        const parentRow = input.closest('.row'); 
+        if (!parentRow) return;
+        const container = parentRow.querySelector('.container-meses-dinamicos');
         if (!container) return;
         
         const cant = parseInt(input.value) || 0;
-        const isExtra = row.classList.contains('fila-extra-edit');
+        const isExtra = !!input.closest('.fila-extra-edit');
         const name = isExtra ? 'extra_meses_seleccionados[]' : 'meses_seleccionados_mensualidad[]';
         
         let html = '';
@@ -2694,9 +2701,10 @@ require_once '../includes/sidebar.php';
                             aggregated.mensualidad.monto += montoVal;
                             const match = desc.match(/(\d+)\s*MESES/);
                             aggregated.mensualidad.cant += match ? parseInt(match[1]) : 1;
-                            // Extraer mes
+                            // Extraer mes (Busca [Mes] o simplemente Mes en la justificación)
                             NOMBRES_MESES_EDIT.forEach(m => {
-                                if (desc.includes(m.toUpperCase())) {
+                                const regexMes = new RegExp('\\b' + m + '\\b', 'i');
+                                if (regexMes.test(desc)) {
                                     aggregated.mensualidad.meses.push(m);
                                 }
                             });
@@ -2731,7 +2739,7 @@ require_once '../includes/sidebar.php';
                     // Aplicar montos agregados
                     if (aggregated.mensualidad.monto > 0) {
                         activateSwitch('edit_switch_mensualidad', aggregated.mensualidad.monto);
-                        const cantInp = document.querySelector('input[name="meses_mensualidad"]');
+                        const cantInp = document.querySelector('#modalEditarCobro input[name="meses_mensualidad"]');
                         if (cantInp) {
                             cantInp.value = aggregated.mensualidad.cant;
                             editActualizarMesesDinamicos(cantInp);
@@ -2740,9 +2748,11 @@ require_once '../includes/sidebar.php';
                         setTimeout(() => {
                             const selects = document.querySelectorAll('#edit_fields_mensualidad select[name="meses_seleccionados_mensualidad[]"]');
                             selects.forEach((sel, idx) => {
-                                if (aggregated.mensualidad.meses[idx]) sel.value = aggregated.mensualidad.meses[idx];
+                                if (aggregated.mensualidad.meses[idx]) {
+                                     sel.value = aggregated.mensualidad.meses[idx];
+                                }
                             });
-                        }, 50);
+                        }, 100);
                     }
                     if (aggregated.instalacion.monto > 0) activateSwitch('edit_switch_instalacion', aggregated.instalacion.monto);
                     if (aggregated.equipo.monto > 0) activateSwitch('edit_switch_equipo', aggregated.equipo.monto);
