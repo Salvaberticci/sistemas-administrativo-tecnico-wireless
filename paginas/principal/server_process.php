@@ -65,7 +65,8 @@ $aColumnas = [
     'c.estado_firma',           // 42 (was 43)
     'c.municipio_texto',        // 43 (NEW)
     'c.parroquia_texto',        // 44 (NEW)
-    '(SELECT COUNT(*) FROM contratos WHERE cedula = c.cedula) AS total_contratos' // 45 (NEW)
+    '(SELECT COUNT(*) FROM contratos WHERE cedula = c.cedula) AS total_contratos', // 45 (NEW)
+    '(SELECT COUNT(*) FROM contratos WHERE cedula = c.cedula AND id <= c.id) AS nro_orden' // 46 (NEW)
 ];
 
 $sIndexColumn = "c.id";
@@ -176,14 +177,17 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 2. CEDULA
     $row[] = clean($aRow['cedula']);
 
-    // 3. NOMBRE (Con Badge Multi-Contrato y Referencia de Punto de Acceso)
+    // 3. NOMBRE (Con Numeración, Badge Multi y Referencia)
     $nombre = clean($aRow['nombre_completo']);
     $total = intval($aRow['total_contratos'] ?? 1);
+    $nro = intval($aRow['nro_orden'] ?? 1);
+    
+    $nroLabel = ($total > 1) ? "<span class='text-primary fw-bold me-1' style='font-size:0.75rem' title='Contrato correlativo'>#{$nro}</span>" : "";
     $multiBadge = ($total > 1) ? "<span class='badge bg-info text-dark ms-1' style='font-size:0.65rem; vertical-align:middle' title='Este cliente tiene {$total} contratos registrados'>Multi {$total}</span>" : "";
     
     $refPunto = !empty($aRow['punto_acceso']) ? "<div class='text-muted' style='font-size:0.75rem; line-height: 1.1; margin-top: 2px;'><i class='fa-solid fa-location-dot me-1' style='font-size:0.6rem'></i>" . clean($aRow['punto_acceso']) . "</div>" : "";
     
-    $row[] = "<div class='text-start'>" . "<strong>{$nombre}</strong>" . $multiBadge . $refPunto . "</div>";
+    $row[] = "<div class='text-start'>" . $nroLabel . "<strong>{$nombre}</strong>" . $multiBadge . $refPunto . "</div>";
 
     // 4. MONTO PLAN [NEW]
     $row[] = clean($aRow['monto_plan']);
