@@ -1040,7 +1040,7 @@ require_once '../includes/sidebar.php';
                 txtFechaTasa.textContent = fechaTexto;
                 alertaTasa.classList.remove('d-none');
             }
-            if(typeof calcCobro === 'function') calcCobro();
+            if(typeof calcCobro === 'function') calcCobro('rate');
         }
 
         function buscarAplicarTasaHistorica(targetDate) {
@@ -1202,45 +1202,56 @@ require_once '../includes/sidebar.php';
         const inputPagoHoy = document.getElementById('monto_pagado_hoy');
         const displayEquivPagoHoy = document.getElementById('equiv_pago_hoy');
 
-        function calcCobro() {
+        function calcCobro(source = 'input') {
             if (!TASA_BCV) return;
-            let val = parseFloat(inputMontoCobro.value) || 0;
             let esBs = document.getElementById('moneda_cobro_bs').checked;
 
-            let usd = 0;
-            let bs = 0;
-
-            if (esBs) {
-                usd = val / TASA_BCV;
-                bs = val;
-                inputMontoCobroHidden.value = usd.toFixed(2);
+            if (source === 'rate' && esBs) {
+                // Si cambió la tasa y estamos en Bs, recalculamos Bs desde el ancla USD
+                let usd = parseFloat(inputMontoCobroHidden.value) || 0;
+                let bs = usd * TASA_BCV;
+                inputMontoCobro.value = bs.toFixed(2).replace('.', ',');
                 displayEquivCobro.textContent = `Equivalente: $${usd.toFixed(2)}`;
             } else {
-                usd = val;
-                bs = val * TASA_BCV;
-                inputMontoCobroHidden.value = val.toFixed(2);
-                displayEquivCobro.textContent = `Equivalente: Bs. ${bs.toFixed(2)}`;
+                // Modo estándar: Leer input y actualizar ancla
+                let val = parseFloat(inputMontoCobro.value.replace(',', '.')) || 0;
+                if (esBs) {
+                    let usd = val / TASA_BCV;
+                    inputMontoCobroHidden.value = usd.toFixed(2);
+                    displayEquivCobro.textContent = `Equivalente: $${usd.toFixed(2)}`;
+                } else {
+                    inputMontoCobroHidden.value = val.toFixed(2);
+                    let bs = val * TASA_BCV;
+                    displayEquivCobro.textContent = `Equivalente: Bs. ${bs.toFixed(2)}`;
+                }
             }
 
             // Auto-llenar monto pagado hoy
             if (inputPagoHoy && !inputPagoHoy.dataset.manuallyChanged) {
-                inputPagoHoy.value = usd.toFixed(2);
+                let usdVal = parseFloat(inputMontoCobroHidden.value) || 0;
+                inputPagoHoy.value = usdVal.toFixed(2);
                 if (displayEquivPagoHoy) {
-                    displayEquivPagoHoy.textContent = `Equivalente: Bs. ${(usd * TASA_BCV).toFixed(2)}`;
+                    displayEquivPagoHoy.textContent = `Equivalente: Bs. ${(usdVal * TASA_BCV).toFixed(2)}`;
                 }
             }
 
             // Sincronizar todos los equivalentes del desglose
-            updateAllDesgloseEquivalents();
+            updateAllDesgloseEquivalents(source === 'rate');
         }
 
-        function updateAllDesgloseEquivalents() {
+        function updateAllDesgloseEquivalents(isRateChange = false) {
             if (!TASA_BCV) return;
             let esBs = document.getElementById('moneda_cobro_bs').checked;
             
             // Buscar todos los montos de desglose
             const inputsDesglose = document.querySelectorAll('#modalGenerarCobro .desglose-monto');
             inputsDesglose.forEach(input => {
+                if (isRateChange && esBs && input.dataset.basePrice) {
+                    // Si cambió la tasa y estamos en Bs, actualizamos el input desde el ancla USD
+                    let base = parseFloat(input.dataset.basePrice) || 0;
+                    input.value = (base * TASA_BCV).toFixed(2).replace('.', ',');
+                }
+
                 let val = parseFloat(input.value.replace(',', '.')) || 0;
                 let container = input.parentElement.querySelector('.equiv-desglose');
                 if (!container) return;
@@ -1283,10 +1294,11 @@ require_once '../includes/sidebar.php';
                         if (val > 0) {
                             input.value = isToBs ? (val * TASA_BCV).toFixed(2) : (val / TASA_BCV).toFixed(2);
                         }
-                    // Soporte para los planes del usuario que inyectan el precio base
+                    // Mantener basePrice siempre en USD (como ancla de precio)
                     if (input.dataset.basePrice) {
-                        let base = parseFloat(input.dataset.basePrice);
-                        input.dataset.basePrice = isToBs ? (base * TASA_BCV).toFixed(2) : (base / TASA_BCV).toFixed(2);
+                        // No convertir el ancla, solo usarla para recalcular el nuevo monto visible
+                        let base = parseFloat(input.dataset.basePrice) || 0;
+                        input.value = isToBs ? (base * TASA_BCV).toFixed(2).replace('.', ',') : base.toFixed(2);
                     }
                 });
 
@@ -1302,6 +1314,13 @@ require_once '../includes/sidebar.php';
             // Escuchar cambios en cualquier monto de desglose
             document.querySelector('#modalGenerarCobro').addEventListener('input', (e) => {
                 if (e.target.classList.contains('desglose-monto')) {
+                    // Actualizar ancla de precio (USD) al editar manualmente
+                    let val = parseFloat(e.target.value.replace(',', '.')) || 0;
+                    let esBs = document.getElementById('moneda_cobro_bs').checked;
+                    if (TASA_BCV > 0) {
+                        e.target.dataset.basePrice = esBs ? (val / TASA_BCV).toFixed(2) : val.toFixed(2);
+                    }
+                    
                     updateAllDesgloseEquivalents();
                     if (typeof validarSumatoriaDesglose === 'function') validarSumatoriaDesglose();
                 }
@@ -1715,9 +1734,11 @@ require_once '../includes/sidebar.php';
                     const row = e.target.closest('.rounded, .fila-extra');
                     const montoInput = row.querySelector('.desglose-monto');
                     if (montoInput && montoInput.dataset.basePrice) {
-                        const base = parseFloat(montoInput.dataset.basePrice);
+                        const base = parseFloat(montoInput.dataset.basePrice) || 0;
                         const cant = parseInt(e.target.value) || 0;
-                        montoInput.value = (base * cant).toFixed(2);
+                        const esBs = document.getElementById('moneda_cobro_bs').checked;
+                        const finalMonto = esBs ? (base * cant * TASA_BCV) : (base * cant);
+                        montoInput.value = finalMonto.toFixed(2).replace('.', ',');
                     }
                 }
                 setTimeout(validarSumatoriaDesglose, 50); // Dar tiempo a que el hidden se asiente si es el principal
@@ -1802,7 +1823,10 @@ require_once '../includes/sidebar.php';
                                                 switchExtra.dispatchEvent(new Event('change'));
                                             }
 
-                                            montoInput.value = parseFloat(c.monto_plan).toFixed(2);
+                                            const esBs = document.getElementById('moneda_cobro_bs').checked;
+                                            const montoSugerido = esBs ? (parseFloat(c.monto_plan) * TASA_BCV) : parseFloat(c.monto_plan);
+
+                                            montoInput.value = montoSugerido.toFixed(2).replace('.', ',');
                                             montoInput.dataset.basePrice = c.monto_plan;
                                             montoInput.readOnly = true;
                                             const cantInput = row.querySelector('[name="extra_meses[]"]');
@@ -1945,9 +1969,11 @@ require_once '../includes/sidebar.php';
                                                 switchMensualidad.checked = true;
                                                 switchMensualidad.dispatchEvent(new Event('change'));
                                             }
-                                            const inputMonto = document.querySelector('[name="monto_mensualidad"]');
-                                            inputMonto.value = parseFloat(c.monto_plan).toFixed(2).replace('.', ',');
-                                            inputMonto.dataset.basePrice = c.monto_plan;
+                                            const esBs = document.getElementById('moneda_cobro_bs').checked;
+                                            const montoSugerido = esBs ? (parseFloat(c.monto_plan) * TASA_BCV) : parseFloat(c.monto_plan);
+                                            
+                                            inputMonto.value = montoSugerido.toFixed(2).replace('.', ',');
+                                            inputMonto.dataset.basePrice = c.monto_plan; // El ancla siempre es USD
                                             inputMonto.readOnly = false; // A petición del usuario: Editable
                                             const inputCant = document.querySelector('[name="meses_mensualidad"]');
                                             inputCant.value = 1;
