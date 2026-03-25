@@ -248,6 +248,10 @@ require_once '../includes/sidebar.php';
                                 <option value="29">Vacío: Instalador Radio</option>
                                 <option value="30">Vacío: Evidencia Fibra</option>
                                 <option value="31">Vacío: Punto Acceso</option>
+                                <option value="38">Vacío: SAE Plus (ID)</option>
+                                <option value="37">Vacío: Vendedor</option>
+                                <option value="40">Vacío: OLT</option>
+                                <option value="41">Vacío: PON</option>
                                 <option value="32">Vacío: Val. Conex. (dBm)</option>
                                 <option value="33">Vacío: Precinto ODN</option>
                                 <option value="34">Vacío: Foto</option>

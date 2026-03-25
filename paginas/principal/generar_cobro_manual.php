@@ -18,7 +18,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // CAMPOS DE JUSTIFICACIÓN
     $autorizado_por = isset($_POST['autorizado_por']) ? $conn->real_escape_string($_POST['autorizado_por']) : '';
-    $justificacion = isset($_POST['justificacion']) ? $conn->real_escape_string($_POST['justificacion']) : 'No especificada.';
+    $justificacion_raw = isset($_POST['justificacion']) ? trim($_POST['justificacion']) : '';
+    $justificacion = !empty($justificacion_raw) ? $conn->real_escape_string($justificacion_raw) : '';
+
+    // CAPTURA DE MESES SELECCIONADOS (Frontend)
+    $meses_usuario = $_POST['meses_seleccionados_mensualidad'] ?? [];
+    $extra_meses_usuario = $_POST['extra_meses_seleccionados'] ?? [];
 
     // 1.5 Manejo de archivo (Capture)
     $capture_path = '';
@@ -77,7 +82,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     'id_contrato' => $id_contrato_principal,
                     'monto' => $monto_usd, 
                     'monto_bs' => $monto_bs,
-                    'justificacion' => "[MENSUALIDAD] Mensualidad ($meses mes/es) - " . $justificacion
+                    'justificacion' => "[MENSUALIDAD] Mensualidad ($meses mes/es)" . (!empty($justificacion) ? " - $justificacion" : "")
                 ];
                 $sumatoria_backend += $monto_usd;
             }
@@ -93,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     'id_contrato' => $id_contrato_principal,
                     'monto' => $monto_usd,
                     'monto_bs' => $monto_bs,
-                    'justificacion' => "[INSTALACION] Instalación - " . $justificacion
+                    'justificacion' => "[INSTALACION] Instalación" . (!empty($justificacion) ? " - $justificacion" : "")
                 ];
                 $sumatoria_backend += $monto_usd;
             }
@@ -109,7 +114,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     'id_contrato' => $id_contrato_principal,
                     'monto' => $monto_usd,
                     'monto_bs' => $monto_bs,
-                    'justificacion' => "[PRORRATEO] Prorrateo - " . $justificacion
+                    'justificacion' => "[PRORRATEO] Prorrateo" . (!empty($justificacion) ? " - $justificacion" : "")
                 ];
                 $sumatoria_backend += $monto_usd;
             }
@@ -125,7 +130,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     'id_contrato' => $id_contrato_principal,
                     'monto' => $monto_usd,
                     'monto_bs' => $monto_bs,
-                    'justificacion' => "[EQUIPOS] Pago de Equipo - " . $justificacion
+                    'justificacion' => "[EQUIPOS] Pago de Equipo" . (!empty($justificacion) ? " - $justificacion" : "")
                 ];
                 $sumatoria_backend += $monto_usd;
             }
@@ -149,7 +154,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         'id_contrato' => $id_c_extra, 
                         'monto' => $monto_usd,
                         'monto_bs' => $monto_bs,
-                        'justificacion' => "[EXTRA] Mens. Extra ($meses_extra mes/es) (Pagado en Ref $referencia_pago) - " . $justificacion
+                        'justificacion' => "[EXTRA] Mens. Extra ($meses_extra mes/es) (Pagado en Ref $referencia_pago)" . (!empty($justificacion) ? " - $justificacion" : "")
                     ];
                     $sumatoria_backend += $monto_usd;
                 }
@@ -205,16 +210,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $monto_por_mes_bs = ($num_meses > 1) ? round($c_monto_bs / $num_meses, 2) : $c_monto_bs;
 
                 for ($m = 0; $m < $num_meses; $m++) {
-                    $target_time = strtotime("+$m month");
-                    $mes_nombre = strftime('%B %Y', $target_time);
-                    // Fallback for systems where strftime is deprecated or locales aren't set
-                    if (!$mes_nombre || strpos($mes_nombre, '%') !== false) {
-                        $mes_nombre = date('F Y', $target_time);
+                    // Si es mensualidad o extra, intentar obtener el mes del array de usuario
+                    $mes_nombre = "";
+                    if (strpos($c_justificacion_base, '[MENSUALIDAD]') !== false) {
+                        $mes_nombre = $meses_usuario[$m] ?? "";
+                    } elseif (strpos($c_justificacion_base, '[EXTRA]') !== false) {
+                        // Para extras, los meses vienen en el mismo orden que los contratos extra en el POST
+                        // Pero como cada cargo[] es Individual aquí, necesitamos un índice global o mapeo.
+                        // Sin embargo, el frontend envía extra_meses_seleccionados[] en orden de aparición.
+                        // Usaremos un shift para ir consumiendo si es extra, o simplemente el primero si no hay más.
+                        $mes_nombre = array_shift($extra_meses_usuario) ?? "";
                     }
-                    
-                    // Traducción básica si es necesario (opcional pero ayuda)
-                    $mes_es = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', 'April' => 'Abril', 'May' => 'Mayo', 'June' => 'Junio', 'July' => 'Julio', 'August' => 'Agosto', 'September' => 'Septiembre', 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'];
-                    foreach($mes_es as $en => $es) $mes_nombre = str_ireplace($en, $es, $mes_nombre);
+
+                    // Fallback si no hay mes del usuario
+                    if (empty($mes_nombre)) {
+                        $target_time = strtotime("+$m month");
+                        $mes_nombre = strftime('%B %Y', $target_time);
+                        if (!$mes_nombre || strpos($mes_nombre, '%') !== false) {
+                            $mes_nombre = date('F Y', $target_time);
+                        }
+                        // Traducción básica
+                        $mes_es = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', 'April' => 'Abril', 'May' => 'Mayo', 'June' => 'Junio', 'July' => 'Julio', 'August' => 'Agosto', 'September' => 'Septiembre', 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'];
+                        foreach($mes_es as $en => $es) $mes_nombre = str_ireplace($en, $es, $mes_nombre);
+                    }
 
                     if ($is_mensualidad) {
                         $base_text = str_replace(['[MENSUALIDAD] ', '[EXTRA] '], '', $c_justificacion_base);

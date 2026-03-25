@@ -9,5 +9,19 @@
             "Pago Móvil",
             "Transferencia"
         ]
+    },
+    {
+        "id_banco": "5",
+        "nombre_banco": "prueba",
+        "numero_cuenta": "0102-0000-0000-0000-0000",
+        "cedula_propietario": "30236536",
+        "nombre_propietario": "galanet solutions,c.a",
+        "metodos_pago": [
+            "Pago Móvil",
+            "Transferencia",
+            "Zelle",
+            "Efectivo",
+            "Divisas"
+        ]
     }
 ]

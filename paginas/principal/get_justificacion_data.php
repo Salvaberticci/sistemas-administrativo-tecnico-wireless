@@ -12,6 +12,14 @@ if ($id_cobro <= 0) {
     exit;
 }
 
+// Cargar mapeo de bancos desde JSON
+$json_bancos = @file_get_contents('bancos.json');
+$bancosArr = json_decode($json_bancos, true) ?: [];
+$bancosMap = [];
+foreach ($bancosArr as $b) {
+    if (isset($b['id_banco'])) $bancosMap[$b['id_banco']] = $b['nombre_banco'];
+}
+
 // 1. Obtener id_grupo_pago del cobro solicitado
 $sql_group = "SELECT id_grupo_pago FROM cuentas_por_cobrar WHERE id_cobro = ?";
 $stmt_group = $conn->prepare($sql_group);
@@ -36,14 +44,13 @@ $sql = "
         cxc.fecha_emision,
         cxc.referencia_pago,
         cxc.capture_pago,
+        cxc.id_banco,
         cxc.id_contrato as id_contrato_unico,
-        b.nombre_banco,
         co.nombre_completo AS nombre_cliente,
         co.id AS id_contrato
     FROM cuentas_por_cobrar cxc
     LEFT JOIN cobros_manuales_historial h ON h.id_cobro_cxc = cxc.id_cobro
     JOIN contratos co ON cxc.id_contrato = co.id
-    LEFT JOIN bancos b ON cxc.id_banco = b.id_banco
     WHERE $where_clause
     ORDER BY h.fecha_creacion ASC
 ";
@@ -60,7 +67,8 @@ if ($result && $result->num_rows > 0) {
         if (!$r['autorizado_por']) $r['autorizado_por'] = 'SISTEMA';
         if (!$r['justificacion']) $r['justificacion'] = 'Cobro automático del sistema';
         if (!$r['fecha_creacion']) $r['fecha_creacion'] = $r['fecha_emision'];
-        if (!$r['monto_cargado']) $r['monto_cargado'] = $r['monto_total']; // Wait, monto_total is in cxc
+        if (!$r['monto_cargado']) $r['monto_cargado'] = $r['monto_total'] ?? 0;
+        $r['nombre_banco'] = $bancosMap[$r['id_banco']] ?? 'No especificado';
         $rows[] = $r;
     }
     // Devolvemos el primero como base y la lista completa
@@ -77,13 +85,12 @@ if ($result && $result->num_rows > 0) {
             cxc.fecha_emision,
             cxc.referencia_pago,
             cxc.capture_pago,
+            cxc.id_banco,
             cxc.id_contrato as id_contrato_unico,
-            b.nombre_banco,
             co.nombre_completo AS nombre_cliente,
             co.id AS id_contrato
         FROM cuentas_por_cobrar cxc
         JOIN contratos co ON cxc.id_contrato = co.id
-        LEFT JOIN bancos b ON cxc.id_banco = b.id_banco
         WHERE cxc.id_cobro = ?
     ";
     $stmt_b = $conn->prepare($sql_basic);
@@ -92,6 +99,7 @@ if ($result && $result->num_rows > 0) {
     $res_b = $stmt_b->get_result();
     if ($res_b && $res_b->num_rows > 0) {
         $row_b = $res_b->fetch_assoc();
+        $row_b['nombre_banco'] = $bancosMap[$row_b['id_banco']] ?? 'No especificado';
         echo json_encode(['success' => true, 'data' => $row_b, 'all_concepts' => [$row_b]]);
     } else {
         echo json_encode(['success' => false, 'message' => 'No se encontró el detalle de la justificación.']);

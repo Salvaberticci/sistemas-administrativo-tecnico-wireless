@@ -117,7 +117,7 @@ require_once '../includes/sidebar.php';
                     <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Desde</label>
                         <input type="date" class="form-control form-control-sm" id="fecha_inicio"
-                            value="<?php echo date('Y-m-01'); ?>" max="<?php echo $hoy; ?>">
+                            value="<?php echo date('Y-m-01', strtotime('-2 month')); ?>" max="<?php echo $hoy; ?>">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Hasta</label>
@@ -531,7 +531,7 @@ require_once '../includes/sidebar.php';
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold text-muted small mb-1">Justificación del Cargo</label>
-                                    <textarea class="form-control form-control-sm shadow-sm" name="justificacion" rows="2" placeholder="Explique el motivo del cargo manual..." required></textarea>
+                                    <textarea class="form-control form-control-sm shadow-sm" name="justificacion" rows="2" placeholder="Notas adicionales (opcional)..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -784,6 +784,13 @@ require_once '../includes/sidebar.php';
                                         <input type="date" class="form-control form-control-sm" name="fecha_vencimiento" id="edit_fecha_vencimiento" required>
                                     </div>
                                 </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-7"></div>
+                                    <div class="col-md-5">
+                                        <label class="small text-muted fw-bold d-block mb-1">Fecha Emisión / Pago</label>
+                                        <input type="date" class="form-control form-control-sm" name="fecha_pago" id="edit_fecha_pago" required>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="row g-3 mb-4">
@@ -876,21 +883,7 @@ require_once '../includes/sidebar.php';
                                     </div>
                                 </div>
 
-                                <!-- Abono / Saldo a Favor -->
-                                <div class="mb-2 bg-white border-start border-4 border-warning rounded p-2 shadow-sm">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="form-check form-switch me-3 mb-0">
-                                            <input class="form-check-input desglose-switch-edit" type="checkbox" id="edit_switch_abono" name="desglose_abono_activado" value="1">
-                                        </div>
-                                        <label class="form-check-label fw-bold text-dark small mb-0" for="edit_switch_abono">Abono / Saldo a Favor</label>
-                                    </div>
-                                    <div class="d-none desglose-fields-edit mt-1" id="edit_fields_abono">
-                                        <label class="small text-muted fw-bold mb-1" style="font-size: 0.65rem;">Monto $</label>
-                                        <input type="text" class="form-control form-control-sm desglose-monto-edit decimal-input" name="monto_abono" placeholder="0,00" inputmode="decimal">
-                                    </div>
-                                </div>
-
-                                <!-- Mensualidad Extra -->
+                                <!-- Mensualidad Extra (Pago de Tercero) -->
                                 <div class="mb-3 bg-white border rounded p-3 shadow-sm border-info mt-3">
                                     <div class="d-flex align-items-center mb-1">
                                         <div class="form-check form-switch me-3 mb-0">
@@ -937,14 +930,14 @@ require_once '../includes/sidebar.php';
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold text-muted small mb-1">Justificación del Cargo</label>
-                                    <textarea class="form-control form-control-sm shadow-sm" name="justificacion" id="edit_pago_justificacion" rows="2" placeholder="Explique el motivo del cambio..." required></textarea>
+                                    <textarea class="form-control form-control-sm shadow-sm" name="justificacion" id="edit_pago_justificacion" rows="2" placeholder="Notas adicionales (opcional)..."></textarea>
                                 </div>
                             </div>
 
                         </div>
 
                         <!-- COLUMNA DERECHA: CAPTURE -->
-                        <div class="col-md-5 bg-light p-4 rounded-end d-flex flex-column">
+                        <div class="col-md-5 ps-lg-4 bg-light p-4 rounded-end d-flex flex-column">
                             <h6 class="fw-bold text-primary mb-3"><i class="fas fa-image me-1"></i> Evidencia del Pago</h6>
                             
                             <div class="mb-3 bg-white p-3 rounded shadow-sm border">
@@ -958,7 +951,7 @@ require_once '../includes/sidebar.php';
                                     <span class="small fw-bold text-secondary">Imagen Actual/Nueva:</span>
                                     <button type="button" class="btn btn-sm text-danger p-0 border-0 d-none" id="btn_clear_edit_capture">Limpiar Selección</button>
                                 </div>
-                                <div class="border rounded shadow-sm overflow-hidden bg-white" style="height: 400px; overflow-y: auto;">
+                                <div class="border rounded shadow-sm bg-white" style="height: 600px; overflow-y: auto;">
                                     <img id="edit_capture_preview_img" src="" alt="Capture" class="img-fluid" style="width: 100%;">
                                     <div id="edit_capture_empty" class="h-100 d-flex flex-column justify-content-center align-items-center text-muted opacity-50">
                                         <i class="fas fa-image fa-4x mb-2"></i>
@@ -1383,7 +1376,7 @@ require_once '../includes/sidebar.php';
         }
 
         // === TABLA UNIFICADA (server_process_mensualidades.php) ===
-        var tablaUnica = $('#tabla_mensualidades_unica').DataTable({
+        window.tablaUnica = $('#tabla_mensualidades_unica').DataTable({
             "order": [[0, "desc"]],
             "pageLength": 10,
             "language": {
@@ -1411,13 +1404,12 @@ require_once '../includes/sidebar.php';
                     d.fecha_inicio = $('#fecha_inicio').val();
                     d.fecha_fin = $('#fecha_fin').val();
                     d.id_banco = $('#filtro_cuenta').val();
-                    d.origen = $('#filtro_origen').val();
                     d.estado_sae = $('#filtro_sae').val();
-                    d.estado_pago = $('#filtro_estado').val(); // Nuevo filtro
+                    d.estado_pago = $('#filtro_estado').val();
                     d.filtro_tipo = $('#filtro_tipo').val();
                     d.meses_mora = $('#filtro_meses_mora').val();
                     d.referencia = $('#filtro_referencia').val();
-                    d.sSearch = d.search.value; // Map modern search to legacy param
+                    d.sSearch = d.search.value;
                 }
             },
             "columns": [
@@ -1478,7 +1470,7 @@ require_once '../includes/sidebar.php';
             "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
         });
 
-        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_origen, #filtro_sae, #filtro_estado, #filtro_tipo, #filtro_meses_mora').on('change', function () {
+        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_sae, #filtro_estado, #filtro_tipo, #filtro_meses_mora').on('change', function () {
             tablaUnica.ajax.reload();
         });
 
@@ -2060,24 +2052,29 @@ require_once '../includes/sidebar.php';
                 const filtro = document.getElementById('filtro_cuenta');
                 const modalSelect = document.getElementById('select_banco_modal');
                 const cobroSelect = document.getElementById('select_banco_cobro');
+                const editSelect = document.getElementById('edit_select_banco');
 
                 const valFiltro = filtro ? filtro.value : '';
                 const valModal = modalSelect ? modalSelect.value : '';
                 const valCobro = cobroSelect ? cobroSelect.value : '';
+                const valEdit = editSelect ? editSelect.value : '';
 
                 if (filtro) filtro.innerHTML = '<option value="">Todas las Cuentas</option>';
                 if (modalSelect) modalSelect.innerHTML = '<option value="">Seleccione...</option>';
                 if (cobroSelect) cobroSelect.innerHTML = '<option value="">Seleccione...</option>';
+                if (editSelect) editSelect.innerHTML = '<option value="">Seleccione...</option>';
 
                 bancosArray.forEach(b => {
                     const nombreLabel = b.nombre_banco + (b.numero_cuenta ? ' (' + b.numero_cuenta.slice(-4) + ')' : '');
                     if (filtro) filtro.add(new Option(nombreLabel, b.id_banco));
                     if (modalSelect) modalSelect.add(new Option(nombreLabel, b.id_banco));
                     if (cobroSelect) cobroSelect.add(new Option(nombreLabel, b.id_banco));
+                    if (editSelect) editSelect.add(new Option(nombreLabel, b.id_banco));
                 });
                 if (valFiltro && filtro) filtro.value = valFiltro;
                 if (valModal && modalSelect) modalSelect.value = valModal;
                 if (valCobro && cobroSelect) cobroSelect.value = valCobro;
+                if (valEdit && editSelect) editSelect.value = valEdit;
             });
     }
 
@@ -2576,7 +2573,24 @@ require_once '../includes/sidebar.php';
         }
     });
 
-    window.confirmarEdicionCobro = async function (id) {
+    // Helper para limpiar justificación técnica (corchetes) antes de editar
+    function cleanJustificationForEdit(justif) {
+        if (!justif) return '';
+        let clean = justif;
+        // Eliminar recursivamente cualquier bloque entre corchetes al inicio
+        // Esto limpia [EXTRA] [ID: 49] [CUALQUIER_OTRO] de forma segura
+        while (clean.match(/^\[[^\]]+\]\s*/)) {
+            clean = clean.replace(/^\[[^\]]+\]\s*/, '');
+        }
+        // Eliminar restos de descripciones estándar que no estén en corchetes
+        clean = clean.replace(/^-?\s*Mensualidad \(\d+ mes\/es\)\s*/i, '');
+        clean = clean.replace(/^-?\s*Pago de Terceros\s*\(ID:\s*\d+\)\s*/i, ''); 
+        // Eliminar guiones y espacios iniciales sobrantes
+        return clean.replace(/^[-\s]+/, '').trim();
+    }
+
+    // Modal de Edición de Cobro (desde gestión general)
+    window.confirmarEdicionCobro = async function (id_cobro) {
         const proceeds = await solicitarClaveAdmin('Modificar Cobro');
         if (!proceeds) return;
 
@@ -2623,7 +2637,7 @@ require_once '../includes/sidebar.php';
             });
         }
 
-        fetch(`get_cobro_data.php?id=${id}&t=${new Date().getTime()}`)
+        fetch(`get_cobro_data.php?id=${id_cobro}&t=${new Date().getTime()}`)
             .then(r => r.json())
             .then(res => {
                 loader.classList.add('d-none');
@@ -2638,80 +2652,104 @@ require_once '../includes/sidebar.php';
                     $('#edit_cliente_info_static').text(`${d.nombre_cliente} (Contrato #${d.id_contrato})`);
                     $('#edit_id_contrato_hidden').val(d.id_contrato);
                     $('#edit_estado').val(d.estado);
-                    $('#edit_input_monto_total').val(parseFloat(d.monto_total).toFixed(2));
-                    $('#edit_monto_total_hidden').val(d.monto_total);
-                    $('#edit_fecha_vencimiento').val(d.fecha_vencimiento);
+                    // Calcular monto total del grupo para el encabezado
+                    let montoTotalGrupo = 0;
+                    concepts.forEach(c => {
+                        montoTotalGrupo += parseFloat(c.monto_total) || 0;
+                    });
+
+                    $('#edit_input_monto_total').val(montoTotalGrupo.toFixed(2));
+                    $('#edit_monto_total_hidden').val(montoTotalGrupo.toFixed(2));
+                    if (d.fecha_vencimiento) $('#edit_fecha_vencimiento').val(d.fecha_vencimiento.substring(0, 10));
+                    const f_pago = (d.fecha_pago || d.fecha_emision || '');
+                    if (f_pago) $('#edit_fecha_pago').val(f_pago.substring(0, 10));
                     $('#edit_input_referencia').val(d.referencia_pago);
                     $('#edit_select_banco').val(d.id_banco);
                     $('#edit_autorizado_por').val(d.autorizado_por);
-                    $('#edit_pago_justificacion').val(d.justificacion);
+                    $('#edit_pago_justificacion').val(cleanJustificationForEdit(d.justificacion));
 
-                    // Poblar Desglose
-                    const editForm = document.getElementById('formEditarCobro');
+                    // Poblar Desglose con Agregador
+                    let aggregated = {
+                        mensualidad: { monto: 0, cant: 0, meses: [] },
+                        instalacion: { monto: 0 },
+                        equipo: { monto: 0 },
+                        prorrateo: { monto: 0 }
+                    };
+
                     concepts.forEach(c => {
                         const desc = (c.justificacion || '').toUpperCase();
-                        let switchId = '';
-                        let montoName = '';
-                        let cantName = '';
+                        const montoVal = parseFloat(c.monto_cargado || c.monto_total) || 0;
 
-                        // Detección mejorada por palabras clave
-                        if (desc.includes('MENSUALIDAD') || desc.includes('MENSUAL') || desc.match(/\bMES\b/)) {
-                            switchId = 'edit_switch_mensualidad';
-                            montoName = 'monto_mensualidad';
-                            cantName = 'meses_mensualidad';
-                        } else if (desc.includes('INSTALACION') || desc.includes('INSTALACIÓN')) {
-                            switchId = 'edit_switch_instalacion';
-                            montoName = 'monto_instalacion';
-                        } else if (desc.includes('ABONO')) {
-                            switchId = 'edit_switch_abono';
-                            montoName = 'monto_abono';
-                        } else if (desc.includes('PRORRATEO')) {
-                            switchId = 'edit_switch_prorrateo';
-                            montoName = 'monto_prorrateo';
-                        } else if (desc.includes('EQUIPO') || desc.includes('MATERIAL') || desc.includes('EQUIPOS')) {
-                            switchId = 'edit_switch_equipo';
-                            montoName = 'monto_equipo';
-                        } else {
-                            // Si no es ninguno de los básicos y es un grupo, puede ser un extra
-                            if (d.id_grupo_pago && c.id_contrato != d.id_contrato) {
-                                document.getElementById('edit_switch_extra').checked = true;
-                                document.getElementById('edit_fields_extra').classList.remove('d-none');
-                                crearFilaExtraEdit(c);
-                                return; // Ya se procesó como extra
+                        // 1. Prioridad: ¿Es un EXTRA por ID o etiqueta?
+                        if (String(c.id_contrato) !== String(d.id_contrato) || desc.includes('[EXTRA]')) {
+                            const swExtra = document.getElementById('edit_switch_extra');
+                            if (swExtra && !swExtra.checked) {
+                                swExtra.checked = true;
+                                swExtra.dispatchEvent(new Event('change'));
                             }
-                        }
-
-                        if (switchId) {
-                            const switchEl = document.getElementById(switchId);
-                            if (switchEl) {
-                                switchEl.checked = true;
-                                const row = switchEl.closest('.rounded, .row, .bg-white');
-                                const container = row.querySelector('.desglose-fields-edit');
-                                if(container) container.classList.remove('d-none');
-                                const montoInp = row.querySelector('.desglose-monto-edit');
-                                if(montoInp) montoInp.classList.remove('d-none');
-
-                                const montoEl = editForm.querySelector(`[name="${montoName}"]`);
-                                if (montoEl) montoEl.value = parseFloat(c.monto_total).toFixed(2);
-                                
-                                if (cantName) {
-                                    const cantEl = editForm.querySelector(`[name="${cantName}"]`);
-                                    if (cantEl) {
-                                        const match = desc.match(/(\d+)\s*MESES/);
-                                        if (match) cantEl.value = match[1];
-                                        
-                                        editActualizarMesesDinamicos(cantEl);
-                                        // Intentar marcar los meses correctos si están en desc
-                                        const selects = row.querySelectorAll('select[name="meses_seleccionados_mensualidad[]"]');
-                                        const foundMonths = NOMBRES_MESES_EDIT.filter(m => desc.includes(m.toUpperCase()));
-                                        selects.forEach((sel, idx) => {
-                                            if (foundMonths[idx]) sel.value = foundMonths[idx];
-                                        });
-                                    }
+                            crearFilaExtraEdit(c);
+                        } 
+                        // 2. ¿Es una categoría específica por etiqueta?
+                        else if (desc.includes('[MENSUALIDAD]') || desc.includes('MENSUAL') || desc.match(/\bMES\b/)) {
+                            aggregated.mensualidad.monto += montoVal;
+                            const match = desc.match(/(\d+)\s*MESES/);
+                            aggregated.mensualidad.cant += match ? parseInt(match[1]) : 1;
+                            // Extraer mes
+                            NOMBRES_MESES_EDIT.forEach(m => {
+                                if (desc.includes(m.toUpperCase())) {
+                                    aggregated.mensualidad.meses.push(m);
                                 }
-                            }
+                            });
+                        } else if (desc.includes('[INSTALACION]') || desc.includes('INSTALACIÓN')) {
+                            aggregated.instalacion.monto += montoVal;
+                        } else if (desc.includes('[PRORRATEO]') || desc.includes('PRORRATEO')) {
+                            aggregated.prorrateo.monto += montoVal;
+                        } else if (desc.includes('[EQUIPO]') || desc.includes('MATERIAL') || desc.includes('EQUIPOS')) {
+                            aggregated.equipo.monto += montoVal;
+                        } 
+                        // 3. Fallback: Si es el mismo contrato pero no tiene etiqueta clara
+                        else {
+                            aggregated.mensualidad.monto += montoVal;
+                            aggregated.mensualidad.cant += 1;
                         }
                     });
+
+                    // Helper para activar switches nativamente y asegurar visibilidad
+                    const activateSwitch = (id, val) => {
+                        const sw = document.getElementById(id);
+                        if (sw) {
+                            if (!sw.checked) {
+                                sw.checked = true;
+                                sw.dispatchEvent(new Event('change'));
+                            }
+                            const row = sw.closest('.rounded, .row, .bg-white');
+                            const input = row.querySelector('.desglose-monto-edit');
+                            if (input) input.value = val.toFixed(2);
+                        }
+                    };
+
+                    // Aplicar montos agregados
+                    if (aggregated.mensualidad.monto > 0) {
+                        activateSwitch('edit_switch_mensualidad', aggregated.mensualidad.monto);
+                        const cantInp = document.querySelector('input[name="meses_mensualidad"]');
+                        if (cantInp) {
+                            cantInp.value = aggregated.mensualidad.cant;
+                            editActualizarMesesDinamicos(cantInp);
+                        }
+                        
+                        setTimeout(() => {
+                            const selects = document.querySelectorAll('#edit_fields_mensualidad select[name="meses_seleccionados_mensualidad[]"]');
+                            selects.forEach((sel, idx) => {
+                                if (aggregated.mensualidad.meses[idx]) sel.value = aggregated.mensualidad.meses[idx];
+                            });
+                        }, 50);
+                    }
+                    if (aggregated.instalacion.monto > 0) activateSwitch('edit_switch_instalacion', aggregated.instalacion.monto);
+                    if (aggregated.equipo.monto > 0) activateSwitch('edit_switch_equipo', aggregated.equipo.monto);
+                    if (aggregated.prorrateo.monto > 0) activateSwitch('edit_switch_prorrateo', aggregated.prorrateo.monto);
+
+                    // Final sum refresh
+                    editValidarSumatoria();
 
                     // Capture Preview
                     const img = document.getElementById('edit_capture_preview_img');
@@ -2744,6 +2782,25 @@ require_once '../includes/sidebar.php';
                 modal.hide();
             });
     };
+
+    function formatConcept(justif) {
+        if (!justif) return 'Sin descripción';
+        // Limpiar etiquetas [TAG] y formatear de forma más humana
+        let clean = justif
+            .replace(/\[MENSUALIDAD\]/gi, 'Mensualidad')
+            .replace(/\[INSTALACION\]/gi, 'Instalación')
+            .replace(/\[EQUIPOS\]/gi, 'Equipos')
+            .replace(/\[ABONO\]/gi, 'Abono')
+            .replace(/\[PRORRATEO\]/gi, 'Prorrateo')
+            .replace(/\[EXTRA\]/gi, 'Pago Tercero')
+            .replace(/\[|\]/g, '') // Quitar corchetes restantes
+            .split(' - ')[0] // Tomar solo la parte principal del concepto
+            .trim();
+        
+        // Si el concepto es "Mensualidad Mayo", solo mostrar "Mensualidad Mayo"
+        // Si hay redundancia (ej. "Mensualidad Mensualidad Mayo"), limpiar.
+        return clean.replace(/Mensualidad\s+Mensualidad/gi, 'Mensualidad');
+    }
 
     window.verHistorialPago = function(idContrato, nombreCliente) {
         document.getElementById('hist_cliente_nombre').textContent = nombreCliente;
@@ -2850,7 +2907,7 @@ require_once '../includes/sidebar.php';
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
                                 <td>${c.id_cobro}</td>
-                                <td>${(c.justificacion || 'Sin justificación').split(' - ')[0]}</td>
+                                <td><span class="fw-bold text-dark">${formatConcept(c.justificacion)}</span></td>
                                 <td class="text-end fw-bold">$${montoVal.toFixed(2)}</td>
                             `;
                             tbody.appendChild(tr);
@@ -2926,7 +2983,12 @@ require_once '../includes/sidebar.php';
                     showConfirmButton: false
                 });
                 bootstrap.Modal.getInstance(document.getElementById('modalEditarCobro')).hide();
-                if (typeof tablaUnica !== 'undefined') tablaUnica.ajax.reload(null, false);
+                if (window.tablaUnica) {
+                    window.tablaUnica.ajax.reload(null, false);
+                } else {
+                    // Fallback extremo si por alguna razón la referencia global falla
+                    $('#tabla_mensualidades_unica').DataTable().ajax.reload(null, false);
+                }
             } else {
                 Swal.fire('Error', res.message, 'error');
             }

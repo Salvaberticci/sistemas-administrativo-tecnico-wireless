@@ -59,7 +59,7 @@ $aSearchColumns = [
 $whereConditions = ["1=1"];
 
 if (isset($_POST['fecha_inicio']) && $_POST['fecha_inicio'] != '' && isset($_POST['fecha_fin']) && $_POST['fecha_fin'] != '') {
-    $whereConditions[] = "(cxc.fecha_emision BETWEEN '" . $conn->real_escape_string($_POST['fecha_inicio']) . "' AND '" . $conn->real_escape_string($_POST['fecha_fin']) . "')";
+    $whereConditions[] = "(COALESCE(cxc.fecha_pago, cxc.fecha_emision) BETWEEN '" . $conn->real_escape_string($_POST['fecha_inicio']) . "' AND '" . $conn->real_escape_string($_POST['fecha_fin']) . "')";
 }
 
 if (isset($_POST['id_banco']) && $_POST['id_banco'] != '') {
@@ -227,6 +227,14 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 0. Fecha (Use payment date if paid, else emission)
     $fecha_base = $aRow['fecha_pago'] ?: $aRow['fecha_emision'];
     $mes_servicio = date('m/Y', strtotime($aRow['fecha_emision']));
+    
+    // Si la justificacion contiene un mes explícito [Mes], usamos ese
+    $justif = $aRow['justificacion'] ?: '';
+    if (preg_match('/\[(Enero|Febrero|Marzo|Abril|Mayo|Junio|Julio|Agosto|Septiembre|Octubre|Noviembre|Diciembre)\]/i', $justif, $matches)) {
+        $año_servicio = date('Y', strtotime($aRow['fecha_emision'])); // Asume el mismo año base
+        $mes_servicio = ucfirst(strtolower($matches[1])) . ' ' . $año_servicio;
+    }
+
     $row[] = '<div class="text-center" title="Periodo: ' . $mes_servicio . '">
                 <span class="badge bg-light text-dark border-0 mb-1" style="font-size: 0.7rem;">' . $mes_servicio . '</span><br>' 
                 . date('d/m/Y', strtotime($fecha_base)) . 
@@ -239,7 +247,6 @@ while ($aRow = $rResult->fetch_assoc()) {
     $row[] = htmlspecialchars($aRow['nombre_completo']);
 
     // 3. Plan / Concepto Principal
-    $justif = $aRow['justificacion'] ?: '';
     $conceptosArr = [];
 
     if (strpos($justif, '[MENSUALIDAD') !== false) $conceptosArr[] = 'Mensualidad';
