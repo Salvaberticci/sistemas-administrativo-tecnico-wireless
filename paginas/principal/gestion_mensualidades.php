@@ -1969,6 +1969,7 @@ require_once '../includes/sidebar.php';
                                                 switchMensualidad.checked = true;
                                                 switchMensualidad.dispatchEvent(new Event('change'));
                                             }
+                                            const inputMonto = document.querySelector('[name="monto_mensualidad"]');
                                             const esBs = document.getElementById('moneda_cobro_bs').checked;
                                             const montoSugerido = esBs ? (parseFloat(c.monto_plan) * TASA_BCV) : parseFloat(c.monto_plan);
                                             
