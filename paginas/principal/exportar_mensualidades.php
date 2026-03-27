@@ -47,6 +47,15 @@ foreach($bancosArr as $b) {
     if(isset($b['id_banco'])) $bancosMap[$b['id_banco']] = $b['nombre_banco'];
 }
 
+// Verificar si las columnas bimonetarias ya existen en la BD
+$tiene_cols_bimonetarias = false;
+$check_cols = $conn->query("SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_NAME='cuentas_por_cobrar' AND COLUMN_NAME='monto_total_bs' LIMIT 1");
+if ($check_cols && $check_cols->num_rows > 0) {
+    $tiene_cols_bimonetarias = true;
+}
+
+$cols_bimonetarias = $tiene_cols_bimonetarias ? "cxc.monto_total_bs, cxc.tasa_bcv," : "NULL AS monto_total_bs, NULL AS tasa_bcv,";
+
 $sql = "
     SELECT 
         cxc.fecha_emision,
@@ -55,6 +64,7 @@ $sql = "
         c.nombre_completo,
         pl.nombre_plan,
         cxc.monto_total,
+        $cols_bimonetarias
         cxc.id_banco,
         cxc.estado,
         h.justificacion
@@ -92,7 +102,9 @@ echo "<thead>
             <th>Cliente</th>
             <th>Concepto</th>
             <th>Detalle</th>
-            <th>Monto</th>
+            <th>Monto ($)</th>
+            <th>Monto (Bs)</th>
+            <th>Tasa BCV</th>
             <th>Cuenta</th>
             <th>Estado</th>
         </tr>
@@ -128,6 +140,8 @@ while ($row = $result->fetch_assoc()) {
     if (empty($detalle)) $detalle = '-';
     
     $monto = number_format($row['monto_total'], 2, ',', '.');
+    $monto_bs = !empty($row['monto_total_bs']) ? number_format($row['monto_total_bs'], 2, ',', '.') : '-';
+    $tasa_bcv = !empty($row['tasa_bcv']) ? number_format($row['tasa_bcv'], 2, ',', '.') : '-';
     
     // Banco name from JSON
     $id_banco = $row['id_banco'];
@@ -140,6 +154,8 @@ while ($row = $result->fetch_assoc()) {
     echo "<td>" . htmlspecialchars($concepto_main) . "</td>";
     echo "<td>" . htmlspecialchars($detalle) . "</td>";
     echo "<td>" . $monto . "</td>";
+    echo "<td>" . $monto_bs . "</td>";
+    echo "<td>" . $tasa_bcv . "</td>";
     echo "<td>" . htmlspecialchars($nombre_banco) . "</td>";
     echo "<td>" . htmlspecialchars($row['estado']) . "</td>";
     echo "</tr>";

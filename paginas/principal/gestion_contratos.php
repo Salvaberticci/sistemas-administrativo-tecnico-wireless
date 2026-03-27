@@ -1158,6 +1158,88 @@ require_once '../includes/sidebar.php';
                 <!-- Alert for errors/success -->
                 <div id="editContratoAlert" class="alert d-none mb-3" role="alert"></div>
 
+                <!-- ══════════ ACORDEÓN FINANCIERO ══════════ -->
+                <div class="accordion accordion-flush mb-4 border rounded shadow-sm" id="accordionFinanciero">
+
+                    <!-- Panel 1: Resumen Financiero -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingResumen">
+                            <button class="accordion-button collapsed fw-bold py-2" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseResumen"
+                                aria-expanded="false" aria-controls="collapseResumen"
+                                onclick="cargarBalancePanel('resumen')">
+                                <i class="fa-solid fa-chart-pie me-2 text-primary"></i>
+                                Resumen Financiero
+                                <span id="badge_resumen" class="ms-auto me-3"></span>
+                            </button>
+                        </h2>
+                        <div id="collapseResumen" class="accordion-collapse collapse" data-bs-parent="#accordionFinanciero">
+                            <div class="accordion-body p-3" id="body_resumen">
+                                <div class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i>Cargando...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel 2: Historial de Pagos -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingPagos">
+                            <button class="accordion-button collapsed fw-bold py-2" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapsePagos"
+                                aria-expanded="false" aria-controls="collapsePagos"
+                                onclick="cargarBalancePanel('pagos')">
+                                <i class="fa-solid fa-receipt me-2 text-success"></i>
+                                Historial de Pagos
+                                <span id="badge_pagos" class="ms-auto me-3"></span>
+                            </button>
+                        </h2>
+                        <div id="collapsePagos" class="accordion-collapse collapse" data-bs-parent="#accordionFinanciero">
+                            <div class="accordion-body p-2" id="body_pagos">
+                                <div class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i>Cargando...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel 3: Todos los Movimientos -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingMovimientos">
+                            <button class="accordion-button collapsed fw-bold py-2" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseMovimientos"
+                                aria-expanded="false" aria-controls="collapseMovimientos"
+                                onclick="cargarBalancePanel('movimientos')">
+                                <i class="fa-solid fa-list-ul me-2 text-info"></i>
+                                Todos los Movimientos
+                                <span id="badge_movimientos" class="ms-auto me-3"></span>
+                            </button>
+                        </h2>
+                        <div id="collapseMovimientos" class="accordion-collapse collapse" data-bs-parent="#accordionFinanciero">
+                            <div class="accordion-body p-2" id="body_movimientos">
+                                <div class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i>Cargando...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel 4: Deuda Activa -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingDeuda">
+                            <button class="accordion-button collapsed fw-bold py-2" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseDeuda"
+                                aria-expanded="false" aria-controls="collapseDeuda"
+                                onclick="cargarBalancePanel('deuda')">
+                                <i class="fa-solid fa-triangle-exclamation me-2 text-warning"></i>
+                                Deuda Activa
+                                <span id="badge_deuda" class="ms-auto me-3"></span>
+                            </button>
+                        </h2>
+                        <div id="collapseDeuda" class="accordion-collapse collapse" data-bs-parent="#accordionFinanciero">
+                            <div class="accordion-body p-2" id="body_deuda">
+                                <div class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i>Cargando...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- ══════════ FIN ACORDEÓN FINANCIERO ══════════ -->
+
                 <!-- Spinner -->
                 <div id="editContratoSpinner" class="text-center py-5">
                     <div class="spinner-border text-primary" role="status"></div>
@@ -1202,7 +1284,7 @@ require_once '../includes/sidebar.php';
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Teléfono</label>
                             <input type="text" class="form-control form-control-sm" id="edit_telefono" name="telefono"
-                                inputmode="tel" pattern="[0-9+\s-]{7,15}" placeholder="0424-1234567">
+                                inputmode="tel" pattern="[0-9+\s\-]{7,15}" placeholder="0424-1234567">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Teléfono (Alt)</label>
@@ -1629,6 +1711,28 @@ require_once '../includes/sidebar.php';
             initEditSignaturePads();
         });
 
+        // Resetear el acordeón financiero al CERRAR el modal
+        $('#modalEditarContrato').on('hidden.bs.modal', function () {
+            ['resumen','pagos','movimientos','deuda'].forEach(p => {
+                const body = document.getElementById('body_' + p);
+                const badge = document.getElementById('badge_' + p);
+                if (body) body.innerHTML = '<div class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i>Cargando...</div>';
+                if (badge) badge.innerHTML = '';
+            });
+            // Colapsar todos los paneles
+            document.querySelectorAll('#accordionFinanciero .accordion-collapse.show').forEach(el => {
+                el.classList.remove('show');
+            });
+            // Marcar botones como collapsed
+            document.querySelectorAll('#accordionFinanciero .accordion-button').forEach(btn => {
+                btn.classList.add('collapsed');
+                btn.setAttribute('aria-expanded', 'false');
+            });
+            // Limpiar caché de paneles
+            window._balancePanelLoaded = {};
+        });
+
+
         $('#btnCambiarFirmaCliente').on('click', function () {
             $('#prev_firma_cliente_div').addClass('d-none');
             $('#pad_firma_cliente_div').removeClass('d-none');
@@ -2044,7 +2148,159 @@ require_once '../includes/sidebar.php';
         });
 
         // Open modal and populate with data
+
+        /* ═══════════════════════ ACORDEÓN FINANCIERO ═══════════════════════ */
+        window._balancePanelLoaded = {};
+
+        window.cargarBalancePanel = function (panel) {
+            const id = document.getElementById('editContratoId') ? document.getElementById('editContratoId').textContent : 0;
+            if (!id || id === '-') return;
+            if (window._balancePanelLoaded[panel]) return; // ya cargado
+            window._balancePanelLoaded[panel] = true;
+
+            const body  = document.getElementById('body_' + panel);
+            const badge = document.getElementById('badge_' + panel);
+            if (!body) return;
+
+            // ── RESUMEN ──────────────────────────────────────────────────────
+            if (panel === 'resumen') {
+                fetch(`get_contract_balance.php?id=${id}&action=resumen`)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (!d.success) { body.innerHTML = '<p class="text-danger">Error al cargar.</p>'; return; }
+
+                        const colorTotal = d.tiene_deuda_activa ? 'danger' : 'success';
+                        const saldoFavorHtml = d.tiene_saldo_favor
+                            ? `<div class="col-md-4"><div class="card border-0 bg-info bg-opacity-10 text-center p-3 h-100">
+                                <div class="small text-muted fw-bold">Saldo a Favor</div>
+                                <h4 class="text-info fw-bold mb-0">$${parseFloat(d.saldo_a_favor).toFixed(2)}</h4>
+                               </div></div>` : '';
+                        const deudaHtml = d.tiene_deuda_activa
+                            ? `<div class="col-md-4"><div class="card border-0 bg-danger bg-opacity-10 text-center p-3 h-100">
+                                <div class="small text-muted fw-bold">Deuda Activa</div>
+                                <h4 class="text-danger fw-bold mb-0">$${parseFloat(d.saldo_deuda).toFixed(2)}</h4>
+                               </div></div>` : '';
+
+                        body.innerHTML = `
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="card border-0 bg-primary bg-opacity-10 text-center p-3 h-100">
+                                    <div class="small text-muted fw-bold">Total Facturado</div>
+                                    <h4 class="text-primary fw-bold mb-0">$${parseFloat(d.total_facturado).toFixed(2)}</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-0 bg-success bg-opacity-10 text-center p-3 h-100">
+                                    <div class="small text-muted fw-bold">Total Pagado</div>
+                                    <h4 class="text-success fw-bold mb-0">$${parseFloat(d.total_pagado).toFixed(2)}</h4>
+                                    <small class="text-muted">${d.meses_pagados} cobro(s) pagados</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-0 bg-warning bg-opacity-10 text-center p-3 h-100">
+                                    <div class="small text-muted fw-bold">Pendiente CXC</div>
+                                    <h4 class="text-warning fw-bold mb-0">$${parseFloat(d.total_pendiente).toFixed(2)}</h4>
+                                </div>
+                            </div>
+                            ${saldoFavorHtml}
+                            ${deudaHtml}
+                        </div>`;
+
+                        if (badge) badge.innerHTML = d.tiene_deuda_activa
+                            ? '<span class="badge bg-danger">Con Deuda</span>'
+                            : (d.tiene_saldo_favor ? '<span class="badge bg-info">Saldo a Favor</span>' : '<span class="badge bg-success">Al Día</span>');
+                    }).catch(err => { body.innerHTML = `<p class="text-danger small"><b>Error:</b> ${err.message || err}</p>`; console.error('balance resumen:', err); });
+
+            // ── HISTORIAL DE PAGOS ───────────────────────────────────────────
+            } else if (panel === 'pagos') {
+                fetch(`get_historial_pagos.php?id_contrato=${id}`)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (!d.success) { body.innerHTML = '<p class="text-danger">Error al cargar.</p>'; return; }
+                        if (!d.data.length) {
+                            body.innerHTML = '<p class="text-muted text-center py-3">No hay pagos registrados.</p>';
+                            badge.innerHTML = '<span class="badge bg-secondary">0 pagos</span>';
+                            return;
+                        }
+                        badge.innerHTML = `<span class="badge bg-success">${d.data.length} pago(s)</span>`;
+                        let rows = d.data.map(p => `
+                            <tr>
+                                <td>${p.fecha_pago || '—'}</td>
+                                <td><code>${p.referencia_pago || '—'}</code></td>
+                                <td class="small text-muted">${(p.justificacion || '').replace(/\[|\]/g, '').substring(0, 60)}</td>
+                                <td class="fw-bold text-success text-end">$${parseFloat(p.monto_total).toFixed(2)}</td>
+                            </tr>`).join('');
+                        body.innerHTML = `<div class="table-responsive" style="max-height:250px;overflow-y:auto;">
+                            <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+                                <thead class="table-light sticky-top"><tr><th>Fecha Pago</th><th>Referencia</th><th>Concepto</th><th class="text-end">Monto</th></tr></thead>
+                                <tbody>${rows}</tbody>
+                            </table></div>`;
+                    }).catch(err => { body.innerHTML = `<p class="text-danger small"><b>Error:</b> ${err.message || err}</p>`; console.error('balance pagos:', err); });
+
+            // ── TODOS LOS MOVIMIENTOS ────────────────────────────────────────
+            } else if (panel === 'movimientos') {
+                fetch(`get_contract_balance.php?id=${id}&action=movimientos`)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (!d.success) { body.innerHTML = '<p class="text-danger">Error al cargar.</p>'; return; }
+                        if (!d.data.length) {
+                            body.innerHTML = '<p class="text-muted text-center py-3">Sin movimientos registrados.</p>';
+                            badge.innerHTML = '<span class="badge bg-secondary">0</span>';
+                            return;
+                        }
+                        badge.innerHTML = `<span class="badge bg-info">${d.data.length} mov.</span>`;
+                        const badgeColors = { PAGADO:'success', PENDIENTE:'warning', VENCIDO:'danger', RECHAZADO:'secondary', ANULADO:'dark', 'ABONO PARCIAL':'info' };
+                        let rows = d.data.map(m => {
+                            const bc = badgeColors[m.estado] || 'light';
+                            const fecha = m.fecha_pago || m.fecha_emision || '—';
+                            return `<tr>
+                                <td>${fecha}</td>
+                                <td><code>${m.referencia_pago || '—'}</code></td>
+                                <td class="small text-muted">${(m.concepto_limpio || '').substring(0, 55)}</td>
+                                <td>${m.nombre_banco || '—'}</td>
+                                <td><span class="badge bg-${bc}">${m.estado}</span></td>
+                                <td class="fw-bold text-end">$${parseFloat(m.monto_total||0).toFixed(2)}</td>
+                            </tr>`;
+                        }).join('');
+                        body.innerHTML = `<div class="table-responsive" style="max-height:300px;overflow-y:auto;">
+                            <table class="table table-sm table-hover mb-0" style="font-size:.82rem;">
+                                <thead class="table-light sticky-top"><tr><th>Fecha</th><th>Ref.</th><th>Concepto</th><th>Banco</th><th>Estado</th><th class="text-end">Monto</th></tr></thead>
+                                <tbody>${rows}</tbody>
+                            </table></div>`;
+                    }).catch(err => { body.innerHTML = `<p class="text-danger small"><b>Error:</b> ${err.message || err}</p>`; console.error('balance movimientos:', err); });
+
+            // ── DEUDA ACTIVA ─────────────────────────────────────────────────
+            } else if (panel === 'deuda') {
+                fetch(`get_contract_balance.php?id=${id}&action=deuda`)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (!d.success) { body.innerHTML = '<p class="text-danger">Error al cargar.</p>'; return; }
+                        if (!d.data.length) {
+                            body.innerHTML = '<div class="alert alert-success py-2 mb-0"><i class="fa-solid fa-circle-check me-2"></i>Sin deuda activa registrada.</div>';
+                            badge.innerHTML = '<span class="badge bg-success">Sin deuda</span>';
+                            return;
+                        }
+                        badge.innerHTML = `<span class="badge bg-danger">${d.data.length} deuda(s)</span>`;
+                        let rows = d.data.map(d2 => `
+                            <tr>
+                                <td>${d2.fecha_registro}</td>
+                                <td>$${parseFloat(d2.monto_total).toFixed(2)}</td>
+                                <td class="text-success">$${parseFloat(d2.monto_pagado).toFixed(2)}</td>
+                                <td class="text-danger fw-bold">$${parseFloat(d2.saldo_pendiente).toFixed(2)}</td>
+                                <td><span class="badge bg-${d2.estado==='PENDIENTE'?'danger':'success'}">${d2.estado}</span></td>
+                            </tr>`).join('');
+                        body.innerHTML = `<div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+                                <thead class="table-light"><tr><th>Fecha</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Estado</th></tr></thead>
+                                <tbody>${rows}</tbody>
+                            </table></div>`;
+                    }).catch(err => { body.innerHTML = `<p class="text-danger small"><b>Error:</b> ${err.message || err}</p>`; console.error('balance deuda:', err); });
+            }
+        };
+        /* ════════════ FIN ACORDEÓN FINANCIERO ════════════ */
+
         window.abrirModalEdicion = function (id) {
+
             // Reset state
             $('#editContratoAlert').addClass('d-none').removeClass('alert-danger alert-success').html('');
             $('#editContratoSpinner').show();
