@@ -185,9 +185,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     $nroLabel = ($total > 1) ? "<span class='text-primary fw-bold me-1' style='font-size:0.75rem' title='Contrato correlativo'>#{$nro}</span>" : "";
     $multiBadge = ($total > 1) ? "<span class='badge bg-info text-dark ms-1' style='font-size:0.65rem; vertical-align:middle' title='Este cliente tiene {$total} contratos registrados'>Multi {$total}</span>" : "";
     
-    $refPunto = !empty($aRow['punto_acceso']) ? "<div class='text-muted' style='font-size:0.75rem; line-height: 1.1; margin-top: 2px;'><i class='fa-solid fa-location-dot me-1' style='font-size:0.6rem'></i>" . clean($aRow['punto_acceso']) . "</div>" : "";
-    
-    $row[] = "<div class='text-start'>" . $nroLabel . "<strong>{$nombre}</strong>" . $multiBadge . $refPunto . "</div>";
+    $row[] = "<div class='text-start'>" . $nroLabel . "<strong>{$nombre}</strong>" . $multiBadge . "</div>";
 
     // 4. MONTO PLAN [NEW]
     $row[] = clean($aRow['monto_plan']);

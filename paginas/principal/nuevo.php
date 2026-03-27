@@ -225,7 +225,7 @@ require_once '../includes/sidebar.php';
 
 
 
-                    <div class="col-md-6">
+                    <div class="col-md-6 campo-ftth">
                         <label for="id_olt" class="form-label">OLT</label>
 
                         <select name="id_olt" id="id_olt" class="form-select" required>
@@ -247,7 +247,7 @@ require_once '../includes/sidebar.php';
 
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-6 campo-ftth">
                         <label for="id_pon" class="form-label">PON</label>
 
                         <select name="id_pon" id="id_pon" class="form-select" required disabled>
@@ -459,7 +459,7 @@ require_once '../includes/sidebar.php';
                     <!-- CAMPOS RADIO -->
                     <div class="col-md-6 campo-radio">
                         <label for="ip" class="form-label">Dirección IP <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="ip" name="ip" placeholder="192.168.x.x"
+                        <input type="text" class="form-control" id="ip" name="ip_onu" placeholder="192.168.x.x"
                             pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
                     </div>
 
@@ -480,20 +480,10 @@ require_once '../includes/sidebar.php';
 
 
                     <div class="col-md-12">
-                        <label for="evidencia_fibra" class="form-label">Evidencia de Fibra</label>
-                        <input type="text" class="form-control" id="evidencia_fibra" name="evidencia_fibra" placeholder="Detalle o ID de evidencia de fibra">
+                        <label for="evidencia_fibra" class="form-label">Evidencia</label>
+                        <input type="text" class="form-control" id="evidencia_fibra" name="evidencia_fibra" placeholder="Detalle o ID de evidencia de fibra o radio">
                     </div>
 
-                    <!-- Campos específicos RADIO -->
-                    <div class="col-md-6 campo-radio">
-                        <label for="punto_acceso" class="form-label">Punto de Acceso</label>
-                        <input type="text" class="form-control" id="punto_acceso" name="punto_acceso">
-                    </div>
-
-                    <div class="col-md-6 campo-radio">
-                        <label for="valor_conexion_dbm" class="form-label">Valor Conexión (dBm)</label>
-                        <input type="text" class="form-control" id="valor_conexion_dbm" name="valor_conexion_dbm">
-                    </div>
 
                     <div class="col-md-6">
                         <label for="evidencia_foto" class="form-label">Evidencia Fotográfica (Instalación)</label>
@@ -1118,23 +1108,19 @@ require_once '../includes/sidebar.php';
         const mMoneda = $('#moneda_pago');
         const mMedio = $('#medio_pago');
 
-        // Mapeo de medios por moneda
-        const mediosPorMoneda = {
-            'USD': ['Efectivo', 'Zelle', 'Otro'],
-            'BS': ['Efectivo', 'Transferencia', 'Pago Móvil', 'Otro']
-        };
-
-        function filtrarMedios(moneda) {
-            const actual = mMedio.val();
-            mMedio.empty().append('<option value="">-- Seleccione --</option>');
-            if (mediosPorMoneda[moneda]) {
-                mediosPorMoneda[moneda].forEach(medio => {
-                    mMedio.append(`<option value="${medio}">${medio}</option>`);
-                });
-            }
-            if (mediosPorMoneda[moneda].includes(actual)) {
-                mMedio.val(actual);
-            }
+        function cargarMediosDePago() {
+            $.get('json_bancos_api.php?action=get&limit=100', function (response) {
+                if (response && response.data) {
+                    mMedio.empty().append('<option value="">-- Seleccione --</option>');
+                    response.data.forEach(banco => {
+                        if (banco.metodos_pago && Array.isArray(banco.metodos_pago)) {
+                            banco.metodos_pago.forEach(metodo => {
+                                mMedio.append(`<option value="${metodo}">${banco.nombre_banco} - ${metodo}</option>`);
+                            });
+                        }
+                    });
+                }
+            });
         }
 
         mMoneda.on('change', function () {
@@ -1150,12 +1136,11 @@ require_once '../includes/sidebar.php';
                     mPagado.val((monto / tasaBCV).toFixed(2));
                 }
             }
-            filtrarMedios(moneda);
             calcularSaldo();
         });
 
-        // Inicializar medios al cargar
-        filtrarMedios(mMoneda.val());
+        // Cargar medios al inicio
+        cargarMediosDePago();
 
         // 13. Función para calcular saldo pendiente y validar que no exceda el total
         function calcularSaldo() {

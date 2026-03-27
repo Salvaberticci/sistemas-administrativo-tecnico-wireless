@@ -118,7 +118,7 @@ if (file_exists($jsonFileTypes)) {
 
                         <form id="formContrato" action="guardar_contrato_instalador.php" method="POST"
                             enctype="multipart/form-data" class="row g-3" autocomplete="off">
-                            <input type="hidden" name="sae_plus" value="2.0">
+                            <input type="hidden" name="sae_plus" value="Excel">
 
                             <!-- ═══════════════════════════════════════════ -->
                             <!-- DATOS DEL CLIENTE                          -->
@@ -237,7 +237,7 @@ if (file_exists($jsonFileTypes)) {
                             </div>
 
 
-                            <div class="col-md-6">
+                            <div class="col-md-6 campo-ftth">
                                 <label for="id_olt" class="form-label">OLT</label>
                                 <select name="id_olt" id="id_olt" class="form-select" required>
                                     <option value="">-- Seleccione una OLT --</option>
@@ -255,7 +255,7 @@ if (file_exists($jsonFileTypes)) {
                                 </select>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-6 campo-ftth">
                                 <label for="id_pon" class="form-label">PON</label>
                                 <select name="id_pon" id="id_pon" class="form-select" required disabled>
                                     <option value="">-- Seleccione una OLT primero --</option>
@@ -462,7 +462,7 @@ if (file_exists($jsonFileTypes)) {
                             <div class="col-md-6 campo-radio">
                                 <label for="ip" class="form-label">Dirección IP <span
                                         class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="ip" name="ip" placeholder="192.168.x.x"
+                                <input type="text" class="form-control" id="ip" name="ip_onu" placeholder="192.168.x.x"
                                     pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
                             </div>
 
@@ -473,8 +473,8 @@ if (file_exists($jsonFileTypes)) {
                             </div>
 
                             <div class="col-md-12">
-                                <label for="evidencia_fibra" class="form-label">Evidencia de Fibra</label>
-                                <input type="text" class="form-control" id="evidencia_fibra" name="evidencia_fibra" placeholder="Detalle o ID de evidencia de fibra">
+                                <label for="evidencia_fibra" class="form-label">Evidencia</label>
+                                <input type="text" class="form-control" id="evidencia_fibra" name="evidencia_fibra" placeholder="Detalle o ID de evidencia de fibra o radio">
                             </div>
 
                             <div class="col-md-6 campo-radio">
@@ -1176,22 +1176,19 @@ if (file_exists($jsonFileTypes)) {
             const mMoneda = $('#moneda_pago');
             const mMedio = $('#medio_pago');
 
-            const mediosPorMoneda = {
-                'USD': ['Efectivo', 'Zelle', 'Otro'],
-                'BS': ['Efectivo', 'Transferencia', 'Pago Móvil', 'Otro']
-            };
-
-            function filtrarMedios(moneda) {
-                const actual = mMedio.val();
-                mMedio.empty().append('<option value="">-- Seleccione --</option>');
-                if (mediosPorMoneda[moneda]) {
-                    mediosPorMoneda[moneda].forEach(medio => {
-                        mMedio.append(`<option value="${medio}">${medio}</option>`);
-                    });
-                }
-                if (mediosPorMoneda[moneda] && mediosPorMoneda[moneda].includes(actual)) {
-                    mMedio.val(actual);
-                }
+            function cargarMediosDePago() {
+                $.get('../principal/json_bancos_api.php?action=get&limit=100', function (response) {
+                    if (response && response.data) {
+                        mMedio.empty().append('<option value="">-- Seleccione --</option>');
+                        response.data.forEach(banco => {
+                            if (banco.metodos_pago && Array.isArray(banco.metodos_pago)) {
+                                banco.metodos_pago.forEach(metodo => {
+                                    mMedio.append(`<option value="${metodo}">${banco.nombre_banco} - ${metodo}</option>`);
+                                });
+                            }
+                        });
+                    }
+                });
             }
 
             mMoneda.on('change', function () {
@@ -1204,11 +1201,11 @@ if (file_exists($jsonFileTypes)) {
                         mPagado.val((monto / tasaBCV).toFixed(2));
                     }
                 }
-                filtrarMedios(moneda);
                 calcularSaldo();
             });
 
-            filtrarMedios(mMoneda.val());
+            // Cargar medios al inicio
+            cargarMediosDePago();
 
             function calcularSaldo() {
                 var total = parseFloat($('#monto_pagar').val()) || 0;

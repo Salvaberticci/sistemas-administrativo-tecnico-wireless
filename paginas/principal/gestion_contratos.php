@@ -349,7 +349,7 @@ require_once '../includes/sidebar.php';
 
                                 <!-- Cierre -->
                                 <th title="Instalador Radio">Instalador Radio</th>
-                                <th title="Evidencia de Fibra">Evidencia Fibra</th>
+                                <th title="Evidencia">Evidencia</th>
                                 <th title="Sugerencias/Observaciones">Sugerencias</th>
                                 <th>Precinto ODN</th>
                                 <th>Foto</th>
