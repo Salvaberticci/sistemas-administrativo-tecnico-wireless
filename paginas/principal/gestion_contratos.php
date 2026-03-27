@@ -1173,7 +1173,7 @@ require_once '../includes/sidebar.php';
                                 <span id="badge_resumen" class="ms-auto me-3"></span>
                             </button>
                         </h2>
-                        <div id="collapseResumen" class="accordion-collapse collapse" data-bs-parent="#accordionFinanciero">
+                        <div id="collapseResumen" class="accordion-collapse collapse">
                             <div class="accordion-body p-3" id="body_resumen">
                                 <div class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i>Cargando...</div>
                             </div>
@@ -1192,7 +1192,7 @@ require_once '../includes/sidebar.php';
                                 <span id="badge_pagos" class="ms-auto me-3"></span>
                             </button>
                         </h2>
-                        <div id="collapsePagos" class="accordion-collapse collapse" data-bs-parent="#accordionFinanciero">
+                        <div id="collapsePagos" class="accordion-collapse collapse">
                             <div class="accordion-body p-2" id="body_pagos">
                                 <div class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i>Cargando...</div>
                             </div>
@@ -1211,7 +1211,7 @@ require_once '../includes/sidebar.php';
                                 <span id="badge_movimientos" class="ms-auto me-3"></span>
                             </button>
                         </h2>
-                        <div id="collapseMovimientos" class="accordion-collapse collapse" data-bs-parent="#accordionFinanciero">
+                        <div id="collapseMovimientos" class="accordion-collapse collapse">
                             <div class="accordion-body p-2" id="body_movimientos">
                                 <div class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i>Cargando...</div>
                             </div>
@@ -1230,7 +1230,7 @@ require_once '../includes/sidebar.php';
                                 <span id="badge_deuda" class="ms-auto me-3"></span>
                             </button>
                         </h2>
-                        <div id="collapseDeuda" class="accordion-collapse collapse" data-bs-parent="#accordionFinanciero">
+                        <div id="collapseDeuda" class="accordion-collapse collapse">
                             <div class="accordion-body p-2" id="body_deuda">
                                 <div class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i>Cargando...</div>
                             </div>
