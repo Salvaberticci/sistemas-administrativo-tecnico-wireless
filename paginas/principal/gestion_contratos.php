@@ -2198,7 +2198,7 @@ require_once '../includes/sidebar.php';
                             </div>
                             <div class="col-md-4">
                                 <div class="card border-0 bg-warning bg-opacity-10 text-center p-3 h-100">
-                                    <div class="small text-muted fw-bold">Pendiente CXC</div>
+                                    <div class="small text-muted fw-bold">Pendiente por Cobrar</div>
                                     <h4 class="text-warning fw-bold mb-0">$${parseFloat(d.total_pendiente).toFixed(2)}</h4>
                                 </div>
                             </div>
@@ -2249,7 +2249,7 @@ require_once '../includes/sidebar.php';
                             return;
                         }
                         badge.innerHTML = `<span class="badge bg-info">${d.data.length} mov.</span>`;
-                        const badgeColors = { PAGADO:'success', PENDIENTE:'warning', VENCIDO:'danger', RECHAZADO:'secondary', ANULADO:'dark', 'ABONO PARCIAL':'info' };
+                        const badgeColors = { PAGADO:'success', PENDIENTE:'warning', VENCIDO:'danger', RECHAZADO:'secondary', ANULADO:'dark', CANCELADO:'secondary', 'ABONO PARCIAL':'info' };
                         let rows = d.data.map(m => {
                             const bc = badgeColors[m.estado] || 'light';
                             const fecha = m.fecha_pago || m.fecha_emision || '—';
