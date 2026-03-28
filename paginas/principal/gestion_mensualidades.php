@@ -114,6 +114,43 @@ require_once '../includes/sidebar.php';
     .grupo-pago-row:hover {
         background-color: rgba(13, 110, 253, 0.1) !important;
     }
+
+    /* Pestañas (Tabs) Estilo Gestión de Fallas */
+    .nav-tabs-custom {
+        border-bottom: 2px solid #dee2e6;
+        padding: 0 1rem;
+    }
+    .nav-tabs-custom .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #6c757d;
+        font-weight: 700;
+        padding: 1rem 1.5rem;
+        transition: all 0.2s;
+    }
+    .nav-tabs-custom .nav-link:hover {
+        color: #0d6efd;
+        background: rgba(13, 110, 253, 0.05);
+    }
+    .nav-tabs-custom .nav-link.active {
+        color: #0d6efd;
+        border-bottom-color: #0d6efd;
+        background: transparent;
+    }
+    .nav-tabs-custom .nav-link.active.tab-sae-pendiente {
+        color: #ffc107;
+        border-bottom-color: #ffc107;
+    }
+    .nav-tabs-custom .nav-link.active.tab-sae-cargado {
+        color: #198754;
+        border-bottom-color: #198754;
+    }
+    .nav-tabs-custom .badge {
+        font-size: 0.7rem;
+        padding: 0.35em 0.65em;
+        margin-left: 0.5rem;
+        vertical-align: middle;
+    }
 </style>
 
 <main class="main-content">
@@ -238,8 +275,31 @@ require_once '../includes/sidebar.php';
         </div>
 
         <!-- Tabla Unificada -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
+        <div class="card border-0 shadow-sm overflow-hidden">
+            <div class="card-header bg-white p-0 border-bottom-0">
+                <ul class="nav nav-tabs nav-tabs-custom" id="mensualidadesTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="tab-general" data-tab="general" type="button">
+                            <i class="fas fa-list-ul me-2"></i>General 
+                            <span class="badge bg-primary" id="count-general">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link tab-sae-pendiente" id="tab-sae-pendiente" data-tab="sae_pendiente" type="button">
+                            <i class="fas fa-clock me-2"></i>Pendientes SAE Plus 
+                            <span class="badge bg-warning text-dark" id="count-sae-pendiente">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link tab-sae-cargado" id="tab-sae-cargado" data-tab="sae_cargado" type="button">
+                            <i class="fas fa-check-double me-2"></i>Cargados SAE Plus 
+                            <span class="badge bg-success" id="count-sae-cargado">0</span>
+                        </button>
+                    </li>
+                </ul>
+                <input type="hidden" id="active_tab" value="general">
+            </div>
+            <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="display table table-striped table-hover w-100" id="tabla_mensualidades_unica">
                         <thead class="bg-light">
@@ -1462,6 +1522,7 @@ require_once '../includes/sidebar.php';
                     d.filtro_tipo = $('#filtro_tipo').val();
                     d.meses_mora = $('#filtro_meses_mora').val();
                     d.referencia = $('#filtro_referencia').val();
+                    d.tab = $('#active_tab').val();
                     d.sSearch = d.search.value;
                 }
             },
@@ -1488,6 +1549,14 @@ require_once '../includes/sidebar.php';
                 }
             },
             "drawCallback": function(settings) {
+                // Actualizar contadores desde la respuesta del servidor
+                if (settings.json && settings.json.tabCounts) {
+                    const counts = settings.json.tabCounts;
+                    $('#count-general').text(counts.general || 0);
+                    $('#count-sae-pendiente').text(counts.sae_pendiente || 0);
+                    $('#count-sae-cargado').text(counts.sae_cargado || 0);
+                }
+
                 // Lógica de colores para grupos al dibujar la tabla
                 const rows = $(this).find('tbody tr');
                 let lastUuid = null;
@@ -1540,6 +1609,28 @@ require_once '../includes/sidebar.php';
 
         $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_sae, #filtro_estado, #filtro_tipo, #filtro_meses_mora').on('change', function () {
             tablaUnica.ajax.reload();
+        });
+
+        // --- CAMBIO DE PESTAÑA ---
+        $('#mensualidadesTabs button').on('click', function() {
+            const tab = $(this).data('tab');
+            $('#mensualidadesTabs button').removeClass('active');
+            $(this).addClass('active');
+            $('#active_tab').val(tab);
+            
+            // Recargar tabla con el nuevo filtro de pestaña
+            window.tablaUnica.ajax.reload();
+        });
+
+        // --- CAMBIO DE PESTAÑA ---
+        $('#mensualidadesTabs button').on('click', function() {
+            const tab = $(this).data('tab');
+            $('#mensualidadesTabs button').removeClass('active');
+            $(this).addClass('active');
+            $('#active_tab').val(tab);
+            
+            // Recargar tabla con el nuevo filtro de pestaña
+            window.tablaUnica.ajax.reload();
         });
 
         // Trigger reload on reference type with delay
