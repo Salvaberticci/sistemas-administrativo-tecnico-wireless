@@ -69,6 +69,42 @@ require_once '../includes/sidebar.php';
     .pulse-warning {
         animation: pulse-warning 2s infinite;
     }
+
+    /* Estilo Ferro/Neón para la Fecha */
+    .col-fecha-vibrante {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 100px;
+    }
+
+    .periodo-badge {
+        background: #00f2fe; /* Cian vibrante */
+        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        box-shadow: 0 2px 8px rgba(0, 242, 254, 0.4);
+        margin-bottom: 6px;
+        letter-spacing: 0.5px;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .fecha-detalle {
+        color: #2c3e50;
+        font-weight: 700;
+        font-size: 1.05rem;
+        text-shadow: 0 0 1px rgba(0,0,0,0.1);
+    }
+
+    /* Hover effect for grouped rows */
+    .grupo-pago-row:hover {
+        background-color: rgba(13, 110, 253, 0.05) !important;
+    }
 </style>
 
 <main class="main-content">
@@ -200,6 +236,7 @@ require_once '../includes/sidebar.php';
                         <thead class="bg-light">
                             <tr>
                                 <th>Fecha de registro</th>
+                                <th>Cédula</th>
                                 <th>Referencia</th>
                                 <th>Cliente</th>
                                 <th>Concepto</th>
@@ -209,6 +246,7 @@ require_once '../includes/sidebar.php';
                                 <th>Estado</th>
                                 <th>Origen</th>
                                 <th>Estado SAE Plus</th>
+                                <th>Cód. SAE</th>
                                 <th class="text-end">Acciones</th>
                             </tr>
                         </thead>
@@ -1419,8 +1457,10 @@ require_once '../includes/sidebar.php';
                 }
             },
             "columns": [
-                { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 }, { "data": 4 }, { "data": 5 }, { "data": 6 }, { "data": 7 }, { "data": 8 }, { "data": 9 },
-                { "data": 10, "orderable": false, "searchable": false, "className": "text-end" }
+                { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 }, { "data": 4 }, 
+                { "data": 5 }, { "data": 6 }, { "data": 7 }, { "data": 8 }, { "data": 9 }, 
+                { "data": 10 }, { "data": 11 },
+                { "data": 12, "orderable": false, "searchable": false, "className": "text-end" }
             ],
             "createdRow": function(row, data, dataIndex) {
                 // El UUID de grupo viene en el metadato (index id_grupo_pago del objeto)
@@ -1449,8 +1489,8 @@ require_once '../includes/sidebar.php';
                         lastUuid = uuid;
                     }
                     
-                    // Group visually by Reference (col index 1)
-                    const refCell = $(this).find('td').eq(1);
+                    // Group visually by Reference (col index 2)
+                    const refCell = $(this).find('td').eq(2);
                     const currentRef = refCell.text().trim();
                     
                     if (currentRef && currentRef !== '-' && currentRef !== '') {

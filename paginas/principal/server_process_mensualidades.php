@@ -45,14 +45,16 @@ if ($check_cols && $check_cols->num_rows > 0) {
 // We use aSearchColumns for DataTables logic
 $aSearchColumns = [
     'COALESCE(cxc.fecha_pago, cxc.fecha_emision)', // 0
-    'cxc.referencia_pago',                         // 1
-    'co.nombre_completo',                          // 2
-    'COALESCE(h.justificacion, pl.nombre_plan)',   // 3
-    'cxc.monto_total',                             // 4
-    'cxc.id_banco',                                // 5
-    'cxc.estado',                                  // 6
-    'cxc.origen',                                  // 7
-    'cxc.estado_sae_plus'                          // 8
+    'co.cedula',                                   // 1 (NEW)
+    'cxc.referencia_pago',                         // 2
+    'co.nombre_completo',                          // 3
+    'COALESCE(h.justificacion, pl.nombre_plan)',   // 4
+    'cxc.monto_total',                             // 5
+    'cxc.id_banco',                                // 6
+    'cxc.estado',                                  // 7
+    'cxc.origen',                                  // 8
+    'cxc.estado_sae_plus',                         // 9
+    'co.sae_plus'                                  // 10 (NEW)
 ];
 
 // 4. Handle Filters (Date Range & Account)
@@ -160,6 +162,8 @@ $sSelect = "
     cxc.id_cobro,
     co.id AS id_contrato,
     co.nombre_completo,
+    co.cedula,
+    co.sae_plus,
     cxc.fecha_emision,
     cxc.fecha_pago,
     cxc.referencia_pago,
@@ -235,10 +239,13 @@ while ($aRow = $rResult->fetch_assoc()) {
         $mes_servicio = ucfirst(strtolower($matches[1])) . ' ' . $año_servicio;
     }
 
-    $row[] = '<div class="text-center" title="Periodo: ' . $mes_servicio . '">
-                <span class="badge bg-light text-dark border-0 mb-1" style="font-size: 0.7rem;">' . $mes_servicio . '</span><br>' 
-                . date('d/m/Y', strtotime($fecha_base)) . 
-             '</div>';
+    $row[] = '<div class="text-center col-fecha-vibrante" title="Periodo: ' . $mes_servicio . '">
+                <div class="periodo-badge">' . $mes_servicio . '</div>
+                <div class="fecha-detalle">' . date('d/m/Y', strtotime($fecha_base)) . '</div>
+             </div>';
+
+    // 1. Cédula (NEW)
+    $row[] = '<div class="text-dark fw-bold" style="font-size: 0.85rem;">' . htmlspecialchars($aRow['cedula'] ?: 'N/A') . '</div>';
 
     // 1. Ref
     $row[] = htmlspecialchars($aRow['referencia_pago'] ?: '-');
@@ -338,6 +345,9 @@ while ($aRow = $rResult->fetch_assoc()) {
     } else {
         $row[] = '<span class="badge bg-light text-secondary border w-100 d-block py-2"><i class="fas fa-minus me-1"></i> N/A</span>';
     }
+
+    // 11. Código SAE Plus (NEW)
+    $row[] = '<div class="text-center"><span class="badge bg-dark bg-opacity-10 text-dark border border-dark border-opacity-25 fw-bold" style="font-size: 0.75rem;">' . htmlspecialchars($aRow['sae_plus'] ?: '-') . '</span></div>';
 
     // 10. Acciones
     $acciones = '<div class="d-flex justify-content-end gap-1">';
