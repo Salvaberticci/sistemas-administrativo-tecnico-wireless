@@ -2249,7 +2249,7 @@ require_once '../includes/sidebar.php';
                             return;
                         }
                         badge.innerHTML = `<span class="badge bg-info">${d.data.length} mov.</span>`;
-                        const badgeColors = { PAGADO:'success', PENDIENTE:'warning', VENCIDO:'danger', RECHAZADO:'secondary', ANULADO:'dark', CANCELADO:'secondary', 'ABONO PARCIAL':'info' };
+                        const badgeColors = { PAGADO:'success', PENDIENTE:'warning', RECHAZADO:'secondary', ANULADO:'dark', 'ABONO PARCIAL':'info' };
                         let rows = d.data.map(m => {
                             const bc = badgeColors[m.estado] || 'light';
                             const fecha = m.fecha_pago || m.fecha_emision || '—';

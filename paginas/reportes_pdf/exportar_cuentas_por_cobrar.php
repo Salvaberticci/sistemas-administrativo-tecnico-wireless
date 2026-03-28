@@ -190,7 +190,7 @@ ob_start();
                     </td>
                     <td class="right">$<?php echo number_format($fila['monto_total'], 2); ?></td>
                     <td class="center">
-                        <span class="<?php echo ($fila['estado'] == 'PAGADO') ? 'success' : 'danger'; ?>">
+                        <span class="<?php echo ($fila['estado'] == 'PAGADO') ? 'success' : (($fila['estado'] == 'RECHAZADO') ? 'muted' : 'danger'); ?>">
                             <?php echo htmlspecialchars($fila['estado']); ?>
                         </span>
                     </td>

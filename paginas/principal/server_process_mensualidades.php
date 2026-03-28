@@ -42,6 +42,8 @@ if ($check_cols && $check_cols->num_rows > 0) {
 }
 
 // 3. Define Columns for Search/Sort
+$where_mensualidad = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR h.justificacion LIKE '%[EXTRA]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL))";
+
 // We use aSearchColumns for DataTables logic
 $aSearchColumns = [
     'COALESCE(cxc.fecha_pago, cxc.fecha_emision)', // 0
@@ -75,7 +77,7 @@ if (isset($_POST['estado_pago']) && $_POST['estado_pago'] != '') {
 if (isset($_POST['estado_sae']) && $_POST['estado_sae'] != '') {
     $whereConditions[] = "cxc.estado_sae_plus = '" . $conn->real_escape_string($_POST['estado_sae']) . "'";
     // Restringir a mensualidades únicamente cuando se filtra por SAE
-    $whereConditions[] = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL) OR h.justificacion LIKE '%mensualidad%')";
+    $whereConditions[] = $where_mensualidad;
 }
 
 if (isset($_POST['referencia']) && $_POST['referencia'] != '') {
@@ -85,7 +87,7 @@ if (isset($_POST['referencia']) && $_POST['referencia'] != '') {
 if (isset($_POST['filtro_tipo']) && $_POST['filtro_tipo'] != '') {
     $tipo = $_POST['filtro_tipo'];
     if ($tipo === 'Mensualidad') {
-        $whereConditions[] = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL) OR h.justificacion LIKE '%mensualidad%')";
+        $whereConditions[] = $where_mensualidad;
     } elseif ($tipo === 'Instalacion') {
         $whereConditions[] = "(h.justificacion LIKE '%[INSTALACION]%' OR h.justificacion LIKE '%instalación%' OR h.justificacion LIKE '%instalacion%')";
     } elseif ($tipo === 'Equipos') {
@@ -110,11 +112,10 @@ if (isset($_POST['meses_mora']) && $_POST['meses_mora'] !== '' && intval($_POST[
         LEFT JOIN cobros_manuales_historial sub_h ON sub_cxc.id_cobro = sub_h.id_cobro_cxc
         LEFT JOIN contratos sub_co ON sub_cxc.id_contrato = sub_co.id
         LEFT JOIN planes sub_pl ON sub_co.id_plan = sub_pl.id_plan
-        WHERE sub_cxc.estado IN ('PENDIENTE', 'VENCIDO')
+        WHERE sub_cxc.estado = 'PENDIENTE'
           AND sub_cxc.fecha_vencimiento <= '" . date('Y-m-d') . "'
           AND (
               sub_h.justificacion LIKE '%[MENSUALIDAD]%'
-              OR sub_h.justificacion LIKE '%mensualidad%'
               OR (sub_h.justificacion IS NULL AND sub_pl.id_plan IS NOT NULL)
           )
         GROUP BY sub_cxc.id_contrato
@@ -124,9 +125,7 @@ if (isset($_POST['meses_mora']) && $_POST['meses_mora'] !== '' && intval($_POST[
 
 // 4.1 Tab Filters (SAE Plus)
 $tab = $_POST['tab'] ?? 'general';
-// Lógica estricta: Solo registros con tags [MENSUALIDAD] o [EXTRA], o registros automáticos sin historial pero con plan.
-// Se elimina el LIKE '%mensualidad%' genérico para evitar falsos positivos (como Registro de Contrato).
-$where_mensualidad = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR h.justificacion LIKE '%[EXTRA]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL))";
+// Lógica estricta centralizada arriba.
 
 if ($tab === 'sae_pendiente') {
     $whereConditions[] = $where_mensualidad;
@@ -343,16 +342,15 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 7. Estado (Badge)
     $badge_class = 'warning';
     
-    // Revertir UX: El usuario prefiere ver 'PENDIENTE' en lugar de 'VENCIDO'
-    $estado_mostrar = ($estado == 'VENCIDO') ? 'PENDIENTE' : $estado;
-    
-    if ($estado_mostrar == 'PAGADO') {
+    if ($estado == 'PAGADO') {
         $badge_class = 'success';
-    } elseif ($estado_mostrar == 'PENDIENTE') {
-        $badge_class = 'warning'; // El amarillo original
+    } elseif ($estado == 'PENDIENTE') {
+        $badge_class = 'warning';
+    } elseif ($estado == 'RECHAZADO') {
+        $badge_class = 'secondary';
     }
     
-    $row[] = '<div class="text-center"><span class="badge bg-' . $badge_class . '">' . $estado_mostrar . '</span></div>';
+    $row[] = '<div class="text-center"><span class="badge bg-' . $badge_class . '">' . $estado . '</span></div>';
 
     // 8. Origen (Badge)
     $origen = $aRow['origen'] ?: 'SISTEMA';

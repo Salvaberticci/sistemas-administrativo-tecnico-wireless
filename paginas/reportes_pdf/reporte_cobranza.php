@@ -11,7 +11,7 @@ $ref_filtro = isset($_GET['referencia']) ? $_GET['referencia'] : '';
 
 $cobros = [];
 $total_cobrado = 0; // Solo PAGADO
-$deuda_clientes = 0; // PENDIENTE + VENCIDO
+$deuda_clientes = 0; // PENDIENTE (incluye lo que antes era VENCIDO)
 
 // 2. CONSTRUCCIÓN DINÁMICA DE LA CLÁUSULA WHERE
 $where_clause = " WHERE 1=1 ";
@@ -85,7 +85,7 @@ if ($stmt) {
         
         if ($fila['estado'] === 'PAGADO') {
             $total_cobrado += $fila['monto_total'];
-        } else if ($fila['estado'] !== 'CANCELADO') {
+        } else if ($fila['estado'] === 'PENDIENTE') {
             $deuda_clientes += $fila['monto_total'];
         }
     }
@@ -138,9 +138,8 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                         <select class="form-select bg-white" name="estado" id="estado">
                             <option value="TODOS" <?php echo ($estado_filtro == 'TODOS') ? 'selected' : ''; ?>>TODOS</option>
                             <option value="PENDIENTE" <?php echo ($estado_filtro == 'PENDIENTE') ? 'selected' : ''; ?>>PENDIENTE</option>
-                            <option value="VENCIDO" <?php echo ($estado_filtro == 'VENCIDO') ? 'selected' : ''; ?>>VENCIDO</option>
                             <option value="PAGADO" <?php echo ($estado_filtro == 'PAGADO') ? 'selected' : ''; ?>>PAGADO</option>
-                            <option value="CANCELADO" <?php echo ($estado_filtro == 'CANCELADO') ? 'selected' : ''; ?>>CANCELADO</option>
+                            <option value="RECHAZADO" <?php echo ($estado_filtro == 'RECHAZADO') ? 'selected' : ''; ?>>RECHAZADO</option>
                         </select>
                     </div>
 
@@ -238,7 +237,7 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                                 <h2 class="display-6 fw-bold mb-0 me-3">$<?php echo number_format($deuda_clientes, 2); ?></h2>
                                 <i class="fa-solid fa-clock-rotate-left fa-2x opacity-25 ms-auto"></i>
                             </div>
-                            <p class="text-white-50 small mb-0 mt-2">Suma de cargos pendientes y vencidos</p>
+                            <p class="text-white-50 small mb-0 mt-2">Suma de todos los cargos pendientes</p>
                         </div>
                     </div>
                 </div>
@@ -293,11 +292,11 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                                                 case 'PAGADO':
                                                     $badge_class = 'success';
                                                     break;
-                                                case 'VENCIDO':
-                                                    $badge_class = 'danger';
-                                                    break;
                                                 case 'PENDIENTE':
                                                     $badge_class = 'warning text-dark';
+                                                    break;
+                                                case 'RECHAZADO':
+                                                    $badge_class = 'secondary';
                                                     break;
                                             }
                                             ?>

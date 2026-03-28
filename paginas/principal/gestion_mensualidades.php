@@ -152,6 +152,37 @@ require_once '../includes/sidebar.php';
         margin-left: 0.5rem;
         vertical-align: middle;
     }
+
+    /* Mejora de espaciado para DataTables */
+    .dataTables_wrapper {
+        padding-top: 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 1.5rem;
+        padding: 0 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        margin-top: 1.5rem;
+        padding: 0 1rem;
+    }
+
+    /* Ajuste de la tabla para que no se sienta apretada */
+    #tabla_mensualidades_unica {
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e9ecef !important;
+        margin-bottom: 0px !important;
+    }
+
+    #tabla_mensualidades_unica thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        padding: 12px 10px;
+    }
 </style>
 
 <main class="main-content">
@@ -227,8 +258,7 @@ require_once '../includes/sidebar.php';
                             <option value="">Cualquier Estado</option>
                             <option value="PAGADO">Pagado</option>
                             <option value="PENDIENTE">Pendiente</option>
-                            <option value="VENCIDO">Vencido</option>
-                            <option value="CANCELADO">Cancelado</option>
+                            <option value="RECHAZADO">Rechazado</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -300,7 +330,7 @@ require_once '../includes/sidebar.php';
                 </ul>
                 <input type="hidden" id="active_tab" value="general">
             </div>
-            <div class="card-body p-0">
+            <div class="card-body p-4">
                 <div class="table-responsive">
                     <table class="display table table-striped table-hover w-100" id="tabla_mensualidades_unica">
                         <thead class="bg-light">
@@ -871,8 +901,7 @@ require_once '../includes/sidebar.php';
                                     <select name="estado" id="edit_estado" class="form-select form-select-sm shadow-sm" required>
                                         <option value="PENDIENTE">PENDIENTE</option>
                                         <option value="PAGADO">PAGADO</option>
-                                        <option value="VENCIDO">VENCIDO</option>
-                                        <option value="CANCELADO">CANCELADO</option>
+                                        <option value="RECHAZADO">RECHAZADO</option>
                                     </select>
                                 </div>
                             </div>

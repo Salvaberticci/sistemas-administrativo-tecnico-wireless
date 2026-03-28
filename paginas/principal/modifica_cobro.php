@@ -108,11 +108,8 @@ require_once '../includes/sidebar.php';
                         <label for="estado" class="form-label">Estado</label>
                         <select name="estado" class="form-select" required>
                             <option value="PENDIENTE" <?php echo ($cobro_data['estado'] == 'PENDIENTE') ? 'selected' : ''; ?>>PENDIENTE</option>
-                            <option value="PAGADO" <?php echo ($cobro_data['estado'] == 'PAGADO') ? 'selected' : ''; ?>>
-                                PAGADO</option>
-                            <option value="VENCIDO" <?php echo ($cobro_data['estado'] == 'VENCIDO') ? 'selected' : ''; ?>>
-                                VENCIDO</option>
-                            <option value="CANCELADO" <?php echo ($cobro_data['estado'] == 'CANCELADO') ? 'selected' : ''; ?>>CANCELADO</option>
+                            <option value="PAGADO" <?php echo ($cobro_data['estado'] == 'PAGADO') ? 'selected' : ''; ?>>PAGADO</option>
+                            <option value="RECHAZADO" <?php echo ($cobro_data['estado'] == 'RECHAZADO') ? 'selected' : ''; ?>>RECHAZADO</option>
                         </select>
                     </div>
 

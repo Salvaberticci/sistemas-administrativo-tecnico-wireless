@@ -27,7 +27,7 @@ $vendedores_json_path = '../principal/data/vendedores.json';
 $vendedores = file_exists($vendedores_json_path) ? json_decode(file_get_contents($vendedores_json_path), true) ?: [] : [];
 $planes = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan")->fetch_all(MYSQLI_ASSOC);
 $estados_contrato = ['ACTIVO', 'INACTIVO', 'SUSPENDIDO', 'CANCELADO'];
-$estados_cobros = ['PENDIENTE', 'VENCIDO', 'PAGADO', 'TODOS'];
+$estados_cobros = ['PENDIENTE', 'PAGADO', 'RECHAZADO', 'TODOS'];
 $olts = $conn->query("SELECT id_olt, nombre_olt FROM olt ORDER BY nombre_olt")->fetch_all(MYSQLI_ASSOC);
 $pons = $conn->query("SELECT id_pon, nombre_pon FROM pon ORDER BY nombre_pon")->fetch_all(MYSQLI_ASSOC);
 
