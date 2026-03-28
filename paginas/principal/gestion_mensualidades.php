@@ -101,9 +101,18 @@ require_once '../includes/sidebar.php';
         text-shadow: 0 0 1px rgba(0,0,0,0.1);
     }
 
-    /* Hover effect for grouped rows */
-    .grupo-pago-row:hover {
+    /* Hover effect for rows */
+    #tabla_mensualidades_unica tbody tr {
+        cursor: pointer;
+    }
+
+    #tabla_mensualidades_unica tbody tr:hover {
         background-color: rgba(13, 110, 253, 0.05) !important;
+    }
+
+    /* Hover effect for grouped rows specific */
+    .grupo-pago-row:hover {
+        background-color: rgba(13, 110, 253, 0.1) !important;
     }
 </style>
 
@@ -1463,6 +1472,11 @@ require_once '../includes/sidebar.php';
                 { "data": 12, "orderable": false, "searchable": false, "className": "text-end" }
             ],
             "createdRow": function(row, data, dataIndex) {
+                // Asignar ID de cobro para doble clic
+                if (data.id_cobro) {
+                    $(row).attr('data-id', data.id_cobro);
+                }
+
                 // El UUID de grupo viene en el metadato (index id_grupo_pago del objeto)
                 const uuid = data.id_grupo_pago;
                 if (uuid) {
@@ -1514,6 +1528,14 @@ require_once '../includes/sidebar.php';
                 });
             },
             "dom": '<"d-flex justify-content-between mb-3"lf>rt<"d-flex justify-content-between mt-3"ip>'
+        });
+        
+        // --- DOBLE CLIC PARA EDITAR ---
+        $('#tabla_mensualidades_unica tbody').on('dblclick', 'tr', function () {
+            const id = $(this).attr('data-id');
+            if (id) {
+                confirmarEdicionCobro(id);
+            }
         });
 
         $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_sae, #filtro_estado, #filtro_tipo, #filtro_meses_mora').on('change', function () {

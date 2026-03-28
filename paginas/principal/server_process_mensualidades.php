@@ -368,6 +368,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     $acciones .= '</div>';
 
     $row[] = $acciones;
+    $row['id_cobro'] = $id_cobro; // Metadato para JS
     $row['id_grupo_pago'] = $aRow['id_grupo_pago']; // Metadato para JS
     $output['aaData'][] = $row;
 }
