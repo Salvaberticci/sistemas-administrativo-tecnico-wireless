@@ -124,7 +124,9 @@ if (isset($_POST['meses_mora']) && $_POST['meses_mora'] !== '' && intval($_POST[
 
 // 4.1 Tab Filters (SAE Plus)
 $tab = $_POST['tab'] ?? 'general';
-$where_mensualidad = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR h.justificacion LIKE '%[EXTRA]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL) OR h.justificacion LIKE '%mensualidad%')";
+// Lógica estricta: Solo registros con tags [MENSUALIDAD] o [EXTRA], o registros automáticos sin historial pero con plan.
+// Se elimina el LIKE '%mensualidad%' genérico para evitar falsos positivos (como Registro de Contrato).
+$where_mensualidad = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR h.justificacion LIKE '%[EXTRA]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL))";
 
 if ($tab === 'sae_pendiente') {
     $whereConditions[] = $where_mensualidad;
