@@ -124,7 +124,7 @@ if (isset($_POST['meses_mora']) && $_POST['meses_mora'] !== '' && intval($_POST[
 
 // 4.1 Tab Filters (SAE Plus)
 $tab = $_POST['tab'] ?? 'general';
-$where_mensualidad = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL) OR h.justificacion LIKE '%mensualidad%')";
+$where_mensualidad = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR h.justificacion LIKE '%[EXTRA]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL) OR h.justificacion LIKE '%mensualidad%')";
 
 if ($tab === 'sae_pendiente') {
     $whereConditions[] = $where_mensualidad;
@@ -240,10 +240,10 @@ $output = [
 ];
 
 // Calcular conteos de SAE para badges (optimizado con una sola consulta si es posible, o dos simples)
-$res_p = $conn->query("SELECT COUNT(*) FROM cuentas_por_cobrar cxc LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc LEFT JOIN contratos co ON cxc.id_contrato = co.id LEFT JOIN planes pl ON co.id_plan = pl.id_plan WHERE (h.justificacion LIKE '%[MENSUALIDAD]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL) OR h.justificacion LIKE '%mensualidad%') AND cxc.estado_sae_plus = 'NO CARGADO'");
+$res_p = $conn->query("SELECT COUNT(*) FROM cuentas_por_cobrar cxc LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc LEFT JOIN contratos co ON cxc.id_contrato = co.id LEFT JOIN planes pl ON co.id_plan = pl.id_plan WHERE $where_mensualidad AND cxc.estado_sae_plus = 'NO CARGADO'");
 $output['tabCounts']['sae_pendiente'] = ($res_p) ? intval($res_p->fetch_array()[0]) : 0;
 
-$res_c = $conn->query("SELECT COUNT(*) FROM cuentas_por_cobrar cxc LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc LEFT JOIN contratos co ON cxc.id_contrato = co.id LEFT JOIN planes pl ON co.id_plan = pl.id_plan WHERE (h.justificacion LIKE '%[MENSUALIDAD]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL) OR h.justificacion LIKE '%mensualidad%') AND cxc.estado_sae_plus = 'CARGADO'");
+$res_c = $conn->query("SELECT COUNT(*) FROM cuentas_por_cobrar cxc LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc LEFT JOIN contratos co ON cxc.id_contrato = co.id LEFT JOIN planes pl ON co.id_plan = pl.id_plan WHERE $where_mensualidad AND cxc.estado_sae_plus = 'CARGADO'");
 $output['tabCounts']['sae_cargado'] = ($res_c) ? intval($res_c->fetch_array()[0]) : 0;
 
 while ($aRow = $rResult->fetch_assoc()) {

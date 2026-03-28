@@ -3,6 +3,8 @@
  * Gestión de Mensualidades y Pagos
  * Consolida la Gestión de Cobros (Pendientes) y el Historial de Pagos
  */
+$path_to_root = "../../";
+require_once '../includes/auth.php';
 require_once '../conexion.php';
 
 
@@ -20,7 +22,6 @@ if ($bancos) {
     }
 }
 
-$path_to_root = "../../";
 $page_title = "Gestión de Mensualidades y Pagos";
 $breadcrumb = ["Cobranzas"];
 $back_url = "../menu.php";
@@ -138,8 +139,8 @@ require_once '../includes/sidebar.php';
         background: transparent;
     }
     .nav-tabs-custom .nav-link.active.tab-sae-pendiente {
-        color: #ffc107;
-        border-bottom-color: #ffc107;
+        color: #dc3545;
+        border-bottom-color: #dc3545;
     }
     .nav-tabs-custom .nav-link.active.tab-sae-cargado {
         color: #198754;
@@ -286,8 +287,8 @@ require_once '../includes/sidebar.php';
                     </li>
                     <li class="nav-item">
                         <button class="nav-link tab-sae-pendiente" id="tab-sae-pendiente" data-tab="sae_pendiente" type="button">
-                            <i class="fas fa-clock me-2"></i>Pendientes SAE Plus 
-                            <span class="badge bg-warning text-dark" id="count-sae-pendiente">0</span>
+                            <i class="fas fa-times-circle me-2"></i>No Cargado SAE Plus 
+                            <span class="badge bg-danger" id="count-sae-pendiente">0</span>
                         </button>
                     </li>
                     <li class="nav-item">
