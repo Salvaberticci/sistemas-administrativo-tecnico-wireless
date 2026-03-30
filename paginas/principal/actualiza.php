@@ -42,6 +42,7 @@ $nap_tx_power = $conn->real_escape_string($_POST['nap_tx_power'] ?? '');
 $onu_rx_power = $conn->real_escape_string($_POST['onu_rx_power'] ?? '');
 $distancia_drop = $conn->real_escape_string($_POST['distancia_drop'] ?? '');
 $punto_acceso = $conn->real_escape_string($_POST['punto_acceso'] ?? '');
+$ip_servicio = $conn->real_escape_string($_POST['ip_servicio'] ?? '');
 $valor_conexion_dbm = $conn->real_escape_string($_POST['valor_conexion_dbm'] ?? '');
 $instalador_ftth = $conn->real_escape_string($_POST['instalador_ftth'] ?? '');
 $instalador_radio = $conn->real_escape_string($_POST['instalador_radio'] ?? '');
@@ -131,7 +132,7 @@ if (empty($errores)) {
 	 id_plan='$id_plan', vendedor_texto='$vendedor_texto', direccion='$direccion',
 	  fecha_instalacion='$fecha_instalacion', estado='$estado', ident_caja_nap='$ident_caja_nap', puerto_nap='$puerto_nap',
 	   num_presinto_odn='$num_presinto_odn', id_olt='$id_olt', id_pon='$id_pon',
-	   tipo_conexion='$tipo_conexion', tipo_instalacion='$tipo_instalacion', mac_onu='$mac_onu', ip_onu='$ip_onu', nap_tx_power='$nap_tx_power', onu_rx_power='$onu_rx_power',
+	   tipo_conexion='$tipo_conexion', tipo_instalacion='$tipo_instalacion', mac_onu='$mac_onu', ip_onu='" . (!empty($ip_onu) ? $ip_onu : $ip_servicio) . "', nap_tx_power='$nap_tx_power', onu_rx_power='$onu_rx_power',
 	   distancia_drop='$distancia_drop', punto_acceso='$punto_acceso', valor_conexion_dbm='$valor_conexion_dbm',
 	   instalador='$instalador_ftth', instalador_c='$instalador_radio'
 	   WHERE id = $id";

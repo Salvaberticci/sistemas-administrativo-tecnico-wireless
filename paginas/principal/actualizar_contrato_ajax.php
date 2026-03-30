@@ -39,6 +39,7 @@ $nap_tx_power = trim($conn->real_escape_string($_POST['nap_tx_power'] ?? ''));
 $onu_rx_power = trim($conn->real_escape_string($_POST['onu_rx_power'] ?? ''));
 $distancia_drop = trim($conn->real_escape_string($_POST['distancia_drop'] ?? ''));
 $punto_acceso = trim($conn->real_escape_string($_POST['punto_acceso'] ?? ''));
+$ip_radio = trim($conn->real_escape_string($_POST['ip_servicio'] ?? ''));
 $valor_conexion = trim($conn->real_escape_string($_POST['valor_conexion_dbm'] ?? ''));
 $observaciones = $conn->real_escape_string($_POST['observaciones'] ?? '');
 $plan_prorrateo_nombre = $conn->real_escape_string($_POST['plan_prorrateo_nombre'] ?? '');
@@ -65,12 +66,13 @@ if (!$id) {
 }
 
 // 2. <<<< VALIDACIÓN DE IP DUPLICADA >>>>
-if (!empty($ip_onu)) {
+$ip_to_check = !empty($ip_onu) ? $ip_onu : $ip_radio;
+if (!empty($ip_to_check)) {
     $stmt_ip_onu = $conn->prepare("SELECT id FROM contratos WHERE ip_onu = ? AND id != ? LIMIT 1");
-    $stmt_ip_onu->bind_param("si", $ip_onu, $id);
+    $stmt_ip_onu->bind_param("si", $ip_to_check, $id);
     $stmt_ip_onu->execute();
     if ($stmt_ip_onu->get_result()->num_rows > 0) {
-        echo json_encode(['success' => false, 'message' => "La IP de ONU '{$ip_onu}' ya está registrada en otro contrato."]);
+        echo json_encode(['success' => false, 'message' => "La dirección IP '{$ip_to_check}' ya está registrada en otro contrato."]);
         exit;
     }
     $stmt_ip_onu->close();
@@ -211,7 +213,7 @@ $sql = "UPDATE contratos SET
     direccion='$direccion', fecha_instalacion='$fecha_inst', estado='$estado',
     ident_caja_nap='$ident_caja_nap', puerto_nap='$puerto_nap', num_presinto_odn='$num_presinto_odn',
     id_olt=$olt, id_pon=$pon,
-    tipo_conexion='$tipo_conexion', tipo_instalacion='$tipo_instalacion', mac_onu='$mac_onu', ip_onu='$ip_onu', 
+    tipo_conexion='$tipo_conexion', tipo_instalacion='$tipo_instalacion', mac_onu='$mac_onu', ip_onu='" . (!empty($ip_onu) ? $ip_onu : $ip_radio) . "', 
     nap_tx_power='$nap_tx_power', onu_rx_power='$onu_rx_power', distancia_drop='$distancia_drop',
     punto_acceso='$punto_acceso', valor_conexion_dbm='$valor_conexion',
     observaciones='$observaciones',

@@ -92,6 +92,7 @@ if ($incluye_prorrateo) {
 $tipo_conexion = $conn->real_escape_string($_POST['tipo_conexion'] ?? '');
 $mac_onu = strtoupper(trim($conn->real_escape_string($_POST['mac_onu'] ?? '')));
 $ip_onu = trim($conn->real_escape_string($_POST['ip_onu'] ?? ''));
+$ip_servicio = trim($conn->real_escape_string($_POST['ip_servicio'] ?? ''));
 $punto_acceso = $conn->real_escape_string($_POST['punto_acceso'] ?? '');
 $valor_conexion_dbm = $conn->real_escape_string($_POST['valor_conexion_dbm'] ?? '');
 
@@ -335,7 +336,6 @@ if ($error_mensaje) {
         nap_tx_power, onu_rx_power, distancia_drop, punto_acceso, valor_conexion_dbm,
         evidencia_fibra, evidencia_foto, evidencia_documento, firma_cliente, firma_tecnico,
         token_firma, estado_firma
-    ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
@@ -350,6 +350,7 @@ if ($error_mensaje) {
         // i=dias | d=monto_prorra | sssssssssssssssss=observ..estado_firma (17 s from pos 33 to 49)
         $types = "ssssiissidsssssssiisddddssssssidsssssssssssssssss";
 
+        $ip_val = (!empty($ip_onu) ? $ip_onu : $ip_servicio);
         $stmt->bind_param(
             $types,
             $cedula,
@@ -388,7 +389,7 @@ if ($error_mensaje) {
             $observaciones,
             $tipo_conexion,
             $mac_onu,
-            $ip_onu,
+            $ip_val,
             $nap_tx_power,
             $onu_rx_power,
             $distancia_drop,

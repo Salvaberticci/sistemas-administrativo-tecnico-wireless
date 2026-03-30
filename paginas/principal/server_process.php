@@ -243,7 +243,7 @@ while ($aRow = $rResult->fetch_assoc()) {
     // 21. MAC ONU
     $row[] = clean($aRow['mac_onu']);
 
-    // 22. IP ONU
+    // 22. IP ONU / RADIO
     $row[] = clean($aRow['ip_onu']);
 
     // 23. CAJA NAP
