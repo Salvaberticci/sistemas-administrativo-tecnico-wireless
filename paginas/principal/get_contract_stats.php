@@ -50,11 +50,12 @@ if ($action === 'modal_stats') {
         $types .= "s";
     }
 
-    // Filtro Instalador
+    // Filtro Instalador (Busca en ambas columnas: FTTH y Radio)
     if (!empty($installer)) {
-        $where[] = "instalador = ?";
+        $where[] = "(instalador = ? OR instalador_c = ?)";
         $params[] = $installer;
-        $types .= "s";
+        $params[] = $installer;
+        $types .= "ss";
     }
 
     // Filtro Tipo Contrato (tipo_conexion)
@@ -86,12 +87,17 @@ if ($action === 'modal_stats') {
         $stmt->close();
     }
 
-    // 1. Por Instalador
-    $sql_installers = "SELECT 
-                        COALESCE(NULLIF(instalador, ''), 'Sin Asignar') as nombre, 
-                        COUNT(*) as total 
-                       FROM contratos 
-                       $sql_where 
+    // 1. Por Instalador (Unificando FTTH y Radio)
+    $sql_installers = "SELECT nombre, COUNT(*) as total FROM (
+                        SELECT 
+                            CASE 
+                                WHEN (instalador IS NOT NULL AND instalador != '') THEN instalador
+                                WHEN (instalador_c IS NOT NULL AND instalador_c != '') THEN instalador_c
+                                ELSE 'Sin Asignar'
+                            END as nombre
+                        FROM contratos 
+                        $sql_where
+                       ) t 
                        GROUP BY nombre 
                        ORDER BY total DESC";
 
@@ -131,9 +137,14 @@ if ($action === 'modal_stats') {
         $monthly_where .= " AND " . implode(" AND ", $where);
     }
 
+    // 5. Por Fecha e Instalador (Unificando FTTH y Radio)
     $sql_monthly = "SELECT 
                         fecha_instalacion as fecha, 
-                        COALESCE(NULLIF(instalador, ''), 'Sin Asignar') as nombre_instalador,
+                        CASE 
+                            WHEN (instalador IS NOT NULL AND instalador != '') THEN instalador
+                            WHEN (instalador_c IS NOT NULL AND instalador_c != '') THEN instalador_c
+                            ELSE 'Sin Asignar'
+                        END as nombre_instalador,
                         COUNT(*) as total 
                        FROM contratos 
                        $monthly_where 
@@ -290,7 +301,11 @@ if ($action === 'get_lists') {
     // Obtener lista única de Instaladores (Nombres) y Vendedores (IDs) para los filtros
 
     // Instaladores: Distintos nombres de la columna texto
-    $sql_inst = "SELECT DISTINCT instalador FROM contratos WHERE instalador IS NOT NULL AND instalador != '' ORDER BY instalador ASC";
+    // Instaladores: Unión de FTTH e Instalador_c
+    $sql_inst = "SELECT DISTINCT instalador FROM contratos WHERE instalador IS NOT NULL AND instalador != ''
+                 UNION
+                 SELECT DISTINCT instalador_c FROM contratos WHERE instalador_c IS NOT NULL AND instalador_c != ''
+                 ORDER BY instalador ASC";
     $res_inst = $conn->query($sql_inst);
     $installers = [];
     while ($row = $res_inst->fetch_row())
