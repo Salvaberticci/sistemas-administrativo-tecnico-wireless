@@ -484,7 +484,7 @@ require_once '../includes/sidebar.php';
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-hashtag"></i> N° Referencia</label>
-                                    <input type="text" class="form-control form-control-sm shadow-sm numeric-input" name="referencia_pago" id="input_ref_generar_cobro" required placeholder="Nro de operación">
+                                    <input type="text" class="form-control form-control-sm shadow-sm" name="referencia_pago" id="input_ref_generar_cobro" required placeholder="Nro de operación">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-university"></i> Banco Receptor</label>
@@ -933,7 +933,7 @@ require_once '../includes/sidebar.php';
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-hashtag"></i> N° Referencia</label>
-                                    <input type="text" class="form-control form-control-sm shadow-sm numeric-input" name="referencia_pago" id="edit_input_referencia" required>
+                                    <input type="text" class="form-control form-control-sm shadow-sm" name="referencia_pago" id="edit_input_referencia" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small mb-1"><i class="fas fa-university"></i> Banco Receptor</label>
@@ -1882,11 +1882,7 @@ require_once '../includes/sidebar.php';
                 e.target.value = e.target.value.replace(/[^0-9.,]/g, '');
             }
 
-            // Validación solo para números (ej: referencia_pago)
-            if (e.target.classList.contains('numeric-input')) {
-                e.target.value = e.target.value.replace(/[^0-9]/g, '');
-            }
-
+            
             // Validación estricta para números enteros (meses)
             if (e.target.type === 'number' && e.target.classList.contains('form-control-sm')) {
                 // Si es un campo de meses (entero positivo)

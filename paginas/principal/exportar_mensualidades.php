@@ -67,12 +67,13 @@ $sql = "
         $cols_bimonetarias
         cxc.id_banco,
         cxc.estado,
-        h.justificacion
+        GROUP_CONCAT(h.justificacion SEPARATOR ' || ') AS justificacion
     FROM cuentas_por_cobrar cxc
     INNER JOIN contratos c ON cxc.id_contrato = c.id
     LEFT JOIN planes pl ON c.id_plan = pl.id_plan
     LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc
     $sWhere
+    GROUP BY cxc.id_cobro
     ORDER BY cxc.fecha_emision DESC
 ";
 
@@ -149,7 +150,7 @@ while ($row = $result->fetch_assoc()) {
 
     echo "<tr>";
     echo "<td>" . $fecha_fmt . "</td>";
-    echo "<td>" . ($row['referencia_pago'] ?? '-') . "</td>";
+    echo "<td style='mso-number-format:\"\\@\";'>" . ($row['referencia_pago'] ?? '-') . "</td>";
     echo "<td>" . htmlspecialchars($row['nombre_completo']) . "</td>";
     echo "<td>" . htmlspecialchars($concepto_main) . "</td>";
     echo "<td>" . htmlspecialchars($detalle) . "</td>";
