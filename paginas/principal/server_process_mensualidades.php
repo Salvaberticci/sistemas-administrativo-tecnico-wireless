@@ -214,7 +214,7 @@ $sSelect = "
 ";
 
 $sQuery = "
-    SELECT SQL_CALC_FOUND_ROWS $sSelect
+    SELECT $sSelect
     FROM $sTabla
     $sWhere
     GROUP BY cxc.id_cobro
@@ -228,20 +228,22 @@ if (!$rResult) {
     exit;
 }
 
-$rResultFilterTotal = $conn->query("SELECT FOUND_ROWS()");
+// Optimización: Usar COUNT(DISTINCT cxc.id_cobro) es más eficiente que SQL_CALC_FOUND_ROWS en versiones modernas de MySQL
+$sQueryFilterTotal = "
+    SELECT COUNT(DISTINCT cxc.id_cobro) 
+    FROM $sTabla
+    $sWhere
+";
+$rResultFilterTotal = $conn->query($sQueryFilterTotal);
 if (!$rResultFilterTotal) {
     echo json_encode(["error" => "SQL Error (Filter Total): " . $conn->error]);
     exit;
 }
 $iFilteredTotal = $rResultFilterTotal->fetch_array()[0];
 
-// Total records query
-$rResultTotal = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar");
-if (!$rResultTotal) {
-    echo json_encode(["error" => "SQL Error (Total Records): " . $conn->error]);
-    exit;
-}
-$iTotal = $rResultTotal->fetch_array()[0];
+// Total records query (Optimizado)
+$rResultTotal = $conn->query("SELECT MAX(id_cobro) FROM cuentas_por_cobrar");
+$iTotal = $rResultTotal ? (int)$rResultTotal->fetch_array()[0] : 0;
 
 // 7. Output Result
 $output = [
@@ -253,26 +255,26 @@ $output = [
     "draw" => intval($draw),
     "recordsTotal" => $iTotal,
     "recordsFiltered" => $iFilteredTotal,
-    "aaData" => [], // DataTables < 1.10 uses aaData, modern uses data (usually auto-detected, but aaData is safe)
+    "aaData" => [], 
     "tabCounts" => [
-        "general" => $iTotal,
+        "general" => $iFilteredTotal,
         "sae_pendiente" => 0,
         "sae_cargado" => 0
     ]
 ];
 
-// Calcular conteos de SAE para badges (optimizado con subconsulta rápida o asumiendo $sWhereBase)
-// Usamos una consulta más mínima para no penalizar el tiempo de respuesta
+
+// Calcular conteos de SAE para badges (respetando filtros base para precisión)
 $output['tabCounts']['sae_pendiente'] = 0;
 $output['tabCounts']['sae_cargado'] = 0;
 
-// Solo contamos si no hay una búsqueda global pesada activa, para priorizar velocidad
+// Solo contamos si no hay una búsqueda global de texto, para priorizar velocidad en la escritura
 if (empty($searchVal)) {
-    $res_p = $conn->query("SELECT COUNT(*) FROM cuentas_por_cobrar cxc WHERE cxc.estado_sae_plus = 'NO CARGADO' AND cxc.estado = 'PAGADO'");
-    $output['tabCounts']['sae_pendiente'] = ($res_p) ? intval($res_p->fetch_array()[0]) : 0;
+    $res_p = $conn->query("SELECT COUNT(DISTINCT cxc.id_cobro) FROM $sTabla $sWhereBase AND $where_mensualidad AND cxc.estado_sae_plus = 'NO CARGADO'");
+    if ($res_p) $output['tabCounts']['sae_pendiente'] = (int)$res_p->fetch_array()[0];
 
-    $res_c = $conn->query("SELECT COUNT(*) FROM cuentas_por_cobrar cxc WHERE cxc.estado_sae_plus = 'CARGADO' AND cxc.estado = 'PAGADO'");
-    $output['tabCounts']['sae_cargado'] = ($res_c) ? intval($res_c->fetch_array()[0]) : 0;
+    $res_c = $conn->query("SELECT COUNT(DISTINCT cxc.id_cobro) FROM $sTabla $sWhereBase AND $where_mensualidad AND cxc.estado_sae_plus = 'CARGADO'");
+    if ($res_c) $output['tabCounts']['sae_cargado'] = (int)$res_c->fetch_array()[0];
 }
 
 
