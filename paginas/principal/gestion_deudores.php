@@ -41,6 +41,40 @@ require_once '../includes/sidebar.php';
             </div>
 
             <div class="card-body px-4">
+                <!-- Filtros y Ordenamiento -->
+                <div class="row g-3 mb-4 bg-light p-3 rounded-3 border mx-0 shadow-sm">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1"><i class="fas fa-calendar-alt me-1 text-danger"></i> Desde (Registro)</label>
+                        <input type="date" id="filter_date_start" class="form-control form-control-sm border-0 shadow-sm">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1"><i class="fas fa-calendar-alt me-1 text-danger"></i> Hasta (Registro)</label>
+                        <input type="date" id="filter_date_end" class="form-control form-control-sm border-0 shadow-sm">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1"><i class="fas fa-dollar-sign me-1 text-success"></i> Mín. Saldo</label>
+                        <input type="number" id="filter_balance_min" class="form-control form-control-sm border-0 shadow-sm" placeholder="0.00">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1"><i class="fas fa-dollar-sign me-1 text-success"></i> Máx. Saldo</label>
+                        <input type="number" id="filter_balance_max" class="form-control form-control-sm border-0 shadow-sm" placeholder="9999.99">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1"><i class="fas fa-sort me-1 text-primary"></i> Orden Rápido</label>
+                        <select id="filter_order" class="form-select form-select-sm border-0 shadow-sm fw-bold">
+                            <option value="7-desc">Más Recientes</option>
+                            <option value="7-asc">Más Antiguos</option>
+                            <option value="6-desc">Mayor Saldo</option>
+                            <option value="6-asc">Menor Saldo</option>
+                        </select>
+                    </div>
+                    <div class="col-12 text-end mt-2">
+                        <button type="button" id="btn_reset_filters" class="btn btn-sm btn-outline-secondary px-3">
+                            <i class="fas fa-undo me-1"></i> Limpiar Filtros
+                        </button>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table class="display table table-hover w-100" id="tabla_deudores">
                         <thead class="bg-light">
@@ -376,7 +410,7 @@ require_once '../includes/sidebar.php';
 
 <script>
     $(document).ready(function () {
-        $('#tabla_deudores').DataTable({
+        const table = $('#tabla_deudores').DataTable({
             "language": {
                 "lengthMenu": "Mostrar _MENU_",
                 "zeroRecords": "No hay deudores registrados",
@@ -384,7 +418,60 @@ require_once '../includes/sidebar.php';
                 "search": "Buscar:",
                 "paginate": { "next": ">", "previous": "<" }
             },
-            "order": [[7, "desc"]] // Ordenar por fecha descendente
+            "order": [[7, "desc"]], // Ordenar por fecha descendente
+            "columnDefs": [
+                { "type": "num-fmt", "targets": 6 } // Asegurar que saldo pendiente se trate como número
+            ]
+        });
+
+        // Lógica de Filtros Personalizados
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            // 1. Filtrado por Fecha (Columna 7)
+            const minDate = $('#filter_date_start').val();
+            const maxDate = $('#filter_date_end').val();
+            const rowDate = data[7] || ''; // Formato d/m/Y (desde el echo de PHP)
+            
+            if (minDate || maxDate) {
+                const parts = rowDate.split('/');
+                if (parts.length === 3) {
+                    const rowDateIso = `${parts[2]}-${parts[1]}-${parts[0]}`; // YYYY-MM-DD
+                    if (minDate && rowDateIso < minDate) return false;
+                    if (maxDate && rowDateIso > maxDate) return false;
+                }
+            }
+
+            // 2. Filtrado por Saldo (Columna 6)
+            const minBal = parseFloat($('#filter_balance_min').val());
+            const maxBal = parseFloat($('#filter_balance_max').val());
+            const rowBalRaw = data[6].replace(/[^\d.]/g, ''); // Limpiar símbolos y comas
+            const rowBal = parseFloat(rowBalRaw);
+
+            if (!isNaN(minBal) && rowBal < minBal) return false;
+            if (!isNaN(maxBal) && rowBal > maxBal) return false;
+
+            return true;
+        });
+
+        // Listeners para los inputs de filtro
+        $('#filter_date_start, #filter_date_end, #filter_balance_min, #filter_balance_max').on('change keyup', function() {
+            table.draw();
+        });
+
+        // Listener para el Orden Rápido
+        $('#filter_order').on('change', function() {
+            const val = $(this).val();
+            const parts = val.split('-');
+            const col = parseInt(parts[0]);
+            const dir = parts[1];
+            table.order([col, dir]).draw();
+        });
+
+        // Botón Reiniciar
+        $('#btn_reset_filters').on('click', function() {
+            $('#filter_date_start, #filter_date_end, #filter_balance_min, #filter_balance_max').val('');
+            $('#filter_order').val('7-desc');
+            table.order([7, 'desc']).draw();
+            table.draw();
         });
 
         // Cargar bancos para el modal de abonos desde PHP
