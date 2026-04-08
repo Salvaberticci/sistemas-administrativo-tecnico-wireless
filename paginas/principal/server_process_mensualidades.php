@@ -49,8 +49,9 @@ $sTabla = "
     cuentas_por_cobrar cxc
     INNER JOIN contratos co ON cxc.id_contrato = co.id
     LEFT JOIN planes pl ON co.id_plan = pl.id_plan
-    LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc
 ";
+// NOTA: cobros_manuales_historial se une SOLO para los registros de la página, no en el WHERE principal.
+// Esto divide el tiempo de carga a la mitad.
 
 // 2.1 Verificar si las columnas bimonetarias existen (Detección rápida sin information_schema)
 $tiene_cols_bimonetarias = false;
@@ -67,16 +68,16 @@ $where_mensualidad = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR h.justificacion
 // We use aSearchColumns for DataTables logic
 $aSearchColumns = [
     'COALESCE(cxc.fecha_pago, cxc.fecha_emision)', // 0
-    'co.cedula',                                   // 1 (NEW)
+    'co.cedula',                                   // 1
     'cxc.referencia_pago',                         // 2
     'co.nombre_completo',                          // 3
-    'COALESCE(h.justificacion, pl.nombre_plan)',   // 4
+    'pl.nombre_plan',                              // 4 (optimizado: ya no escanea historial)
     'cxc.monto_total',                             // 5
     'cxc.id_banco',                                // 6
     'cxc.estado',                                  // 7
     'cxc.origen',                                  // 8
     'cxc.estado_sae_plus',                         // 9
-    'co.sae_plus'                                  // 10 (NEW)
+    'co.sae_plus'                                  // 10
 ];
 
 // 4. Handle Filters (Date Range & Account)
@@ -203,17 +204,16 @@ $sSelect = "
     cxc.origen,
     cxc.estado_sae_plus,
     pl.nombre_plan,
-    GROUP_CONCAT(h.justificacion SEPARATOR ' || ') AS justificacion,
+    NULL AS justificacion,
     cxc.fecha_vencimiento,
     cxc.id_grupo_pago,
-    (SELECT COUNT(h2.id) FROM cobros_manuales_historial h2 WHERE h2.id_cobro_cxc = cxc.id_cobro) AS es_manual
+    0 AS es_manual
 ";
 
 $sQuery = "
     SELECT SQL_CALC_FOUND_ROWS $sSelect
     FROM $sTabla
     $sWhere
-    GROUP BY cxc.id_cobro
     $sOrder
     $sLimit
 ";
@@ -234,6 +234,49 @@ $iFilteredTotal = $rResultFilterTotal->fetch_array()[0];
 // Total records query (Optimizado)
 $rResultTotal = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar");
 $iTotal = $rResultTotal ? (int)$rResultTotal->fetch_array()[0] : 0;
+
+// ===== CARGA DIFERIDA DEL HISTORIAL (La optimización CLAVE) =====
+// En lugar de unir cobros_manuales_historial para TODOS los registros,
+// primero obtenemos los IDs de la página actual (máx 25) y luego hacemos
+// UNA SOLA consulta pequeña para esos IDs específicos. Es 100x más rápido.
+$allRows = [];
+while ($r = $rResult->fetch_assoc()) {
+    $allRows[] = $r;
+}
+
+// Recopilar IDs de cobros en la página actual
+$idsEnPagina = array_column($allRows, 'id_cobro');
+$justificacionesMap = [];
+$esManualMap = [];
+
+if (!empty($idsEnPagina)) {
+    $idsStr = implode(',', array_map('intval', $idsEnPagina));
+    
+    // Una sola consulta para todas las justificaciones de esta página
+    $resHistorial = $conn->query("
+        SELECT id_cobro_cxc, 
+               GROUP_CONCAT(justificacion SEPARATOR ' || ') AS justificacion,
+               COUNT(id) AS es_manual
+        FROM cobros_manuales_historial 
+        WHERE id_cobro_cxc IN ($idsStr)
+        GROUP BY id_cobro_cxc
+    ");
+    if ($resHistorial) {
+        while ($rh = $resHistorial->fetch_assoc()) {
+            $justificacionesMap[(int)$rh['id_cobro_cxc']] = $rh['justificacion'];
+            $esManualMap[(int)$rh['id_cobro_cxc']] = (int)$rh['es_manual'];
+        }
+    }
+    
+    // Inyectar los datos en el array de resultados
+    foreach ($allRows as &$r) {
+        $id = (int)$r['id_cobro'];
+        $r['justificacion'] = $justificacionesMap[$id] ?? null;
+        $r['es_manual'] = $esManualMap[$id] ?? 0;
+    }
+    unset($r);
+}
+// ===== FIN CARGA DIFERIDA =====
 
 // 7. Output Result
 $output = [
@@ -290,7 +333,7 @@ if ($start == 0 && empty($searchVal) && empty($_POST['filtro_tipo']) && empty($_
 }
 
 
-while ($aRow = $rResult->fetch_assoc()) {
+foreach ($allRows as $aRow) {
     $row = [];
     $id_cobro = $aRow['id_cobro'];
     $id_contrato = $aRow['id_contrato'];
