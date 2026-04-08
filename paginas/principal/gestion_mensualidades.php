@@ -2153,7 +2153,11 @@ require_once '../includes/sidebar.php';
                                                     <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size: 0.7rem;">Próximo a cobrar: ${proximoMes}</span>
                                                 </div>
                                             `;
+                                        } else {
+                                            pagoInfoHtml = `<div class="mt-1"><span class="badge bg-light text-secondary border" style="font-size: 0.65rem;">Sin mensualidades registradas</span></div>`;
                                         }
+                                    } else {
+                                        pagoInfoHtml = `<div class="mt-1"><span class="badge bg-light text-secondary border" style="font-size: 0.65rem;">Sin mensualidades registradas</span></div>`;
                                     }
 
                                     let extraPlanInfo = c.nombre_plan ? ` | <span class="badge bg-success-subtle text-success">$${parseFloat(c.monto_plan).toFixed(2)}</span>` : '';
