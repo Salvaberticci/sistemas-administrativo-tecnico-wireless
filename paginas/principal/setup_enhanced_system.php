@@ -88,6 +88,30 @@ foreach ($columns as $col) {
     }
 }
 
+echo "\n=== Optimizando Base de Datos (Índices) ===\n";
+$indexQueries = [
+    "idx_cxc_fecha_pago" => "CREATE INDEX idx_cxc_fecha_pago ON cuentas_por_cobrar(fecha_pago)",
+    "idx_cxc_fecha_emision" => "CREATE INDEX idx_cxc_fecha_emision ON cuentas_por_cobrar(fecha_emision)",
+    "idx_cxc_id_banco" => "CREATE INDEX idx_cxc_id_banco ON cuentas_por_cobrar(id_banco)",
+    "idx_cxc_estado" => "CREATE INDEX idx_cxc_estado ON cuentas_por_cobrar(estado)",
+    "idx_cxc_estado_sae_plus" => "CREATE INDEX idx_cxc_estado_sae_plus ON cuentas_por_cobrar(estado_sae_plus)",
+    "idx_cxc_referencia_pago" => "CREATE INDEX idx_cxc_referencia_pago ON cuentas_por_cobrar(referencia_pago)"
+];
+
+foreach ($indexQueries as $idxName => $sql) {
+    // Verificar si el índice ya existe (Compatible con MySQL antiguo y nuevo)
+    $checkIndex = $conn->query("SHOW INDEX FROM cuentas_por_cobrar WHERE Key_name = '$idxName'");
+    if ($checkIndex && $checkIndex->num_rows == 0) {
+        if ($conn->query($sql)) {
+            echo "✓ Índice '$idxName' creado con éxito.\n";
+        } else {
+            echo "✗ Error creando índice '$idxName': " . $conn->error . "\n";
+        }
+    } else {
+        echo "- Índice '$idxName' ya existe.\n";
+    }
+}
+
 echo "\n=== Proceso completado ===\n";
 $conn->close();
 ?>

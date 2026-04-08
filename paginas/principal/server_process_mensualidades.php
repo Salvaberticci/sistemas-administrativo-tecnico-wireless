@@ -17,20 +17,10 @@ $logEntry = sprintf(
     $_SERVER['REQUEST_METHOD'] ?? 'CLI',
     json_encode($_POST)
 );
-file_put_contents($logFile, $logEntry, FILE_APPEND);
 
-
-// Ensure required indexes exist for performance
-$indexQueries = [
-    "CREATE INDEX IF NOT EXISTS idx_cxc_fecha_pago ON cuentas_por_cobrar(fecha_pago)",
-    "CREATE INDEX IF NOT EXISTS idx_cxc_fecha_emision ON cuentas_por_cobrar(fecha_emision)",
-    "CREATE INDEX IF NOT EXISTS idx_cxc_id_banco ON cuentas_por_cobrar(id_banco)",
-    "CREATE INDEX IF NOT EXISTS idx_cxc_estado ON cuentas_por_cobrar(estado)",
-    "CREATE INDEX IF NOT EXISTS idx_cxc_estado_sae_plus ON cuentas_por_cobrar(estado_sae_plus)",
-    "CREATE INDEX IF NOT EXISTS idx_cxc_referencia_pago ON cuentas_por_cobrar(referencia_pago)"
-];
-foreach($indexQueries as $iq){
-    $conn->query($iq);
+// Solo intentar escribir si el directorio y el archivo permiten escritura
+if (is_writable(dirname($logFile)) && (!file_exists($logFile) || is_writable($logFile))) {
+    @file_put_contents($logFile, $logEntry, FILE_APPEND);
 }
 
 // 1. Load Banks from JSON for mapping
