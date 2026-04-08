@@ -336,6 +336,7 @@ if ($error_mensaje) {
         nap_tx_power, onu_rx_power, distancia_drop, punto_acceso, valor_conexion_dbm,
         evidencia_fibra, evidencia_foto, evidencia_documento, firma_cliente, firma_tecnico,
         token_firma, estado_firma
+    ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
