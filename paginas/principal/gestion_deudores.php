@@ -9,13 +9,15 @@ $page_title = "Clientes Deudores";
 $breadcrumb = ["Cobranzas"];
 $back_url = "../menu.php";
 
-// Obtener Bancos para Modal de Abonos
-$bancos = $conn->query("SELECT id_banco, nombre_banco FROM bancos ORDER BY nombre_banco ASC");
+// Obtener Bancos desde JSON (Consistencia con otros módulos)
+$bancos_json_path = 'bancos.json';
 $bancos_data = [];
-if ($bancos) {
-    while ($row = $bancos->fetch_assoc()) {
-        $bancos_data[] = $row;
-    }
+if (file_exists($bancos_json_path)) {
+    $bancos_data = json_decode(file_get_contents($bancos_json_path), true) ?: [];
+    // Ordenar alfabéticamente por nombre de banco
+    usort($bancos_data, function($a, $b) {
+        return strcmp($a['nombre_banco'], $b['nombre_banco']);
+    });
 }
 
 require_once '../includes/layout_head.php';
