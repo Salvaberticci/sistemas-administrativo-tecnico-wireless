@@ -225,6 +225,32 @@ require_once '../includes/sidebar.php';
 
 
 
+                    <!-- NUEVOS CAMPOS: Tipo de Instalación y Costos -->
+                    <div class="section-title">Información de Instalación y Pago</div>
+
+                    <div class="col-md-6">
+                        <label for="tipo_conexion" class="form-label">Tipo de Conexión</label>
+                        <select name="tipo_conexion" id="tipo_conexion" class="form-select" required>
+                            <option value="">-- Seleccione Conexión --</option>
+                            <?php
+                            // Cargar Tipos desde JSON (Repurposed for Connection Type)
+                            $jsonFileTypes = 'data/tipos_conexion.json';
+                            if (file_exists($jsonFileTypes)) {
+                                $typesData = json_decode(file_get_contents($jsonFileTypes), true);
+                                if (is_array($typesData)) {
+                                    foreach ($typesData as $type) {
+                                        echo '<option value="' . $type . '">' . $type . '</option>';
+                                    }
+                                }
+                            } else {
+                                // Fallback básico
+                                echo '<option value="FTTH">FTTH</option>';
+                                echo '<option value="RADIO">RADIO</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
+
                     <div class="col-md-6 campo-ftth">
                         <label for="id_olt" class="form-label">OLT</label>
 
@@ -254,32 +280,6 @@ require_once '../includes/sidebar.php';
                             <option value="">-- Seleccione una OLT primero --</option>
                         </select>
 
-                    </div>
-
-                    <!-- NUEVOS CAMPOS: Tipo de Instalación y Costos -->
-                    <div class="section-title">Información de Instalación y Pago</div>
-
-                    <div class="col-md-6">
-                        <label for="tipo_conexion" class="form-label">Tipo de Conexión</label>
-                        <select name="tipo_conexion" id="tipo_conexion" class="form-select" required>
-                            <option value="">-- Seleccione Conexión --</option>
-                            <?php
-                            // Cargar Tipos desde JSON (Repurposed for Connection Type)
-                            $jsonFileTypes = 'data/tipos_conexion.json';
-                            if (file_exists($jsonFileTypes)) {
-                                $typesData = json_decode(file_get_contents($jsonFileTypes), true);
-                                if (is_array($typesData)) {
-                                    foreach ($typesData as $type) {
-                                        echo '<option value="' . $type . '">' . $type . '</option>';
-                                    }
-                                }
-                            } else {
-                                // Fallback básico
-                                echo '<option value="FTTH">FTTH</option>';
-                                echo '<option value="RADIO">RADIO</option>';
-                            }
-                            ?>
-                        </select>
                     </div>
 
                     <div class="col-md-6">

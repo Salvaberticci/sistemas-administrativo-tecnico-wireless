@@ -237,6 +237,24 @@ if (file_exists($jsonFileTypes)) {
                             </div>
 
 
+
+                            <!-- ═══════════════════════════════════════════ -->
+                            <!-- INSTALACIÓN Y PAGO                         -->
+                            <!-- ═══════════════════════════════════════════ -->
+                            <div class="col-12">
+                                <div class="section-title">Información de Instalación y Pago</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="tipo_conexion" class="form-label">Tipo de Conexión</label>
+                                <select name="tipo_conexion" id="tipo_conexion" class="form-select" required>
+                                    <option value="">-- Seleccione Conexión --</option>
+                                    <?php foreach ($tiposConexion as $type) {
+                                        echo '<option value="' . htmlspecialchars($type) . '">' . htmlspecialchars($type) . '</option>';
+                                    } ?>
+                                </select>
+                            </div>
+
                             <div class="col-md-6 campo-ftth">
                                 <label for="id_olt" class="form-label">OLT</label>
                                 <select name="id_olt" id="id_olt" class="form-select" required>
@@ -259,23 +277,6 @@ if (file_exists($jsonFileTypes)) {
                                 <label for="id_pon" class="form-label">PON</label>
                                 <select name="id_pon" id="id_pon" class="form-select" required disabled>
                                     <option value="">-- Seleccione una OLT primero --</option>
-                                </select>
-                            </div>
-
-                            <!-- ═══════════════════════════════════════════ -->
-                            <!-- INSTALACIÓN Y PAGO                         -->
-                            <!-- ═══════════════════════════════════════════ -->
-                            <div class="col-12">
-                                <div class="section-title">Información de Instalación y Pago</div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="tipo_conexion" class="form-label">Tipo de Conexión</label>
-                                <select name="tipo_conexion" id="tipo_conexion" class="form-select" required>
-                                    <option value="">-- Seleccione Conexión --</option>
-                                    <?php foreach ($tiposConexion as $type) {
-                                        echo '<option value="' . htmlspecialchars($type) . '">' . htmlspecialchars($type) . '</option>';
-                                    } ?>
                                 </select>
                             </div>
 
