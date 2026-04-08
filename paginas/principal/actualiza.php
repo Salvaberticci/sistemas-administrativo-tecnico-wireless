@@ -6,9 +6,7 @@
  * Este script recibe los datos del registro a través del método POST
  * y realiza la actualización en la base de datos. También permite la carga de archivos adjuntos.
  *
- * @author MRoblesDev
- * @version 1.0
- * https://github.com/mroblesdev
+ * 
  *
  */
 

@@ -8,9 +8,7 @@ ob_start();
  * Este script recibe los nuevos datos del registro a través del método POST
  * y realiza la inserción en la base de datos. También permite la carga de archivos adjuntos.
  *
- * @author MRoblesDev
- * @version 1.0
- * https://github.com/mroblesdev
+ *
  *
  */
 // Conexión a la base de datos
@@ -166,7 +164,8 @@ if (isset($_FILES['evidencia_documento_file']) && $_FILES['evidencia_documento_f
     if (in_array(strtolower(pathinfo($_FILES['evidencia_documento_file']['name'], PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif'])) {
         $new_filename_doc = 'doc_' . uniqid() . '.' . strtolower(pathinfo($_FILES['evidencia_documento_file']['name'], PATHINFO_EXTENSION));
         $upload_dir = '../../uploads/contratos/';
-        if (!file_exists($upload_dir)) mkdir($upload_dir, 0755, true);
+        if (!file_exists($upload_dir))
+            mkdir($upload_dir, 0755, true);
         if (move_uploaded_file($_FILES['evidencia_documento_file']['tmp_name'], $upload_dir . $new_filename_doc)) {
             $evidencia_documento = 'uploads/contratos/' . $new_filename_doc;
         }
