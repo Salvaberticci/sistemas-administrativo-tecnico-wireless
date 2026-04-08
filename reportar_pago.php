@@ -88,15 +88,6 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
             color: #555;
         }
 
-        /* Tasa BCV Banner */
-        #tasa_banner {
-            background: linear-gradient(90deg, #fff8e1, #fff3cd);
-            border: 1px solid #ffe082;
-            border-radius: 10px;
-            padding: 8px 16px;
-            font-size: 0.85rem;
-            color: #7a6000;
-        }
 
         /* Amount dual field */
         .amount-group .input-group-text { font-weight: 700; min-width: 45px; justify-content: center; }
@@ -124,11 +115,6 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
                     <p class="text-muted mb-0">Reporte de Pago de Mensualidad</p>
                 </div>
 
-                <!-- Tasa BCV Banner -->
-                <div id="tasa_banner" class="mb-3 d-flex align-items-center gap-2">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Cargando tasa BCV...</span>
-                </div>
 
                 <div class="card payment-card">
                     <div class="card-header header-gradient p-4 text-center">
@@ -173,8 +159,6 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
                                         <div class="plan-price">
                                             Precio del plan:
                                             <strong id="plan_precio_usd_display">$0.00</strong> USD
-                                            &nbsp;|&nbsp;
-                                            <strong id="plan_precio_bs_display">Bs. 0.00</strong>
                                         </div>
                                     </div>
                                 </div>
@@ -226,9 +210,6 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
                                         <input type="number" step="0.01" class="form-control fw-bold fs-5"
                                             id="input_monto_bs" placeholder="0.00">
                                     </div>
-                                    <div id="equiv_usd_display" class="equiv-display equiv-usd d-none">
-                                        <i class="fas fa-dollar-sign me-1"></i><span id="val_equiv_usd">0.00</span> USD
-                                    </div>
                                     <div class="important-note mt-1">Ingrese el monto exacto del comprobante.</div>
                                 </div>
                                 <div class="col-md-6">
@@ -238,10 +219,7 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
                                         <input type="number" step="0.01" class="form-control fw-bold fs-5 text-success"
                                             id="input_monto_usd_vis" placeholder="0.00">
                                     </div>
-                                    <div id="equiv_bs_display" class="equiv-display equiv-bs d-none">
-                                        Bs. <span id="val_equiv_bs">0.00</span>
-                                    </div>
-                                    <div class="important-note mt-1">Se calcula automáticamente. También puede editarlo.</div>
+                                    <div class="important-note mt-1">Ingrese el monto correspondiente en divisas si aplica.</div>
                                 </div>
                             </div>
 
@@ -300,41 +278,11 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
         // ================================================================
         //  GLOBALS
         // ================================================================
-        let tasaBCV = 0;
+
         let planPrecioBase = 0; // USD
         const todosLosBancos = <?php echo json_encode($bancosArr); ?>;
         const mesesNombres = <?php echo json_encode($meses_nombres); ?>;
 
-        // ================================================================
-        //  1. CARGAR TASA BCV
-        // ================================================================
-        async function cargarTasaBCV() {
-            try {
-                const res = await fetch('paginas/principal/get_tasa_dolar.php');
-                const data = await res.json();
-                if (data.success && data.promedio > 0) {
-                    tasaBCV = parseFloat(data.promedio);
-                    document.getElementById('tasa_banner').innerHTML =
-                        `<i class="fas fa-chart-line me-1"></i>
-                         <strong>Tasa BCV Oficial:</strong>&nbsp; Bs. ${tasaBCV.toLocaleString('es-VE', {minimumFractionDigits:2})} / $1.00 USD
-                         &nbsp;<span class="text-muted" style="font-size:0.75rem;">(Actualizado: ${data.fecha ? data.fecha.substring(0,10) : 'hoy'})</span>`;
-                    document.getElementById('tasa_dolar_hidden').value = tasaBCV;
-                    // Actualizar panel del plan si ya estaba cargado
-                    if (planPrecioBase > 0) actualizarPanelPlan(planPrecioBase, null);
-                } else {
-                    document.getElementById('tasa_banner').innerHTML =
-                        '<i class="fas fa-exclamation-triangle text-warning me-1"></i> No se pudo obtener la tasa BCV. Ingrese el monto en USD manualmente.';
-                }
-            } catch (e) {
-                document.getElementById('tasa_banner').innerHTML =
-                    '<i class="fas fa-wifi-slash text-danger me-1"></i> Sin conexión para obtener tasa BCV.';
-            }
-        }
-        cargarTasaBCV();
-
-        // ================================================================
-        //  2. CONVERSIÓN DE MONTOS
-        // ================================================================
         const inputBs  = document.getElementById('input_monto_bs');
         const inputUsd = document.getElementById('input_monto_usd_vis');
         const hiddenUsd = document.getElementById('monto_usd_hidden');
@@ -342,33 +290,10 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
         function formatBs(val) { return val.toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2}); }
         function formatUsd(val) { return val.toFixed(2); }
 
-        inputBs.addEventListener('input', function() {
-            const bs = parseFloat(this.value) || 0;
-            if (tasaBCV > 0 && bs > 0) {
-                const usd = bs / tasaBCV;
-                inputUsd.value = formatUsd(usd);
-                hiddenUsd.value = formatUsd(usd);
-                document.getElementById('equiv_usd_display').classList.remove('d-none');
-                document.getElementById('val_equiv_usd').textContent = formatUsd(usd);
-            } else {
-                inputUsd.value = '';
-                hiddenUsd.value = '';
-                document.getElementById('equiv_usd_display').classList.add('d-none');
-            }
-        });
-
+        // Actualizar el valor oculto cuando se edite el monto USD manualmente
         inputUsd.addEventListener('input', function() {
             const usd = parseFloat(this.value) || 0;
             hiddenUsd.value = formatUsd(usd);
-            if (tasaBCV > 0 && usd > 0) {
-                const bs = usd * tasaBCV;
-                inputBs.value = formatUsd(bs);
-                document.getElementById('equiv_bs_display').classList.remove('d-none');
-                document.getElementById('val_equiv_bs').textContent = formatBs(bs);
-            } else {
-                inputBs.value = '';
-                document.getElementById('equiv_bs_display').classList.add('d-none');
-            }
         });
 
         // ================================================================
@@ -380,9 +305,6 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
                 panel.style.display = 'block';
                 if (nombrePlan) document.getElementById('plan_nombre_display').textContent = nombrePlan;
                 document.getElementById('plan_precio_usd_display').textContent = '$' + formatUsd(precioUsd);
-                const precioBS = tasaBCV > 0 ? precioUsd * tasaBCV : null;
-                document.getElementById('plan_precio_bs_display').textContent =
-                    precioBS ? 'Bs. ' + formatBs(precioBS) : '---';
             }
         }
 
@@ -436,12 +358,6 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
                                     if (planPrecioBase > 0) {
                                         inputUsd.value = formatUsd(planPrecioBase);
                                         hiddenUsd.value = formatUsd(planPrecioBase);
-                                        if (tasaBCV > 0) {
-                                            const bs = planPrecioBase * tasaBCV;
-                                            inputBs.value = formatUsd(bs);
-                                            document.getElementById('equiv_bs_display').classList.remove('d-none');
-                                            document.getElementById('val_equiv_bs').textContent = formatBs(bs);
-                                        }
                                     }
 
                                     recalcularMontoPorMeses();
@@ -519,11 +435,6 @@ $meses_nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"
             const totalUsd = planPrecioBase * cantMeses;
             inputUsd.value = formatUsd(totalUsd);
             hiddenUsd.value = formatUsd(totalUsd);
-            if (tasaBCV > 0) {
-                inputBs.value = formatUsd(totalUsd * tasaBCV);
-                document.getElementById('equiv_bs_display').classList.remove('d-none');
-                document.getElementById('val_equiv_bs').textContent = formatBs(totalUsd * tasaBCV);
-            }
         }
 
         window.agregarMes = function() {
