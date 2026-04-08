@@ -183,6 +183,29 @@ require_once '../includes/sidebar.php';
         border-bottom: 2px solid #dee2e6;
         padding: 12px 10px;
     }
+
+    /* Reposicionamiento del mensaje 'Procesando...' */
+    .dataTables_wrapper {
+        position: relative;
+    }
+    .dataTables_wrapper .dataTables_processing {
+        position: absolute;
+        top: 25px; /* Ajustado para estar entre las barras superiores */
+        left: 50%;
+        width: 200px;
+        margin-left: -100px;
+        margin-top: 0;
+        z-index: 1000;
+        background: #fdfdfd;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        color: #0d6efd;
+        font-weight: 600;
+        border-radius: 20px;
+        padding: 8px 15px;
+        text-align: center;
+        opacity: 0.95;
+    }
 </style>
 
 <main class="main-content">
