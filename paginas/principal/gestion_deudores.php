@@ -35,6 +35,9 @@ require_once '../includes/sidebar.php';
                     <h5 class="fw-bold text-danger mb-1">Clientes Deudores</h5>
                     <p class="text-muted small mb-0">Listado de clientes con saldos pendientes</p>
                 </div>
+                <button type="button" class="btn btn-danger shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearDeuda">
+                    <i class="fas fa-plus-circle me-1"></i> Crear Nueva Deuda
+                </button>
             </div>
 
             <div class="card-body px-4">
@@ -316,6 +319,53 @@ require_once '../includes/sidebar.php';
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear Nueva Deuda -->
+<div class="modal fade" id="modalCrearDeuda" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="fas fa-hand-holding-dollar me-2"></i>Registrar Nueva Deuda</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formCrearDeuda">
+                <div class="modal-body p-4">
+                    <!-- 1. Buscador de Contrato -->
+                    <div class="mb-4 position-relative">
+                        <label class="form-label fw-bold text-dark small"><i class="fas fa-search me-1 text-danger"></i> 1. Buscar Cliente / Contrato</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-user text-muted"></i></span>
+                            <input type="text" id="contrato_search_deuda" class="form-control border-start-0" placeholder="Nombre, Cédula o ID..." autocomplete="off">
+                        </div>
+                        <input type="hidden" name="id_contrato" id="id_contrato_hidden_deuda" required>
+                        <div id="contrato_search_results_deuda" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1050; max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+
+                    <!-- 2. Monto de la Deuda -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small"><i class="fas fa-money-bill-wave me-1 text-success"></i> 2. Monto de la Deuda ($)</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light fw-bold text-success">$</span>
+                            <input type="number" step="0.01" min="0.01" name="monto" class="form-control fw-bold" placeholder="0.00" required>
+                        </div>
+                    </div>
+
+                    <!-- 3. Notas / Justificación -->
+                    <div class="mb-2">
+                        <label class="form-label fw-bold text-dark small"><i class="fas fa-comment-alt me-1 text-primary"></i> 3. Notas / Justificación</label>
+                        <textarea name="notas" class="form-control" rows="3" placeholder="Ej: Saldo pendiente por reposición de equipo ONU..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold" id="btn_submit_deuda">
+                        <i class="fas fa-save me-1"></i> Guardar Deuda
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -672,6 +722,121 @@ require_once '../includes/sidebar.php';
             
         });
     }
+
+    /* =========================================
+       NUEVO: REGISTRO MANUAL DE DEUDA
+       ========================================= */
+    const searchInputDeuda = document.getElementById('contrato_search_deuda');
+    const resultsContainerDeuda = document.getElementById('contrato_search_results_deuda');
+    const hiddenInputDeuda = document.getElementById('id_contrato_hidden_deuda');
+
+    if (searchInputDeuda) {
+        let timer;
+        searchInputDeuda.addEventListener('input', function () {
+            clearTimeout(timer);
+            const q = this.value.trim();
+            if (q.length < 3) { resultsContainerDeuda.innerHTML = ''; return; }
+            timer = setTimeout(() => {
+                fetch(`buscar_contratos.php?q=${encodeURIComponent(q)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        resultsContainerDeuda.innerHTML = '';
+                        if (data.length) {
+                            data.forEach(c => {
+                                const a = document.createElement('a');
+                                a.className = 'list-group-item list-group-item-action';
+                                
+                                // Reutilizamos lógica de badges de mensualidades para consistencia
+                                let nroLabel = (c.total_contratos > 1) ? `<span class="bg-primary text-white px-2 py-0 rounded-pill me-1" style="font-size:0.7rem;">#${c.nro_orden}</span>` : '';
+                                let pagoInfoHtml = '';
+                                const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                                
+                                if (c.ultimo_justif) {
+                                    const match = c.ultimo_justif.match(/\[(Enero|Febrero|Marzo|Abril|Mayo|Junio|Julio|Agosto|Septiembre|Octubre|Noviembre|Diciembre)\]/i);
+                                    if (match) {
+                                        const ultimoMes = match[1];
+                                        pagoInfoHtml = `<div class="mt-1 small"><span class="text-info">Último Pago: ${ultimoMes}</span></div>`;
+                                    }
+                                }
+
+                                a.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            ${nroLabel} <strong>ID ${c.id}: ${c.nombre_completo}</strong>
+                                            <br><small class="text-muted">C.I.: ${c.cedula || 'N/A'}</small>
+                                            ${pagoInfoHtml}
+                                        </div>
+                                        <i class="fas fa-plus text-danger"></i>
+                                    </div>
+                                `;
+                                a.onclick = (e) => {
+                                    e.preventDefault();
+                                    searchInputDeuda.value = `ID ${c.id}: ${c.nombre_completo}`;
+                                    hiddenInputDeuda.value = c.id;
+                                    resultsContainerDeuda.innerHTML = '';
+                                };
+                                resultsContainerDeuda.appendChild(a);
+                            });
+                        } else {
+                            resultsContainerDeuda.innerHTML = '<div class="list-group-item disabled">Sin resultados</div>';
+                        }
+                    });
+            }, 300);
+        });
+        
+        // Cerrar resultados al clickear fuera
+        document.addEventListener('click', (e) => {
+            if (!searchInputDeuda.contains(e.target) && !resultsContainerDeuda.contains(e.target)) {
+                resultsContainerDeuda.innerHTML = '';
+            }
+        });
+    }
+
+    // Envío del formulario de deuda
+    document.getElementById('formCrearDeuda').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!hiddenInputDeuda.value) {
+            Swal.fire('Atención', 'Por favor, seleccione un cliente válido del buscador.', 'warning');
+            return;
+        }
+
+        const proceeds = await solicitarClaveAdmin('Confirmar Nueva Deuda');
+        if (!proceeds) return;
+
+        const btn = document.getElementById('btn_submit_deuda');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Guardando...';
+
+        const fd = new FormData(this);
+        fetch('registrar_deuda_manual.php', {
+            method: 'POST',
+            body: fd
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                Swal.fire({
+                    title: '¡Registrado!',
+                    text: res.message,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => location.reload());
+            } else {
+                Swal.fire('Error', res.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire('Error Técnico', 'No se pudo comunicar con el servidor.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        });
+    });
 </script>
 
 <?php require_once '../includes/layout_foot.php'; ?>
