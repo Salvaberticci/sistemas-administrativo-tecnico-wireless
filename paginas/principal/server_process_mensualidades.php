@@ -3,6 +3,12 @@
  * Unified Server-side processing for DataTables - Mensualidades y Pagos
  * Columns: Fecha de registro, Referencia, Cliente, Concepto, Monto, Cuenta, Estado, Acciones
  */
+
+// === LÍMITES DE SERVIDOR (Previene Error 520 de Cloudflare) ===
+// Sin esto, si el servidor tarda más de 30s, PHP muere en silencio y Cloudflare responde con 520.
+@set_time_limit(120);
+@ini_set('memory_limit', '256M');
+
 ob_start(); // Iniciar búfer de salida para prevenir fugas de texto accidentales
 
 // CORS header for cross‑origin requests
@@ -15,6 +21,7 @@ require '../conexion.php';
 if (session_id()) {
     session_write_close();
 }
+
 
 
 // 1. Load Banks from JSON for mapping
