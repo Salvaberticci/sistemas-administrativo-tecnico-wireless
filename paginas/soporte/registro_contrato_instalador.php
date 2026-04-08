@@ -787,18 +787,32 @@ if (file_exists($jsonFileTypes)) {
         const canvasCliente = document.getElementById('sigCliente');
         const canvasTecnico = document.getElementById('sigTecnico');
 
-        function resizeCanvas(canvas) {
-            var ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-        }
-
-        window.onresize = function () { resizeCanvas(canvasCliente); resizeCanvas(canvasTecnico); };
-        resizeCanvas(canvasCliente); resizeCanvas(canvasTecnico);
-
         const padCliente = new SignaturePad(canvasCliente);
         const padTecnico = new SignaturePad(canvasTecnico);
+
+        function resizeCanvas(canvas, pad) {
+            var ratio = Math.max(window.devicePixelRatio || 1, 1);
+            var newWidth = canvas.offsetWidth * ratio;
+            var newHeight = canvas.offsetHeight * ratio;
+
+            if (canvas.width !== newWidth || canvas.height !== newHeight) {
+                const data = pad ? pad.toData() : null;
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                canvas.getContext("2d").scale(ratio, ratio);
+                if (pad) {
+                    pad.clear();
+                    if (data) pad.fromData(data);
+                }
+            }
+        }
+
+        window.onresize = function () { 
+            resizeCanvas(canvasCliente, padCliente); 
+            resizeCanvas(canvasTecnico, padTecnico); 
+        };
+        resizeCanvas(canvasCliente, padCliente); 
+        resizeCanvas(canvasTecnico, padTecnico);
 
         window.clearPad = function (type) {
             if (type === 'cliente') padCliente.clear();
