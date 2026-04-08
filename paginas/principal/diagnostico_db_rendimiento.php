@@ -1,5 +1,5 @@
 <?php
-require 'conexion.php';
+require '../conexion.php';
 
 echo "<pre>";
 echo "<h2>Diagnóstico de Rendimiento MySQL</h2>";
