@@ -214,7 +214,7 @@ $sSelect = "
 ";
 
 $sQuery = "
-    SELECT $sSelect
+    SELECT SQL_CALC_FOUND_ROWS $sSelect
     FROM $sTabla
     $sWhere
     GROUP BY cxc.id_cobro
@@ -228,13 +228,7 @@ if (!$rResult) {
     exit;
 }
 
-// Optimización: Usar COUNT(DISTINCT cxc.id_cobro) es más eficiente que SQL_CALC_FOUND_ROWS en versiones modernas de MySQL
-$sQueryFilterTotal = "
-    SELECT COUNT(DISTINCT cxc.id_cobro) 
-    FROM $sTabla
-    $sWhere
-";
-$rResultFilterTotal = $conn->query($sQueryFilterTotal);
+$rResultFilterTotal = $conn->query("SELECT FOUND_ROWS()");
 if (!$rResultFilterTotal) {
     echo json_encode(["error" => "SQL Error (Filter Total): " . $conn->error]);
     exit;
@@ -242,7 +236,7 @@ if (!$rResultFilterTotal) {
 $iFilteredTotal = $rResultFilterTotal->fetch_array()[0];
 
 // Total records query (Optimizado)
-$rResultTotal = $conn->query("SELECT MAX(id_cobro) FROM cuentas_por_cobrar");
+$rResultTotal = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar");
 $iTotal = $rResultTotal ? (int)$rResultTotal->fetch_array()[0] : 0;
 
 // 7. Output Result
@@ -264,16 +258,33 @@ $output = [
 ];
 
 
+
 // Calcular conteos de SAE para badges (respetando filtros base para precisión)
 $output['tabCounts']['sae_pendiente'] = 0;
 $output['tabCounts']['sae_cargado'] = 0;
 
-// Solo contamos si no hay una búsqueda global de texto, para priorizar velocidad en la escritura
-if (empty($searchVal)) {
-    $res_p = $conn->query("SELECT COUNT(DISTINCT cxc.id_cobro) FROM $sTabla $sWhereBase AND $where_mensualidad AND cxc.estado_sae_plus = 'NO CARGADO'");
+// Calcular conteos de SAE para badges de la forma más rápida y sin JOINs
+$output['tabCounts']['sae_pendiente'] = 0;
+$output['tabCounts']['sae_cargado'] = 0;
+
+// Reconstruir un Where muy básico sin joins
+$basicWhereConds = ["1=1"];
+if (isset($_POST['fecha_inicio']) && $_POST['fecha_inicio'] != '' && isset($_POST['fecha_fin']) && $_POST['fecha_fin'] != '') {
+    $basicWhereConds[] = "(COALESCE(cxc.fecha_pago, cxc.fecha_emision) BETWEEN '" . $conn->real_escape_string($_POST['fecha_inicio']) . "' AND '" . $conn->real_escape_string($_POST['fecha_fin']) . "')";
+}
+if (isset($_POST['id_banco']) && $_POST['id_banco'] != '') {
+    $basicWhereConds[] = "cxc.id_banco = '" . $conn->real_escape_string($_POST['id_banco']) . "'";
+}
+if (isset($_POST['estado_pago']) && $_POST['estado_pago'] != '') {
+    $basicWhereConds[] = "cxc.estado = '" . $conn->real_escape_string($_POST['estado_pago']) . "'";
+}
+$basicWhere = "WHERE " . implode(" AND ", $basicWhereConds);
+
+if (empty($searchVal) && empty($_POST['filtro_tipo']) && empty($_POST['meses_mora'])) {
+    $res_p = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar cxc $basicWhere AND cxc.estado_sae_plus = 'NO CARGADO'");
     if ($res_p) $output['tabCounts']['sae_pendiente'] = (int)$res_p->fetch_array()[0];
 
-    $res_c = $conn->query("SELECT COUNT(DISTINCT cxc.id_cobro) FROM $sTabla $sWhereBase AND $where_mensualidad AND cxc.estado_sae_plus = 'CARGADO'");
+    $res_c = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar cxc $basicWhere AND cxc.estado_sae_plus = 'CARGADO'");
     if ($res_c) $output['tabCounts']['sae_cargado'] = (int)$res_c->fetch_array()[0];
 }
 
