@@ -2131,8 +2131,43 @@ require_once '../includes/sidebar.php';
                                 data.forEach(c => {
                                     const a = document.createElement('a');
                                     a.className = 'list-group-item list-group-item-action';
+                                    
+                                    // 1. Numeración (#N) si tiene múltiples contratos
+                                    let nroLabel = (c.total_contratos > 1) ? `<span class="bg-primary text-white px-2 py-0 rounded-pill me-1" style="font-size:0.7rem;">#${c.nro_orden}</span>` : '';
+                                    
+                                    // 2. Información de Pago (Último y Próximo)
+                                    let pagoInfoHtml = '';
+                                    const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                                    let ultimoMes = null;
+                                    
+                                    if (c.ultimo_justif) {
+                                        const match = c.ultimo_justif.match(/\[(Enero|Febrero|Marzo|Abril|Mayo|Junio|Julio|Agosto|Septiembre|Octubre|Noviembre|Diciembre)\]/i);
+                                        if (match) {
+                                            ultimoMes = match[1];
+                                            const idx = MESES.indexOf(ultimoMes);
+                                            const proximoMes = MESES[(idx + 1) % 12];
+                                            
+                                            pagoInfoHtml = `
+                                                <div class="mt-1 d-flex gap-1 flex-wrap">
+                                                    <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 0.7rem;">Último pago de mensualidad fue: ${ultimoMes}</span>
+                                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size: 0.7rem;">Próximo a cobrar: ${proximoMes}</span>
+                                                </div>
+                                            `;
+                                        }
+                                    }
+
                                     let extraPlanInfo = c.nombre_plan ? ` | <span class="badge bg-success-subtle text-success">$${parseFloat(c.monto_plan).toFixed(2)}</span>` : '';
-                                    a.innerHTML = `<strong>ID ${c.id}</strong>: ${c.nombre_completo} <br><small class="text-muted">C.I.: ${c.cedula || 'N/A'}${extraPlanInfo}</small>`;
+                                    
+                                    a.innerHTML = `
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                ${nroLabel} <strong>ID ${c.id}: ${c.nombre_completo}</strong>
+                                                <br><small class="text-muted">C.I.: ${c.cedula || 'N/A'}${extraPlanInfo}</small>
+                                                ${pagoInfoHtml}
+                                            </div>
+                                            <i class="fas fa-chevron-right text-light mt-2"></i>
+                                        </div>
+                                    `;
                                     a.onclick = (e) => {
                                         e.preventDefault();
                                         searchInput.value = `ID ${c.id}: ${c.nombre_completo}`;
