@@ -274,7 +274,7 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                 <div class="col-md-4 mb-3">
                     <div class="card border-0 shadow-sm h-100 bg-dark text-white overflow-hidden">
                         <div class="card-body p-4">
-                            <h6 class="text-white-50 text-uppercase fw-bold mb-2 small"><i class="fa-solid fa-bullseye me-2"></i>Facturación Mensual (Meta)</h6>
+                            <h6 class="text-white-50 text-uppercase fw-bold mb-2 small"><i class="fa-solid fa-bullseye me-2"></i>Facturación Mensual</h6>
                             <h2 class="fw-bold mb-0 text-white">$<?php echo number_format($facturacion_mensual_meta, 2); ?></h2>
                             <p class="text-white-50 small mb-0 mt-2">Suma de planes activos</p>
                         </div>
