@@ -97,8 +97,7 @@ if (isset($_POST['estado_pago']) && $_POST['estado_pago'] != '') {
 
 if (isset($_POST['estado_sae']) && $_POST['estado_sae'] != '') {
     $whereConditions[] = "cxc.estado_sae_plus = '" . $conn->real_escape_string($_POST['estado_sae']) . "'";
-    // Restringir a mensualidades únicamente cuando se filtra por SAE
-    $whereConditions[] = $where_mensualidad;
+    // Se elimina el filtro pesado de $where_mensualidad ya que estado_sae_plus es específico y confiable.
 }
 
 if (isset($_POST['referencia']) && $_POST['referencia'] != '') {
@@ -158,10 +157,8 @@ $sWhereBase = "WHERE " . implode(" AND ", $whereConditions);
 // 4.2 Tab Filters (SAE Plus) - Solo para la consulta principal
 $tab = $_POST['tab'] ?? 'general';
 if ($tab === 'sae_pendiente') {
-    $whereConditions[] = $where_mensualidad;
     $whereConditions[] = "cxc.estado_sae_plus = 'NO CARGADO'";
 } elseif ($tab === 'sae_cargado') {
-    $whereConditions[] = $where_mensualidad;
     $whereConditions[] = "cxc.estado_sae_plus = 'CARGADO'";
 }
 
