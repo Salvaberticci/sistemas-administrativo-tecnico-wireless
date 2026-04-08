@@ -10,20 +10,12 @@ header('Access-Control-Allow-Origin: *');
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Content-Type: application/json; charset=utf-8');
 require '../conexion.php';
-// Detailed request logging for debugging intermittent issues
-$logFile = __DIR__ . '/logs/mensualidades_requests.log';
-$logEntry = sprintf(
-    "[%s] IP: %s | Method: %s | Params: %s\n",
-    date('Y-m-d H:i:s'),
-    $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-    $_SERVER['REQUEST_METHOD'] ?? 'CLI',
-    json_encode($_POST)
-);
 
-// Solo intentar escribir si el directorio y el archivo permiten escritura
-if (is_writable(dirname($logFile)) && (!file_exists($logFile) || is_writable($logFile))) {
-    @file_put_contents($logFile, $logEntry, FILE_APPEND);
+// Desbloquear sesión de PHP para permitir peticiones Ajax concurrentes
+if (session_id()) {
+    session_write_close();
 }
+
 
 // 1. Load Banks from JSON for mapping
 // 1. Load Banks from JSON for mapping
@@ -261,28 +253,33 @@ $output['tabCounts']['sae_pendiente'] = 0;
 $output['tabCounts']['sae_cargado'] = 0;
 
 // Calcular conteos de SAE para badges de la forma más rápida y sin JOINs
+// OPTIMIZACIÓN: Solo contar si es la carga inicial (start=0) para no ralentizar la navegación
 $output['tabCounts']['sae_pendiente'] = 0;
 $output['tabCounts']['sae_cargado'] = 0;
 
-// Reconstruir un Where muy básico sin joins
-$basicWhereConds = ["1=1"];
-if (isset($_POST['fecha_inicio']) && $_POST['fecha_inicio'] != '' && isset($_POST['fecha_fin']) && $_POST['fecha_fin'] != '') {
-    $basicWhereConds[] = "(COALESCE(cxc.fecha_pago, cxc.fecha_emision) BETWEEN '" . $conn->real_escape_string($_POST['fecha_inicio']) . "' AND '" . $conn->real_escape_string($_POST['fecha_fin']) . "')";
-}
-if (isset($_POST['id_banco']) && $_POST['id_banco'] != '') {
-    $basicWhereConds[] = "cxc.id_banco = '" . $conn->real_escape_string($_POST['id_banco']) . "'";
-}
-if (isset($_POST['estado_pago']) && $_POST['estado_pago'] != '') {
-    $basicWhereConds[] = "cxc.estado = '" . $conn->real_escape_string($_POST['estado_pago']) . "'";
-}
-$basicWhere = "WHERE " . implode(" AND ", $basicWhereConds);
+if ($start == 0 && empty($searchVal) && empty($_POST['filtro_tipo']) && empty($_POST['meses_mora'])) {
+    // Reconstruir un Where muy básico sin joins
+    $basicWhereConds = ["1=1"];
+    if (isset($_POST['fecha_inicio']) && $_POST['fecha_inicio'] != '' && isset($_POST['fecha_fin']) && $_POST['fecha_fin'] != '') {
+        $basicWhereConds[] = "(COALESCE(cxc.fecha_pago, cxc.fecha_emision) BETWEEN '" . $conn->real_escape_string($_POST['fecha_inicio']) . "' AND '" . $conn->real_escape_string($_POST['fecha_fin']) . "')";
+    }
+    if (isset($_POST['id_banco']) && $_POST['id_banco'] != '') {
+        $basicWhereConds[] = "cxc.id_banco = '" . $conn->real_escape_string($_POST['id_banco']) . "'";
+    }
+    if (isset($_POST['estado_pago']) && $_POST['estado_pago'] != '') {
+        $basicWhereConds[] = "cxc.estado = '" . $conn->real_escape_string($_POST['estado_pago']) . "'";
+    }
+    $basicWhere = "WHERE " . implode(" AND ", $basicWhereConds);
 
-if (empty($searchVal) && empty($_POST['filtro_tipo']) && empty($_POST['meses_mora'])) {
     $res_p = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar cxc $basicWhere AND cxc.estado_sae_plus = 'NO CARGADO'");
     if ($res_p) $output['tabCounts']['sae_pendiente'] = (int)$res_p->fetch_array()[0];
 
     $res_c = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar cxc $basicWhere AND cxc.estado_sae_plus = 'CARGADO'");
     if ($res_c) $output['tabCounts']['sae_cargado'] = (int)$res_c->fetch_array()[0];
+} else {
+    // Si no es la carga inicial, enviamos -1 para que el JS sepa que no debe actualizar los números actuales
+    $output['tabCounts']['sae_pendiente'] = -1;
+    $output['tabCounts']['sae_cargado'] = -1;
 }
 
 

@@ -1587,12 +1587,14 @@ require_once '../includes/sidebar.php';
                 }
             },
             "drawCallback": function(settings) {
-                // Actualizar contadores desde la respuesta del servidor
+                // Actualizar contadores desde la respuesta del servidor (Solo si se recalculan, evitado en paginación)
                 if (settings.json && settings.json.tabCounts) {
                     const counts = settings.json.tabCounts;
-                    $('#count-general').text(counts.general || 0);
-                    $('#count-sae-pendiente').text(counts.sae_pendiente || 0);
-                    $('#count-sae-cargado').text(counts.sae_cargado || 0);
+                    if (counts.sae_pendiente !== -1) {
+                        $('#count-general').text(counts.general || 0);
+                        $('#count-sae-pendiente').text(counts.sae_pendiente || 0);
+                        $('#count-sae-cargado').text(counts.sae_cargado || 0);
+                    }
                 }
 
                 // Lógica de colores para grupos al dibujar la tabla
