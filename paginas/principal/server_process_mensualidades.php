@@ -312,9 +312,11 @@ while ($aRow = $rResult->fetch_assoc()) {
     if (strpos($justif, '[INSTALACION') !== false) $conceptosArr[] = 'Instalación';
     if (strpos($justif, '[EQUIPOS') !== false) $conceptosArr[] = 'Equipos / Materiales';
     if (strpos($justif, '[PRORRATEO') !== false) $conceptosArr[] = 'Prorrateo';
-    if (strpos($justif, '[ABONO') !== false) $conceptosArr[] = 'Abono / Saldo a Favor';
+    if (strpos($justif, '[ABONO') !== false && strpos($justif, '[ABONO_DEUDA]') === false) $conceptosArr[] = 'Abono / Saldo a Favor';
     if (strpos($justif, '[EXTRA') !== false) $conceptosArr[] = 'Pago de Terceros';
     if (strpos($justif, '[REGISTRO_CONTRATO') !== false) $conceptosArr[] = 'Registro de Contrato';
+    if (strpos($justif, '[PAGO_DEUDA]') !== false) $conceptosArr[] = 'Pago de Deuda';
+    if (strpos($justif, '[ABONO_DEUDA]') !== false) $conceptosArr[] = 'Abono de Deuda';
 
     $es_mensualidad = false;
     if (strpos($justif, '[MENSUALIDAD') !== false || strpos($justif, '[EXTRA') !== false) {

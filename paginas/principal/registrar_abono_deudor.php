@@ -59,7 +59,7 @@ if ($monto_abono > $saldo_pendiente_actual) {
 $nuevo_saldo_pendiente = $saldo_pendiente_actual - $monto_abono;
 $nuevo_monto_pagado = $monto_pagado_actual + $monto_abono;
 $fecha_actual = date('Y-m-d H:i:s');
-$justificacion_final = "Abono #{$referencia}" . (!empty($justificacion_ingresada) ? " - " . $conn->real_escape_string($justificacion_ingresada) : "");
+$justificacion_final = "[ABONO_DEUDA] Abono #{$referencia}" . (!empty($justificacion_ingresada) ? " - " . $conn->real_escape_string($justificacion_ingresada) : "");
 
 $conn->begin_transaction();
 
@@ -98,6 +98,15 @@ try {
     $stmt_upd->close();
 
     $conn->commit();
+
+    // 7. REACTIVACIÓN AUTOMÁTICA DEL CONTRATO (Si aplica)
+    if ($estado_deudor === 'PAGADO') {
+        $sql_upd_contrato = "UPDATE contratos SET estado = 'ACTIVO' WHERE id = ? AND estado = 'SUSPENDIDO'";
+        $stmt_upd_contrato = $conn->prepare($sql_upd_contrato);
+        $stmt_upd_contrato->bind_param("i", $id_contrato);
+        $stmt_upd_contrato->execute();
+        $stmt_upd_contrato->close();
+    }
 
     echo json_encode([
         'success' => true, 

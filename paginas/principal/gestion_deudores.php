@@ -539,58 +539,84 @@ require_once '../includes/sidebar.php';
         const proceeds = await solicitarClaveAdmin('Confirmar Pago');
         if (!proceeds) return;
 
-        Swal.fire({
-            title: '¿Confirmar Pago?',
-            text: "Esta acción marcará la deuda como pagada y limpiará el saldo pendiente.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#198754',
-            cancelButtonColor: '#343a40',
-            confirmButtonText: '<i class="fa-solid fa-check me-2"></i>Sí, confirmar pago',
-            cancelButtonText: 'Cancelar',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Mostrar estado de carga
-                Swal.fire({
-                    title: 'Procesando...',
-                    text: 'Actualizando registro en el sistema',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
+        // Generar opciones de bancos para el select
+        let bancoOptions = '<option value="">Seleccione Banco...</option>';
+        if (typeof bancosInfo !== 'undefined') {
+            bancosInfo.forEach(b => {
+                bancoOptions += `<option value="${b.id_banco}">${b.nombre_banco}</option>`;
+            });
+        }
 
-                $.post('marcar_pagado.php', { id: id }, function (resp) {
-                    if (resp === 'OK') {
-                        Swal.fire({
-                            title: '¡Guardado!',
-                            text: 'El cliente ha sido marcado como pagado exitosamente.',
-                            icon: 'success',
-                            confirmButtonColor: '#0d6efd',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            title: 'Error',
-                            text: 'No se pudo actualizar el registro: ' + resp,
-                            icon: 'error',
-                            confirmButtonColor: '#dc3545'
-                        });
-                    }
-                }).fail(function() {
+        const { value: formValues } = await Swal.fire({
+            title: 'Datos del Pago',
+            html:
+                '<div class="text-start mb-3">' +
+                '  <label class="form-label small fw-bold">Banco Receptor</label>' +
+                '  <select id="swal-banco" class="form-select">' + bancoOptions + '</select>' +
+                '</div>' +
+                '<div class="text-start">' +
+                '  <label class="form-label small fw-bold">Referencia de Pago</label>' +
+                '  <input id="swal-ref" class="form-control" placeholder="Ej: 123456">' +
+                '</div>',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Confirmar Pago',
+            cancelButtonText: 'Cancelar',
+            preConfirm: () => {
+                const idBanco = document.getElementById('swal-banco').value;
+                const ref = document.getElementById('swal-ref').value;
+                if (!idBanco) {
+                    Swal.showValidationMessage('Debe seleccionar un banco');
+                    return false;
+                }
+                return { id_banco: idBanco, referencia: ref };
+            }
+        });
+
+        if (formValues) {
+            // Mostrar estado de carga
+            Swal.fire({
+                title: 'Procesando...',
+                text: 'Sincronizando pago con mensualidades',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.post('marcar_pagado.php', { 
+                id: id, 
+                id_banco: formValues.id_banco, 
+                referencia: formValues.referencia 
+            }, function (resp) {
+                if (resp.trim() === 'OK') {
                     Swal.fire({
-                        title: 'Error de Red',
-                        text: 'No se pudo comunicar con el servidor.',
+                        title: '¡Saldado!',
+                        text: 'La deuda ha sido liquidada y el pago registrado en mensualidades.',
+                        icon: 'success',
+                        confirmButtonColor: '#0d6efd',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'No se pudo actualizar el registro: ' + resp,
                         icon: 'error',
                         confirmButtonColor: '#dc3545'
                     });
+                }
+            }).fail(function() {
+                Swal.fire({
+                    title: 'Error de Red',
+                    text: 'No se pudo comunicar con el servidor.',
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545'
                 });
-            }
-        });
+            });
+        }
     }
 
     /* =========================================
