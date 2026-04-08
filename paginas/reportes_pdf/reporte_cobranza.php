@@ -8,6 +8,35 @@ $estado_filtro = isset($_GET['estado']) ? $_GET['estado'] : 'TODOS';
 $banco_filtro = isset($_GET['id_banco']) ? $_GET['id_banco'] : '';
 $origen_filtro = isset($_GET['origen']) ? $_GET['origen'] : '';
 $ref_filtro = isset($_GET['referencia']) ? $_GET['referencia'] : '';
+$plan_filtro = isset($_GET['id_plan']) ? $_GET['id_plan'] : '';
+
+// 1.1 ESTADÍSTICAS GLOBALES (METAS)
+// Facturación Mensual (Basado en contratos activos)
+$stats_metas = $conn->query("
+    SELECT 
+        SUM(monto_plan) as facturacion_mensual,
+        COUNT(*) as total_activos
+    FROM contratos 
+    WHERE estado = 'ACTIVO'
+")->fetch_assoc();
+
+$facturacion_mensual_meta = $stats_metas['facturacion_mensual'] ?? 0;
+$total_contratos_activos = $stats_metas['total_activos'] ?? 0;
+
+// Desglose por planes (Para el nuevo panel)
+$desglose_planes = [];
+$res_desglose = $conn->query("
+    SELECT p.nombre_plan, COUNT(c.id) as cantidad, SUM(c.monto_plan) as subtotal
+    FROM contratos c
+    JOIN planes p ON c.id_plan = p.id_plan
+    WHERE c.estado = 'ACTIVO'
+    GROUP BY p.nombre_plan
+    ORDER BY cantidad DESC
+");
+if ($res_desglose) {
+    while($d = $res_desglose->fetch_assoc()) $desglose_planes[] = $d;
+}
+
 
 $cobros = [];
 $total_cobrado = 0; // Solo PAGADO
@@ -49,6 +78,12 @@ if (!empty($ref_filtro)) {
     $types .= 's';
 }
 
+if (!empty($plan_filtro)) {
+    $where_clause .= " AND co.id_plan = ? ";
+    $params[] = $plan_filtro;
+    $types .= 'i';
+}
+
 // 3. CONSULTA SQL
 $sql = "
     SELECT 
@@ -61,10 +96,12 @@ $sql = "
         cxc.origen,
         co.nombre_completo AS cliente,
         co.ip_onu,
+        p.nombre_plan,
         DATEDIFF(CURRENT_DATE(), cxc.fecha_vencimiento) AS dias_vencido,
         b.nombre_banco
     FROM cuentas_por_cobrar cxc
     JOIN contratos co ON cxc.id_contrato = co.id
+    LEFT JOIN planes p ON co.id_plan = p.id_plan
     LEFT JOIN bancos b ON cxc.id_banco = b.id_banco
     " . $where_clause . "
     ORDER BY cxc.fecha_emision DESC
@@ -100,6 +137,14 @@ $lista_bancos = [];
 if ($bancos_res) {
     while($b = $bancos_res->fetch_assoc()) $lista_bancos[] = $b;
 }
+
+// Obtener planes para el filtro
+$planes_res = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan ASC");
+$lista_planes = [];
+if ($planes_res) {
+    while($p = $planes_res->fetch_assoc()) $lista_planes[] = $p;
+}
+
 
 // --- TEMPLATE START ---
 $path_to_root = "../../";
@@ -165,6 +210,18 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                     </div>
 
                     <div class="col-md-2">
+                        <label for="id_plan" class="form-label fw-semibold text-secondary small text-uppercase">Plan</label>
+                        <select class="form-select bg-white" name="id_plan" id="id_plan">
+                            <option value="">TODOS</option>
+                            <?php foreach ($lista_planes as $p): ?>
+                                <option value="<?php echo $p['id_plan']; ?>" <?php echo ($plan_filtro == $p['id_plan']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($p['nombre_plan']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
                         <label for="referencia" class="form-label fw-semibold text-secondary small text-uppercase">Referencia</label>
                         <input type="text" class="form-control" name="referencia" id="referencia" 
                                value="<?php echo htmlspecialchars($ref_filtro); ?>" placeholder="Ej: 1234...">
@@ -212,33 +269,95 @@ include $path_to_root . 'paginas/includes/layout_head.php';
             </div>
         <?php else: ?>
 
-            <!-- KPIs -->
+            <!-- KPIs Globales (Metas) -->
             <div class="row mb-4">
-                <!-- Total Card -->
-                <div class="col-md-6 mb-3 mb-md-0">
-                    <div class="card border-0 shadow-sm h-100 bg-primary text-white overflow-hidden position-relative">
+                <div class="col-md-4 mb-3">
+                    <div class="card border-0 shadow-sm h-100 bg-dark text-white overflow-hidden">
                         <div class="card-body p-4">
-                            <h6 class="text-white-50 text-uppercase fw-bold mb-2">Total Cobrado (PAGADO)</h6>
-                            <div class="d-flex align-items-center mb-0">
-                                <h2 class="display-6 fw-bold mb-0 me-3">$<?php echo number_format($total_cobrado, 2); ?></h2>
-                                <i class="fa-solid fa-sack-dollar fa-2x opacity-25 ms-auto"></i>
-                            </div>
-                            <p class="text-white-50 small mb-0 mt-2">Monto recolectado efectivamente</p>
+                            <h6 class="text-white-50 text-uppercase fw-bold mb-2 small"><i class="fa-solid fa-bullseye me-2"></i>Facturación Mensual (Meta)</h6>
+                            <h2 class="fw-bold mb-0 text-white">$<?php echo number_format($facturacion_mensual_meta, 2); ?></h2>
+                            <p class="text-white-50 small mb-0 mt-2">Suma de planes activos</p>
                         </div>
                     </div>
                 </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card border-0 shadow-sm h-100 bg-info text-white overflow-hidden">
+                        <div class="card-body p-4">
+                            <h6 class="text-white-50 text-uppercase fw-bold mb-2 small"><i class="fa-solid fa-users me-2"></i>Contratos Activos</h6>
+                            <h2 class="fw-bold mb-0 text-white"><?php echo number_format($total_contratos_activos); ?></h2>
+                            <p class="text-white-50 small mb-0 mt-2">Clientes en servicio actualmente</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card border-0 shadow-sm h-100 bg-gradient-success text-white overflow-hidden" style="background: linear-gradient(45deg, #198754, #20c997);">
+                        <div class="card-body p-4">
+                            <?php 
+                                $eficiencia = ($total_cobrado + $deuda_clientes > 0) ? ($total_cobrado / ($total_cobrado + $deuda_clientes)) * 100 : 0;
+                            ?>
+                            <h6 class="text-white-50 text-uppercase fw-bold mb-2 small"><i class="fa-solid fa-chart-line me-2"></i>Eficiencia de Cobro</h6>
+                            <h2 class="fw-bold mb-0 text-white"><?php echo number_format($eficiencia, 1); ?>%</h2>
+                            <div class="progress mt-2 bg-white bg-opacity-25" style="height: 6px;">
+                                <div class="progress-bar bg-white" role="progressbar" style="width: <?php echo $eficiencia; ?>%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                <!-- Vencido Card -->
-                <div class="col-md-6">
+            <!-- KPIs Dinámicos (Período) -->
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="card border-0 shadow-sm h-100 bg-primary text-white overflow-hidden position-relative">
+                        <div class="card-body p-4">
+                            <h6 class="text-white-50 text-uppercase fw-bold mb-2">Total Cobrado (Período)</h6>
+                            <div class="d-flex align-items-center">
+                                <h2 class="display-6 fw-bold mb-0">$<?php echo number_format($total_cobrado, 2); ?></h2>
+                                <i class="fa-solid fa-sack-dollar fa-2x opacity-25 ms-auto"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
                     <div class="card border-0 shadow-sm h-100 bg-danger text-white overflow-hidden position-relative">
                         <div class="card-body p-4">
-                            <h6 class="text-white-50 text-uppercase fw-bold mb-2">Deuda Total Clientes</h6>
-                            <div class="d-flex align-items-center mb-0">
-                                <h2 class="display-6 fw-bold mb-0 me-3">$<?php echo number_format($deuda_clientes, 2); ?></h2>
+                            <h6 class="text-white-50 text-uppercase fw-bold mb-2">Deuda Pendiente (Período)</h6>
+                            <div class="d-flex align-items-center">
+                                <h2 class="display-6 fw-bold mb-0">$<?php echo number_format($deuda_clientes, 2); ?></h2>
                                 <i class="fa-solid fa-clock-rotate-left fa-2x opacity-25 ms-auto"></i>
                             </div>
-                            <p class="text-white-50 small mb-0 mt-2">Suma de todos los cargos pendientes</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desglose por Planes -->
+            <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-layer-group me-2 text-primary"></i>Desglose Comercial por Planes</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="bg-light-subtle">
+                                <tr>
+                                    <th class="ps-4 py-2 text-muted fw-bold small">Nombre del Plan</th>
+                                    <th class="text-center py-2 text-muted fw-bold small">Cantidad Clientes</th>
+                                    <th class="text-end pe-4 py-2 text-muted fw-bold small">Subtotal Mensual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($desglose_planes as $dp): ?>
+                                <tr>
+                                    <td class="ps-4 py-3 fw-bold text-dark"><?php echo htmlspecialchars($dp['nombre_plan']); ?></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border px-3"><?php echo $dp['cantidad']; ?></span>
+                                    </td>
+                                    <td class="text-end pe-4 fw-bold text-primary">$<?php echo number_format($dp['subtotal'], 2); ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -252,6 +371,7 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                                 <tr>
                                     <th class="ps-4 text-secondary text-uppercase small fw-bold">ID</th>
                                     <th class="text-secondary text-uppercase small fw-bold">Cliente</th>
+                                    <th class="text-secondary text-uppercase small fw-bold">Plan</th>
                                     <th class="text-secondary text-uppercase small fw-bold">Emisión</th>
                                     <th class="text-secondary text-uppercase small fw-bold">Vencimiento</th>
                                     <th class="text-center text-secondary text-uppercase small fw-bold">Días Vencido</th>
@@ -269,6 +389,7 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                                         <td class="ps-4 fw-medium text-muted">
                                             #<?php echo htmlspecialchars($fila['id_cobro']); ?></td>
                                         <td class="fw-bold text-dark"><?php echo htmlspecialchars($fila['cliente']); ?></td>
+                                        <td><span class="badge bg-light text-dark border"><?php echo htmlspecialchars($fila['nombre_plan'] ?? 'N/A'); ?></span></td>
                                         <td><?php echo htmlspecialchars($fila['fecha_emision']); ?></td>
                                         <td class="<?php echo $is_vencido ? 'text-danger fw-bold' : ''; ?>">
                                             <?php echo htmlspecialchars($fila['fecha_vencimiento']); ?>
@@ -462,7 +583,7 @@ include $path_to_root . 'paginas/includes/layout_foot.php';
 $(document).ready(function() {
     // Inicializar DataTable
     $('#tabla_reporte_cobranza').DataTable({
-        "order": [[2, "desc"]], // Ordenar por Emisión (columna 2) desc
+        "order": [[3, "desc"]], // Ordenar por Emisión (columna 3 ahora por el Plan) desc
         "pageLength": 25,
         "language": {
             "sProcessing": "Procesando...",
