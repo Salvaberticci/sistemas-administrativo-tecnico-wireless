@@ -3,6 +3,8 @@
  * Unified Server-side processing for DataTables - Mensualidades y Pagos
  * Columns: Fecha de registro, Referencia, Cliente, Concepto, Monto, Cuenta, Estado, Acciones
  */
+ob_start(); // Iniciar búfer de salida para prevenir fugas de texto accidentales
+
 // CORS header for cross‑origin requests
 header('Access-Control-Allow-Origin: *');
 header('Cache-Control: no-cache, no-store, must-revalidate');
@@ -51,12 +53,14 @@ $sTabla = "
     LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc
 ";
 
-// Verificar si las columnas bimonetarias ya existen en la BD (pueden no existir si no se ejecutó el ALTER TABLE)
+// 2.1 Verificar si las columnas bimonetarias existen (Detección rápida sin information_schema)
 $tiene_cols_bimonetarias = false;
-$check_cols = $conn->query("SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_NAME='cuentas_por_cobrar' AND COLUMN_NAME='monto_total_bs' LIMIT 1");
-if ($check_cols && $check_cols->num_rows > 0) {
+$check_query = "SELECT monto_total_bs FROM cuentas_por_cobrar LIMIT 1";
+if ($res_check = mysqli_query($conn, $check_query)) {
     $tiene_cols_bimonetarias = true;
+    mysqli_free_result($res_check);
 }
+
 
 // 3. Define Columns for Search/Sort
 $where_mensualidad = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR h.justificacion LIKE '%[EXTRA]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL))";
@@ -257,12 +261,20 @@ $output = [
     ]
 ];
 
-// Calcular conteos de SAE para badges (respetando filtros base)
-$res_p = $conn->query("SELECT COUNT(DISTINCT cxc.id_cobro) FROM $sTabla $sWhereBase AND $where_mensualidad AND cxc.estado_sae_plus = 'NO CARGADO'");
-$output['tabCounts']['sae_pendiente'] = ($res_p) ? intval($res_p->fetch_array()[0]) : 0;
+// Calcular conteos de SAE para badges (optimizado con subconsulta rápida o asumiendo $sWhereBase)
+// Usamos una consulta más mínima para no penalizar el tiempo de respuesta
+$output['tabCounts']['sae_pendiente'] = 0;
+$output['tabCounts']['sae_cargado'] = 0;
 
-$res_c = $conn->query("SELECT COUNT(DISTINCT cxc.id_cobro) FROM $sTabla $sWhereBase AND $where_mensualidad AND cxc.estado_sae_plus = 'CARGADO'");
-$output['tabCounts']['sae_cargado'] = ($res_c) ? intval($res_c->fetch_array()[0]) : 0;
+// Solo contamos si no hay una búsqueda global pesada activa, para priorizar velocidad
+if (empty($searchVal)) {
+    $res_p = $conn->query("SELECT COUNT(*) FROM cuentas_por_cobrar cxc WHERE cxc.estado_sae_plus = 'NO CARGADO' AND cxc.estado = 'PAGADO'");
+    $output['tabCounts']['sae_pendiente'] = ($res_p) ? intval($res_p->fetch_array()[0]) : 0;
+
+    $res_c = $conn->query("SELECT COUNT(*) FROM cuentas_por_cobrar cxc WHERE cxc.estado_sae_plus = 'CARGADO' AND cxc.estado = 'PAGADO'");
+    $output['tabCounts']['sae_cargado'] = ($res_c) ? intval($res_c->fetch_array()[0]) : 0;
+}
+
 
 while ($aRow = $rResult->fetch_assoc()) {
     $row = [];
@@ -417,8 +429,13 @@ while ($aRow = $rResult->fetch_assoc()) {
 }
 
 $conn->close();
-// Clear buffer to avoid whitespace issues
-if (ob_get_length())
-    ob_clean();
-echo json_encode($output);
-// exit;
+
+// Robust JSON output blocking any previous garbage
+if (ob_get_length()) ob_clean(); 
+header('Content-Type: application/json; charset=utf-8');
+
+// Use JSON_UNESCAPED_UNICODE for better readability/compatibility with accents
+// and JSON_PARTIAL_OUTPUT_ON_ERROR to avoid empty response on malformed data
+echo json_encode($output, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+exit;
+

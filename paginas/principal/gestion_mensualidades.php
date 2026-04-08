@@ -1554,6 +1554,14 @@ require_once '../includes/sidebar.php';
                     d.referencia = $('#filtro_referencia').val();
                     d.tab = $('#active_tab').val();
                     d.sSearch = d.search.value;
+                },
+                "error": function(xhr, error, thrown) {
+                    console.error("Error Ajax en Tabla Mensualidades:", thrown);
+                    console.log("Respuesta del servidor:", xhr.responseText);
+                    // No mostrar el alert por defecto de DataTables para una mejor UX
+                    if (xhr.status === 500) {
+                        Swal.fire('Error del Servidor', 'El servidor tardó demasiado en responder o encontró un error interno. Intenta ajustar los filtros de fecha.', 'error');
+                    }
                 }
             },
             "columns": [
