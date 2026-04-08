@@ -121,8 +121,6 @@ if (isset($_POST['filtro_tipo']) && $_POST['filtro_tipo'] != '') {
         $whereConditions[] = "(h.justificacion LIKE '%[EQUIPOS]%' OR h.justificacion LIKE '%equipo%' OR h.justificacion LIKE '%material%')";
     } elseif ($tipo === 'Prorrateo') {
         $whereConditions[] = "(h.justificacion LIKE '%[PRORRATEO]%' OR h.justificacion LIKE '%prorrateo%')";
-    } elseif ($tipo === 'Abono') {
-        $whereConditions[] = "(h.justificacion LIKE '%[ABONO]%' OR h.justificacion LIKE '%abono%' OR h.justificacion LIKE '%saldo a favor%')";
     } elseif ($tipo === 'Extra') {
         $whereConditions[] = "(h.justificacion LIKE '%[EXTRA]%' OR h.justificacion LIKE '%terceros%' OR h.justificacion LIKE '%extra%')";
     }
@@ -150,19 +148,7 @@ if (isset($_POST['meses_mora']) && $_POST['meses_mora'] !== '' && intval($_POST[
     )";
 }
 
-// 4.1 Tab Filters (SAE Plus)
-$tab = $_POST['tab'] ?? 'general';
-// Lógica estricta centralizada arriba.
-
-if ($tab === 'sae_pendiente') {
-    $whereConditions[] = $where_mensualidad;
-    $whereConditions[] = "cxc.estado_sae_plus = 'NO CARGADO'";
-} elseif ($tab === 'sae_cargado') {
-    $whereConditions[] = $where_mensualidad;
-    $whereConditions[] = "cxc.estado_sae_plus = 'CARGADO'";
-}
-
-// Global Search
+// 4.1 Global Search
 if ($searchVal != "") {
     $searchValue = $conn->real_escape_string($searchVal);
     $searchConds = [];
@@ -170,6 +156,19 @@ if ($searchVal != "") {
         $searchConds[] = "$col LIKE '%$searchValue%'";
     }
     $whereConditions[] = "(" . implode(" OR ", $searchConds) . ")";
+}
+
+// === FILTROS BASE (Sin el filtro de pestaña activa) ===
+$sWhereBase = "WHERE " . implode(" AND ", $whereConditions);
+
+// 4.2 Tab Filters (SAE Plus) - Solo para la consulta principal
+$tab = $_POST['tab'] ?? 'general';
+if ($tab === 'sae_pendiente') {
+    $whereConditions[] = $where_mensualidad;
+    $whereConditions[] = "cxc.estado_sae_plus = 'NO CARGADO'";
+} elseif ($tab === 'sae_cargado') {
+    $whereConditions[] = $where_mensualidad;
+    $whereConditions[] = "cxc.estado_sae_plus = 'CARGADO'";
 }
 
 $sWhere = "WHERE " . implode(" AND ", $whereConditions);
@@ -214,7 +213,7 @@ $sSelect = "
     cxc.origen,
     cxc.estado_sae_plus,
     pl.nombre_plan,
-    h.justificacion,
+    GROUP_CONCAT(h.justificacion SEPARATOR ' || ') AS justificacion,
     cxc.fecha_vencimiento,
     cxc.id_grupo_pago,
     (SELECT COUNT(h2.id) FROM cobros_manuales_historial h2 WHERE h2.id_cobro_cxc = cxc.id_cobro) AS es_manual
@@ -224,6 +223,7 @@ $sQuery = "
     SELECT SQL_CALC_FOUND_ROWS $sSelect
     FROM $sTabla
     $sWhere
+    GROUP BY cxc.id_cobro
     $sOrder
     $sLimit
 ";
@@ -267,11 +267,11 @@ $output = [
     ]
 ];
 
-// Calcular conteos de SAE para badges (optimizado con una sola consulta si es posible, o dos simples)
-$res_p = $conn->query("SELECT COUNT(*) FROM cuentas_por_cobrar cxc LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc LEFT JOIN contratos co ON cxc.id_contrato = co.id LEFT JOIN planes pl ON co.id_plan = pl.id_plan WHERE $where_mensualidad AND cxc.estado_sae_plus = 'NO CARGADO'");
+// Calcular conteos de SAE para badges (respetando filtros base)
+$res_p = $conn->query("SELECT COUNT(DISTINCT cxc.id_cobro) FROM $sTabla $sWhereBase AND $where_mensualidad AND cxc.estado_sae_plus = 'NO CARGADO'");
 $output['tabCounts']['sae_pendiente'] = ($res_p) ? intval($res_p->fetch_array()[0]) : 0;
 
-$res_c = $conn->query("SELECT COUNT(*) FROM cuentas_por_cobrar cxc LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc LEFT JOIN contratos co ON cxc.id_contrato = co.id LEFT JOIN planes pl ON co.id_plan = pl.id_plan WHERE $where_mensualidad AND cxc.estado_sae_plus = 'CARGADO'");
+$res_c = $conn->query("SELECT COUNT(DISTINCT cxc.id_cobro) FROM $sTabla $sWhereBase AND $where_mensualidad AND cxc.estado_sae_plus = 'CARGADO'");
 $output['tabCounts']['sae_cargado'] = ($res_c) ? intval($res_c->fetch_array()[0]) : 0;
 
 while ($aRow = $rResult->fetch_assoc()) {
