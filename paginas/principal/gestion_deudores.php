@@ -748,15 +748,11 @@ require_once '../includes/sidebar.php';
                                 
                                 // Reutilizamos lógica de badges de mensualidades para consistencia
                                 let nroLabel = (c.total_contratos > 1) ? `<span class="bg-primary text-white px-2 py-0 rounded-pill me-1" style="font-size:0.7rem;">#${c.nro_orden}</span>` : '';
-                                let pagoInfoHtml = '';
-                                const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-                                
-                                if (c.ultimo_justif) {
-                                    const match = c.ultimo_justif.match(/\[(Enero|Febrero|Marzo|Abril|Mayo|Junio|Julio|Agosto|Septiembre|Octubre|Noviembre|Diciembre)\]/i);
-                                    if (match) {
-                                        const ultimoMes = match[1];
-                                        pagoInfoHtml = `<div class="mt-1 small"><span class="text-info">Último Pago: ${ultimoMes}</span></div>`;
-                                    }
+                                let debtStatusHtml = '';
+                                if (c.saldo_deuda && parseFloat(c.saldo_deuda) > 0) {
+                                    debtStatusHtml = `<div class="mt-1"><span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.7rem;">Deuda Pendiente: $${parseFloat(c.saldo_deuda).toFixed(2)}</span></div>`;
+                                } else {
+                                    debtStatusHtml = `<div class="mt-1"><span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.7rem;">Al día / Sin deudas</span></div>`;
                                 }
 
                                 a.innerHTML = `
@@ -764,7 +760,7 @@ require_once '../includes/sidebar.php';
                                         <div>
                                             ${nroLabel} <strong>ID ${c.id}: ${c.nombre_completo}</strong>
                                             <br><small class="text-muted">C.I.: ${c.cedula || 'N/A'}</small>
-                                            ${pagoInfoHtml}
+                                            ${debtStatusHtml}
                                         </div>
                                         <i class="fas fa-plus text-danger"></i>
                                     </div>
