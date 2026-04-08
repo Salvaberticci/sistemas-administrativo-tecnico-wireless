@@ -35,9 +35,14 @@ require_once '../includes/sidebar.php';
                     <h5 class="fw-bold text-danger mb-1">Clientes Deudores</h5>
                     <p class="text-muted small mb-0">Listado de clientes con saldos pendientes</p>
                 </div>
-                <button type="button" class="btn btn-danger shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearDeuda">
-                    <i class="fas fa-plus-circle me-1"></i> Crear Nueva Deuda
-                </button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-danger shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearDeuda">
+                        <i class="fas fa-plus-circle me-1"></i> Crear Nueva Deuda
+                    </button>
+                    <button type="button" class="btn btn-outline-warning shadow-sm px-4 fw-bold" onclick="confirmarLimpiezaResiduos()">
+                        <i class="fas fa-broom me-1"></i> Ajustar Residuos (< $0.50)
+                    </button>
+                </div>
             </div>
 
             <div class="card-body px-4">
@@ -920,6 +925,50 @@ require_once '../includes/sidebar.php';
             btn.innerHTML = originalHtml;
         });
     });
+
+    /**
+     * Lógica para ajustar residuos menores a $0.50 a saldo cero
+     */
+    async function confirmarLimpiezaResiduos() {
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Ajustar Residuos?',
+            text: "Los saldos menores a $0.50 pasarán a $0.00 sin cambiar el estado de la deuda (se mantendrán PENDIENTES). ¿Deseas continuar?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#343a40',
+            confirmButtonText: 'Sí, ajustar montos',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        });
+
+        if (!isConfirmed) return;
+
+        const proceeds = await solicitarClaveAdmin('Seguridad: Ingrese Clave');
+        if (!proceeds) return;
+
+        Swal.fire({
+            title: 'Procesando...',
+            text: 'Ajustando saldos residuales...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        $.post('limpiar_residuos.php', {}, function(resp) {
+            if (resp.success) {
+                Swal.fire({
+                    title: '¡Ajuste Completado!',
+                    text: resp.message,
+                    icon: 'success',
+                    confirmButtonColor: '#0d6efd'
+                }).then(() => location.reload());
+            } else {
+                Swal.fire('Error', resp.message, 'error');
+            }
+        }, 'json').fail(() => {
+            Swal.fire('Error', 'No se pudo comunicar con el servidor.', 'error');
+        });
+    }
 </script>
 
 <?php require_once '../includes/layout_foot.php'; ?>
