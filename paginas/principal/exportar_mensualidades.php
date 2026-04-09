@@ -54,27 +54,30 @@ if ($check_cols && $check_cols->num_rows > 0) {
     $tiene_cols_bimonetarias = true;
 }
 
-$cols_bimonetarias = $tiene_cols_bimonetarias ? "cxc.monto_total_bs, cxc.tasa_bcv," : "NULL AS monto_total_bs, NULL AS tasa_bcv,";
+// (Las columnas bimonetarias ya se manejan con COALESCE en la query principal)
 
 $sql = "
     SELECT 
         cxc.fecha_emision,
         cxc.fecha_pago,
         cxc.referencia_pago,
-        c.nombre_completo,
+        co.cedula,
+        co.nombre_completo,
         pl.nombre_plan,
-        cxc.monto_total,
-        $cols_bimonetarias
+        -- Monto real: usa el sumatorio del historial si existe, si no el monto facturado
+        COALESCE(SUM(h.monto_cargado), cxc.monto_total) AS monto_total,
+        COALESCE(SUM(h.monto_cargado_bs), cxc.monto_total_bs) AS monto_total_bs,
+        COALESCE(MAX(h.tasa_bcv), cxc.tasa_bcv) AS tasa_bcv,
         cxc.id_banco,
         cxc.estado,
-        GROUP_CONCAT(h.justificacion SEPARATOR ' || ') AS justificacion
+        GROUP_CONCAT(h.justificacion ORDER BY h.id SEPARATOR ' || ') AS justificacion
     FROM cuentas_por_cobrar cxc
-    INNER JOIN contratos c ON cxc.id_contrato = c.id
-    LEFT JOIN planes pl ON c.id_plan = pl.id_plan
+    INNER JOIN contratos co ON cxc.id_contrato = co.id
+    LEFT JOIN planes pl ON co.id_plan = pl.id_plan
     LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc
     $sWhere
     GROUP BY cxc.id_cobro
-    ORDER BY cxc.fecha_emision DESC
+    ORDER BY COALESCE(cxc.fecha_pago, cxc.fecha_emision) DESC
 ";
 
 $result = $conn->query($sql);
@@ -99,6 +102,7 @@ echo "<table border='1'>";
 echo "<thead>
         <tr style='background-color: #0d6efd; color: white;'>
             <th>Fecha</th>
+            <th>Cédula</th>
             <th>Referencia</th>
             <th>Cliente</th>
             <th>Concepto</th>
@@ -150,6 +154,7 @@ while ($row = $result->fetch_assoc()) {
 
     echo "<tr>";
     echo "<td>" . $fecha_fmt . "</td>";
+    echo "<td style='mso-number-format:\"\\@\";'>" . htmlspecialchars($row['cedula'] ?? '-') . "</td>";
     echo "<td style='mso-number-format:\"\\@\";'>" . ($row['referencia_pago'] ?? '-') . "</td>";
     echo "<td>" . htmlspecialchars($row['nombre_completo']) . "</td>";
     echo "<td>" . htmlspecialchars($concepto_main) . "</td>";

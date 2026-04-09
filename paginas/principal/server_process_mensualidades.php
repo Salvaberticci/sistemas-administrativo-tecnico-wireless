@@ -324,6 +324,9 @@ if ($start == 0 && empty($searchVal) && empty($_POST['filtro_tipo']) && empty($_
     }
     $basicWhere = "WHERE " . implode(" AND ", $basicWhereConds);
 
+    $res_g = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar cxc $basicWhere");
+    if ($res_g) $output['tabCounts']['general'] = (int)$res_g->fetch_array()[0];
+
     $res_p = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar cxc $basicWhere AND cxc.estado_sae_plus = 'NO CARGADO'");
     if ($res_p) $output['tabCounts']['sae_pendiente'] = (int)$res_p->fetch_array()[0];
 
@@ -331,6 +334,7 @@ if ($start == 0 && empty($searchVal) && empty($_POST['filtro_tipo']) && empty($_
     if ($res_c) $output['tabCounts']['sae_cargado'] = (int)$res_c->fetch_array()[0];
 } else {
     // Si no es la carga inicial, enviamos -1 para que el JS sepa que no debe actualizar los números actuales
+    $output['tabCounts']['general'] = -1;
     $output['tabCounts']['sae_pendiente'] = -1;
     $output['tabCounts']['sae_cargado'] = -1;
 }
