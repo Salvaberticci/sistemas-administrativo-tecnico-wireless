@@ -960,7 +960,7 @@ require_once '../includes/sidebar.php';
     async function confirmarLimpiezaResiduos() {
         const { isConfirmed } = await Swal.fire({
             title: '¿Ajustar Residuos?',
-            text: "Los saldos menores a $0.50 pasarán a $0.00 sin cambiar el estado de la deuda (se mantendrán PENDIENTES). ¿Deseas continuar?",
+            text: "Los saldos menores a $0.50 pasarán a $0.00 y se marcarán como PAGADOS (desaparecerán de esta lista). ¿Deseas continuar?",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ffc107',

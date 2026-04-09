@@ -7,7 +7,7 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Primero contamos cuántos registros serán afectados
-    $count_res = $conn->query("SELECT COUNT(*) as total FROM clientes_deudores WHERE saldo_pendiente < 0.50 AND saldo_pendiente > 0 AND estado = 'PENDIENTE'");
+    $count_res = $conn->query("SELECT COUNT(*) as total FROM clientes_deudores WHERE saldo_pendiente < 0.50 AND saldo_pendiente >= 0 AND estado = 'PENDIENTE'");
     $count = ($count_res) ? $count_res->fetch_assoc()['total'] : 0;
 
     if ($count == 0) {
@@ -16,12 +16,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Realizar el ajuste
-    // Ponemos saldo_pendiente en 0 y ajustamos monto_total para que coincida con lo pagado hasta ahora
+    // Ponemos saldo_pendiente en 0, estado en 'PAGADO' y ajustamos monto_total para que coincida con lo pagado hasta ahora
     $sql = "UPDATE clientes_deudores 
             SET monto_total = monto_pagado, 
                 saldo_pendiente = 0, 
+                estado = 'PAGADO',
                 notas = CONCAT(IFNULL(notas, ''), ' [AJUSTE AUTOMATICO DE RESIDUOS < 0.50]') 
-            WHERE saldo_pendiente < 0.50 AND saldo_pendiente > 0 AND estado = 'PENDIENTE'";
+            WHERE saldo_pendiente < 0.50 AND saldo_pendiente >= 0 AND estado = 'PENDIENTE'";
 
     if ($conn->query($sql)) {
         echo json_encode([
