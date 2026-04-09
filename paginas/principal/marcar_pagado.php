@@ -38,7 +38,7 @@ try {
     $sql_cxc = "INSERT INTO cuentas_por_cobrar (id_contrato, fecha_emision, fecha_vencimiento, monto_total, estado, origen, estado_sae_plus, fecha_pago, referencia_pago, id_banco) 
                 VALUES (?, ?, ?, ?, 'PAGADO', 'SISTEMA', 'NO CARGADO', ?, ?, ?)";
     $stmt_cxc = $conn->prepare($sql_cxc);
-    $stmt_cxc->bind_param("issdsssi", $id_contrato, $fecha_solo_dia, $fecha_solo_dia, $monto_total, $fecha_actual, $referencia, $id_banco);
+    $stmt_cxc->bind_param("issdssi", $id_contrato, $fecha_solo_dia, $fecha_solo_dia, $monto_total, $fecha_actual, $referencia, $id_banco);
     $stmt_cxc->execute();
     $id_cobro_nuevo = $conn->insert_id;
 

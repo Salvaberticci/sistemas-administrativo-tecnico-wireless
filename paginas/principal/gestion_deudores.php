@@ -589,11 +589,12 @@ require_once '../includes/sidebar.php';
             table.draw();
         });
 
-        // Cargar bancos para el modal de abonos desde PHP
-        const bancosInfo = <?php echo json_encode($bancos_data); ?>;
+        // Declarar bancosInfo globalmente para que sea accesible desde marcarPagado()
+        window.bancosInfo = <?php echo json_encode($bancos_data); ?>;
+        
         const selectBanco = document.getElementById('abono_select_banco');
-        if (bancosInfo && bancosInfo.length > 0) {
-            bancosInfo.forEach(b => {
+        if (window.bancosInfo && window.bancosInfo.length > 0) {
+            window.bancosInfo.forEach(b => {
                 const opt = document.createElement('option');
                 opt.value = b.id_banco;
                 opt.textContent = b.nombre_banco;
