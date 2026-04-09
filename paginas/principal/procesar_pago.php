@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $es_mensualidad = !empty($info['id_plan_cobrado']);
 
             $tag_justif   = $es_mensualidad ? '[MENSUALIDAD]' : '[PAGO]';
-            $justif_texto = "$tag_justif Pago registrado vía modal (Ref: $referencia_pago)";
+            $justif_texto = "$tag_justif Pago registrado vía modal (Ref: $referencia_pago) (Total Operación: $" . number_format($monto_pagado_usd, 2) . ")";
             $justif_esc   = $conn->real_escape_string($justif_texto);
             $autorizado   = $conn->real_escape_string('Sistema');
 

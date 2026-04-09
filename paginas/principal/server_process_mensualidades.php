@@ -415,8 +415,8 @@ foreach ($allRows as $aRow) {
 
     // 4. Detalle / Justificación Extendida
     $justifHtml = str_replace(' || ', ' | ', $justif);
-    if (strlen($justifHtml) > 55) {
-        $justifHtml = '<span title="' . htmlspecialchars($justifHtml) . '" style="cursor:help">' . htmlspecialchars(substr($justifHtml, 0, 52)) . '...</span>';
+    if (strlen($justifHtml) > 120) {
+        $justifHtml = '<span title="' . htmlspecialchars($justifHtml) . '" style="cursor:help">' . htmlspecialchars(substr($justifHtml, 0, 117)) . '...</span>';
     } else {
         $justifHtml = htmlspecialchars($justifHtml ?: '-');
     }

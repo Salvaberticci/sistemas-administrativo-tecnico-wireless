@@ -183,11 +183,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // pagó $20, se guarda $20, no $17.50.
         if ($sumatoria_backend > 0 && $monto_total_declarado > 0) {
             $factor_real = $monto_total_declarado / $sumatoria_backend;
-            foreach ($cargos_a_procesar as &$cargo_ref) {
-                $cargo_ref['monto']    = round($cargo_ref['monto']    * $factor_real, 2);
-                $cargo_ref['monto_bs'] = round($cargo_ref['monto_bs'] * $factor_real, 2);
+            $acumulado_monto_usd = 0;
+            $acumulado_monto_bs = 0;
+            $total_conceptos = count($cargos_a_procesar);
+            $total_esperado_bs = $convertir_a_bs($monto_total_declarado);
+
+            for ($i = 0; $i < $total_conceptos; $i++) {
+                if ($i === $total_conceptos - 1) {
+                    // El último concepto ajusta los centavos para cuadrar con el total declarado
+                    $cargos_a_procesar[$i]['monto'] = round($monto_total_declarado - $acumulado_monto_usd, 2);
+                    $cargos_a_procesar[$i]['monto_bs'] = round($total_esperado_bs - $acumulado_monto_bs, 2);
+                } else {
+                    $cargos_a_procesar[$i]['monto'] = round($cargos_a_procesar[$i]['monto'] * $factor_real, 2);
+                    $cargos_a_procesar[$i]['monto_bs'] = round($cargos_a_procesar[$i]['monto_bs'] * $factor_real, 2);
+                    $acumulado_monto_usd += $cargos_a_procesar[$i]['monto'];
+                    $acumulado_monto_bs += $cargos_a_procesar[$i]['monto_bs'];
+                }
+                
+                // Añadimos la nota del total a la justificación de cada concepto
+                $nota_total = " (Total Operación: $" . number_format($monto_total_declarado, 2) . ")";
+                $cargos_a_procesar[$i]['justificacion'] .= $nota_total;
             }
-            unset($cargo_ref);
         }
 
         $conn->begin_transaction();
@@ -219,10 +235,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     }
                 }
 
-                $monto_por_mes_usd = ($num_meses > 1) ? round($c_monto_usd / $num_meses, 2) : $c_monto_usd;
-                $monto_por_mes_bs = ($num_meses > 1) ? round($c_monto_bs / $num_meses, 2) : $c_monto_bs;
+                $acumulado_mes_usd = 0;
+                $acumulado_mes_bs = 0;
 
                 for ($m = 0; $m < $num_meses; $m++) {
+                    // Lógica de residuo para meses
+                    if ($m === $num_meses - 1) {
+                        $monto_por_mes_usd = round($c_monto_usd - $acumulado_mes_usd, 2);
+                        $monto_por_mes_bs = round($c_monto_bs - $acumulado_mes_bs, 2);
+                    } else {
+                        $monto_por_mes_usd = round($c_monto_usd / $num_meses, 2);
+                        $monto_por_mes_bs = round($c_monto_bs / $num_meses, 2);
+                        $acumulado_mes_usd += $monto_por_mes_usd;
+                        $acumulado_mes_bs += $monto_por_mes_bs;
+                    }
                     // Si es mensualidad o extra, intentar obtener el mes del array de usuario
                     $mes_nombre = "";
                     if (strpos($c_justificacion_base, '[MENSUALIDAD]') !== false) {

@@ -11,6 +11,9 @@ $fecha_fin = isset($_GET['fecha_fin']) ? $_GET['fecha_fin'] : '';
 $id_banco = isset($_GET['id_banco']) ? $_GET['id_banco'] : '';
 $filtro_tipo = isset($_GET['filtro_tipo']) ? $_GET['filtro_tipo'] : '';
 
+// Aumentar el límite de GROUP_CONCAT para evitar truncamiento en justificaciones largas
+$conn->query("SET SESSION group_concat_max_len = 10000");
+
 // Construir consulta
 $sWhere = "WHERE 1=1";
 
