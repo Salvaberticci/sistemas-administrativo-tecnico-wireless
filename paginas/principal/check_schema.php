@@ -1,5 +1,5 @@
 <?php
-require 'conexion.php';
+require '../conexion.php';
 $tables = ['cuentas_por_cobrar', 'cobros_manuales_historial', 'clientes_deudores'];
 foreach ($tables as $table) {
     echo "--- $table ---\n";

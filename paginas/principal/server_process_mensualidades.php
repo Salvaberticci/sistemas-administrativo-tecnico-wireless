@@ -61,6 +61,13 @@ if ($res_check = mysqli_query($conn, $check_query)) {
     mysqli_free_result($res_check);
 }
 
+// 2.2 Definir criterio SQL para mensualidades (Proxy para registros que soportan SAE Plus)
+$sqlEsMensualidad = "(
+    cxc.id_cobro IN (SELECT id_cobro_cxc FROM cobros_manuales_historial WHERE justificacion LIKE '%[MENSUALIDAD]%' OR justificacion LIKE '%[EXTRA]%')
+    OR 
+    (NOT EXISTS (SELECT 1 FROM cobros_manuales_historial WHERE id_cobro_cxc = cxc.id_cobro) AND pl.nombre_plan IS NOT NULL)
+)";
+
 
 // Columnas para búsqueda (Sección de filtro de mensualidad movida más abajo)
 
@@ -96,7 +103,8 @@ if (isset($_POST['estado_pago']) && $_POST['estado_pago'] != '') {
 
 if (isset($_POST['estado_sae']) && $_POST['estado_sae'] != '') {
     $whereConditions[] = "cxc.estado_sae_plus = '" . $conn->real_escape_string($_POST['estado_sae']) . "'";
-    // Se elimina el filtro pesado de $where_mensualidad ya que estado_sae_plus es específico y confiable.
+    // Limitamos el filtro de SAE solo a mensualidades reales
+    $whereConditions[] = $sqlEsMensualidad;
 }
 
 if (isset($_POST['referencia']) && $_POST['referencia'] != '') {
@@ -161,8 +169,10 @@ $sWhereBase = "WHERE " . implode(" AND ", $whereConditions);
 $tab = $_POST['tab'] ?? 'general';
 if ($tab === 'sae_pendiente') {
     $whereConditions[] = "cxc.estado_sae_plus = 'NO CARGADO'";
+    $whereConditions[] = $sqlEsMensualidad;
 } elseif ($tab === 'sae_cargado') {
     $whereConditions[] = "cxc.estado_sae_plus = 'CARGADO'";
+    $whereConditions[] = $sqlEsMensualidad;
 }
 
 $sWhere = "WHERE " . implode(" AND ", $whereConditions);
@@ -327,10 +337,14 @@ if ($start == 0 && empty($searchVal) && empty($_POST['filtro_tipo']) && empty($_
     $res_g = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar cxc $basicWhere");
     if ($res_g) $output['tabCounts']['general'] = (int)$res_g->fetch_array()[0];
 
-    $res_p = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar cxc $basicWhere AND cxc.estado_sae_plus = 'NO CARGADO'");
+    // Para los conteos de SAE, debemos unir con planes para que la condición $sqlEsMensualidad funcione
+    $basicWhereSAE = "WHERE " . implode(" AND ", $basicWhereConds);
+    $joinPlanes = "LEFT JOIN contratos co ON cxc.id_contrato = co.id LEFT JOIN planes pl ON co.id_plan = pl.id_plan";
+
+    $res_p = $conn->query("SELECT COUNT(cxc.id_cobro) FROM cuentas_por_cobrar cxc $joinPlanes $basicWhereSAE AND cxc.estado_sae_plus = 'NO CARGADO' AND $sqlEsMensualidad");
     if ($res_p) $output['tabCounts']['sae_pendiente'] = (int)$res_p->fetch_array()[0];
 
-    $res_c = $conn->query("SELECT COUNT(id_cobro) FROM cuentas_por_cobrar cxc $basicWhere AND cxc.estado_sae_plus = 'CARGADO'");
+    $res_c = $conn->query("SELECT COUNT(cxc.id_cobro) FROM cuentas_por_cobrar cxc $joinPlanes $basicWhereSAE AND cxc.estado_sae_plus = 'CARGADO' AND $sqlEsMensualidad");
     if ($res_c) $output['tabCounts']['sae_cargado'] = (int)$res_c->fetch_array()[0];
 } else {
     // Si no es la carga inicial, enviamos -1 para que el JS sepa que no debe actualizar los números actuales
