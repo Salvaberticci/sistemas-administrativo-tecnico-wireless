@@ -176,12 +176,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         }
 
-        // === DISTRIBUCIÓN PROPORCIONAL DEL MONTO REAL ===
-        // El monto declarado por el cliente ($monto_total_declarado) es lo que REALMENTE se cobró.
-        // Los montos del desglose son referencia (precio del plan), pero el monto almacenado
-        // debe ser proporcional al pago real. Ej: si el plan cuesta $17.50 pero el cliente
-        // pagó $20, se guarda $20, no $17.50.
-        if ($sumatoria_backend > 0 && $monto_total_declarado > 0) {
+        // === GESTIÓN DE MONTOS Y EXCEDENTES ===
+        // Si hay un excedente (paga más de lo que debe), preservamos los precios originales 
+        // y creamos una fila de "Abono" para el sobrante.
+        // Si hay un déficit (paga menos), escalamos proporcionalmente para cubrir parte de cada item.
+        
+        $surplus = round($monto_total_declarado - $sumatoria_backend, 2);
+
+        if ($surplus > 0) {
+            // Caso EXCEDENTE: No escalamos ítems, añadimos fila de Abono/Saldo a Favor
+            $cargos_a_procesar[] = [
+                'id_contrato' => $id_contrato_principal,
+                'monto' => $surplus,
+                'monto_bs' => $convertir_a_bs($surplus),
+                'justificacion' => "[ABONO] Saldo a Favor (Excedente en Pago)" . (!empty($justificacion) ? " - $justificacion" : "")
+            ];
+            
+            // Añadimos nota de total a cada concepto pero manteniendo su monto original
+            foreach ($cargos_a_procesar as &$item) {
+                $nota_total = " (Total Operación: $" . number_format($monto_total_declarado, 2) . ")";
+                $item['justificacion'] .= $nota_total;
+            }
+        } elseif ($sumatoria_backend > 0 && $monto_total_declarado > 0 && $surplus < 0) {
+            // Caso DÉFICIT: Escalamos proporcionalmente (Lógica anterior)
             $factor_real = $monto_total_declarado / $sumatoria_backend;
             $acumulado_monto_usd = 0;
             $acumulado_monto_bs = 0;
@@ -190,7 +207,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             for ($i = 0; $i < $total_conceptos; $i++) {
                 if ($i === $total_conceptos - 1) {
-                    // El último concepto ajusta los centavos para cuadrar con el total declarado
                     $cargos_a_procesar[$i]['monto'] = round($monto_total_declarado - $acumulado_monto_usd, 2);
                     $cargos_a_procesar[$i]['monto_bs'] = round($total_esperado_bs - $acumulado_monto_bs, 2);
                 } else {
@@ -199,10 +215,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $acumulado_monto_usd += $cargos_a_procesar[$i]['monto'];
                     $acumulado_monto_bs += $cargos_a_procesar[$i]['monto_bs'];
                 }
-                
-                // Añadimos la nota del total a la justificación de cada concepto
                 $nota_total = " (Total Operación: $" . number_format($monto_total_declarado, 2) . ")";
                 $cargos_a_procesar[$i]['justificacion'] .= $nota_total;
+            }
+        } else {
+            // Caso Montos Iguales o Fallback: Solo añadimos la nota
+            foreach ($cargos_a_procesar as &$item) {
+                $nota_total = " (Total Operación: $" . number_format($monto_total_declarado, 2) . ")";
+                $item['justificacion'] .= $nota_total;
             }
         }
 
@@ -356,38 +376,84 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             } // Fin foreach
 
-            // 6. LÓGICA DE DEUDA AUTOMÁTICA
-            $saldo_deudor = round($sumatoria_backend - $monto_total_declarado, 2);
-            if ($saldo_deudor > 0) {
-                $notas_deuda = "Generado automáticamente desde Cobro Manual (Ref: $referencia_pago). Justificación: " . $justificacion;
-                $sql_deudor = "INSERT INTO clientes_deudores (
-                    id_contrato, 
-                    monto_total, 
-                    monto_pagado, 
-                    saldo_pendiente, 
-                    estado,
-                    notas
+            // 6. LÓGICA DE CONSUMO DE SALDO A FAVOR Y BALANCE (Umbral de $0.50)
+            $monto_credito_aplicado = isset($_POST['monto_credito_aplicado']) ? floatval($_POST['monto_credito_aplicado']) : 0;
+            
+            // Consumir créditos existentes si se aplicó saldo
+            if ($monto_credito_aplicado > 0) {
+                // Buscar registros de CREDITO pendientes para este cliente, ordenados por antigüedad
+                $sql_get_creditos = "SELECT id, saldo_pendiente, monto_pagado FROM clientes_deudores 
+                                     WHERE id_contrato = '$id_contrato_principal' AND tipo_registro = 'CREDITO' 
+                                     AND estado = 'PENDIENTE' ORDER BY fecha_registro ASC";
+                $res_creditos = $conn->query($sql_get_creditos);
+                
+                $por_consumir = $monto_credito_aplicado;
+                while($row_c = $res_creditos->fetch_assoc()) {
+                    if ($por_consumir <= 0) break;
+                    
+                    $id_reg_c = $row_c['id'];
+                    $saldo_c  = floatval($row_c['saldo_pendiente']);
+                    $pagado_c = floatval($row_c['monto_pagado']);
+                    
+                    if ($por_consumir >= $saldo_c) {
+                        // Consumir todo este registro
+                        $nuevo_pagado = $pagado_c + $saldo_c; // En créditos, monto_pagado suma lo 'abonado' al saldo a favor? 
+                        // En realidad, para créditos, podríamos solo bajar el saldo_pendiente.
+                        $sql_up_c = "UPDATE clientes_deudores SET saldo_pendiente = 0, estado = 'PAGADO', 
+                                     notas = CONCAT(notas, ' | Consumido en Cobro Manual Ref: $referencia_pago') 
+                                     WHERE id = '$id_reg_c'";
+                        $por_consumir -= $saldo_c;
+                    } else {
+                        // Consumir parcialmente
+                        $nuevo_saldo = $saldo_c - $por_consumir;
+                        $sql_up_c = "UPDATE clientes_deudores SET saldo_pendiente = '$nuevo_saldo', 
+                                     notas = CONCAT(notas, ' | Parcialmente consumido ($$por_consumir) en Ref: $referencia_pago') 
+                                     WHERE id = '$id_reg_c'";
+                        $por_consumir = 0;
+                    }
+                    $conn->query($sql_up_c);
+                }
+            }
+
+            // El balance final se basa en lo que el input reporta (que ya incluye el crédito si se aplicó)
+            // comparado con lo que el backend dice que sumaron los cargos.
+            $balance = round($sumatoria_backend - $monto_total_declarado, 2);
+            
+            if ($balance >= 0.50) {
+                // Caso DEUDA (Déficit)
+                $txt_credito = ($monto_credito_aplicado > 0) ? " (Crédito aplicado: $$monto_credito_aplicado)" : "";
+                $notas_registro = "Generado automáticamente desde Cobro Manual (Ref: $referencia_pago).$txt_credito Justificación: " . $justificacion;
+                $sql_registro = "INSERT INTO clientes_deudores (
+                    id_contrato, tipo_registro, monto_total, monto_pagado, saldo_pendiente, estado, notas
                 ) VALUES (
-                    '$id_contrato_principal', 
-                    '$sumatoria_backend', 
-                    '$monto_total_declarado', 
-                    '$saldo_deudor', 
-                    'PENDIENTE',
-                    '$notas_deuda'
+                    '$id_contrato_principal', 'DEUDA', '$sumatoria_backend', '$monto_total_declarado', '$balance', 'PENDIENTE', '$notas_registro'
                 )";
                 
-                if (!$conn->query($sql_deudor)) {
+                if (!$conn->query($sql_registro)) {
                     throw new Exception("Error al registrar en lista de deudores: " . $conn->error);
+                }
+            } elseif ($balance < -0.49) { // Solo si el exceso es significativo
+                // Caso CRÉDITO (Excedente)
+                $monto_nuevo_credito = abs($balance);
+                $notas_registro = "Saldo a favor generado desde Cobro Manual (Ref: $referencia_pago).";
+                $sql_registro = "INSERT INTO clientes_deudores (
+                    id_contrato, tipo_registro, monto_total, monto_pagado, saldo_pendiente, estado, notas
+                ) VALUES (
+                    '$id_contrato_principal', 'CREDITO', '0', '$monto_nuevo_credito', '$monto_nuevo_credito', 'PENDIENTE', '$notas_registro'
+                )";
+                
+                if (!$conn->query($sql_registro)) {
+                    throw new Exception("Error al registrar saldo a favor: " . $conn->error);
                 }
             }
 
             $conn->commit();
             
             $status_msg = "";
-            if ($saldo_deudor > 0) {
-                $status_msg = " [SALDO PENDIENTE: $$saldo_deudor registrado en lista de deudores]";
-            } elseif ($saldo_deudor < 0) {
-                $status_msg = " [AVISO: Sobrante de $" . abs($saldo_deudor) . " no asignado]";
+            if ($balance >= 0.50) {
+                $status_msg = " [SALDO PENDIENTE: $$balance registrado en lista de deudores]";
+            } elseif ($balance < 0) {
+                $status_msg = " [SALDO A FAVOR: $" . abs($balance) . " registrado con éxito]";
             }
 
             $message = "Capture procesado con éxito. Se generaron $registros_exitosos cobros (Ref: $referencia_pago) por un total de $$monto_total_declarado.$status_msg";

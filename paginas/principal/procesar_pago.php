@@ -23,83 +23,104 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         : null;
 
     $estado     = 'PAGADO';
-    $fecha_pago = date('Y-m-d H:i:s');
+    $fecha_actual = date('Y-m-d H:i:s');
 
     $conn->begin_transaction();
     try {
 
-        // 4. Actualizar el cobro: estado + fecha + referencia + banco + monto real
-        if ($monto_pagado_usd !== null && $monto_pagado_usd > 0 && $monto_bs !== null) {
-            // Tenemos monto Y tasa → actualizamos todo
+        // 4. Obtener monto original para detectar sobrepago
+        $res_orig = $conn->query("SELECT id_contrato, monto_total as deuda_original, id_grupo_pago FROM cuentas_por_cobrar WHERE id_cobro = $id_cobro LIMIT 1");
+        $info_orig = $res_orig->fetch_assoc();
+        $deuda_original = floatval($info_orig['deuda_original']);
+        $id_contrato = intval($info_orig['id_contrato']);
+        $id_grupo_pago_base = $info_orig['id_grupo_pago'] ?: sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x', mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000, mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff));
+
+        $sobrepago = 0;
+        if ($monto_pagado_usd !== null && $monto_pagado_usd > $deuda_original) {
+            $sobrepago = round($monto_pagado_usd - $deuda_original, 2);
+            $monto_pagado_usd_final = $deuda_original; // Capamos el actual a la deuda original
+            $monto_bs_final = round($monto_pagado_usd_final * $tasa_bcv, 2);
+        } else {
+            $monto_pagado_usd_final = $monto_pagado_usd;
+            $monto_bs_final = $monto_bs;
+        }
+
+        if ($monto_pagado_usd_final !== null && $monto_pagado_usd_final > 0) {
             $stmt = $conn->prepare(
                 "UPDATE cuentas_por_cobrar
                  SET estado = ?, fecha_pago = ?, referencia_pago = ?, id_banco = ?,
-                     monto_total = ?, monto_total_bs = ?, tasa_bcv = ?
+                     monto_total = ?, monto_total_bs = ?, tasa_bcv = ?, id_grupo_pago = ?
                  WHERE id_cobro = ?"
             );
-            $stmt->bind_param("sssidddi",
-                $estado, $fecha_pago, $referencia_pago, $id_banco,
-                $monto_pagado_usd, $monto_bs, $tasa_bcv,
+            $stmt->bind_param("sssidddsi",
+                $estado, $fecha_actual, $referencia_pago, $id_banco,
+                $monto_pagado_usd_final, $monto_bs_final, $tasa_bcv, $id_grupo_pago_base,
                 $id_cobro
             );
-        } elseif ($monto_pagado_usd !== null && $monto_pagado_usd > 0) {
-            // Tenemos monto pero sin tasa (pago USD directo)
-            $stmt = $conn->prepare(
-                "UPDATE cuentas_por_cobrar
-                 SET estado = ?, fecha_pago = ?, referencia_pago = ?, id_banco = ?,
-                     monto_total = ?
-                 WHERE id_cobro = ?"
-            );
-            $stmt->bind_param("sssidi",
-                $estado, $fecha_pago, $referencia_pago, $id_banco,
-                $monto_pagado_usd, $id_cobro
-            );
         } else {
-            // Sin monto (compatibilidad hacia atrás)
             $stmt = $conn->prepare(
                 "UPDATE cuentas_por_cobrar
-                 SET estado = ?, fecha_pago = ?, referencia_pago = ?, id_banco = ?
+                 SET estado = ?, fecha_pago = ?, referencia_pago = ?, id_banco = ?, id_grupo_pago = ?
                  WHERE id_cobro = ?"
             );
-            $stmt->bind_param("sssii",
-                $estado, $fecha_pago, $referencia_pago, $id_banco, $id_cobro
+            $stmt->bind_param("sssisi",
+                $estado, $fecha_actual, $referencia_pago, $id_banco, $id_grupo_pago_base, $id_cobro
             );
         }
 
         if ($stmt === false) throw new Exception("Error de preparación: " . $conn->error);
-        if (!$stmt->execute())    throw new Exception("Error al registrar el pago: " . $stmt->error);
+        if (!$stmt->execute()) throw new Exception("Error al registrar el pago: " . $stmt->error);
         $stmt->close();
 
-        // 5. Crear registro en cobros_manuales_historial (si tenemos monto real)
-        //    Esto permite que la exportación Excel muestre el monto correcto via COALESCE.
-        if ($monto_pagado_usd !== null && $monto_pagado_usd > 0) {
+        // 5. Manejar el Sobrepago (Si existe)
+        if ($sobrepago > 0) {
+            $fecha_dia = date('Y-m-d');
+            $justif_sobrepago = "[ABONO] Saldo a Favor (Sobrepago en Ref: $referencia_pago)";
+            $monto_bs_sobrepago = round($sobrepago * $tasa_bcv, 2);
+            
+            // Insertar Nueva CxC para el Saldo a Favor
+            $sql_extra = "INSERT INTO cuentas_por_cobrar (id_contrato, fecha_emision, fecha_vencimiento, monto_total, monto_total_bs, tasa_bcv, estado, fecha_pago, referencia_pago, id_banco, id_grupo_pago) 
+                          VALUES (?, ?, ?, ?, ?, ?, 'PAGADO', ?, ?, ?, ?)";
+            $stmt_extra = $conn->prepare($sql_extra);
+            $stmt_extra->bind_param("issdddsssis", $id_contrato, $fecha_dia, $fecha_dia, $sobrepago, $monto_bs_sobrepago, $tasa_bcv, $fecha_actual, $referencia_pago, $id_banco, $id_grupo_pago_base);
+            $stmt_extra->execute();
+            $id_cobro_extra = $stmt_extra->insert_id;
+            $stmt_extra->close();
 
-            // Obtener id_contrato y tipo de cobro para la justificación
-            $res = $conn->query(
-                "SELECT id_contrato, id_plan_cobrado FROM cuentas_por_cobrar WHERE id_cobro = $id_cobro LIMIT 1"
-            );
-            $info = $res ? $res->fetch_assoc() : null;
-            $id_contrato   = intval($info['id_contrato'] ?? 0);
-            $es_mensualidad = !empty($info['id_plan_cobrado']);
+            // Insertar Historial para el extra
+            $autorizado = 'Sistema';
+            $sql_h_extra = "INSERT INTO cobros_manuales_historial (id_cobro_cxc, id_contrato, autorizado_por, justificacion, monto_cargado, monto_cargado_bs, tasa_bcv)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $stmt_h_e = $conn->prepare($sql_h_extra);
+            $stmt_h_e->bind_param("iissddd", $id_cobro_extra, $id_contrato, $autorizado, $justif_sobrepago, $sobrepago, $monto_bs_sobrepago, $tasa_bcv);
+            $stmt_h_e->execute();
+            $stmt_h_e->close();
 
+            // Insertar en clientes_deudores como tipo CREDITO
+            $sql_credito = "INSERT INTO clientes_deudores (id_contrato, tipo_registro, monto_total, monto_pagado, saldo_pendiente, estado, notas) 
+                            VALUES (?, 'CREDITO', 0, ?, ?, 'PENDIENTE', ?)";
+            $notas_credito = "Saldo a favor generado por sobrepago (Ref: $referencia_pago).";
+            $stmt_cred = $conn->prepare($sql_credito);
+            $stmt_cred->bind_param("idds", $id_contrato, $sobrepago, $sobrepago, $notas_credito);
+            $stmt_cred->execute();
+            $stmt_cred->close();
+        }
+
+        // 6. Crear registro en historial para el cobro principal
+        if ($monto_pagado_usd_final !== null && $monto_pagado_usd_final > 0) {
             $tag_justif   = $es_mensualidad ? '[MENSUALIDAD]' : '[PAGO]';
             $justif_texto = "$tag_justif Pago registrado vía modal (Ref: $referencia_pago) (Total Operación: $" . number_format($monto_pagado_usd, 2) . ")";
-            $justif_esc   = $conn->real_escape_string($justif_texto);
-            $autorizado   = $conn->real_escape_string('Sistema');
-
-            $monto_bs_h   = $monto_bs ?? 0;
-            $tasa_h       = $tasa_bcv;
-
+            $monto_bs_h   = $monto_bs_final ?? 0;
+            
             $sql_h = "INSERT INTO cobros_manuales_historial
                         (id_cobro_cxc, id_contrato, autorizado_por, justificacion,
                          monto_cargado, monto_cargado_bs, tasa_bcv)
                       VALUES
-                        ($id_cobro, $id_contrato, '$autorizado', '$justif_esc',
-                         $monto_pagado_usd, $monto_bs_h, $tasa_h)";
-
-            if (!$conn->query($sql_h)) {
-                throw new Exception("Error al registrar historial: " . $conn->error);
-            }
+                        (?, ?, ?, ?, ?, ?, ?)";
+            $stmt_h = $conn->prepare($sql_h);
+            $stmt_h->bind_param("iissddd", $id_cobro, $id_contrato, $autorizado, $justif_texto, $monto_pagado_usd_final, $monto_bs_h, $tasa_bcv);
+            $stmt_h->execute();
+            $stmt_h->close();
         }
 
         $conn->commit();

@@ -84,8 +84,13 @@ try {
     $stmt_hist->execute();
     $stmt_hist->close();
 
-    // 6. Actualizar la tabla clientes_deudores
-    $estado_deudor = ($nuevo_saldo_pendiente <= 0.01) ? 'PAGADO' : 'PENDIENTE'; // Tolerancia de 0.01
+    // 6. Actualizar la tabla clientes_deudores (Ajuste por residuo < 0.50)
+    if ($nuevo_saldo_pendiente < 0.50) {
+        $nuevo_saldo_pendiente = 0;
+        $estado_deudor = 'PAGADO';
+    } else {
+        $estado_deudor = 'PENDIENTE';
+    }
 
     $sql_update_deudor = "UPDATE clientes_deudores SET 
                             monto_pagado = ?, 

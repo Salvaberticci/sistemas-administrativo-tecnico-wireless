@@ -1,11 +1,16 @@
 <?php
-require '../conexion.php';
-$tables = ['cuentas_por_cobrar', 'cobros_manuales_historial', 'clientes_deudores'];
-foreach ($tables as $table) {
-    echo "--- $table ---\n";
-    $res = $conn->query("DESCRIBE $table");
-    while ($row = $res->fetch_assoc()) {
-        echo "{$row['Field']} - {$row['Type']} - {$row['Null']} - {$row['Key']}\n";
-    }
+require 'paginas/conexion.php';
+$res = $conn->query('DESCRIBE cobros_manuales_historial');
+echo "<pre>";
+while($row = $res->fetch_assoc()) {
+    print_r($row);
 }
+echo "</pre>";
+
+$res3 = $conn->query('DESCRIBE clientes_deudores');
+echo "<h2>clientes_deudores</h2><pre>";
+while($row = $res3->fetch_assoc()) {
+    print_r($row);
+}
+echo "</pre>";
 ?>

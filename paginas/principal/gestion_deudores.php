@@ -26,6 +26,39 @@ require_once '../includes/sidebar.php';
 
 <link href="<?php echo $path_to_root; ?>css/datatables.min.css" rel="stylesheet">
 
+<style>
+    /* Estilos personalizados para las pestañas de Deudores */
+    #deudorTabs .nav-link {
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+
+    /* Pestaña Deudas (Roja al estar activa) */
+    #tab-deudas.active {
+        background-color: #dc3545 !important;
+        color: white !important;
+        border-color: #dc3545;
+    }
+
+    /* Pestaña Créditos (Verde al estar activa) */
+    #tab-creditos.active {
+        background-color: #198754 !important;
+        color: white !important;
+        border-color: #198754;
+    }
+
+    /* Hover effects */
+    #tab-deudas:not(.active):hover {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    #tab-creditos:not(.active):hover {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+</style>
+
 <main class="main-content">
     <?php include '../includes/header.php'; ?>
 
@@ -41,13 +74,23 @@ require_once '../includes/sidebar.php';
                     <button type="button" class="btn btn-danger shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearDeuda">
                         <i class="fas fa-plus-circle me-1"></i> Crear Nueva Deuda
                     </button>
-                    <button type="button" class="btn btn-outline-warning shadow-sm px-4 fw-bold" onclick="confirmarLimpiezaResiduos()">
-                        <i class="fas fa-broom me-1"></i> Ajustar Residuos (< $0.50)
-                    </button>
                 </div>
             </div>
 
             <div class="card-body px-4">
+                <!-- TABS DE NAVEGACIÓN -->
+                <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3 shadow-sm border" id="deudorTabs" role="tablist">
+                    <li class="nav-item flex-fill" role="presentation">
+                        <button class="nav-link active w-100 fw-bold py-2" id="tab-deudas" data-bs-toggle="pill" data-bs-target="#pane-deudas" type="button" role="tab" aria-selected="true">
+                            <i class="fas fa-hand-holding-dollar me-2"></i>Deudas Pendientes
+                        </button>
+                    </li>
+                    <li class="nav-item flex-fill" role="presentation">
+                        <button class="nav-link w-100 fw-bold py-2" id="tab-creditos" data-bs-toggle="pill" data-bs-target="#pane-creditos" type="button" role="tab" aria-selected="false">
+                            <i class="fas fa-coins me-2"></i>Saldos a Favor (Créditos)
+                        </button>
+                    </li>
+                </ul>
                 <!-- Filtros y Ordenamiento -->
                 <div class="row g-3 mb-4 bg-light p-3 rounded-3 border mx-0 shadow-sm">
                     <div class="col-md-3">
@@ -82,62 +125,113 @@ require_once '../includes/sidebar.php';
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="display table table-hover w-100" id="tabla_deudores">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="text-center">ID</th>
-                                <th class="text-center">Cliente</th>
-                                <th class="text-center">Cédula</th>
-                                <th class="text-center">IP</th>
-                                <th class="text-center">Monto Total</th>
-                                <th class="text-center">Monto Pagado</th>
-                                <th class="text-center">Saldo Pendiente</th>
-                                <th class="text-center">Fecha Registro</th>
-                                <th class="text-center">Estado</th>
-                                <th class="text-center" width="15%">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            $sql = "SELECT d.*, c.nombre_completo, c.cedula, c.ip_onu
-                                    FROM clientes_deudores d
-                                    INNER JOIN contratos c ON d.id_contrato = c.id
-                                    WHERE d.estado = 'PENDIENTE'
-                                    ORDER BY d.fecha_registro DESC";
-                            $result = $conn->query($sql);
+                <div class="tab-content" id="deudorTabsContent">
+                    <!-- PANEL 1: DEUDAS -->
+                    <div class="tab-pane fade show active" id="pane-deudas" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="display table table-hover w-100" id="tabla_deudores">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="text-center">ID</th>
+                                        <th class="text-center">Cliente</th>
+                                        <th class="text-center">Cédula</th>
+                                        <th class="text-center">IP</th>
+                                        <th class="text-center">Monto Total</th>
+                                        <th class="text-center">Monto Pagado</th>
+                                        <th class="text-center">Saldo Pendiente</th>
+                                        <th class="text-center">Fecha Registro</th>
+                                        <th class="text-center">Estado</th>
+                                        <th class="text-center" width="15%">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $sql = "SELECT d.*, c.nombre_completo, c.cedula, c.ip_onu
+                                            FROM clientes_deudores d
+                                            INNER JOIN contratos c ON d.id_contrato = c.id
+                                            WHERE d.estado = 'PENDIENTE' AND d.tipo_registro = 'DEUDA'
+                                            ORDER BY d.fecha_registro DESC";
+                                    $result = $conn->query($sql);
+        
+                                    while ($row = $result->fetch_assoc()) {
+                                        echo "<tr>
+                                            <td class='text-center'>{$row['id']}</td>
+                                            <td class='fw-bold text-center'>{$row['nombre_completo']}</td>
+                                            <td class='text-center'>{$row['cedula']}</td>
+                                            <td class='text-center'><code>{$row['ip_onu']}</code></td>
+                                            <td class='text-center'>\${$row['monto_total']}</td>
+                                            <td class='text-center'>\${$row['monto_pagado']}</td>
+                                            <td class='text-center text-danger fw-bold'>\${$row['saldo_pendiente']}</td>
+                                            <td class='text-center'>" . date('d/m/Y', strtotime($row['fecha_registro'])) . "</td>
+                                            <td class='text-center'><span class='badge bg-danger'>PENDIENTE</span></td>
+                                            <td>
+                                                <div class='d-flex justify-content-center gap-1 flex-nowrap'>
+                                                    <button class='btn btn-sm btn-success' onclick='marcarPagado({$row['id']})' title='Marcar como Pagado'>
+                                                        <i class='fa-solid fa-check'></i> Pagado
+                                                    </button>
+                                                    <button class='btn btn-sm btn-info text-white' onclick='abrirModalAbonos({$row['id']}, {$row['saldo_pendiente']})' title='Gestionar Abonos'>
+                                                        <i class='fa-solid fa-coins'></i> Abonos
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>";
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-                            while ($row = $result->fetch_assoc()) {
-                                $estado_badge = '<span class="badge bg-danger">PENDIENTE</span>';
-
-                                echo "<tr>
-                                    <td class='text-center'>{$row['id']}</td>
-                                    <td class='fw-bold text-center'>{$row['nombre_completo']}</td>
-                                    <td class='text-center'>{$row['cedula']}</td>
-                                    <td class='text-center'><code>{$row['ip_onu']}</code></td>
-                                    <td class='text-center'>\${$row['monto_total']}</td>
-                                    <td class='text-center'>\${$row['monto_pagado']}</td>
-                                    <td class='text-center text-danger fw-bold'>\${$row['saldo_pendiente']}</td>
-                                    <td class='text-center'>" . date('d/m/Y', strtotime($row['fecha_registro'])) . "</td>
-                                    <td class='text-center'>{$estado_badge}</td>
-                                    <td>
-                                        <div class='d-flex justify-content-center gap-1 flex-nowrap'>
-                                            <button class='btn btn-sm btn-success' onclick='marcarPagado({$row['id']})' title='Marcar como Pagado'>
-                                                <i class='fa-solid fa-check'></i> Pagado
-                                            </button>
-                                            <button class='btn btn-sm btn-info text-white' onclick='abrirModalAbonos({$row['id']}, {$row['saldo_pendiente']})' title='Gestionar Abonos'>
-                                                <i class='fa-solid fa-coins'></i> Abonos
-                                            </button>
-                                            <button onclick='verContrato({$row['id_contrato']})' class='btn btn-sm btn-outline-primary' title='Ver Detalle del Contrato'>
-                                                <i class='fa-solid fa-eye'></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>";
-                            }
-                            ?>
-                        </tbody>
-                    </table>
+                    <!-- PANEL 2: CRÉDITOS -->
+                    <div class="tab-pane fade" id="pane-creditos" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="display table table-hover w-100" id="tabla_creditos">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="text-center">ID</th>
+                                        <th class="text-center">Cliente</th>
+                                        <th class="text-center">Cédula</th>
+                                        <th class="text-center">IP</th>
+                                        <th class="text-center">Monto Inicial</th>
+                                        <th class="text-center">Crédito Disponible</th>
+                                        <th class="text-center">Fecha Generado</th>
+                                        <th class="text-center">Estado</th>
+                                        <th class="text-center" width="15%">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $sql_c = "SELECT d.*, c.nombre_completo, c.cedula, c.ip_onu
+                                            FROM clientes_deudores d
+                                            INNER JOIN contratos c ON d.id_contrato = c.id
+                                            WHERE d.estado = 'PENDIENTE' AND d.tipo_registro = 'CREDITO'
+                                            ORDER BY d.fecha_registro DESC";
+                                    $result_c = $conn->query($sql_c);
+        
+                                    while ($row_c = $result_c->fetch_assoc()) {
+                                        echo "<tr>
+                                            <td class='text-center'>{$row_c['id']}</td>
+                                            <td class='fw-bold text-center'>{$row_c['nombre_completo']}</td>
+                                            <td class='text-center'>{$row_c['cedula']}</td>
+                                            <td class='text-center'><code>{$row_c['ip_onu']}</code></td>
+                                            <td class='text-center'>\${$row_c['monto_pagado']}</td>
+                                            <td class='text-center text-success fw-bold'>\${$row_c['saldo_pendiente']}</td>
+                                            <td class='text-center'>" . date('d/m/Y', strtotime($row_c['fecha_registro'])) . "</td>
+                                            <td class='text-center'><span class='badge bg-success'>A FAVOR</span></td>
+                                            <td>
+                                                <div class='d-flex justify-content-center gap-1 flex-nowrap'>
+                                                    <button class='btn btn-sm btn-outline-success' disabled title='Se aplicará en el próximo cobro'>
+                                                        <i class='fa-solid fa-hand-holding-dollar'></i> Crédito Activo
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>";
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="d-flex justify-content-center mt-4">
@@ -425,9 +519,23 @@ require_once '../includes/sidebar.php';
                 "search": "Buscar:",
                 "paginate": { "next": ">", "previous": "<" }
             },
-            "order": [[7, "desc"]], // Ordenar por fecha descendente
+            "order": [[7, "desc"]], 
             "columnDefs": [
-                { "type": "num-fmt", "targets": 6 } // Asegurar que saldo pendiente se trate como número
+                { "type": "num-fmt", "targets": 6 }
+            ]
+        });
+
+        const tableCreditos = $('#tabla_creditos').DataTable({
+            "language": {
+                "lengthMenu": "Mostrar _MENU_",
+                "zeroRecords": "No hay créditos registrados",
+                "info": "_START_ - _END_ de _TOTAL_",
+                "search": "Buscar:",
+                "paginate": { "next": ">", "previous": "<" }
+            },
+            "order": [[6, "desc"]], 
+            "columnDefs": [
+                { "type": "num-fmt", "targets": 5 }
             ]
         });
 

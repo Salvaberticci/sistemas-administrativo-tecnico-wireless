@@ -459,6 +459,7 @@ require_once '../includes/sidebar.php';
                     <!-- METADATOS BIMONETARIOS OCULTOS -->
                     <input type="hidden" name="moneda_enviada" id="moneda_enviada_hidden" value="usd">
                     <input type="hidden" name="tasa_aplicada" id="tasa_aplicada_hidden" value="0">
+                    <input type="hidden" name="monto_credito_aplicado" id="input_credito_aplicado" value="0">
                     
                     <div class="row g-0">
                         <!-- COLUMNA IZQUIERDA: DATOS Y DESGLOSE -->
@@ -476,6 +477,18 @@ require_once '../includes/sidebar.php';
                                     <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 py-2 px-3 w-100 text-start">
                                         <i class="fas fa-satellite-dish me-1"></i> Plan: <strong id="val_plan_nombre">---</strong>
                                     </span>
+                                </div>
+                                <!-- Nuevo: Saldo a Favor -->
+                                <div id="info_saldo_favor" class="mt-2 d-none">
+                                    <div class="alert alert-success d-flex align-items-center mb-0 py-2 px-3 border-success shadow-sm" role="alert">
+                                        <i class="fas fa-coins me-2"></i>
+                                        <div class="flex-grow-1">
+                                            El cliente tiene un <strong>Saldo a Favor de $<span id="val_saldo_favor">0.00</span></strong>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-success fw-bold px-3 ms-2" id="btn_aplicar_credito" onclick="aplicarSaldoAFavor()">
+                                            <i class="fas fa-check-circle me-1"></i> Usar Saldo
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -2206,25 +2219,58 @@ require_once '../includes/sidebar.php';
                                     }
 
                                     let extraPlanInfo = c.nombre_plan ? ` | <span class="badge bg-success-subtle text-success">$${parseFloat(c.monto_plan).toFixed(2)}</span>` : '';
+                                    let creditBadge = (c.saldo_favor && parseFloat(c.saldo_favor) > 0) ? ` <span class="badge bg-success text-white" style="font-size: 0.65rem;"><i class="fas fa-coins me-1"></i>Crédito: $${parseFloat(c.saldo_favor).toFixed(2)}</span>` : '';
                                     
                                     a.innerHTML = `
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div>
                                                 ${nroLabel} <strong>ID ${c.id}: ${c.nombre_completo}</strong>
-                                                <br><small class="text-muted">C.I.: ${c.cedula || 'N/A'}${extraPlanInfo}</small>
+                                                <br><small class="text-muted">C.I.: ${c.cedula || 'N/A'}${extraPlanInfo}${creditBadge}</small>
                                                 ${pagoInfoHtml}
                                             </div>
                                             <i class="fas fa-chevron-right text-light mt-2"></i>
                                         </div>
                                     `;
-                                    a.onclick = (e) => {
-                                        e.preventDefault();
-                                        searchInput.value = `ID ${c.id}: ${c.nombre_completo}`;
-                                        hiddenInput.value = c.id;
-                                        resultsContainer.innerHTML = '';
-                                        
-                                        // Auto-seleccionar Mensualidad basado en el plan del cliente (Monto Sugerido)
-                                        if (c.monto_plan && parseFloat(c.monto_plan) > 0) {
+                                        a.onclick = (e) => {
+                                            e.preventDefault();
+                                            const idContrato = c.id;
+                                            searchInput.value = `ID ${idContrato}: ${c.nombre_completo}`;
+                                            hiddenInput.value = idContrato;
+                                            resultsContainer.innerHTML = '';
+                                            
+                                            const infoSaldo = document.getElementById('info_saldo_favor');
+                                            const valSaldo = document.getElementById('val_saldo_favor');
+                                            const inputCredito = document.getElementById('input_credito_aplicado');
+                                            const btnSaldo = document.getElementById('btn_aplicar_credito');
+                                            
+                                            // Resetear estado al cambiar contrato
+                                            if (infoSaldo) infoSaldo.classList.add('d-none');
+                                            if (inputCredito) inputCredito.value = 0;
+                                            if (btnSaldo) {
+                                                btnSaldo.innerHTML = '<i class="fas fa-check-circle me-1"></i> Usar Saldo';
+                                                btnSaldo.classList.remove('btn-danger');
+                                                btnSaldo.classList.add('btn-success');
+                                            }
+                                            
+                                            // Usamos la info que ya viene en 'c' (nuestra búsqueda optimizada)
+                                            if (parseFloat(c.saldo_favor) > 0) {
+                                                if (valSaldo) valSaldo.textContent = parseFloat(c.saldo_favor).toFixed(2);
+                                                if (infoSaldo) infoSaldo.classList.remove('d-none');
+                                            } else {
+                                                // Fallback si por alguna razón no vino en el search (fetch directo)
+                                                fetch(`get_client_credit.php?id_contrato=${idContrato}`)
+                                                    .then(r => r.json())
+                                                    .then(data => {
+                                                        if (data.success && data.saldo_favor > 0) {
+                                                            if (valSaldo) valSaldo.textContent = data.saldo_favor.toFixed(2);
+                                                            if (infoSaldo) infoSaldo.classList.remove('d-none');
+                                                        }
+                                                    });
+                                            }
+                                            // ------------------------------------
+
+                                            // Auto-seleccionar Mensualidad basado en el plan del cliente (Monto Sugerido)
+                                            if (c.monto_plan && parseFloat(c.monto_plan) > 0) {
                                             const switchMensualidad = document.getElementById('switch_mensualidad');
                                             if (!switchMensualidad.checked) {
                                                 switchMensualidad.checked = true;
@@ -2295,6 +2341,59 @@ require_once '../includes/sidebar.php';
     });
 
     // === FUNCIONES GLOBALES ===
+    window.aplicarSaldoAFavor = function() {
+        const btn = document.getElementById('btn_aplicar_credito');
+        const saldoDisponible = parseFloat(document.getElementById('val_saldo_favor').textContent) || 0;
+        const inputMonto = document.getElementById('input_monto_cobro');
+        const hiddenCredito = document.getElementById('input_credito_aplicado');
+        const esBs = document.getElementById('moneda_cobro_bs').checked;
+        const yaAplicado = (parseFloat(hiddenCredito.value) > 0);
+
+        if (saldoDisponible <= 0) return;
+
+        // Convertir monto visual según moneda actual
+        let montoVisual = saldoDisponible;
+        if (esBs) {
+            montoVisual = saldoDisponible * TASA_BCV;
+        }
+
+        let montoActualInput = parseFloat(inputMonto.value.replace(',', '.')) || 0;
+
+        if (!yaAplicado) {
+            // MODO APLICAR: Sumamos al monto actual
+            inputMonto.value = (montoActualInput + montoVisual).toFixed(2);
+            hiddenCredito.value = saldoDisponible;
+            
+            btn.innerHTML = '<i class="fas fa-times-circle me-1"></i> Quitar Saldo';
+            btn.classList.replace('btn-success', 'btn-danger');
+
+            Swal.fire({
+                title: 'Saldo Aplicado',
+                text: `Se agregaron $${saldoDisponible.toFixed(2)} al pago actual.`,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } else {
+            // MODO QUITAR: Restamos del monto actual
+            inputMonto.value = Math.max(0, montoActualInput - montoVisual).toFixed(2);
+            hiddenCredito.value = 0;
+            
+            btn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Usar Saldo';
+            btn.classList.replace('btn-danger', 'btn-success');
+
+            Swal.fire({
+                title: 'Saldo Removido',
+                text: 'Se ha descontado el saldo a favor del monto pagado.',
+                icon: 'info',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+
+        // Disparar evento para que se actualice el resumen y validaciones del modal
+        inputMonto.dispatchEvent(new Event('input', { bubbles: true }));
+    };
     function exportarExcel(tipo) {
         var fecha_inicio = $('#fecha_inicio').val();
         var fecha_fin = $('#fecha_fin').val();
