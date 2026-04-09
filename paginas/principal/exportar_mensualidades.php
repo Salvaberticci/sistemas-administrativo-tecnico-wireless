@@ -28,7 +28,7 @@ if ($tipo === 'filtrado' && !empty($id_banco)) {
     $sWhere .= " AND cxc.id_banco = '" . $conn->real_escape_string($id_banco) . "'";
 }
 
-if (!empty($filtro_tipo)) {
+    if (!empty($filtro_tipo)) {
     if ($filtro_tipo === 'Mensualidad') {
         $sWhere .= " AND (h.justificacion LIKE '%[MENSUALIDAD]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL) OR h.justificacion LIKE '%mensualidad%')";
     } elseif ($filtro_tipo === 'Instalacion') {
@@ -38,7 +38,7 @@ if (!empty($filtro_tipo)) {
     } elseif ($filtro_tipo === 'Prorrateo') {
         $sWhere .= " AND (h.justificacion LIKE '%[PRORRATEO]%' OR h.justificacion LIKE '%prorrateo%')";
     } elseif ($filtro_tipo === 'Abono') {
-        $sWhere .= " AND (h.justificacion LIKE '%[ABONO]%' OR h.justificacion LIKE '%abono%' OR h.justificacion LIKE '%saldo a favor%')";
+        $sWhere .= " AND (h.justificacion LIKE '%[ABONO]%' OR h.justificacion LIKE '%abono%' OR h.justificacion LIKE '%saldo a favor%' OR h.justificacion LIKE '%[ABONO_DEUDA]%')";
     } elseif ($filtro_tipo === 'Extra') {
         $sWhere .= " AND (h.justificacion LIKE '%[EXTRA]%' OR h.justificacion LIKE '%terceros%' OR h.justificacion LIKE '%extra%')";
     }
@@ -83,7 +83,7 @@ $sql = "
     LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc
     $sWhere
     GROUP BY cxc.id_cobro
-    ORDER BY COALESCE(cxc.fecha_pago, cxc.fecha_emision) DESC, cxc.id_cobro DESC
+    ORDER BY cxc.id_cobro DESC
 ";
 
 $result = $conn->query($sql);
@@ -127,18 +127,29 @@ while ($row = $result->fetch_assoc()) {
     $fecha_display = $row['fecha_pago'] ? $row['fecha_pago'] : $row['fecha_emision'];
     $fecha_fmt = date('d/m/Y', strtotime($fecha_display));
     
-    // Concepto Parsing (Sync with Table)
+    // Concepto Parsing (Sincronizado con tabla web)
     $justif = $row['justificacion'] ?: '';
     $conceptosArr = [];
-    if (strpos($justif, '[MENSUALIDAD]') !== false) $conceptosArr[] = 'Mensualidad';
-    if (strpos($justif, '[INSTALACION]') !== false) $conceptosArr[] = 'Instalación';
-    if (strpos($justif, '[EQUIPOS]') !== false) $conceptosArr[] = 'Equipos / Materiales';
-    if (strpos($justif, '[PRORRATEO]') !== false) $conceptosArr[] = 'Prorrateo';
-    if (strpos($justif, '[ABONO]') !== false) $conceptosArr[] = 'Abono / Saldo a Favor';
-    if (strpos($justif, '[EXTRA]') !== false) $conceptosArr[] = 'Pago de Terceros';
+
+    if (strpos($justif, '[MENSUALIDAD') !== false) $conceptosArr[] = 'Mensualidad';
+    if (strpos($justif, '[INSTALACION') !== false) $conceptosArr[] = 'Instalación';
+    if (strpos($justif, '[EQUIPOS') !== false) $conceptosArr[] = 'Equipos / Materiales';
+    if (strpos($justif, '[PRORRATEO') !== false) $conceptosArr[] = 'Prorrateo';
+    if (strpos($justif, '[ABONO') !== false && strpos($justif, '[ABONO_DEUDA]') === false) $conceptosArr[] = 'Abono / Saldo a Favor';
+    if (strpos($justif, '[EXTRA') !== false) $conceptosArr[] = 'Pago de Terceros';
+    if (strpos($justif, '[REGISTRO_CONTRATO') !== false) $conceptosArr[] = 'Registro de Contrato';
+    if (strpos($justif, '[PAGO_DEUDA]') !== false) $conceptosArr[] = 'Pago de Deuda';
+    if (strpos($justif, '[ABONO_DEUDA]') !== false) $conceptosArr[] = 'Abono de Deuda';
 
     if (count($conceptosArr) > 0) {
-        $concepto_main = implode(' + ', $conceptosArr);
+        // Mapear con nombre del plan si es mensualidad
+        $mapped = array_map(function($c) use ($row) {
+            if ($c === 'Mensualidad' && !empty($row['nombre_plan'])) {
+                return 'Mensualidad / ' . $row['nombre_plan'];
+            }
+            return $c;
+        }, $conceptosArr);
+        $concepto_main = implode(' + ', $mapped);
     } elseif ($justif && strpos($justif, '||') === false) {
         $concepto_main = 'Cargo Manual / Otro';
     } elseif ($row['nombre_plan']) {
