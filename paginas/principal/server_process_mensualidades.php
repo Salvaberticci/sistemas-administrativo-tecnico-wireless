@@ -89,8 +89,11 @@ $aSearchColumns = [
 // 4. Handle Filters (Date Range & Account)
 $whereConditions = ["1=1"];
 
-if (isset($_POST['fecha_inicio']) && $_POST['fecha_inicio'] != '' && isset($_POST['fecha_fin']) && $_POST['fecha_fin'] != '') {
-    $whereConditions[] = "(COALESCE(cxc.fecha_pago, cxc.fecha_emision) BETWEEN '" . $conn->real_escape_string($_POST['fecha_inicio']) . "' AND '" . $conn->real_escape_string($_POST['fecha_fin']) . "')";
+if (isset($_POST['fecha_inicio']) && $_POST['fecha_inicio'] != '') {
+    $whereConditions[] = "COALESCE(cxc.fecha_pago, cxc.fecha_emision) >= '" . $conn->real_escape_string($_POST['fecha_inicio']) . "'";
+}
+if (isset($_POST['fecha_fin']) && $_POST['fecha_fin'] != '') {
+    $whereConditions[] = "COALESCE(cxc.fecha_pago, cxc.fecha_emision) <= '" . $conn->real_escape_string($_POST['fecha_fin']) . "'";
 }
 
 if (isset($_POST['id_banco']) && $_POST['id_banco'] != '') {

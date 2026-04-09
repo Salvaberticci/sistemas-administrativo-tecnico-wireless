@@ -11,7 +11,7 @@ require_once '../conexion.php';
 // Lógica de mensajes
 $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : '';
 $message_class = isset($_GET['class']) ? htmlspecialchars($_GET['class']) : '';
-$hoy = date('Y-m-d');
+//$hoy = date('Y-m-d'); // Ya no es necesario para valores iniciales
 
 // Obtener Bancos para Modal
 $bancos = $conn->query("SELECT id_banco, nombre_banco FROM bancos ORDER BY nombre_banco ASC");
@@ -254,12 +254,12 @@ require_once '../includes/sidebar.php';
                     <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Desde</label>
                         <input type="date" class="form-control form-control-sm" id="fecha_inicio"
-                            value="<?php echo date('Y-m-01', strtotime('-2 month')); ?>" max="<?php echo $hoy; ?>">
+                            value="" max="<?php echo date('Y-m-d'); ?>">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Hasta</label>
                         <input type="date" class="form-control form-control-sm" id="fecha_fin"
-                            value="<?php echo $hoy; ?>" max="<?php echo $hoy; ?>">
+                            value="" max="<?php echo date('Y-m-d'); ?>">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-bold text-muted mb-1">Cuenta/Banco</label>

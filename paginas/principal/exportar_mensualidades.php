@@ -17,8 +17,11 @@ $conn->query("SET SESSION group_concat_max_len = 10000");
 // Construir consulta
 $sWhere = "WHERE 1=1";
 
-if (!empty($fecha_inicio) && !empty($fecha_fin)) {
-    $sWhere .= " AND (cxc.fecha_emision BETWEEN '" . $conn->real_escape_string($fecha_inicio) . "' AND '" . $conn->real_escape_string($fecha_fin) . "')";
+if (!empty($fecha_inicio)) {
+    $sWhere .= " AND COALESCE(cxc.fecha_pago, cxc.fecha_emision) >= '" . $conn->real_escape_string($fecha_inicio) . "'";
+}
+if (!empty($fecha_fin)) {
+    $sWhere .= " AND COALESCE(cxc.fecha_pago, cxc.fecha_emision) <= '" . $conn->real_escape_string($fecha_fin) . "'";
 }
 
 if ($tipo === 'filtrado' && !empty($id_banco)) {
