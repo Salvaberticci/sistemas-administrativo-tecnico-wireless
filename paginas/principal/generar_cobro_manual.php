@@ -176,6 +176,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         }
 
+        // === DISTRIBUCIÓN PROPORCIONAL DEL MONTO REAL ===
+        // El monto declarado por el cliente ($monto_total_declarado) es lo que REALMENTE se cobró.
+        // Los montos del desglose son referencia (precio del plan), pero el monto almacenado
+        // debe ser proporcional al pago real. Ej: si el plan cuesta $17.50 pero el cliente
+        // pagó $20, se guarda $20, no $17.50.
+        if ($sumatoria_backend > 0 && $monto_total_declarado > 0) {
+            $factor_real = $monto_total_declarado / $sumatoria_backend;
+            foreach ($cargos_a_procesar as &$cargo_ref) {
+                $cargo_ref['monto']    = round($cargo_ref['monto']    * $factor_real, 2);
+                $cargo_ref['monto_bs'] = round($cargo_ref['monto_bs'] * $factor_real, 2);
+            }
+            unset($cargo_ref);
+        }
 
         $conn->begin_transaction();
 
@@ -287,7 +300,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     if ($conn->query($sql_cxc) === TRUE) {
                         $id_cobro_cxc = $conn->insert_id;
 
-                        // INSERTAR HISTORIAL
+                        // INSERTAR HISTORIAL (usando monto POR MES, no el total del cargo)
                         $sql_historial = "INSERT INTO cobros_manuales_historial (
                             id_cobro_cxc, 
                             id_contrato, 
@@ -301,8 +314,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             '$c_id_contrato', 
                             '$autorizado_por', 
                             '$loop_justificacion', 
-                            '$c_monto_usd',
-                            '$c_monto_bs',
+                            '$monto_por_mes_usd',
+                            '$monto_por_mes_bs',
                             '$tasa_aplicada'
                         )";
 
