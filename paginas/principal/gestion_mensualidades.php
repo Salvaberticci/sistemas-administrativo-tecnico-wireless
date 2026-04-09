@@ -392,9 +392,10 @@ require_once '../includes/sidebar.php';
                 <h5 class="modal-title fw-bold">Registrar Pago</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form action="procesar_pago.php" method="POST">
+            <form action="procesar_pago.php" method="POST" id="form_pagar_simple">
                 <div class="modal-body p-4">
                     <input type="hidden" name="id_cobro" id="id_cobro_modal">
+                    <input type="hidden" name="tasa_bcv_pagar" id="tasa_bcv_pagar_hidden" value="0">
 
                     <div class="mb-4 text-center">
                         <h6 class="text-muted text-uppercase small fw-bold mb-1">Monto Pendiente</h6>
@@ -1539,6 +1540,17 @@ require_once '../includes/sidebar.php';
         if (inputMontoPagar) {
             inputMontoPagar.addEventListener('input', calcPagar);
             radiosMonedaPagar.forEach(r => r.addEventListener('change', calcPagar));
+        }
+
+        // Sincronizar tasa BCV justo antes de enviar el form "Pagar"
+        const formPagarSimple = document.getElementById('form_pagar_simple');
+        if (formPagarSimple) {
+            formPagarSimple.addEventListener('submit', function () {
+                const tasaField = document.getElementById('tasa_bcv_pagar_hidden');
+                if (tasaField && TASA_BCV > 0) tasaField.value = TASA_BCV;
+                // Asegurarse de que monto_pagado_hidden tenga el valor USD correcto
+                calcPagar();
+            });
         }
 
         // === TABLA UNIFICADA (server_process_mensualidades.php) ===

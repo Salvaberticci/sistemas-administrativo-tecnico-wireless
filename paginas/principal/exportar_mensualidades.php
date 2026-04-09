@@ -77,7 +77,7 @@ $sql = "
     LEFT JOIN cobros_manuales_historial h ON cxc.id_cobro = h.id_cobro_cxc
     $sWhere
     GROUP BY cxc.id_cobro
-    ORDER BY COALESCE(cxc.fecha_pago, cxc.fecha_emision) DESC
+    ORDER BY COALESCE(cxc.fecha_pago, cxc.fecha_emision) DESC, cxc.id_cobro DESC
 ";
 
 $result = $conn->query($sql);
