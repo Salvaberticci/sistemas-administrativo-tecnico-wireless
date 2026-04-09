@@ -62,8 +62,7 @@ if ($res_check = mysqli_query($conn, $check_query)) {
 }
 
 
-// 3. Define Columns for Search/Sort
-$where_mensualidad = "(h.justificacion LIKE '%[MENSUALIDAD]%' OR h.justificacion LIKE '%[EXTRA]%' OR (h.justificacion IS NULL AND pl.nombre_plan IS NOT NULL))";
+// Columnas para búsqueda (Sección de filtro de mensualidad movida más abajo)
 
 // We use aSearchColumns for DataTables logic
 $aSearchColumns = [
@@ -107,15 +106,19 @@ if (isset($_POST['referencia']) && $_POST['referencia'] != '') {
 if (isset($_POST['filtro_tipo']) && $_POST['filtro_tipo'] != '') {
     $tipo = $_POST['filtro_tipo'];
     if ($tipo === 'Mensualidad') {
-        $whereConditions[] = $where_mensualidad;
+        $whereConditions[] = "(
+            cxc.id_cobro IN (SELECT id_cobro_cxc FROM cobros_manuales_historial WHERE justificacion LIKE '%[MENSUALIDAD]%' OR justificacion LIKE '%[EXTRA]%')
+            OR 
+            (NOT EXISTS (SELECT 1 FROM cobros_manuales_historial WHERE id_cobro_cxc = cxc.id_cobro) AND pl.nombre_plan IS NOT NULL)
+        )";
     } elseif ($tipo === 'Instalacion') {
-        $whereConditions[] = "(h.justificacion LIKE '%[INSTALACION]%' OR h.justificacion LIKE '%instalación%' OR h.justificacion LIKE '%instalacion%')";
+        $whereConditions[] = "cxc.id_cobro IN (SELECT id_cobro_cxc FROM cobros_manuales_historial WHERE justificacion LIKE '%[INSTALACION]%' OR justificacion LIKE '%instalación%' OR justificacion LIKE '%instalacion%')";
     } elseif ($tipo === 'Equipos') {
-        $whereConditions[] = "(h.justificacion LIKE '%[EQUIPOS]%' OR h.justificacion LIKE '%equipo%' OR h.justificacion LIKE '%material%')";
+        $whereConditions[] = "cxc.id_cobro IN (SELECT id_cobro_cxc FROM cobros_manuales_historial WHERE justificacion LIKE '%[EQUIPOS]%' OR justificacion LIKE '%equipo%' OR justificacion LIKE '%material%')";
     } elseif ($tipo === 'Prorrateo') {
-        $whereConditions[] = "(h.justificacion LIKE '%[PRORRATEO]%' OR h.justificacion LIKE '%prorrateo%')";
+        $whereConditions[] = "cxc.id_cobro IN (SELECT id_cobro_cxc FROM cobros_manuales_historial WHERE justificacion LIKE '%[PRORRATEO]%' OR justificacion LIKE '%prorrateo%')";
     } elseif ($tipo === 'Extra') {
-        $whereConditions[] = "(h.justificacion LIKE '%[EXTRA]%' OR h.justificacion LIKE '%terceros%' OR h.justificacion LIKE '%extra%')";
+        $whereConditions[] = "cxc.id_cobro IN (SELECT id_cobro_cxc FROM cobros_manuales_historial WHERE justificacion LIKE '%[EXTRA]%' OR justificacion LIKE '%terceros%' OR justificacion LIKE '%extra%')";
     }
 }
 
