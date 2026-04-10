@@ -162,7 +162,7 @@ require_once '../includes/sidebar.php';
                                             <td class='text-center'>\${$row['monto_total']}</td>
                                             <td class='text-center'>\${$row['monto_pagado']}</td>
                                             <td class='text-center text-danger fw-bold'>\${$row['saldo_pendiente']}</td>
-                                            <td class='text-center'>" . date('d/m/Y', strtotime($row['fecha_registro'])) . "</td>
+                                            <td class='text-center' data-order='{$row['fecha_registro']}'>" . date('d/m/Y', strtotime($row['fecha_registro'])) . "</td>
                                             <td class='text-center'><span class='badge bg-danger'>PENDIENTE</span></td>
                                             <td>
                                                 <div class='d-flex justify-content-center gap-1 flex-nowrap'>
@@ -216,7 +216,7 @@ require_once '../includes/sidebar.php';
                                             <td class='text-center'><code>{$row_c['ip_onu']}</code></td>
                                             <td class='text-center'>\${$row_c['monto_pagado']}</td>
                                             <td class='text-center text-success fw-bold'>\${$row_c['saldo_pendiente']}</td>
-                                            <td class='text-center'>" . date('d/m/Y', strtotime($row_c['fecha_registro'])) . "</td>
+                                            <td class='text-center' data-order='{$row_c['fecha_registro']}'>" . date('d/m/Y', strtotime($row_c['fecha_registro'])) . "</td>
                                             <td class='text-center'><span class='badge bg-success'>A FAVOR</span></td>
                                             <td>
                                                 <div class='d-flex justify-content-center gap-1 flex-nowrap'>
