@@ -188,7 +188,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $cargos_a_procesar[] = [
                 'id_contrato' => $id_contrato_principal,
                 'monto' => $surplus,
-                'monto_bs' => $convertir_a_bs($surplus),
+                'monto_bs' => round($surplus * $tasa_valida, 2),
                 'justificacion' => "[ABONO] Saldo a Favor (Excedente en Pago)" . (!empty($justificacion) ? " - $justificacion" : "")
             ];
             

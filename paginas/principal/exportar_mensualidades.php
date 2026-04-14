@@ -161,9 +161,18 @@ while ($row = $result->fetch_assoc()) {
     $detalle = str_replace(' || ', ' | ', $justif);
     if (empty($detalle)) $detalle = '-';
     
-    $monto = number_format($row['monto_total'], 2, ',', '.');
-    $monto_bs = !empty($row['monto_total_bs']) ? number_format($row['monto_total_bs'], 2, ',', '.') : '-';
-    $tasa_bcv = !empty($row['tasa_bcv']) ? number_format($row['tasa_bcv'], 2, ',', '.') : '-';
+    $monto_val = $row['monto_total'];
+    $monto_bs_val = $row['monto_total_bs'];
+    $tasa_bcv_val = $row['tasa_bcv'];
+    
+    // Protección contra error de guardado (USD == BS cuando tasa > 1)
+    if (!empty($monto_bs_val) && !empty($tasa_bcv_val) && $monto_bs_val == $monto_val && $tasa_bcv_val > 1.01) {
+        $monto_bs_val = $monto_val * $tasa_bcv_val;
+    }
+
+    $monto = number_format($monto_val, 2, ',', '.');
+    $monto_bs = !empty($monto_bs_val) ? number_format($monto_bs_val, 2, ',', '.') : '-';
+    $tasa_bcv = !empty($tasa_bcv_val) ? number_format($tasa_bcv_val, 2, ',', '.') : '-';
     
     // Banco name from JSON
     $id_banco = $row['id_banco'];

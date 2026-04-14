@@ -442,7 +442,12 @@ foreach ($allRows as $aRow) {
     // 5. Monto
     $montoHtml = '<div class="text-end fw-bold text-success">$' . number_format($aRow['monto_total'], 2, ',', '.') . '</div>';
     if (!empty($aRow['monto_total_bs']) && !empty($aRow['tasa_bcv'])) {
-        $montoHtml .= '<div class="text-end small text-secondary" style="font-size: 0.75rem;">Bs. ' . number_format($aRow['monto_total_bs'], 2, ',', '.') . ' <br><span style="font-size:0.65rem; opacity: 0.8;">(Tasa BCV: ' . number_format($aRow['tasa_bcv'], 2, ',', '.') . ')</span></div>';
+        $monto_disp_bs = $aRow['monto_total_bs'];
+        // Protección contra error de guardado (USD == BS cuando tasa > 1)
+        if ($aRow['monto_total_bs'] == $aRow['monto_total'] && $aRow['tasa_bcv'] > 1.01) {
+            $monto_disp_bs = $aRow['monto_total'] * $aRow['tasa_bcv'];
+        }
+        $montoHtml .= '<div class="text-end small text-secondary" style="font-size: 0.75rem;">Bs. ' . number_format($monto_disp_bs, 2, ',', '.') . ' <br><span style="font-size:0.65rem; opacity: 0.8;">(Tasa BCV: ' . number_format($aRow['tasa_bcv'], 2, ',', '.') . ')</span></div>';
     }
     $row[] = $montoHtml;
 
