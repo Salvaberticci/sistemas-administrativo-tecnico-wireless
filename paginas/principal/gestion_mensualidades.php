@@ -27,7 +27,19 @@ $breadcrumb = ["Cobranzas"];
 $back_url = "../menu.php";
 require_once '../includes/layout_head.php';
 require_once '../includes/sidebar.php';
+
+// Obtener Planes para inferir mensualidades en el modal
+$planes_query = $conn->query("SELECT nombre_plan, monto FROM planes ORDER BY monto DESC");
+$planes_data = [];
+if ($planes_query) {
+    while ($row = $planes_query->fetch_assoc()) {
+        $planes_data[] = $row;
+    }
+}
 ?>
+<script>
+    const planesDisponibles = <?php echo json_encode($planes_data); ?>;
+</script>
 <!-- Estilos DataTables -->
 <link href="<?php echo $path_to_root; ?>css/datatables.min.css" rel="stylesheet">
 <style>
@@ -3155,7 +3167,7 @@ require_once '../includes/sidebar.php';
             });
     };
 
-    function formatConcept(justif) {
+    function formatConcept(justif, montoVal = 0) {
         if (!justif) return 'Sin descripción';
         // Limpiar etiquetas [TAG] y formatear de forma más humana
         let clean = justif
@@ -3171,7 +3183,24 @@ require_once '../includes/sidebar.php';
         
         // Si el concepto es "Mensualidad Mayo", solo mostrar "Mensualidad Mayo"
         // Si hay redundancia (ej. "Mensualidad Mensualidad Mayo"), limpiar.
-        return clean.replace(/Mensualidad\s+Mensualidad/gi, 'Mensualidad');
+        let conceptoFinal = clean.replace(/Mensualidad\s+Mensualidad/gi, 'Mensualidad');
+        
+        // Inferir el plan en base al monto si es de tipo Mensualidad
+        if (conceptoFinal.toLowerCase().includes('mensualidad') && montoVal > 0 && typeof planesDisponibles !== 'undefined') {
+            for (let plan of planesDisponibles) {
+                let planMonto = parseFloat(plan.monto);
+                if (planMonto > 0) {
+                    let meses = montoVal / planMonto;
+                    // Si el monto pagado es múltiplo exacto de este plan
+                    if (Math.abs(meses - Math.round(meses)) < 0.01 && Math.round(meses) > 0) {
+                        conceptoFinal += ` (${plan.nombre_plan})`;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return conceptoFinal;
     }
 
     window.verHistorialPago = function(idContrato, nombreCliente) {
@@ -3279,7 +3308,7 @@ require_once '../includes/sidebar.php';
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
                                 <td>${c.id_cobro}</td>
-                                <td><span class="fw-bold text-dark">${formatConcept(c.justificacion)}</span></td>
+                                <td><span class="fw-bold text-dark">${formatConcept(c.justificacion, montoVal)}</span></td>
                                 <td class="text-end fw-bold">$${montoVal.toFixed(2)}</td>
                             `;
                             tbody.appendChild(tr);
