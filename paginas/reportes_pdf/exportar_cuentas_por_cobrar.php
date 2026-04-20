@@ -13,7 +13,9 @@ use Dompdf\Options;
 $fecha_inicio = isset($_GET['fecha_inicio']) ? $_GET['fecha_inicio'] : '';
 $fecha_fin = isset($_GET['fecha_fin']) ? $_GET['fecha_fin'] : '';
 $estado_filtro = isset($_GET['estado']) ? $_GET['estado'] : 'TODOS';
+$sae_plus_filtro = isset($_GET['estado_sae_plus']) ? $_GET['estado_sae_plus'] : 'CARGADO';
 $params = [];
+
 $types = '';
 $where_clause = " WHERE 1=1 ";
 $cobros = [];
@@ -32,6 +34,13 @@ if (!empty($fecha_inicio) && !empty($fecha_fin)) {
     $params[] = $fecha_fin;
     $types .= 'ss';
 }
+
+if ($sae_plus_filtro !== 'TODOS') {
+    $where_clause .= " AND cxc.estado_sae_plus = ? ";
+    $params[] = $sae_plus_filtro;
+    $types .= 's';
+}
+
 
 // 2. CONSULTA SQL
 $sql = "
