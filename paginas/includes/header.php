@@ -81,6 +81,22 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
                     </ul>
                 </li>
 
+                <!-- MikroTik Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="dropMikrotik" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="fa-solid fa-tower-broadcast me-1" style="color:#fa541c;"></i> MikroTik
+                    </a>
+                    <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="dropMikrotik">
+                        <li><a class="dropdown-item"
+                                href="<?php echo $path_fix; ?>paginas/principal/gestion_mikrotik.php"><i
+                                    class="fa-solid fa-tower-broadcast w-20 me-2" style="color:#fa541c;"></i> Gestión de Routers</a></li>
+                        <li><a class="dropdown-item"
+                                href="<?php echo $path_fix; ?>paginas/principal/mikrotik_logs.php"><i
+                                    class="fa-solid fa-terminal w-20 me-2" style="color:#00b96b;"></i> Consola de Logs</a></li>
+                    </ul>
+                </li>
+
                 <!-- Cobranzas Dropdown -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="dropCobranzas" role="button"

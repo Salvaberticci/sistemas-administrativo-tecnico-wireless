@@ -220,8 +220,8 @@ require_once '../includes/sidebar.php';
                                             <td class='text-center'><span class='badge bg-success'>A FAVOR</span></td>
                                             <td>
                                                 <div class='d-flex justify-content-center gap-1 flex-nowrap'>
-                                                    <button class='btn btn-sm btn-outline-success' disabled title='Se aplicará en el próximo cobro'>
-                                                        <i class='fa-solid fa-hand-holding-dollar'></i> Crédito Activo
+                                                    <button class='btn btn-sm btn-success' onclick='abrirModalUsarSaldo({$row_c['id']}, {$row_c['id_contrato']}, {$row_c['saldo_pendiente']}, \"{$row_c['nombre_completo']}\")' title='Usar este saldo para pagar deudas'>
+                                                        <i class='fa-solid fa-hand-holding-dollar'></i> Usar Saldo
                                                     </button>
                                                 </div>
                                             </td>
@@ -458,7 +458,57 @@ require_once '../includes/sidebar.php';
     </div>
 </div>
 
-<!-- Modal Crear Nueva Deuda -->
+<!-- Modal Usar Saldo a Favor -->
+<div class="modal fade" id="modalUsarSaldoCredito" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-hand-holding-dollar me-2"></i>Aplicar Saldo a Favor
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formUsarSaldo">
+                <input type="hidden" name="id_credito" id="usc_id_credito">
+                
+                <div class="modal-body p-4">
+                    <div class="alert alert-success border-0 shadow-sm mb-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-circle fa-2x me-3"></i>
+                            <div>
+                                <h6 class="mb-0 fw-bold" id="usc_cliente_nombre">---</h6>
+                                <span class="small">Crédito Disponible: <strong class="fs-5">$<span id="usc_saldo_disponible">0.00</span></strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small"><i class="fas fa-list-ul me-1 text-primary"></i> 1. Seleccione la Deuda a amortizar</label>
+                        <div id="usc_deudas_list" class="list-group shadow-sm" style="max-height: 200px; overflow-y: auto;">
+                            <!-- Cargando vía JS -->
+                            <div class="p-3 text-center text-muted">Cargando deudas...</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label fw-bold text-dark small"><i class="fas fa-money-bill-wave me-1 text-success"></i> 2. Monto a aplicar ($)</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light fw-bold text-success">$</span>
+                            <input type="number" step="0.01" min="0.01" name="monto" id="usc_monto_aplicar" class="form-control fw-bold" placeholder="0.00" required>
+                        </div>
+                        <div id="usc_error_monto" class="text-danger small mt-1 d-none">El monto supera el crédito o la deuda.</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success px-4 fw-bold" id="btn_submit_usc">
+                        <i class="fas fa-check-circle me-1"></i> Confirmar Aplicación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="modalCrearDeuda" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
@@ -601,6 +651,101 @@ require_once '../includes/sidebar.php';
                 selectBanco.appendChild(opt);
             });
         }
+
+        // --- LÓGICA USAR SALDO A FAVOR ---
+        window.abrirModalUsarSaldo = function(idCredito, idContrato, saldo, nombre) {
+            document.getElementById('usc_id_credito').value = idCredito;
+            document.getElementById('usc_cliente_nombre').textContent = nombre;
+            document.getElementById('usc_saldo_disponible').textContent = saldo.toFixed(2);
+            document.getElementById('usc_monto_aplicar').value = "";
+            document.getElementById('usc_monto_aplicar').max = saldo;
+            
+            const list = document.getElementById('usc_deudas_list');
+            list.innerHTML = '<div class="p-4 text-center"><div class="spinner-border spinner-border-sm text-primary"></div><br><small>Buscando deudas...</small></div>';
+            
+            fetch(`get_contract_balance.php?id=${idContrato}&action=deuda`)
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success && res.data.length > 0) {
+                        const deudasPendientes = res.data.filter(d => d.estado === 'PENDIENTE');
+                        if (deudasPendientes.length === 0) {
+                            list.innerHTML = '<div class="alert alert-warning m-2 small">No hay deudas PENDIENTES vinculadas a este cliente.</div>';
+                            return;
+                        }
+                        
+                        list.innerHTML = '';
+                        deudasPendientes.forEach(d => {
+                            const item = document.createElement('label');
+                            item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center cursor-pointer';
+                            item.innerHTML = `
+                                <div>
+                                    <input class="form-check-input me-2" type="radio" name="id_deuda" value="${d.id}" data-saldo="${d.saldo_pendiente}" required>
+                                    <span class="small fw-bold">ID #${d.id}</span> 
+                                    <span class="text-muted ms-1">(${d.fecha_registro.split(' ')[0]})</span>
+                                </div>
+                                <span class="badge bg-danger">Faltan $${d.saldo_pendiente}</span>
+                            `;
+                            list.appendChild(item);
+                        });
+                        
+                        // Auto-ajustar monto al seleccionar
+                        list.querySelectorAll('input[name="id_deuda"]').forEach(radio => {
+                            radio.addEventListener('change', function() {
+                                const saldoDeuda = parseFloat(this.dataset.saldo);
+                                const saldoCredito = parseFloat(document.getElementById('usc_saldo_disponible').textContent);
+                                document.getElementById('usc_monto_aplicar').value = Math.min(saldoDeuda, saldoCredito).toFixed(2);
+                            });
+                        });
+                        
+                    } else {
+                        list.innerHTML = '<div class="alert alert-warning m-2 small">No se encontraron deudas para este contrato.</div>';
+                    }
+                });
+            
+            new bootstrap.Modal(document.getElementById('modalUsarSaldoCredito')).show();
+        };
+
+        document.getElementById('formUsarSaldo').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn_submit_usc');
+            const data = new FormData(this);
+            
+            const montoAplicar = parseFloat(data.get('monto'));
+            const saldoDisponible = parseFloat(document.getElementById('usc_saldo_disponible').textContent);
+            
+            const deudaRadio = document.querySelector('input[name="id_deuda"]:checked');
+            if (!deudaRadio) {
+                Swal.fire('Error', 'Debe seleccionar una deuda de la lista.', 'warning');
+                return;
+            }
+            
+            const saldoDeuda = parseFloat(deudaRadio.dataset.saldo);
+            
+            if (montoAplicar > saldoDisponible || montoAplicar > saldoDeuda) {
+                Swal.fire('Atención', 'El monto supera el crédito disponible o el saldo de la deuda.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
+
+            fetch('procesar_uso_credito.php', {
+                method: 'POST',
+                body: data
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    Swal.fire('¡Éxito!', res.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Confirmar Aplicación';
+                }
+            });
+        });
     });
 
     async function solicitarClaveAdmin(titulo = 'Confirmar Acción') {
