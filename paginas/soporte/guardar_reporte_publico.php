@@ -21,7 +21,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $imgData = base64_decode($data[1]);
         $fileName = $prefix . '_' . uniqid() . '.png';
-        $filePath = '../../uploads/firmas/' . $fileName; // Ruta relativa desde este script
+        $uploadDir = '../../uploads/firmas/';
+        
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $filePath = $uploadDir . $fileName; // Ruta relativa desde este script
 
         if (file_put_contents($filePath, $imgData)) {
             return $fileName;
@@ -79,16 +85,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // Descripción autogenerada para el listado simple
             $descripcion_corta = "Visita Técnica ($tipo_servicio) - $tipo_falla";
-            $tecnico_nombre = "Reporte Digital"; // O pedir nombre en form
+            $tecnico_nombre = !empty($_POST['tecnico']) ? $conn->real_escape_string($_POST['tecnico']) : "Reporte Digital";
+            $telefono = isset($_POST['telefono']) ? $conn->real_escape_string($_POST['telefono']) : "";
 
             $sql = "INSERT INTO soportes (
-                id_contrato, descripcion, monto_total, monto_pagado, fecha_soporte, hora_solucion, tiempo_transcurrido, tecnico_asignado, observaciones, tipo_falla,
+                id_contrato, telefono, descripcion, monto_total, monto_pagado, fecha_soporte, hora_solucion, tiempo_transcurrido, tecnico_asignado, observaciones, tipo_falla,
                 sector, tipo_servicio, ip_address, estado_onu, estado_router, modelo_router,
                 bw_bajada, bw_subida, bw_ping, num_dispositivos,
                 estado_antena, valores_antena, sugerencias, solucion_completada,
                 firma_tecnico, firma_cliente, prioridad, id_olt, id_pon
             ) VALUES (
-                '$id_contrato', '$descripcion_corta', '$monto_total', '$monto_pagado', '$fecha', '$hora_solucion', '$tiempo_transcurrido', '$tecnico_nombre', '$observaciones', '$tipo_falla',
+                '$id_contrato', '$telefono', '$descripcion_corta', '$monto_total', '$monto_pagado', '$fecha', '$hora_solucion', '$tiempo_transcurrido', '$tecnico_nombre', '$observaciones', '$tipo_falla',
                 '$sector', '$tipo_servicio', '$ip', '$estado_onu', '$estado_router', '$modelo_router',
                 '$bw_bajada', '$bw_subida', '$bw_ping', '$num_dispositivos',
                 '$estado_antena', '$valores_antena', '$sugerencias', '$solucion_completada',
@@ -99,6 +106,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 throw new Exception("Error SQL: " . $conn->error);
             }
             $id_soporte = $conn->insert_id;
+
+            // Sync with junction table for multi-OLT support (even for single OLT reports)
+            if ($id_olt !== 'NULL') {
+                $stmt_soa = $conn->prepare("INSERT INTO soporte_olts_afectados (id_soporte, id_olt, id_pon) VALUES (?, ?, ?)");
+                $pon_val = ($id_pon !== 'NULL') ? $id_pon : null;
+                $stmt_soa->bind_param("iii", $id_soporte, $id_olt, $pon_val);
+                $stmt_soa->execute();
+                $stmt_soa->close();
+            }
 
             // Generar Deuda (Si hay cobro)
             if ($monto_total > 0) {

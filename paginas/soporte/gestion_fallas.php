@@ -429,7 +429,6 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 echo "<td>{$idBadge}</td>";
                 echo "<td>{$fecha}</td>";
                 echo "<td>" . (substr($row['hora_solucion'] ?? '', 0, 5) ?: '—') . "</td>";
-                echo "<td>" . fix_utf8($row['tiempo_transcurrido'] ?: '—') . "</td>";
                 echo "<td>{$cliente}</td>";
                 echo "<td>{$falla}</td>";
                 echo "<td>{$tecnico}</td>";
@@ -496,7 +495,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                             <table class="display table table-striped table-bordered w-100 mb-0" id="tablaNivel1">
                                 <thead class="table-warning">
                                     <tr>
-                                        <th>ID</th><th>Fecha</th><th>Hora</th><th>Tiempo</th><th>Cliente</th><th>Tipo Falla</th><th>Técnico</th><th>Nivel</th><th>Pagado</th><th>Estado</th><th>Acciones</th>
+                                        <th>ID</th><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Tipo Falla</th><th>Técnico</th><th>Nivel</th><th>Pagado</th><th>Estado</th><th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -504,7 +503,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                     if (count($rowsNivel1) > 0) {
                                         foreach ($rowsNivel1 as $r) renderRow($r);
                                     } else {
-                                        echo "<tr class='empty-row'><td colspan='11' class='text-center text-muted py-4'>No se encontraron reportes de Nivel 1.</td></tr>";
+                                        echo "<tr class='empty-row'><td colspan='10' class='text-center text-muted py-4'>No se encontraron reportes de Nivel 1.</td></tr>";
                                     }
                                     ?>
                                 </tbody>
@@ -537,7 +536,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                             <table class="display table table-striped table-bordered w-100 mb-0" id="tablaNivel2">
                                 <thead style="background-color: #fff4ea; color: #ca6510;">
                                     <tr>
-                                        <th>ID</th><th>Fecha</th><th>Hora</th><th>Tiempo</th><th>Cliente</th><th>Tipo Falla</th><th>Técnico</th><th>Nivel</th><th>Pagado</th><th>Estado</th><th>Acciones</th>
+                                        <th>ID</th><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Tipo Falla</th><th>Técnico</th><th>Nivel</th><th>Pagado</th><th>Estado</th><th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -545,7 +544,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                     if (count($rowsNivel2) > 0) {
                                         foreach ($rowsNivel2 as $r) renderRow($r);
                                     } else {
-                                        echo "<tr class='empty-row'><td colspan='11' class='text-center text-muted py-4'>No se encontraron reportes de Nivel 2.</td></tr>";
+                                        echo "<tr class='empty-row'><td colspan='10' class='text-center text-muted py-4'>No se encontraron reportes de Nivel 2.</td></tr>";
                                     }
                                     ?>
                                 </tbody>
@@ -781,7 +780,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label fw-bold">Técnico Asignado</label>
-                        <select class="form-select" name="tecnico_edit" id="tecnico_edit" required>
+                        <select class="form-select" name="tecnico_edit" id="tecnico_edit">
                             <option value="">-- Seleccionar técnico --</option>
                             <?php foreach ($instaladoresList as $instalador): ?>
                             <option value="<?php echo htmlspecialchars($instalador); ?>">
@@ -795,6 +794,10 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                         <input type="text" class="form-control" name="sector" id="sector_edit">
                     </div>
                     <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Teléfono Contacto</label>
+                        <input type="text" class="form-control" name="telefono_edit" id="telefono_edit">
+                    </div>
+                    <div class="col-md-3 mb-3">
                                         <label class="form-label fw-bold">Prioridad</label>
                                         <select class="form-select" name="prioridad_edit" id="prioridad_edit">
                                             <option value="NIVEL 1">NIVEL 1 (WhatsApp)</option>
@@ -803,11 +806,7 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label fw-bold">Hora Solución</label>
-                                        <input type="time" class="form-control" name="hora_edit" id="hora_edit">
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label fw-bold">Tiempo Transcurrido</label>
-                                        <input type="text" class="form-control" name="tiempo_edit" id="tiempo_edit" placeholder="Ej. 1h 20m">
+                                        <input type="time" class="form-control" name="hora_edit" id="hora_edit" step="1">
                                     </div>
                 </div>
 
@@ -1040,6 +1039,30 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
     let padTechEdit = null, padCliEdit = null;
     let _currentEditId = null;
 
+    // --- Notificaciones de Estado ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('status') === 'success') {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Operación Exitosa!',
+                text: urlParams.get('msg') || 'Datos actualizados correctamente.',
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+            // Limpiar la URL para evitar re-lanzar la alerta al recargar
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (urlParams.get('status') === 'error') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: urlParams.get('msg') || 'No se pudo completar la operación.'
+            });
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    });
+
     // ---- Ver Detalles (Modal AJAX) ----
     function verDetalles(id) {
         _currentEditId = id;
@@ -1090,7 +1113,6 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                             <div class="card-body">
                                 <p class="mb-1"><strong>Fecha:</strong> ${f(d.fecha_soporte_form)}</p>
                                 <p class="mb-1"><strong>Hora:</strong> ${f(d.hora_solucion ? d.hora_solucion.substring(0,5) : '')}</p>
-                                <p class="mb-1"><strong>Tiempo:</strong> ${f(d.tiempo_transcurrido)}</p>
                                 <p class="mb-1"><strong>Técnico:</strong> ${f(d.tecnico_asignado)}</p>
                                 <p class="mb-1"><strong>Sector:</strong> ${f(d.sector)}</p>
                                 ${infraHtml}
@@ -1160,9 +1182,9 @@ $cnt_n3 = (int)($conn->query("SELECT COUNT(*) c FROM soportes WHERE prioridad = 
                 cargarOpcionesFallaEdit(prioridad, () => {
                     $('#fecha_edit').val(d.fecha_soporte_form);
                     $('#hora_edit').val(d.hora_solucion || '');
-                    $('#tiempo_edit').val(d.tiempo_transcurrido || '');
                     $('#tecnico_edit').val(d.tecnico_asignado || '');
                     $('#sector_edit').val(d.sector || '');
+                    $('#telefono_edit').val(d.telefono || '');
                     $('#tipo_falla_edit').val(d.tipo_falla || '');
                     $('#tipo_servicio_edit').val(d.tipo_servicio || 'FTTH');
                     $('#es_caida_critica_edit').prop('checked', d.es_caida_critica == 1);

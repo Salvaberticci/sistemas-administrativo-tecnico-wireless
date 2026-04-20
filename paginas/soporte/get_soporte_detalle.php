@@ -11,7 +11,7 @@ if ($id <= 0) {
     exit;
 }
 
-$sql = "SELECT s.*, c.nombre_completo, c.cedula, o.nombre_olt, p.nombre_pon
+$sql = "SELECT s.*, s.telefono as telefono_soporte, c.nombre_completo, c.cedula, o.nombre_olt, p.nombre_pon
         FROM soportes s
         INNER JOIN contratos c ON s.id_contrato = c.id
         LEFT JOIN olt o ON s.id_olt = o.id_olt

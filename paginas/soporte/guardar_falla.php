@@ -25,6 +25,7 @@ $zona_afectada     = isset($_POST['zona_afectada'])     ? trim($_POST['zona_afec
 $observaciones     = isset($_POST['observaciones'])     ? trim($_POST['observaciones'])     : '';
 $equipos_afectados = isset($_POST['equipos_afectados']) ? trim($_POST['equipos_afectados']) : '';
 $tecnico_asignado  = isset($_POST['tecnico_asignado'])  ? trim($_POST['tecnico_asignado'])  : '';
+$telefono          = isset($_POST['telefono'])          ? trim($_POST['telefono'])          : '';
 $notas_internas    = isset($_POST['notas_internas'])    ? trim($_POST['notas_internas'])    : '';
 $fecha_reporte     = isset($_POST['fecha_reporte'])     ? $_POST['fecha_reporte']           : date('Y-m-d H:i:s');
 
@@ -63,13 +64,16 @@ if (!empty($errores)) {
 }
 
 // Obtener datos del cliente
-$sql_cliente = "SELECT nombre_completo, cedula, ip_onu as ip, direccion FROM contratos WHERE id = $id_contrato";
+$sql_cliente = "SELECT nombre_completo, cedula, ip_onu as ip, direccion, telefono FROM contratos WHERE id = $id_contrato";
 $result_cliente = $conn->query($sql_cliente);
 if ($result_cliente->num_rows == 0) {
     echo json_encode(['success' => false, 'message' => 'Cliente de referencia no encontrado']);
     exit;
 }
 $cliente = $result_cliente->fetch_assoc();
+if (empty($telefono)) {
+    $telefono = $cliente['telefono'] ?? '';
+}
 
 // Descripción corta automática
 $descripcion_corta = "[MASIVA] " . $tipo_falla . ' - ' . $cliente['nombre_completo'];
@@ -83,6 +87,7 @@ $sector             = $conn->real_escape_string($sector);
 $zona_afectada      = $conn->real_escape_string($zona_afectada);
 $observaciones      = $conn->real_escape_string($observaciones);
 $tecnico_asignado   = $conn->real_escape_string($tecnico_asignado);
+$telefono           = $conn->real_escape_string($telefono);
 $notas_internas     = $conn->real_escape_string($notas_internas);
 $fecha_reporte_sql  = $conn->real_escape_string($fecha_reporte);
 
@@ -95,12 +100,12 @@ $sql = "INSERT INTO soportes (
     id_contrato, fecha_soporte, fecha_reporte, hora_solucion, descripcion, tipo_falla,
     prioridad, es_caida_critica, clientes_afectados, tipo_servicio,
     sector, zona_afectada, observaciones, notas_internas, tecnico_asignado,
-    id_olt, id_pon, solucion_completada, monto_total, monto_pagado, estado_firma
+    id_olt, id_pon, solucion_completada, monto_total, monto_pagado, estado_firma, telefono
 ) VALUES (
     $id_contrato, '$fecha_soporte', '$fecha_reporte_sql', '$hora_solucion', '$descripcion_corta', '$tipo_falla',
     'NIVEL 3', 1, $clientes_afectados, '$tipo_servicio',
     '$sector', '$zona_afectada', '$observaciones', '$notas_internas', '$tecnico_asignado',
-    $id_olt_sql, $id_pon_sql, 0, 0, 0, 'PENDIENTE'
+    $id_olt_sql, $id_pon_sql, 0, 0, 0, 'PENDIENTE', '$telefono'
 )";
 
 if (!$conn->query($sql)) {

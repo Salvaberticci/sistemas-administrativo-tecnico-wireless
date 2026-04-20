@@ -134,10 +134,17 @@ while ($row = $res_olt->fetch_assoc()) {
                 <div class="row g-3">
                     <div class="col-12">
                         <label class="form-label">Buscar un cliente afectado como referencia <span class="text-danger">*</span></label>
-                        <div class="input-group position-relative">
-                            <span class="input-group-text"><i class="fa-solid fa-search"></i></span>
-                            <input type="text" class="form-control" id="cliente_search"
-                                placeholder="Nombre, ID o Cédula..." autocomplete="off">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-9">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-search"></i></span>
+                                    <input type="text" class="form-control" id="cliente_search"
+                                        placeholder="Nombre, ID o Cédula..." autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" class="form-control" name="telefono" id="telefono" placeholder="Teléfono Contacto">
+                            </div>
                         </div>
                         <input type="hidden" name="id_contrato" id="id_contrato" required>
                         <div id="search_results" class="list-group position-absolute w-100 shadow mt-1"
@@ -442,6 +449,7 @@ while ($row = $res_olt->fetch_assoc()) {
                                 clienteData = item;
                                 $('#direccion').val(item.direccion || '');
                                 $('#sector').val(item.sector || '');
+                                $('#telefono').val(item.telefono || '');
                             };
                             resultsDiv.appendChild(a);
                         });
@@ -523,6 +531,7 @@ while ($row = $res_olt->fetch_assoc()) {
                 observaciones: $('#observaciones').val(),
                 equipos_afectados: equiposAfectados.join(', '),
                 tecnico_asignado: $('#tecnico_asignado').val(),
+                telefono: $('#telefono').val(),
                 notas_internas: $('#notas_internas').val(),
                 fecha_reporte: $('#fecha_reporte').val(),
                 'olts[]': [],

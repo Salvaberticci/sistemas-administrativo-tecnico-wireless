@@ -63,6 +63,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $solucion_completada = isset($_POST['solucion_completada']) ? 1 : 0;
     $id_olt = (isset($_POST['id_olt']) && !empty($_POST['id_olt'])) ? intval($_POST['id_olt']) : 'NULL';
     $id_pon = (isset($_POST['id_pon']) && !empty($_POST['id_pon'])) ? intval($_POST['id_pon']) : 'NULL';
+    $tiempo_transcurrido = isset($_POST['tiempo_transcurrido']) ? $conn->real_escape_string($_POST['tiempo_transcurrido']) : '';
+    $telefono = isset($_POST['telefono']) ? $conn->real_escape_string($_POST['telefono']) : '';
 
     // Firmas
     $firma_tecnico_b64 = isset($_POST['firma_tecnico_data']) ? $_POST['firma_tecnico_data'] : '';
@@ -92,23 +94,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
             $sql_soporte = "INSERT INTO soportes (
-                id_contrato, descripcion, monto_total, monto_pagado, fecha_soporte, hora_solucion, tecnico_asignado, observaciones,
+                id_contrato, telefono, descripcion, monto_total, monto_pagado, fecha_soporte, hora_solucion, tecnico_asignado, observaciones,
                 sector, tipo_servicio, ip_address, estado_onu, estado_router, modelo_router,
                 bw_bajada, bw_subida, bw_ping, num_dispositivos,
                 estado_antena, valores_antena, sugerencias, solucion_completada,
-                firma_tecnico, firma_cliente, token_firma, estado_firma, prioridad, id_olt, id_pon
+                firma_tecnico, firma_cliente, token_firma, estado_firma, prioridad, id_olt, id_pon, tiempo_transcurrido
             ) VALUES (
-                '$id_contrato', '$descripcion_problema', '$monto_total', '$monto_pagado', '$fecha_soporte', '$hora_solucion', '$tecnico', '$descripcion_problema',
+                '$id_contrato', '$telefono', '$descripcion_problema', '$monto_total', '$monto_pagado', '$fecha_soporte', '$hora_solucion', '$tecnico', '$descripcion_problema',
                 '$sector', '$tipo_servicio', '$ip', '$estado_onu', '$estado_router', '$modelo_router',
                 '$bw_bajada', '$bw_subida', '$bw_ping', '$num_dispositivos',
                 '$estado_antena', '$valores_antena', '$sugerencias', '$solucion_completada',
-                '$path_firma_tech', '$path_firma_cli', " . ($token_firma ? "'$token_firma'" : "NULL") . ", '$estado_firma', '$prioridad', $id_olt, $id_pon
+                '$path_firma_tech', '$path_firma_cli', " . ($token_firma ? "'$token_firma'" : "NULL") . ", '$estado_firma', '$prioridad', $id_olt, $id_pon, '$tiempo_transcurrido'
             )";
 
             if (!$conn->query($sql_soporte)) {
                 throw new Exception("Error al guardar soporte: " . $conn->error);
             }
             $id_soporte = $conn->insert_id;
+
+            // Sync with junction table for multi-OLT support
+            if ($id_olt !== 'NULL') {
+                $stmt_soa = $conn->prepare("INSERT INTO soporte_olts_afectados (id_soporte, id_olt, id_pon) VALUES (?, ?, ?)");
+                $pon_val = ($id_pon !== 'NULL') ? $id_pon : null;
+                $stmt_soa->bind_param("iii", $id_soporte, $id_olt, $pon_val);
+                $stmt_soa->execute();
+                $stmt_soa->close();
+            }
 
             // 4. Deuda / Cobranzas (Solo si no es 'generate_link' o si política lo permite en pendiente)
             // Lógica: Si es link, el documento no está "cerrado", ¿deberíamos generar deuda?

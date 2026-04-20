@@ -17,7 +17,9 @@ if (!file_exists($json_file)) {
     }
     // Crear archivo por defecto si no existe
     $defaults = [
-        'tipos_falla' => ['Sin Señal', 'Internet Lento', 'Otro']
+        'NIVEL 1' => ['Mala señal WiFi'],
+        'NIVEL 2' => ['Cable roto'],
+        'NIVEL 3' => ['Caída de nodo']
     ];
     file_put_contents($json_file, json_encode($defaults, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 }

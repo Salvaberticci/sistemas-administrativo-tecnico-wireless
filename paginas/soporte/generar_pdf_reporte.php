@@ -242,9 +242,6 @@ if ($r['prioridad'] !== 'NIVEL 3') {
                 <td class="label">Hora de Solución:</td>
                 <td class="value">' . (substr($r['hora_solucion'], 0, 5) ?: '—') . '</td>
             </tr>
-            <tr>
-                <td class="label">Tiempo Transcurrido:</td>
-                <td class="value">' . htmlspecialchars($r['tiempo_transcurrido'] ?: '—') . '</td>
             </tr>';
 }
 

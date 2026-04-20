@@ -36,7 +36,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fecha = isset($_POST['fecha_edit']) ? $conn->real_escape_string($_POST['fecha_edit']) : '';
     $hora_solucion = isset($_POST['hora_edit']) ? $conn->real_escape_string($_POST['hora_edit']) : '';
     $tiempo_transcurrido = isset($_POST['tiempo_edit']) ? $conn->real_escape_string($_POST['tiempo_edit']) : '';
-    $tecnico = isset($_POST['tecnico_edit']) ? $conn->real_escape_string($_POST['tecnico_edit']) : '';
+    $tecnico = !empty($_POST['tecnico_edit']) ? $conn->real_escape_string($_POST['tecnico_edit']) : 'Reporte Digital';
+    $telefono = isset($_POST['telefono_edit']) ? $conn->real_escape_string($_POST['telefono_edit']) : '';
     $sector = isset($_POST['sector']) ? $conn->real_escape_string($_POST['sector']) : '';
     $descripcion = isset($_POST['descripcion_edit']) ? $conn->real_escape_string($_POST['descripcion_edit']) : '';
     $sugerencias = isset($_POST['sugerencias']) ? $conn->real_escape_string($_POST['sugerencias']) : '';
@@ -129,6 +130,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $sql_update = "UPDATE soportes SET 
                                fecha_soporte = '$fecha',
                                tecnico_asignado = '$tecnico', 
+                               telefono = '$telefono',
                                sector = '$sector',
                                tipo_servicio = '$tipo_servicio',
                                ip_address = '$ip',
@@ -141,7 +143,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                bw_ping = '$bw_ping',
                                estado_antena = '$estado_antena',
                                valores_antena = '$valores_antena',
-                               descripcion = '$descripcion', 
+                               descripcion = '$descripcion',
+                               observaciones = '$descripcion',
                                sugerencias = '$sugerencias',
                                notas_internas = '$notas_internas',
                                prioridad = '$prioridad',

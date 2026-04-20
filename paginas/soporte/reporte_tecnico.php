@@ -1,3 +1,10 @@
+<?php
+$jsonInstaladores = '../../paginas/principal/data/instaladores.json';
+$instaladoresList = [];
+if (file_exists($jsonInstaladores)) {
+    $instaladoresList = json_decode(file_get_contents($jsonInstaladores), true) ?: [];
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 
@@ -101,16 +108,22 @@
                                 <div class="col-md-3 mb-2">
                                     <label class="form-label fw-bold">Hora Solución</label>
                                     <input type="time" class="form-control" name="hora_solucion"
-                                        value="<?php echo date('H:i'); ?>" required>
+                                        value="<?php echo date('H:i'); ?>" step="1" required>
                                 </div>
                                 <div class="col-md-3 mb-2">
-                                    <label class="form-label fw-bold">Tiempo (Hrs/Min)</label>
-                                    <input type="text" class="form-control" name="tiempo_transcurrido" placeholder="Ej. 1h 30m">
+                                    <label class="form-label fw-bold">Técnico</label>
+                                    <select class="form-select" name="tecnico">
+                                        <option value="">-- Seleccionar --</option>
+                                        <?php foreach ($instaladoresList as $instalador): ?>
+                                            <option value="<?php echo htmlspecialchars($instalador); ?>">
+                                                <?php echo htmlspecialchars($instalador); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
                                 <div class="col-md-3 mb-2">
                                     <label class="form-label fw-bold">Sector</label>
-                                    <input type="text" class="form-control" name="sector" placeholder="Ej. Las Malvinas"
-                                        readonly style="background-color: #e9ecef;">
+                                    <input type="text" class="form-control" name="sector" id="sector" placeholder="Ej. Las Malvinas">
                                 </div>
                             </div>
 
@@ -124,6 +137,8 @@
                                         placeholder="Buscar por Nombre, ID o Cédula..." autocomplete="off">
                                 </div>
                                 <input type="hidden" name="id_contrato" id="id_contrato" required>
+                                <input type="hidden" name="id_olt" id="id_olt">
+                                <input type="hidden" name="id_pon" id="id_pon">
                                 <div id="search_results" class="list-group position-absolute w-100 shadow"
                                     style="z-index: 1000; display: none;"></div>
                                 <div id="cliente_seleccionado" class="form-text text-success fw-bold mt-2"></div>
@@ -132,18 +147,22 @@
                             <!-- 3. Servicio & Equipos -->
                             <div class="section-title">Detalles del Servicio</div>
                             <div class="row mb-3">
-                                <div class="col-6">
+                                <div class="col-md-4">
                                     <label class="form-label fw-bold">Tipo Servicio</label>
                                     <select class="form-select" name="tipo_servicio" id="tipo_servicio" onchange="actualizarVisibilidadServicio()">
                                         <option value="FTTH">FTTH (Fibra)</option>
                                         <option value="RADIO">Radio/Antena</option>
                                     </select>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-md-4">
                                     <label class="form-label fw-bold">IP Asignada</label>
                                     <input type="text" class="form-control" id="rt_ip" name="ip" placeholder="0.0.0.0"
                                         pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" readonly
                                         style="background-color: #e9ecef;">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Teléfono Contacto</label>
+                                    <input type="text" class="form-control" name="telefono" id="rt_telefono" placeholder="Ej. 04121234567">
                                 </div>
                             </div>
 
@@ -636,17 +655,20 @@
                                     .then(details => {
                                         if (details.error) return;
 
-                                        // 1. Sector (優先: Comunidad, secundario: Dirección corta/Parroquia)
-                                        const sectorInput = document.querySelector('input[name="sector"]');
-                                        if (sectorInput) {
-                                            sectorInput.value = details.nombre_comunidad || details.nombre_parroquia || "";
-                                        }
+                                        // 1. Sector y Infraestructura
+                                        const sectorInput = document.getElementById('sector');
+                                        const idOltInput = document.getElementById('id_olt');
+                                        const idPonInput = document.getElementById('id_pon');
 
-                                        // 2. IP Asignada
+                                        if (sectorInput) sectorInput.value = details.nombre_comunidad || details.nombre_parroquia || "";
+                                        if (idOltInput) idOltInput.value = details.id_olt || "";
+                                        if (idPonInput) idPonInput.value = details.id_pon || "";
+
+                                        // 2. IP y Contacto
                                         const ipInput = document.getElementById('rt_ip');
-                                        if (ipInput) {
-                                            ipInput.value = details.ip_onu || "";
-                                        }
+                                        const telInput = document.getElementById('rt_telefono');
+                                        if (ipInput) ipInput.value = details.ip_onu || "";
+                                        if (telInput) telInput.value = details.telefono || "";
 
                                         // 3. Tipo Servicio (Mapeo de 'FTTH'/'RADIO' o similares)
                                         const serviceSelect = document.querySelector('select[name="tipo_servicio"]');
