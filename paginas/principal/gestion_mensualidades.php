@@ -235,8 +235,8 @@ if ($planes_query) {
                     <span id="tasa_display" class="text-secondary small">Cargando tasa...</span>
                 </div>
                 <?php
-                // Contar clientes deudores pendientes
-                $res_pend = $conn->query("SELECT COUNT(*) FROM clientes_deudores WHERE estado = 'PENDIENTE'");
+                // Contar clientes deudores pendientes (Solo deudas, no créditos)
+                $res_pend = $conn->query("SELECT COUNT(*) FROM clientes_deudores WHERE estado = 'PENDIENTE' AND tipo_registro = 'DEUDA'");
                 $cant_pend = $res_pend ? $res_pend->fetch_array()[0] : 0;
                 if ($cant_pend > 0):
                     ?>
