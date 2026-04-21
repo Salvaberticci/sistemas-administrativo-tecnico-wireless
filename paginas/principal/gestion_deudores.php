@@ -172,6 +172,9 @@ require_once '../includes/sidebar.php';
                                                     <button class='btn btn-sm btn-info text-white' onclick='abrirModalAbonos({$row['id']}, {$row['saldo_pendiente']})' title='Gestionar Abonos'>
                                                         <i class='fa-solid fa-coins'></i> Abonos
                                                     </button>
+                                                    <button class='btn btn-sm btn-danger' onclick='eliminarDeuda({$row['id']})' title='Eliminar/Anular Deuda'>
+                                                        <i class='fa-solid fa-trash'></i> Eliminar
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>";
@@ -222,6 +225,9 @@ require_once '../includes/sidebar.php';
                                                 <div class='d-flex justify-content-center gap-1 flex-nowrap'>
                                                     <button class='btn btn-sm btn-success' onclick='abrirModalUsarSaldo({$row_c['id']}, {$row_c['id_contrato']}, {$row_c['saldo_pendiente']}, \"{$row_c['nombre_completo']}\")' title='Usar este saldo para pagar deudas'>
                                                         <i class='fa-solid fa-hand-holding-dollar'></i> Usar Saldo
+                                                    </button>
+                                                    <button class='btn btn-sm btn-danger' onclick='eliminarSaldoFavor({$row_c['id']})' title='Eliminar/Anular Saldo a Favor'>
+                                                        <i class='fa-solid fa-trash'></i> Eliminar
                                                     </button>
                                                 </div>
                                             </td>
@@ -1240,6 +1246,88 @@ require_once '../includes/sidebar.php';
             if (resp.success) {
                 Swal.fire({
                     title: '¡Ajuste Completado!',
+                    text: resp.message,
+                    icon: 'success',
+                    confirmButtonColor: '#0d6efd'
+                }).then(() => location.reload());
+            } else {
+                Swal.fire('Error', resp.message, 'error');
+            }
+        }, 'json').fail(() => {
+            Swal.fire('Error', 'No se pudo comunicar con el servidor.', 'error');
+        });
+    }
+
+    async function eliminarDeuda(id) {
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Eliminar Deuda?',
+            text: "Esta acción marcará la deuda como saldada administrativamente SIN registrar un pago en el sistema. ¿Deseas continuar?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#343a40',
+            confirmButtonText: 'Sí, eliminar deuda',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        });
+
+        if (!isConfirmed) return;
+
+        const proceeds = await solicitarClaveAdmin('Seguridad: Ingrese Clave');
+        if (!proceeds) return;
+
+        Swal.fire({
+            title: 'Procesando...',
+            text: 'Eliminando cargo de la lista...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        $.post('eliminar_deuda.php', { id: id }, function(resp) {
+            if (resp.success) {
+                Swal.fire({
+                    title: '¡Eliminado!',
+                    text: resp.message,
+                    icon: 'success',
+                    confirmButtonColor: '#0d6efd'
+                }).then(() => location.reload());
+            } else {
+                Swal.fire('Error', resp.message, 'error');
+            }
+        }, 'json').fail(() => {
+            Swal.fire('Error', 'No se pudo comunicar con el servidor.', 'error');
+        });
+    }
+
+    async function eliminarSaldoFavor(id) {
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Eliminar Saldo a Favor?',
+            text: "Esta acción anulará el crédito disponible para este cliente SIN generar devoluciones ni registros contables. ¿Deseas continuar?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#343a40',
+            confirmButtonText: 'Sí, eliminar saldo',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        });
+
+        if (!isConfirmed) return;
+
+        const proceeds = await solicitarClaveAdmin('Seguridad: Ingrese Clave');
+        if (!proceeds) return;
+
+        Swal.fire({
+            title: 'Procesando...',
+            text: 'Anulando saldo a favor...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        $.post('eliminar_deuda.php', { id: id }, function(resp) {
+            if (resp.success) {
+                Swal.fire({
+                    title: '¡Anulado!',
                     text: resp.message,
                     icon: 'success',
                     confirmButtonColor: '#0d6efd'
