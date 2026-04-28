@@ -94,6 +94,12 @@ if ($sae_plus_filtro !== 'TODOS') {
 
 
 // 3. CONSULTA SQL PARA LA TABLA (DETALLADA)
+// Construir mapa JSON id_banco => nombre_banco para resolución en PHP
+$bancosJsonMap = [];
+foreach ($lista_bancos as $bj) {
+    $bancosJsonMap[(string)$bj['id_banco']] = $bj['nombre_banco'];
+}
+
 $sql = "
     SELECT 
         cxc.id_cobro, 
@@ -105,15 +111,14 @@ $sql = "
         cxc.estado,
         cxc.referencia_pago,
         cxc.origen,
+        cxc.id_banco,
         co.nombre_completo AS cliente,
         co.ip_onu,
         p.nombre_plan,
-        DATEDIFF(CURRENT_DATE(), cxc.fecha_vencimiento) AS dias_vencido,
-        b.nombre_banco
+        DATEDIFF(CURRENT_DATE(), cxc.fecha_vencimiento) AS dias_vencido
     FROM cuentas_por_cobrar cxc
     JOIN contratos co ON cxc.id_contrato = co.id
     LEFT JOIN planes p ON co.id_plan = p.id_plan
-    LEFT JOIN bancos b ON cxc.id_banco = b.id_banco
     " . $where_clause . "
     ORDER BY cxc.fecha_emision DESC
 ";
@@ -202,11 +207,23 @@ $res_global_u = $conn->query("SELECT COUNT(DISTINCT cedula) as total FROM contra
 $global_clientes = $res_global_u ? $res_global_u->fetch_assoc()['total'] : 0;
 
 
-// Obtener bancos para el filtro
-$bancos_res = $conn->query("SELECT id_banco, nombre_banco FROM bancos ORDER BY nombre_banco ASC");
+// Obtener bancos para el filtro — fuente: bancos.json (fuente maestra del sistema)
+$bancos_json_path = dirname(__FILE__) . '/../principal/bancos.json';
 $lista_bancos = [];
-if ($bancos_res) {
-    while($b = $bancos_res->fetch_assoc()) $lista_bancos[] = $b;
+if (file_exists($bancos_json_path)) {
+    $bancos_raw = json_decode(file_get_contents($bancos_json_path), true);
+    if ($bancos_raw) {
+        // Ordenar por nombre para consistencia con el resto del sistema
+        usort($bancos_raw, fn($a, $b) => strcmp($a['nombre_banco'], $b['nombre_banco']));
+        $lista_bancos = $bancos_raw;
+    }
+}
+// Fallback: si el JSON falla, intentar desde la tabla SQL
+if (empty($lista_bancos)) {
+    $bancos_res = $conn->query("SELECT id_banco, nombre_banco FROM bancos ORDER BY nombre_banco ASC");
+    if ($bancos_res) {
+        while($b = $bancos_res->fetch_assoc()) $lista_bancos[] = $b;
+    }
 }
 
 // Obtener planes para el filtro
@@ -302,9 +319,11 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                         <label class="form-label small fw-bold text-muted text-uppercase mb-1">Banco / Caja</label>
                         <select class="form-select form-select-sm border-0 bg-light" name="id_banco">
                             <option value="">TODOS LOS BANCOS</option>
-                            <?php foreach ($lista_bancos as $b): ?>
-                                <option value="<?php echo $b['id_banco']; ?>" <?php echo ($banco_filtro == $b['id_banco']) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($b['nombre_banco']); ?>
+                            <?php foreach ($lista_bancos as $b): 
+                                $ultimosCuatro = !empty($b['numero_cuenta']) ? ' (' . substr($b['numero_cuenta'], -4) . ')' : '';
+                            ?>
+                                <option value="<?php echo htmlspecialchars($b['id_banco']); ?>" <?php echo ($banco_filtro == $b['id_banco']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($b['nombre_banco'] . $ultimosCuatro); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
