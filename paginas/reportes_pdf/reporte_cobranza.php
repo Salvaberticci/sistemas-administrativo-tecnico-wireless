@@ -10,19 +10,17 @@ $origen_filtro = isset($_GET['origen']) ? $_GET['origen'] : '';
 $ref_filtro = isset($_GET['referencia']) ? $_GET['referencia'] : '';
 $plan_filtro = isset($_GET['id_plan']) ? $_GET['id_plan'] : '';
 $sae_plus_filtro = isset($_GET['estado_sae_plus']) ? $_GET['estado_sae_plus'] : 'TODOS';
+$mes_cobrado = isset($_GET['mes_cobrado']) ? $_GET['mes_cobrado'] : '';
 
-
-// 1.1 ESTADÍSTICAS GLOBALES (METAS) - Se calculan dinámicamente según filtros abajo
-$total_contratos_periodo = 0; // Se usará para contratos únicos
-$unique_contracts_map = [];  // Mapeo para contar contratos sin duplicados
-$total_cobros_periodo = 0;    // Cantidad total de registros encontrados
+// 1.1 ESTADÍSTICAS GLOBALES (METAS)
+$total_contratos_periodo = 0;
+$unique_contracts_map = [];
+$total_cobros_periodo = 0;
 $total_facturado_periodo = 0;
 
-
-
 $cobros = [];
-$total_cobrado = 0; // Solo PAGADO
-$deuda_clientes = 0; // PENDIENTE (incluye lo que antes era VENCIDO)
+$total_cobrado = 0; 
+$deuda_clientes = 0; 
 
 // 2. CONSTRUCCIÓN DINÁMICA DE LA CLÁUSULA WHERE
 $where_clause = " WHERE 1=1 ";
@@ -40,6 +38,27 @@ if (!empty($fecha_inicio) && !empty($fecha_fin)) {
     $params[] = $fecha_inicio;
     $params[] = $fecha_fin;
     $types .= 'ss';
+}
+
+if (!empty($mes_cobrado)) {
+    // Mapeo de meses en español a números para el fallback de fecha_emision
+    $mesesMapNum = [
+        'Enero' => 1, 'Febrero' => 2, 'Marzo' => 3, 'Abril' => 4, 'Mayo' => 5, 'Junio' => 6,
+        'Julio' => 7, 'Agosto' => 8, 'Septiembre' => 9, 'Octubre' => 10, 'Noviembre' => 11, 'Diciembre' => 12
+    ];
+    $numMes = isset($mesesMapNum[$mes_cobrado]) ? $mesesMapNum[$mes_cobrado] : 0;
+
+    $where_clause .= " AND (
+        cxc.id_cobro IN (SELECT id_cobro_cxc FROM cobros_manuales_historial WHERE justificacion LIKE ?)
+        OR 
+        (
+            NOT EXISTS (SELECT 1 FROM cobros_manuales_historial WHERE id_cobro_cxc = cxc.id_cobro) 
+            AND MONTH(cxc.fecha_emision) = ?
+        )
+    )";
+    $params[] = "%[$mes_cobrado]%";
+    $params[] = $numMes;
+    $types .= 'si';
 }
 
 if (!empty($banco_filtro)) {
@@ -297,6 +316,19 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                             <?php foreach ($lista_planes as $p): ?>
                                 <option value="<?php echo $p['id_plan']; ?>" <?php echo ($plan_filtro == $p['id_plan']) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($p['nombre_plan']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Mes que Pagó</label>
+                        <select class="form-select form-select-sm border-0 bg-light" name="mes_cobrado">
+                            <option value="">CUALQUIER MES</option>
+                            <?php 
+                            $meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                            foreach ($meses as $m): ?>
+                                <option value="<?php echo $m; ?>" <?php echo ($mes_cobrado == $m) ? 'selected' : ''; ?>>
+                                    <?php echo $m; ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>

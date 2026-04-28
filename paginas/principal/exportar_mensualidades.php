@@ -43,6 +43,27 @@ if ($tipo === 'filtrado' && !empty($id_banco)) {
         $sWhere .= " AND (h.justificacion LIKE '%[EXTRA]%' OR h.justificacion LIKE '%terceros%' OR h.justificacion LIKE '%extra%')";
     }
 }
+
+$mes_cobrado = isset($_GET['mes_cobrado']) ? $_GET['mes_cobrado'] : '';
+if (!empty($mes_cobrado)) {
+    $mes = $conn->real_escape_string($mes_cobrado);
+    
+    // Mapeo de meses en español a números para el fallback de fecha_emision
+    $mesesMapNum = [
+        'Enero' => 1, 'Febrero' => 2, 'Marzo' => 3, 'Abril' => 4, 'Mayo' => 5, 'Junio' => 6,
+        'Julio' => 7, 'Agosto' => 8, 'Septiembre' => 9, 'Octubre' => 10, 'Noviembre' => 11, 'Diciembre' => 12
+    ];
+    $numMes = isset($mesesMapNum[$mes]) ? $mesesMapNum[$mes] : 0;
+
+    $sWhere .= " AND (
+        cxc.id_cobro IN (SELECT id_cobro_cxc FROM cobros_manuales_historial WHERE justificacion LIKE '%[$mes]%')
+        OR 
+        (
+            NOT EXISTS (SELECT 1 FROM cobros_manuales_historial WHERE id_cobro_cxc = cxc.id_cobro) 
+            AND MONTH(cxc.fecha_emision) = $numMes
+        )
+    )";
+}
 // Si es 'todos' (global), NO aplicamos el filtro de banco, pero sí el de fechas si existen.
 
 // Cargar Bancos JSON
