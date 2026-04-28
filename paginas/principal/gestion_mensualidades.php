@@ -309,6 +309,24 @@ if ($planes_query) {
                         </select>
                     </div>
                     <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Mes que Pagó</label>
+                        <select class="form-select form-select-sm" id="filtro_mes_cobrado">
+                            <option value="">Cualquier Mes</option>
+                            <option value="Enero">Enero</option>
+                            <option value="Febrero">Febrero</option>
+                            <option value="Marzo">Marzo</option>
+                            <option value="Abril">Abril</option>
+                            <option value="Mayo">Mayo</option>
+                            <option value="Junio">Junio</option>
+                            <option value="Julio">Julio</option>
+                            <option value="Agosto">Agosto</option>
+                            <option value="Septiembre">Septiembre</option>
+                            <option value="Octubre">Octubre</option>
+                            <option value="Noviembre">Noviembre</option>
+                            <option value="Diciembre">Diciembre</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
                         <label class="form-label small fw-bold text-muted mb-1">Meses sin Pagar</label>
                         <select class="form-select form-select-sm" id="filtro_meses_mora">
                             <option value="">Todos los Clientes</option>
@@ -1611,6 +1629,7 @@ if ($planes_query) {
                     d.estado_pago = $('#filtro_estado').val();
                     d.filtro_tipo = $('#filtro_tipo').val();
                     d.meses_mora = $('#filtro_meses_mora').val();
+                    d.mes_cobrado = $('#filtro_mes_cobrado').val();
                     d.referencia = $('#filtro_referencia').val();
                     d.tab = $('#active_tab').val();
                     d.sSearch = d.search.value;
@@ -1707,7 +1726,7 @@ if ($planes_query) {
             }
         });
 
-        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_sae, #filtro_estado, #filtro_tipo, #filtro_meses_mora').on('change', function () {
+        $('#fecha_inicio, #fecha_fin, #filtro_cuenta, #filtro_sae, #filtro_estado, #filtro_tipo, #filtro_meses_mora, #filtro_mes_cobrado').on('change', function () {
             tablaUnica.ajax.reload();
         });
 
@@ -2410,8 +2429,10 @@ if ($planes_query) {
         var fecha_inicio = $('#fecha_inicio').val();
         var fecha_fin = $('#fecha_fin').val();
         var id_banco = $('#filtro_cuenta').val();
-        var filtro_estado = $('#filtro_estado').val(); // Nuevo
+        var filtro_estado = $('#filtro_estado').val();
         var filtro_tipo = $('#filtro_tipo').val();
+        var mes_cobrado = $('#filtro_mes_cobrado').val();
+        
         var url = 'exportar_mensualidades.php?tipo=' + tipo;
         if (fecha_inicio && fecha_fin) {
             url += '&fecha_inicio=' + encodeURIComponent(fecha_inicio) + '&fecha_fin=' + encodeURIComponent(fecha_fin);
@@ -2420,6 +2441,7 @@ if ($planes_query) {
             if (id_banco) url += '&id_banco=' + encodeURIComponent(id_banco);
             if (filtro_estado) url += '&estado_pago=' + encodeURIComponent(filtro_estado);
             if (filtro_tipo) url += '&filtro_tipo=' + encodeURIComponent(filtro_tipo);
+            if (mes_cobrado) url += '&mes_cobrado=' + encodeURIComponent(mes_cobrado);
         }
         window.open(url, '_blank');
     }
