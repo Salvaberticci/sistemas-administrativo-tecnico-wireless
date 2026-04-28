@@ -314,6 +314,9 @@ include $path_to_root . 'paginas/includes/layout_head.php';
                             <i class="fa-solid fa-magnifying-glass me-1"></i> Filtrar
                         </button>
                         <?php $export_params = http_build_query($_GET); ?>
+                        <a href="exportar_cobranza_excel.php?<?php echo $export_params; ?>" class="btn btn-success btn-sm" title="Exportar Excel">
+                            <i class="fa-solid fa-file-excel"></i>
+                        </a>
                         <a href="exportar_cuentas_por_cobrar.php?<?php echo $export_params; ?>" class="btn btn-danger btn-sm" target="_blank" title="Exportar PDF">
                             <i class="fa-solid fa-file-pdf"></i>
                         </a>

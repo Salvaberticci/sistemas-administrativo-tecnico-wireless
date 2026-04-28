@@ -25,8 +25,7 @@ $user_role = isset($_SESSION['rol']) ? $_SESSION['rol'] : 'Sin Rol';
 $user_initial = strtoupper(substr($user_name, 0, 1));
 ?>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark top-header py-0 shadow-sm"
-    style="background-color: var(--bg-sidebar) !important;">
+<nav class="navbar navbar-expand-lg navbar-dark glass-header py-1 shadow-sm">
     <div class="container-fluid px-4">
         <!-- Brand / Logo -->
         <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="<?php echo $path_fix; ?>paginas/menu.php">
@@ -207,8 +206,8 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
                             <span class="badge bg-primary-light text-primary small"
                                 style="font-size: 0.6rem;"><?php echo htmlspecialchars($user_role); ?></span>
                         </div>
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
-                            style="width: 38px; height: 38px;"><?php echo $user_initial; ?></div>
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm border border-white border-opacity-10"
+                            style="width: 38px; height: 38px; background: linear-gradient(135deg, var(--primary), var(--accent)) !important;"><?php echo $user_initial; ?></div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 text-small"
                         aria-labelledby="dropdownUser1">
@@ -227,7 +226,7 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
 </nav>
 
 <!-- Sub-header for Page Title (Optional, keeps the context) -->
-<div class="bg-white border-bottom py-2 shadow-sm d-none d-lg-block">
+<div class="border-bottom py-2 shadow-sm d-none d-lg-block" style="background: rgba(255,255,255,0.02); border-color: var(--border-glass) !important;">
     <div class="container-fluid px-4">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="m-0 text-secondary fw-bold d-flex align-items-center gap-2 flex-wrap">
