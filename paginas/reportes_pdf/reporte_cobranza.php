@@ -93,12 +93,31 @@ if ($sae_plus_filtro !== 'TODOS') {
 }
 
 
-// 3. CONSULTA SQL PARA LA TABLA (DETALLADA)
-// Construir mapa JSON id_banco => nombre_banco para resolución en PHP
+// 3. CARGAR BANCOS DESDE JSON (fuente maestra del sistema) — debe ir antes de cualquier uso
+$bancos_json_path = dirname(__FILE__) . '/../principal/bancos.json';
+$lista_bancos = [];
+if (file_exists($bancos_json_path)) {
+    $bancos_raw = json_decode(file_get_contents($bancos_json_path), true);
+    if ($bancos_raw) {
+        usort($bancos_raw, fn($a, $b) => strcmp($a['nombre_banco'], $b['nombre_banco']));
+        $lista_bancos = $bancos_raw;
+    }
+}
+// Fallback a SQL si el JSON falla
+if (empty($lista_bancos)) {
+    $bancos_res = $conn->query("SELECT id_banco, nombre_banco FROM bancos ORDER BY nombre_banco ASC");
+    if ($bancos_res) {
+        while ($b = $bancos_res->fetch_assoc()) $lista_bancos[] = $b;
+    }
+}
+
+// Construir mapa id_banco => nombre_banco para resolución rápida en PHP
 $bancosJsonMap = [];
 foreach ($lista_bancos as $bj) {
     $bancosJsonMap[(string)$bj['id_banco']] = $bj['nombre_banco'];
 }
+
+// 4. CONSULTA SQL PARA LA TABLA (DETALLADA)
 
 $sql = "
     SELECT 
@@ -207,24 +226,7 @@ $res_global_u = $conn->query("SELECT COUNT(DISTINCT cedula) as total FROM contra
 $global_clientes = $res_global_u ? $res_global_u->fetch_assoc()['total'] : 0;
 
 
-// Obtener bancos para el filtro — fuente: bancos.json (fuente maestra del sistema)
-$bancos_json_path = dirname(__FILE__) . '/../principal/bancos.json';
-$lista_bancos = [];
-if (file_exists($bancos_json_path)) {
-    $bancos_raw = json_decode(file_get_contents($bancos_json_path), true);
-    if ($bancos_raw) {
-        // Ordenar por nombre para consistencia con el resto del sistema
-        usort($bancos_raw, fn($a, $b) => strcmp($a['nombre_banco'], $b['nombre_banco']));
-        $lista_bancos = $bancos_raw;
-    }
-}
-// Fallback: si el JSON falla, intentar desde la tabla SQL
-if (empty($lista_bancos)) {
-    $bancos_res = $conn->query("SELECT id_banco, nombre_banco FROM bancos ORDER BY nombre_banco ASC");
-    if ($bancos_res) {
-        while($b = $bancos_res->fetch_assoc()) $lista_bancos[] = $b;
-    }
-}
+// $lista_bancos ya fue cargado antes de la query principal (ver arriba)
 
 // Obtener planes para el filtro
 $planes_res = $conn->query("SELECT id_plan, nombre_plan FROM planes ORDER BY nombre_plan ASC");
