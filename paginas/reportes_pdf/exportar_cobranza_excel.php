@@ -24,10 +24,7 @@ $origen_filtro = isset($_GET['origen']) ? $_GET['origen'] : '';
 $ref_filtro = isset($_GET['referencia']) ? $_GET['referencia'] : '';
 $plan_filtro = isset($_GET['id_plan']) ? $_GET['id_plan'] : '';
 $sae_plus_filtro = isset($_GET['estado_sae_plus']) ? $_GET['estado_sae_plus'] : 'TODOS';
-<<<<<<< HEAD
-=======
 $mes_cobrado = isset($_GET['mes_cobrado']) ? $_GET['mes_cobrado'] : '';
->>>>>>> 719507e (Implementación de reportes de cobranza y gestión de mensualidades con filtro por mes (Sin rediseño dark))
 
 // 2. CONSTRUCCIÓN DE LA CONSULTA
 $where_clause = " WHERE 1=1 ";
@@ -42,9 +39,6 @@ if (!empty($fecha_inicio) && !empty($fecha_fin)) {
     $where_clause .= " AND COALESCE(cxc.fecha_pago, cxc.fecha_emision) >= ? AND COALESCE(cxc.fecha_pago, cxc.fecha_emision) <= ? ";
     $params[] = $fecha_inicio; $params[] = $fecha_fin; $types .= 'ss';
 }
-<<<<<<< HEAD
-=======
-
 if (!empty($mes_cobrado)) {
     // Mapeo de meses en español a números para el fallback de fecha_emision
     $mesesMapNum = [
@@ -65,8 +59,6 @@ if (!empty($mes_cobrado)) {
     $params[] = $numMes;
     $types .= 'si';
 }
-
->>>>>>> 719507e (Implementación de reportes de cobranza y gestión de mensualidades con filtro por mes (Sin rediseño dark))
 if (!empty($banco_filtro)) {
     $where_clause .= " AND cxc.id_banco = ? ";
     $params[] = $banco_filtro; $types .= 'i';
@@ -145,23 +137,15 @@ function createSheet(Spreadsheet $spreadsheet, $title) {
     $sheet = $spreadsheet->createSheet();
     $sheet->setTitle(substr($title, 0, 31));
     
-<<<<<<< HEAD
-=======
     global $mes_cobrado;
     $mes_display = !empty($mes_cobrado) ? strtoupper($mes_cobrado) : strtoupper(date('F'));
-    
->>>>>>> 719507e (Implementación de reportes de cobranza y gestión de mensualidades con filtro por mes (Sin rediseño dark))
     // Título Superior
     $sheet->mergeCells('A1:J1');
     $sheet->setCellValue('A1', $title . " - Reporte de Cobranzas " . date('Y'));
     $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
     $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
     
-<<<<<<< HEAD
-    $sheet->setCellValue('K1', strtoupper(date('F')));
-=======
     $sheet->setCellValue('K1', $mes_display);
->>>>>>> 719507e (Implementación de reportes de cobranza y gestión de mensualidades con filtro por mes (Sin rediseño dark))
     $sheet->getStyle('K1')->getFont()->setBold(true)->setSize(12);
     $sheet->getStyle('K1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 

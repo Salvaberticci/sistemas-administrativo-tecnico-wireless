@@ -17,9 +17,9 @@ require_once 'includes/sidebar.php';
                         <p class="lead text-muted mb-4">Sistema de Gestión Administrativa y Técnica de Nueva Generación</p>
                     </div>
                     <div class="col-md-4 text-center">
-                        <div class="p-3 bg-white bg-opacity-5 rounded-circle d-inline-block shadow-lg">
-                            <img src="../images/logo.jpg" alt="Wireless Supply" class="img-fluid rounded-circle shadow-sm"
-                                style="max-height: 160px; filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.3));">
+                        <div class="p-3 bg-white bg-opacity-5 rounded-4 d-inline-block shadow-lg border border-white border-opacity-10">
+                            <img src="../images/logo.jpg" alt="Wireless Supply" class="img-fluid rounded-3 shadow-sm"
+                                style="max-height: 160px; filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.2));">
                         </div>
                     </div>
                 </div>
@@ -37,7 +37,7 @@ require_once 'includes/sidebar.php';
                             <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-3 p-3 bg-white bg-opacity-5 shadow-sm">
                                 <i class="fa-solid fa-file-contract fa-2x text-primary"></i>
                             </div>
-                            <h5 class="card-title text-white">Contratos</h5>
+                            <h5 class="card-title">Contratos</h5>
                             <p class="card-text text-muted small">Administrar contratos de clientes</p>
                         </div>
                     </div>
@@ -51,7 +51,7 @@ require_once 'includes/sidebar.php';
                             <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-3 p-3 bg-white bg-opacity-5 shadow-sm">
                                 <i class="fa-solid fa-money-bill-wave fa-2x text-success"></i>
                             </div>
-                            <h5 class="card-title text-white">Cobranzas</h5>
+                            <h5 class="card-title">Cobranzas</h5>
                             <p class="card-text text-muted small">Gestión de cuentas por cobrar</p>
                         </div>
                     </div>
@@ -65,7 +65,7 @@ require_once 'includes/sidebar.php';
                             <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-3 p-3 bg-white bg-opacity-5 shadow-sm">
                                 <i class="fa-solid fa-users fa-2x text-info"></i>
                             </div>
-                            <h5 class="card-title text-white">Usuarios</h5>
+                            <h5 class="card-title">Usuarios</h5>
                             <p class="card-text text-muted small">Gestión de usuarios del sistema</p>
                         </div>
                     </div>
@@ -79,7 +79,7 @@ require_once 'includes/sidebar.php';
                             <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-3 p-3 bg-white bg-opacity-5 shadow-sm">
                                 <i class="fa-solid fa-chart-line fa-2x text-danger"></i>
                             </div>
-                            <h5 class="card-title text-white">Gestión de Fallas</h5>
+                            <h5 class="card-title">Gestión de Fallas</h5>
                             <p class="card-text text-muted small">Estadísticas y reportes técnicos</p>
                         </div>
                     </div>
@@ -93,7 +93,7 @@ require_once 'includes/sidebar.php';
                             <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-3 p-3 bg-white bg-opacity-5 shadow-sm">
                                 <i class="fa-solid fa-chart-pie fa-2x text-warning"></i>
                             </div>
-                            <h5 class="card-title text-white">Reportes</h5>
+                            <h5 class="card-title">Reportes</h5>
                             <p class="card-text text-muted small">Ver métricas y reportes</p>
                         </div>
                     </div>
@@ -107,7 +107,7 @@ require_once 'includes/sidebar.php';
                             <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-3 p-3 bg-white bg-opacity-5 shadow-sm">
                                 <i class="fa-solid fa-check-double fa-2x text-warning"></i>
                             </div>
-                            <h5 class="card-title text-white">Aprobar Pagos</h5>
+                            <h5 class="card-title">Aprobar Pagos</h5>
                             <p class="card-text text-muted small">Revisar reportes de clientes</p>
                         </div>
                     </div>
@@ -121,7 +121,7 @@ require_once 'includes/sidebar.php';
                             <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-3 p-3 bg-white bg-opacity-5 shadow-sm">
                                 <i class="fa-solid fa-clock-rotate-left fa-2x text-primary"></i>
                             </div>
-                            <h5 class="card-title text-white">Historial Pagos</h5>
+                            <h5 class="card-title">Historial Pagos</h5>
                             <p class="card-text text-muted small">Ver reportes procesados</p>
                         </div>
                     </div>
@@ -135,7 +135,7 @@ require_once 'includes/sidebar.php';
                             <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-3 p-3 bg-white bg-opacity-5 shadow-sm">
                                 <i class="fa-solid fa-calendar-plus fa-2x text-primary"></i>
                             </div>
-                            <h5 class="card-title text-white">Prórrogas</h5>
+                            <h5 class="card-title">Prórrogas</h5>
                             <p class="card-text text-muted small">Gestión de solicitudes de pago</p>
                         </div>
                     </div>
@@ -149,7 +149,7 @@ require_once 'includes/sidebar.php';
                             <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-3 p-3 bg-white bg-opacity-5 shadow-sm">
                                 <i class="fa-solid fa-scale-balanced fa-2x text-primary"></i>
                             </div>
-                            <h5 class="card-title text-white">Conciliación</h5>
+                            <h5 class="card-title">Conciliación</h5>
                             <p class="card-text text-muted small">Validar pagos con extracto (OCR)</p>
                         </div>
                     </div>

@@ -1,7 +1,23 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$path_fix_auth = isset($path_to_root) ? $path_to_root : '../';
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: " . $path_fix_auth . "index.html");
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <script>
+        // Aplicar el tema guardado inmediatamente para evitar parpadeos
+        const savedTheme = localStorage.getItem('theme') || 'dark'; // Dark por defecto
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wireless Supply Admin</title>
     
